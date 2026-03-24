@@ -17,7 +17,7 @@ This command invokes the **python-reviewer** agent for comprehensive Python-spec
 
 ## When to Use
 
-Use `/python-review` when:
+Use `/aw:python-review` when:
 - After writing or modifying Python code
 - Before committing Python changes
 - Reviewing pull requests with Python code
@@ -77,7 +77,7 @@ pytest --cov=app --cov-report=term-missing
 ## Example Usage
 
 ```text
-User: /python-review
+User: /aw:python-review
 
 Agent:
 # Python Code Review Report
@@ -171,10 +171,10 @@ Run: `black app/routes/user.py app/services/auth.py`
 
 ## Integration with Other Commands
 
-- Use `/tdd` first to ensure tests pass
-- Use `/code-review` for non-Python specific concerns
-- Use `/python-review` before committing
-- Use `/build-fix` if static analysis tools fail
+- Use `/aw:tdd` first to ensure tests pass
+- Use `/aw:code-review` for non-Python specific concerns
+- Use `/aw:python-review` before committing
+- Use `/aw:build-fix` if static analysis tools fail
 
 ## Framework-Specific Reviews
 

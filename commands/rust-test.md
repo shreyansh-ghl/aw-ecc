@@ -17,7 +17,7 @@ This command enforces test-driven development methodology for Rust code using `#
 
 ## When to Use
 
-Use `/rust-test` when:
+Use `/aw:rust-test` when:
 - Implementing new Rust functions, methods, or traits
 - Adding test coverage to existing Rust code
 - Fixing bugs (write failing test first)
@@ -36,7 +36,7 @@ REPEAT  -> Next test case
 ## Example Session
 
 ````text
-User: /rust-test I need a function to validate user registration
+User: /aw:rust-test I need a function to validate user registration
 
 Agent:
 # TDD Session: Registration Validator
@@ -298,9 +298,9 @@ cargo test --no-fail-fast
 
 ## Related Commands
 
-- `/rust-build` - Fix build errors
-- `/rust-review` - Review code after implementation
-- `/verify` - Run full verification loop
+- `/aw:rust-build` - Fix build errors
+- `/aw:rust-review` - Review code after implementation
+- `/aw:verify` - Run full verification loop
 
 ## Related
 

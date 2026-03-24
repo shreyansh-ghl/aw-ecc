@@ -16,7 +16,7 @@ This command invokes the **cpp-build-resolver** agent to incrementally fix C++ b
 
 ## When to Use
 
-Use `/cpp-build` when:
+Use `/aw:cpp-build` when:
 - `cmake --build build` fails with errors
 - Linker errors (undefined references, multiple definitions)
 - Template instantiation failures
@@ -40,7 +40,7 @@ cppcheck --enable=all src/
 ## Example Session
 
 ```text
-User: /cpp-build
+User: /aw:cpp-build
 
 Agent:
 # C++ Build Resolution
@@ -163,9 +163,9 @@ The agent will stop and report if:
 
 ## Related Commands
 
-- `/cpp-test` - Run tests after build succeeds
-- `/cpp-review` - Review code quality
-- `/verify` - Full verification loop
+- `/aw:cpp-test` - Run tests after build succeeds
+- `/aw:cpp-review` - Review code quality
+- `/aw:verify` - Full verification loop
 
 ## Related
 

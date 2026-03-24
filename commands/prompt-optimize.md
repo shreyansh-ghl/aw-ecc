@@ -2,7 +2,7 @@
 description: Analyze a draft prompt and output an optimized, ECC-enriched version ready to paste and run. Does NOT execute the task — outputs advisory analysis only.
 ---
 
-# /prompt-optimize
+# /aw:prompt-optimize
 
 Analyze and optimize the following prompt for maximum ECC leverage.
 
@@ -28,7 +28,7 @@ Apply the **prompt-optimizer** skill to the user's input below. Follow the 6-pha
 ## CRITICAL
 
 Do NOT execute the user's task. Output ONLY the analysis and optimized prompt.
-If the user asks for direct execution, explain that `/prompt-optimize` only produces advisory output and tell them to start a normal task request instead.
+If the user asks for direct execution, explain that `/aw:prompt-optimize` only produces advisory output and tell them to start a normal task request instead.
 
 Note: `blueprint` is a **skill**, not a slash command. Write "Use the blueprint skill"
 instead of presenting it as a `/...` command.

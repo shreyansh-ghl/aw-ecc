@@ -2,7 +2,7 @@
 description: Look up current documentation for a library or topic via Context7.
 ---
 
-# /docs
+# /aw:docs
 
 ## Purpose
 

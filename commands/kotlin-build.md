@@ -16,7 +16,7 @@ This command invokes the **kotlin-build-resolver** agent to incrementally fix Ko
 
 ## When to Use
 
-Use `/kotlin-build` when:
+Use `/aw:kotlin-build` when:
 - `./gradlew build` fails with errors
 - Kotlin compiler reports errors
 - `./gradlew detekt` reports violations
@@ -43,7 +43,7 @@ Use `/kotlin-build` when:
 ## Example Session
 
 ````text
-User: /kotlin-build
+User: /aw:kotlin-build
 
 Agent:
 # Kotlin Build Resolution
@@ -164,9 +164,9 @@ The agent will stop and report if:
 
 ## Related Commands
 
-- `/kotlin-test` - Run tests after build succeeds
-- `/kotlin-review` - Review code quality
-- `/verify` - Full verification loop
+- `/aw:kotlin-test` - Run tests after build succeeds
+- `/aw:kotlin-review` - Review code quality
+- `/aw:verify` - Full verification loop
 
 ## Related
 

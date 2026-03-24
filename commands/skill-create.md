@@ -4,7 +4,7 @@ description: Analyze local git history to extract coding patterns and generate S
 allowed_tools: ["Bash", "Read", "Write", "Grep", "Glob"]
 ---
 
-# /skill-create - Local Skill Generation
+# /aw:skill-create - Local Skill Generation
 
 Analyze your repository's git history to extract coding patterns and generate SKILL.md files that teach Claude your team's practices.
 
@@ -104,7 +104,7 @@ Prefix commits with: feat:, fix:, chore:, docs:, test:, refactor:
 
 ## Example Output
 
-Running `/skill-create` on a TypeScript project might produce:
+Running `/aw:skill-create` on a TypeScript project might produce:
 
 ```markdown
 ---
@@ -165,9 +165,9 @@ For advanced features (10k+ commits, team sharing, auto-PRs), use the [Skill Cre
 
 ## Related Commands
 
-- `/instinct-import` - Import generated instincts
-- `/instinct-status` - View learned instincts
-- `/evolve` - Cluster instincts into skills/agents
+- `/aw:instinct-import` - Import generated instincts
+- `/aw:instinct-status` - View learned instincts
+- `/aw:evolve` - Cluster instincts into skills/agents
 
 ---
 

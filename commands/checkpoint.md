@@ -54,15 +54,15 @@ Show all checkpoints with:
 Typical checkpoint flow:
 
 ```
-[Start] --> /checkpoint create "feature-start"
+[Start] --> /aw:checkpoint create "feature-start"
    |
-[Implement] --> /checkpoint create "core-done"
+[Implement] --> /aw:checkpoint create "core-done"
    |
-[Test] --> /checkpoint verify "core-done"
+[Test] --> /aw:checkpoint verify "core-done"
    |
-[Refactor] --> /checkpoint create "refactor-done"
+[Refactor] --> /aw:checkpoint create "refactor-done"
    |
-[PR] --> /checkpoint verify "feature-start"
+[PR] --> /aw:checkpoint verify "feature-start"
 ```
 
 ## Arguments

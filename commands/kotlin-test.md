@@ -17,7 +17,7 @@ This command enforces test-driven development methodology for Kotlin code using 
 
 ## When to Use
 
-Use `/kotlin-test` when:
+Use `/aw:kotlin-test` when:
 - Implementing new Kotlin functions or classes
 - Adding test coverage to existing Kotlin code
 - Fixing bugs (write failing test first)
@@ -36,7 +36,7 @@ REPEAT  -> Next test case
 ## Example Session
 
 ````text
-User: /kotlin-test I need a function to validate user registration requests
+User: /aw:kotlin-test I need a function to validate user registration requests
 
 Agent:
 # TDD Session: Registration Validator
@@ -302,9 +302,9 @@ open build/reports/kover/html/index.html
 
 ## Related Commands
 
-- `/kotlin-build` - Fix build errors
-- `/kotlin-review` - Review code after implementation
-- `/verify` - Run full verification loop
+- `/aw:kotlin-build` - Fix build errors
+- `/aw:kotlin-review` - Review code after implementation
+- `/aw:verify` - Run full verification loop
 
 ## Related
 

@@ -110,5 +110,5 @@ Skipped: 3 instincts (equal/higher confidence already exists)
 
 New instincts saved to: ~/.claude/homunculus/instincts/inherited/
 
-Run /instinct-status to see all instincts.
+Run /aw:instinct-status to see all instincts.
 ```

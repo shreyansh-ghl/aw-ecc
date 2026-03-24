@@ -31,7 +31,7 @@ Ask a question mid-task and get an immediate, focused answer — then continue r
 
 Before answering anything, mentally note:
 - What is the active task? (what file, feature, or problem was being worked on)
-- What step was in progress at the moment `/aside` was invoked?
+- What step was in progress at the moment `/aw:aside` was invoked?
 - What was about to happen next?
 
 Do NOT touch, edit, create, or delete any files during the aside.
@@ -63,7 +63,7 @@ After delivering the answer, immediately continue the active task from the exact
 
 ## Edge Cases
 
-**No question provided (`/aside` with nothing after it):**
+**No question provided (`/aw:aside` with nothing after it):**
 Respond:
 ```
 ASIDE: no question provided
@@ -95,7 +95,7 @@ Wait for the user's answer — do not make assumptions.
 **Question is about the currently open file or code:**
 Answer from the live context. If the file was read earlier in the session, reference it directly. If not, read it now (read-only) and answer with a file:line reference.
 
-**No active task (nothing in progress when `/aside` is invoked):**
+**No active task (nothing in progress when `/aw:aside` is invoked):**
 Still use the standard wrapper so the response shape stays consistent:
 ```
 ASIDE: [restate the question briefly]
@@ -111,7 +111,7 @@ Give the essential answer concisely, then offer:
 That's the short version. Want a deeper explanation after we finish [current task]?
 ```
 
-**Multiple `/aside` questions in a row:**
+**Multiple `/aw:aside` questions in a row:**
 Answer each one in sequence. After the last answer, resume the main task. Do not lose task state across a chain of asides.
 
 **Aside answer implies a code change is needed:**
@@ -130,7 +130,7 @@ Ask one clarifying question — the shortest question that gets the information 
 ## Example Output
 
 ```
-User: /aside what does fetchWithRetry() actually do?
+User: /aw:aside what does fetchWithRetry() actually do?
 
 ASIDE: what does fetchWithRetry() do?
 
@@ -142,7 +142,7 @@ network errors — 4xx errors are treated as final and not retried.
 ```
 
 ```
-User: /aside is the approach we're taking thread-safe?
+User: /aw:aside is the approach we're taking thread-safe?
 
 ASIDE: is the current approach thread-safe?
 

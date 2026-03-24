@@ -5,7 +5,7 @@ description: Load the most recent session file from ~/.claude/sessions/ and resu
 # Resume Session Command
 
 Load the last saved session state and orient fully before doing any work.
-This command is the counterpart to `/save-session`.
+This command is the counterpart to `/aw:save-session`.
 
 ## When to Use
 
@@ -34,7 +34,7 @@ If no argument provided:
 3. If the folder does not exist or has no matching files, tell the user:
    ```
    No session files found in ~/.claude/sessions/
-   Run /save-session at the end of a session to create one.
+   Run /aw:save-session at the end of a session to create one.
    ```
    Then stop.
 
@@ -152,4 +152,4 @@ Ready to continue. What would you like to do?
 - Never modify the session file when loading it — it's a read-only historical record
 - The briefing format is fixed — do not skip sections even if they are empty
 - "What Not To Retry" must always be shown, even if it just says "None" — it's too important to miss
-- After resuming, the user may want to run `/save-session` again at the end of the new session to create a new dated file
+- After resuming, the user may want to run `/aw:save-session` again at the end of the new session to create a new dated file

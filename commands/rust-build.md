@@ -16,7 +16,7 @@ This command invokes the **rust-build-resolver** agent to incrementally fix Rust
 
 ## When to Use
 
-Use `/rust-build` when:
+Use `/aw:rust-build` when:
 - `cargo build` or `cargo check` fails with errors
 - `cargo clippy` reports warnings
 - Borrow checker or lifetime errors block compilation
@@ -45,7 +45,7 @@ if command -v cargo-audit >/dev/null; then cargo audit; else echo "cargo-audit n
 ## Example Session
 
 ````text
-User: /rust-build
+User: /aw:rust-build
 
 Agent:
 # Rust Build Resolution
@@ -177,9 +177,9 @@ The agent will stop and report if:
 
 ## Related Commands
 
-- `/rust-test` - Run tests after build succeeds
-- `/rust-review` - Review code quality
-- `/verify` - Full verification loop
+- `/aw:rust-test` - Run tests after build succeeds
+- `/aw:rust-review` - Review code quality
+- `/aw:verify` - Full verification loop
 
 ## Related
 

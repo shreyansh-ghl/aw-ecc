@@ -2,9 +2,9 @@
 description: "Extract reusable patterns from the session, self-evaluate quality before saving, and determine the right save location (Global vs Project)."
 ---
 
-# /learn-eval - Extract, Evaluate, then Save
+# /aw:learn-eval - Extract, Evaluate, then Save
 
-Extends `/learn` with a quality gate, save-location decision, and knowledge-placement awareness before writing any skill file.
+Extends `/aw:learn` with a quality gate, save-location decision, and knowledge-placement awareness before writing any skill file.
 
 ## What to Extract
 

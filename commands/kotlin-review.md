@@ -17,7 +17,7 @@ This command invokes the **kotlin-reviewer** agent for comprehensive Kotlin-spec
 
 ## When to Use
 
-Use `/kotlin-review` when:
+Use `/aw:kotlin-review` when:
 - After writing or modifying Kotlin code
 - Before committing Kotlin changes
 - Reviewing pull requests with Kotlin code
@@ -68,7 +68,7 @@ Use `/kotlin-review` when:
 ## Example Usage
 
 ````text
-User: /kotlin-review
+User: /aw:kotlin-review
 
 Agent:
 # Kotlin Code Review Report
@@ -129,10 +129,10 @@ Recommendation: ❌ Block merge until CRITICAL issue is fixed
 
 ## Integration with Other Commands
 
-- Use `/kotlin-test` first to ensure tests pass
-- Use `/kotlin-build` if build errors occur
-- Use `/kotlin-review` before committing
-- Use `/code-review` for non-Kotlin-specific concerns
+- Use `/aw:kotlin-test` first to ensure tests pass
+- Use `/aw:kotlin-build` if build errors occur
+- Use `/aw:kotlin-review` before committing
+- Use `/aw:code-review` for non-Kotlin-specific concerns
 
 ## Related
 

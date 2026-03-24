@@ -17,7 +17,7 @@ This command invokes the **cpp-reviewer** agent for comprehensive C++-specific c
 
 ## When to Use
 
-Use `/cpp-review` when:
+Use `/aw:cpp-review` when:
 - After writing or modifying C++ code
 - Before committing C++ changes
 - Reviewing pull requests with C++ code
@@ -64,7 +64,7 @@ cmake --build build -- -Wall -Wextra -Wpedantic
 ## Example Usage
 
 ```text
-User: /cpp-review
+User: /aw:cpp-review
 
 Agent:
 # C++ Code Review Report
@@ -121,10 +121,10 @@ Recommendation: ❌ Block merge until CRITICAL issue is fixed
 
 ## Integration with Other Commands
 
-- Use `/cpp-test` first to ensure tests pass
-- Use `/cpp-build` if build errors occur
-- Use `/cpp-review` before committing
-- Use `/code-review` for non-C++ specific concerns
+- Use `/aw:cpp-test` first to ensure tests pass
+- Use `/aw:cpp-build` if build errors occur
+- Use `/aw:cpp-review` before committing
+- Use `/aw:code-review` for non-C++ specific concerns
 
 ## Related
 

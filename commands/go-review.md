@@ -17,7 +17,7 @@ This command invokes the **go-reviewer** agent for comprehensive Go-specific cod
 
 ## When to Use
 
-Use `/go-review` when:
+Use `/aw:go-review` when:
 - After writing or modifying Go code
 - Before committing Go changes
 - Reviewing pull requests with Go code
@@ -69,7 +69,7 @@ govulncheck ./...
 ## Example Usage
 
 ```text
-User: /go-review
+User: /aw:go-review
 
 Agent:
 # Go Code Review Report
@@ -137,10 +137,10 @@ Recommendation: ❌ Block merge until CRITICAL issue is fixed
 
 ## Integration with Other Commands
 
-- Use `/go-test` first to ensure tests pass
-- Use `/go-build` if build errors occur
-- Use `/go-review` before committing
-- Use `/code-review` for non-Go specific concerns
+- Use `/aw:go-test` first to ensure tests pass
+- Use `/aw:go-build` if build errors occur
+- Use `/aw:go-review` before committing
+- Use `/aw:code-review` for non-Go specific concerns
 
 ## Related
 

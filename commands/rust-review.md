@@ -17,7 +17,7 @@ This command invokes the **rust-reviewer** agent for comprehensive Rust-specific
 
 ## When to Use
 
-Use `/rust-review` when:
+Use `/aw:rust-review` when:
 - After writing or modifying Rust code
 - Before committing Rust changes
 - Reviewing pull requests with Rust code
@@ -71,7 +71,7 @@ if command -v cargo-audit >/dev/null; then cargo audit; else echo "cargo-audit n
 ## Example Usage
 
 ````text
-User: /rust-review
+User: /aw:rust-review
 
 Agent:
 # Rust Code Review Report
@@ -131,10 +131,10 @@ Recommendation: Block merge until CRITICAL issue is fixed
 
 ## Integration with Other Commands
 
-- Use `/rust-test` first to ensure tests pass
-- Use `/rust-build` if build errors occur
-- Use `/rust-review` before committing
-- Use `/code-review` for non-Rust-specific concerns
+- Use `/aw:rust-test` first to ensure tests pass
+- Use `/aw:rust-build` if build errors occur
+- Use `/aw:rust-review` before committing
+- Use `/aw:code-review` for non-Rust-specific concerns
 
 ## Related
 
