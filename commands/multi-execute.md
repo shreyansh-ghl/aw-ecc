@@ -313,3 +313,17 @@ After audit passes, report to user:
 1. `/ccg:plan` generates plan + SESSION_ID
 2. User confirms with "Y"
 3. `/ccg:execute` reads plan, reuses SESSION_ID, executes implementation
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+- Testing/QA → `platform-sdet-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

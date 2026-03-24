@@ -78,3 +78,17 @@ All tests passing ✅
 - **One deletion at a time** — Atomic changes make rollback easy
 - **Skip if uncertain** — Better to keep dead code than break production
 - **Don't refactor while cleaning** — Separate concerns (clean first, refactor later)
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+- Testing/QA → `platform-sdet-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

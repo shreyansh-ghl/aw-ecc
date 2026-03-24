@@ -57,3 +57,17 @@ $ARGUMENTS can be:
 - `full` - All checks (default)
 - `pre-commit` - Checks relevant for commits
 - `pre-pr` - Full checks plus security scan
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+- Testing/QA → `platform-sdet-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

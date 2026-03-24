@@ -326,3 +326,15 @@ The related `tdd-workflow` skill is also bundled with ECC.
 For manual installs, the source files live at:
 - `agents/tdd-guide.md`
 - `skills/tdd-workflow/SKILL.md`
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

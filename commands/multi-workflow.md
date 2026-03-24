@@ -189,3 +189,17 @@ Wait for results with `TaskOutput`. Integrate review feedback, execute optimizat
 1. Phase sequence cannot be skipped (unless user explicitly instructs)
 2. External models have **zero filesystem write access**, all modifications by Claude
 3. **Force stop** when score < 7 or user does not approve
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+- Testing/QA → `platform-sdet-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

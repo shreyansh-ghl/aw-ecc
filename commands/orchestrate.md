@@ -229,3 +229,17 @@ $ARGUMENTS:
 3. **Use security-reviewer** for auth/payment/PII
 4. **Keep handoffs concise** - focus on what next agent needs
 5. **Run verification** between agents if needed
+
+---
+
+## GHL Platform Integration
+
+Also activate the matching platform agent by task domain:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+- Infra/deploy → `platform-infra-*`
+- Testing/QA → `platform-sdet-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.

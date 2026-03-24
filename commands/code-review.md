@@ -38,3 +38,16 @@ Comprehensive security and quality review of uncommitted changes:
 4. Block commit if CRITICAL or HIGH issues found
 
 Never approve code with security vulnerabilities!
+
+---
+
+## GHL Platform Integration
+
+Also activate ALL `platform-review-*` agents in parallel.
+Also activate the domain-specific platform agent:
+
+- Backend/services → `platform-services-*`
+- Frontend/UI → `platform-frontend-*`
+- Data layer → `platform-data-*`
+
+For ALL activated agents: read frontmatter → load each skill from `skills:` array.
