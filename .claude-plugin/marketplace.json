@@ -1,28 +1,25 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "everything-claude-code",
-  "description": "Battle-tested Claude Code configurations from an Anthropic hackathon winner — agents, skills, hooks, commands, and rules evolved over 10+ months of intensive daily use",
+  "name": "aw-marketplace",
+  "description": "GoHighLevel Agentic Workspace — agents, skills, commands, hooks, and rules for GHL development workflows.",
   "owner": {
-    "name": "Affaan Mustafa",
-    "email": "me@affaanmustafa.com"
-  },
-  "metadata": {
-    "description": "Battle-tested Claude Code configurations from an Anthropic hackathon winner"
+    "name": "GoHighLevel"
   },
   "plugins": [
     {
-      "name": "everything-claude-code",
+      "name": "aw",
       "source": "./",
-      "description": "The most comprehensive Claude Code plugin — 14+ agents, 56+ skills, 33+ commands, and production-ready hooks for TDD, security scanning, code review, and continuous learning",
-      "version": "1.9.0",
+      "description": "Agentic Workspace Engine — agents, skills, commands, hooks, and rules for GHL development workflows.",
+      "version": "1.2.0",
       "author": {
-        "name": "Affaan Mustafa",
-        "email": "me@affaanmustafa.com"
+        "name": "GoHighLevel"
       },
-      "homepage": "https://github.com/affaan-m/everything-claude-code",
-      "repository": "https://github.com/affaan-m/everything-claude-code",
+      "homepage": "https://github.com/shreyansh-ghl/aw-ecc",
+      "repository": "https://github.com/shreyansh-ghl/aw-ecc",
       "license": "MIT",
       "keywords": [
+        "ghl",
+        "agentic-workspace",
         "agents",
         "skills",
         "hooks",
@@ -30,19 +27,9 @@
         "tdd",
         "code-review",
         "security",
-        "best-practices"
+        "workflow"
       ],
       "category": "workflow",
-      "tags": [
-        "agents",
-        "skills",
-        "hooks",
-        "commands",
-        "tdd",
-        "code-review",
-        "security",
-        "best-practices"
-      ],
       "strict": false
     }
   ]
