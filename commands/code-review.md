@@ -1,53 +1,28 @@
-# Code Review
-
-Comprehensive security and quality review of uncommitted changes:
-
-1. Get changed files: git diff --name-only HEAD
-
-2. For each changed file, check for:
-
-**Security Issues (CRITICAL):**
-- Hardcoded credentials, API keys, tokens
-- SQL injection vulnerabilities
-- XSS vulnerabilities  
-- Missing input validation
-- Insecure dependencies
-- Path traversal risks
-
-**Code Quality (HIGH):**
-- Functions > 50 lines
-- Files > 800 lines
-- Nesting depth > 4 levels
-- Missing error handling
-- console.log statements
-- TODO/FIXME comments
-- Missing JSDoc for public APIs
-
-**Best Practices (MEDIUM):**
-- Mutation patterns (use immutable instead)
-- Emoji usage in code/comments
-- Missing tests for new code
-- Accessibility issues (a11y)
-
-3. Generate report with:
-   - Severity: CRITICAL, HIGH, MEDIUM, LOW
-   - File location and line numbers
-   - Issue description
-   - Suggested fix
-
-4. Block commit if CRITICAL or HIGH issues found
-
-Never approve code with security vulnerabilities!
-
+---
+description: Compatibility alias that routes legacy code review requests into the AW verification stage.
+status: alias
+replacement: /aw:verify
+forwardMode: silent
+legacyBehavior: Legacy code review requests now execute the AW verification workflow.
 ---
 
-## GHL Platform Integration
+# /aw:code-review
 
-Also activate ALL `platform-review-*` agents in parallel.
-Also activate the domain-specific platform agent:
+Use the `/aw:verify` workflow for this request.
 
-- Backend/services → `platform-services-*`
-- Frontend/UI → `platform-frontend-*`
-- Data layer → `platform-data-*`
+## Alias Contract
 
-For ALL activated agents: read frontmatter → load each skill from `skills:` array.
+- Treat this command as a silent compatibility alias.
+- Load `platform-core-aw-verify`.
+- Perform verification-oriented review, not the older standalone review routine.
+- Preserve review intent by emphasizing findings, risks, and evidence.
+
+## Smoke Test Marker
+
+For aw-ecc smoke tests, include:
+
+```text
+AW_SMOKE_STAGE: review
+AW_SMOKE_COMMAND: /aw:verify
+AW_SMOKE_SKILL: platform-core-aw-verify
+```

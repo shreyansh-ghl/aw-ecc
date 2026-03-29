@@ -11,6 +11,42 @@ const ROOT_DIR = path.join(__dirname, '../..');
 const COMMANDS_DIR = path.join(ROOT_DIR, 'commands');
 const AGENTS_DIR = path.join(ROOT_DIR, 'agents');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
+const VALID_COMMAND_STATUS = new Set(['active', 'alias', 'deprecated']);
+const VALID_FORWARD_MODES = new Set(['silent', 'warn', 'stop']);
+
+function stripQuotes(value) {
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+function parseCommandFrontmatter(content) {
+  if (typeof content !== 'string' || !content.startsWith('---\n')) {
+    return { attributes: {}, hasFrontmatter: false };
+  }
+
+  const closingIndex = content.indexOf('\n---\n', 4);
+  if (closingIndex === -1) {
+    return { attributes: {}, hasFrontmatter: false };
+  }
+
+  const rawFrontmatter = content.slice(4, closingIndex);
+  const attributes = {};
+
+  for (const line of rawFrontmatter.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separatorIndex = trimmed.indexOf(':');
+    if (separatorIndex === -1) continue;
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = stripQuotes(trimmed.slice(separatorIndex + 1).trim());
+    attributes[key] = value;
+  }
+
+  return { attributes, hasFrontmatter: true };
+}
 
 function validateCommands() {
   if (!fs.existsSync(COMMANDS_DIR)) {
@@ -66,6 +102,39 @@ function validateCommands() {
       console.error(`ERROR: ${file} - Empty command file`);
       hasErrors = true;
       continue;
+    }
+
+    const { attributes } = parseCommandFrontmatter(content);
+    const status = attributes.status;
+    const replacement = attributes.replacement;
+    const forwardMode = attributes.forwardMode;
+
+    if (status && !VALID_COMMAND_STATUS.has(status)) {
+      console.error(`ERROR: ${file} - invalid status "${status}" (expected active|alias|deprecated)`);
+      hasErrors = true;
+    }
+
+    if (forwardMode && !VALID_FORWARD_MODES.has(forwardMode)) {
+      console.error(`ERROR: ${file} - invalid forwardMode "${forwardMode}" (expected silent|warn|stop)`);
+      hasErrors = true;
+    }
+
+    if ((status === 'alias' || status === 'deprecated') && !replacement) {
+      console.error(`ERROR: ${file} - ${status} commands must declare replacement`);
+      hasErrors = true;
+    }
+
+    if (replacement) {
+      const replacementName = replacement.replace(/^\/aw:/, '').replace(/^\//, '');
+      if (!validCommands.has(replacementName)) {
+        console.error(`ERROR: ${file} - replacement points to non-existent command ${replacement}`);
+        hasErrors = true;
+      }
+    }
+
+    if (status === 'alias' && !forwardMode) {
+      console.error(`ERROR: ${file} - alias commands must declare forwardMode`);
+      hasErrors = true;
     }
 
     // Strip fenced code blocks before checking cross-references.

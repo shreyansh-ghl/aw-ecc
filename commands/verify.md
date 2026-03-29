@@ -1,73 +1,34 @@
-# Verification Command
+---
+description: Run the AW verification stage with evidence-based checks, review findings, and workflow readiness reporting.
+status: active
+---
 
-Run comprehensive verification on current codebase state.
+# /aw:verify
+
+Primary AW SDLC verification entrypoint.
+
+## Stage Contract
+
+- **AW_SDLC_STAGE:** `verify`
+- **Primary skill:** `platform-core-aw-verify`
+- **Expected output:** evidence-based verification with review findings and readiness status
 
 ## Instructions
 
-Execute verification in this exact order:
+When this command is invoked:
 
-1. **Build Check**
-   - Run the build command for this project
-   - If it fails, report errors and STOP
+1. Load `platform-core-aw-verify`.
+2. Run actual verification commands where possible.
+3. Present review findings first when issues exist.
+4. Confirm spec compliance and workflow readiness.
+5. Hand off to `/aw:finish` only after verification passes.
 
-2. **Type Check**
-   - Run TypeScript/type checker
-   - Report all errors with file:line
+## Smoke Test Marker
 
-3. **Lint Check**
-   - Run linter
-   - Report warnings and errors
+For aw-ecc smoke tests, include:
 
-4. **Test Suite**
-   - Run all tests
-   - Report pass/fail count
-   - Report coverage percentage
-
-5. **Console.log Audit**
-   - Search for console.log in source files
-   - Report locations
-
-6. **Git Status**
-   - Show uncommitted changes
-   - Show files modified since last commit
-
-## Output
-
-Produce a concise verification report:
-
+```text
+AW_SMOKE_STAGE: verify
+AW_SMOKE_COMMAND: /aw:verify
+AW_SMOKE_SKILL: platform-core-aw-verify
 ```
-VERIFICATION: [PASS/FAIL]
-
-Build:    [OK/FAIL]
-Types:    [OK/X errors]
-Lint:     [OK/X issues]
-Tests:    [X/Y passed, Z% coverage]
-Secrets:  [OK/X found]
-Logs:     [OK/X console.logs]
-
-Ready for PR: [YES/NO]
-```
-
-If any critical issues, list them with fix suggestions.
-
-## Arguments
-
-$ARGUMENTS can be:
-- `quick` - Only build + types
-- `full` - All checks (default)
-- `pre-commit` - Checks relevant for commits
-- `pre-pr` - Full checks plus security scan
-
----
-
-## GHL Platform Integration
-
-Also activate the matching platform agent by task domain:
-
-- Backend/services → `platform-services-*`
-- Frontend/UI → `platform-frontend-*`
-- Data layer → `platform-data-*`
-- Infra/deploy → `platform-infra-*`
-- Testing/QA → `platform-sdet-*`
-
-For ALL activated agents: read frontmatter → load each skill from `skills:` array.

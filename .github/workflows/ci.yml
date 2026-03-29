@@ -183,6 +183,48 @@ jobs:
         run: node scripts/ci/catalog.js --text
         continue-on-error: false
 
+  real-cli-smoke:
+    name: Real CLI Smoke
+    runs-on: [self-hosted, linux, aw-cli-smoke]
+    timeout-minutes: 15
+    needs: [validate]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify CLI availability
+        shell: bash
+        run: |
+          command -v claude
+          command -v codex
+          command -v cursor
+
+      - name: Verify authenticated smoke runner environment
+        shell: bash
+        run: |
+          test -n "${AW_CLAUDE_SMOKE_READY:-}"
+          test -n "${AW_CODEX_SMOKE_READY:-}"
+          test -n "${AW_CURSOR_SMOKE_READY:-}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run real CLI smoke suite
+        run: node scripts/ci/real-cli-smoke.js
+
+      - name: Upload smoke artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-cli-smoke-artifacts
+          path: artifacts/real-cli-smoke/
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest

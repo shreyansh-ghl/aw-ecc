@@ -4,7 +4,15 @@
 
 ## What is this?
 
-`aw-ecc` is GoHighLevel's private fork of ECC. It ships all 60 commands, 28 agents, 125 skills, all rules, hooks, and MCP configs from upstream ECC — unchanged. The only additions are ~6 lines appended to 14 commands that activate GHL platform agents alongside ECC agents.
+`aw-ecc` is GoHighLevel's private fork of ECC. It ships 63 commands, 28 agents, 132 skills, all rules, hooks, and MCP configs from upstream ECC, plus the AW SDLC command surface and smoke-testing infrastructure for GoHighLevel workflows.
+
+Access to 28 agents, 132 skills, and 63 commands.
+
+| Feature | Claude Code | Cursor IDE | Codex CLI | OpenCode |
+|---------|------------|------------|-----------|----------|
+| Agents | ✅ 28 agents | Shared | Shared | 1 |
+| Commands | ✅ 63 commands | Shared | Shared | 1 |
+| Skills | ✅ 132 skills | Shared | Shared | 1 |
 
 ## How it works
 
@@ -22,13 +30,15 @@ When a developer runs `aw init`, the CLI:
 4. Cleans up the clone
 5. Symlinks platform/ content into `.cursor/`
 
-Result: `.cursor/` has 46 agents, 218 skills, 60 commands — all discoverable by the IDE.
+Result: `.cursor/` has 46 agents, 218 skills, 63 commands — all discoverable by the IDE.
 
 ## What changed from upstream ECC
 
 | Change | Files | Lines |
 |--------|-------|-------|
 | GHL Platform Integration section appended | 14 command files | ~6 lines each |
+| AW SDLC command surface + aliases | command + skill workflow files | additive |
+| Real CLI smoke testing | scripts, tests, CI | additive |
 | Rebrand | package.json, README.md | name + version |
 
 Zero hooks added. Zero lines modified in ECC originals. All changes are additive appends.

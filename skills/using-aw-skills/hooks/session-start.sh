@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Find .aw_registry root by walking up from this script's location
+# Find repo-local or registry skill root by walking up from this script's location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AW_REGISTRY_ROOT="$SCRIPT_DIR"
-while [[ "$AW_REGISTRY_ROOT" != "/" ]]; do
-  if [[ -d "$AW_REGISTRY_ROOT/.aw_registry" ]]; then
-    AW_REGISTRY_ROOT="$AW_REGISTRY_ROOT/.aw_registry"
+SEARCH_ROOT="$SCRIPT_DIR"
+AW_REGISTRY_ROOT=""
+REPO_ROOT=""
+
+while [[ "$SEARCH_ROOT" != "/" ]]; do
+  if [[ -d "$SEARCH_ROOT/.aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT/.aw_registry"
     break
   fi
-  # Check if we ARE inside .aw_registry
-  if [[ "$(basename "$AW_REGISTRY_ROOT")" == ".aw_registry" ]]; then
+  if [[ "$(basename "$SEARCH_ROOT")" == ".aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT"
     break
   fi
-  AW_REGISTRY_ROOT="$(dirname "$AW_REGISTRY_ROOT")"
+  if [[ -d "$SEARCH_ROOT/skills" && -f "$SEARCH_ROOT/package.json" ]]; then
+    REPO_ROOT="$SEARCH_ROOT"
+    break
+  fi
+  SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
 done
 
-if [[ ! -d "$AW_REGISTRY_ROOT" ]]; then
+if [[ -z "$AW_REGISTRY_ROOT" && -z "$REPO_ROOT" ]]; then
   echo '{"hookSpecificOutput": {"additionalContext": "WARNING: .aw_registry not found. AW skills unavailable."}}'
   exit 0
 fi
+
+SKILL_SEARCH_ROOT="${AW_REGISTRY_ROOT:-$REPO_ROOT}"
 
 # --- Discover all skills ---
 SKILLS_LIST=""
@@ -32,7 +41,7 @@ while IFS= read -r skill_file; do
   if [[ -n "$skill_name" ]]; then
     SKILLS_LIST="${SKILLS_LIST}- ${skill_name}: ${skill_desc}\n"
   fi
-done < <(find "$AW_REGISTRY_ROOT" -path "*/skills/*/SKILL.md" -type f 2>/dev/null | sort)
+done < <(find "$SKILL_SEARCH_ROOT" -path "*/skills/*/SKILL.md" -type f 2>/dev/null | sort)
 
 # --- Discover all commands ---
 COMMANDS_LIST=""
@@ -50,10 +59,14 @@ while IFS= read -r cmd_file; do
   if [[ -n "$cmd_basename" ]]; then
     COMMANDS_LIST="${COMMANDS_LIST}- ${cmd_basename}: ${cmd_desc}\n"
   fi
-done < <(find "$AW_REGISTRY_ROOT" -path "*/commands/*.md" -type f 2>/dev/null | sort)
+done < <(find "$SKILL_SEARCH_ROOT" -path "*/commands/*.md" -type f 2>/dev/null | sort)
 
 # --- Read using-aw-skills SKILL.md ---
-ROUTING_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
+if [[ -n "$AW_REGISTRY_ROOT" ]]; then
+  ROUTING_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
+else
+  ROUTING_SKILL_PATH="$REPO_ROOT/skills/using-aw-skills/SKILL.md"
+fi
 ROUTING_SKILL_CONTENT=""
 if [[ -f "$ROUTING_SKILL_PATH" ]]; then
   ROUTING_SKILL_CONTENT=$(cat "$ROUTING_SKILL_PATH")
