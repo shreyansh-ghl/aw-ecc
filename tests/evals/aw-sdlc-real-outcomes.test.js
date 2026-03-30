@@ -4,8 +4,8 @@ const assert = require('assert');
 const { spawnSync } = require('child_process');
 const { createRepoSnapshot } = require('./lib/repo-snapshot');
 const { createEvalWorkspace } = require('./lib/eval-workspace');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const CLI = process.env.AW_SDLC_EVAL_CLI || 'codex';
 const TIMEOUT_MS = Number(process.env.AW_SDLC_EVAL_TIMEOUT_MS || 240000);
@@ -24,6 +24,7 @@ const AW_CONTEXT_PATHS = [
   'commands/tdd.md',
   'skills/using-aw-skills/SKILL.md',
   'skills/aw-plan/SKILL.md',
+  'skills/aw-prepare/SKILL.md',
   'skills/aw-execute/SKILL.md',
   'skills/aw-verify/SKILL.md',
   'skills/aw-deploy/SKILL.md',
@@ -290,6 +291,127 @@ const REAL_CASES = [
       const verification = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md');
       assert.ok(/PASS|PASS_WITH_NOTES/i.test(verification), 'verification.md should contain an overall pass state');
       assert.ok(/checklist|PR/i.test(verification), 'verification.md should mention PR governance or checklist review');
+      assert.ok(/local validation|test|lint|type-check|build/i.test(verification), 'verification.md should capture validation evidence');
+      assert.ok(/readiness|ready for staging|release readiness/i.test(verification), 'verification.md should state the readiness result');
+    },
+  },
+  {
+    id: 'verify-failing-change-requires-repair-loop',
+    prompt: [
+      'Follow the repo-local AW commands, skills, and docs as the source of truth.',
+      'Execute the requested AW stage for real and write files to disk.',
+      'Do not modify commands/, skills/, docs/, defaults/, or tests/.',
+      'Use feature slug `contact-sync-api`.',
+      'This is a post-execution verify handoff. Do not reopen planning.',
+      'Run real local validation commands where possible.',
+      'This implementation is expected to fail verification and should produce a repair handoff.',
+      'A failing verify run is only complete if it still writes verification.md and state.json before stopping.',
+      '',
+      '/aw:verify Review this failing contact sync implementation and tell me exactly what must be fixed before staging.',
+    ].join('\n'),
+    setup(workspaceDir) {
+      writeFile(
+        workspaceDir,
+        'package.json',
+        JSON.stringify(
+          {
+            name: 'contact-sync-api',
+            version: '1.0.0',
+            private: true,
+            scripts: {
+              test: 'node --test tests/contact-sync.test.js',
+              'type-check': 'node scripts/type-check.js',
+              lint: 'node scripts/lint.js',
+              build: 'node scripts/build.js',
+            },
+          },
+          null,
+          2
+        )
+      );
+
+      writeFile(
+        workspaceDir,
+        'src/contact-sync.js',
+        [
+          "function queueContactSyncJob(locationId, batchId) {",
+          "  return { status: 'queued', locationId, batchId };",
+          '}',
+          '',
+          'module.exports = { queueContactSyncJob };',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        'tests/contact-sync.test.js',
+        [
+          "const test = require('node:test');",
+          "const assert = require('node:assert/strict');",
+          "const { queueContactSyncJob } = require('../src/contact-sync');",
+          '',
+          "test('queues a normalized contact sync job', () => {",
+          "  const result = queueContactSyncJob('loc_123', ' Batch_ABC ');",
+          "  assert.equal(result.status, 'queued');",
+          "  assert.equal(result.batchId, 'batch_abc');",
+          '});',
+        ].join('\n')
+      );
+
+      writeFile(workspaceDir, 'scripts/type-check.js', "console.log('type-check ok');\n");
+      writeFile(workspaceDir, 'scripts/lint.js', "console.log('lint ok');\n");
+      writeFile(workspaceDir, 'scripts/build.js', "console.log('build ok');\n");
+
+      writeFile(
+        workspaceDir,
+        'PR_DESCRIPTION.md',
+        [
+          '# Summary',
+          '',
+          '- Contact sync normalization still needs implementation.',
+          '',
+          '## Verification Checklist',
+          '- [x] Tests run locally',
+          '- [x] Type-check completed',
+          '- [x] Lint completed',
+          '- [x] Build completed',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/spec.md',
+        [
+          '# Contact Sync Spec',
+          '',
+          '- Normalize batch IDs before queueing.',
+          '- Use helper-based normalization.',
+          '- Do not claim staging readiness while the normalization path is broken.',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/execution.md',
+        [
+          '# Execution',
+          '',
+          '- Attempted the contact sync queue implementation.',
+          '- The normalization helper was not added yet.',
+          '- Verification is expected to capture the failing test and route the repair loop.',
+        ].join('\n')
+      );
+    },
+    assert(workspaceDir) {
+      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md'), 'verification.md was not created');
+      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/state.json'), 'state.json was not created');
+      assert.ok(!exists(workspaceDir, '.aw_docs/features/contact-sync-api/release.md'), 'release.md should not be created during failing verify');
+      const verification = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md');
+      const state = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/state.json');
+      assert.ok(/FAIL/i.test(verification), 'verification.md should contain a failing overall status');
+      assert.ok(/repair|re-review|re review|\/aw:execute|fix/i.test(verification), 'verification.md should produce an explicit repair loop handoff');
+      assert.ok(/reproduction|root cause|debug|failing test|test failure/i.test(verification), 'verification.md should capture debugging or failure evidence');
+      assert.ok(/FAIL|repair|required|aw-execute/i.test(state), 'state.json should reflect that repair is required');
     },
   },
   {
@@ -300,6 +422,7 @@ const REAL_CASES = [
       'Do not modify commands/, skills/, docs/, defaults/, or tests/.',
       'Use feature slug `contact-sync-api`.',
       'The technical spec is already approved, so implement only the required execution changes and stop after execution.',
+      'Record task-unit progress plus spec and quality review notes in execution.md.',
       '',
       '/aw:execute Implement the approved contact sync batch normalization helper and wire it into the queue path.',
     ].join('\n'),
@@ -338,9 +461,13 @@ const REAL_CASES = [
       const source = readFile(workspaceDir, 'src/contact-sync.js');
       const helper = readFile(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
       const execution = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md');
+      const state = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/state.json');
       assert.ok(/normalizeBatchId/.test(source), 'src/contact-sync.js should call normalizeBatchId');
       assert.ok(/trim\(\)/.test(helper) && /toLowerCase\(\)/.test(helper), 'normalize-batch-id.js should normalize the batch id');
       assert.ok(/batch normalization|normalize/i.test(execution), 'execution.md should describe the normalization work');
+      assert.ok(/task|unit|step/i.test(execution), 'execution.md should record task-unit progress');
+      assert.ok(/spec review|spec_review|quality review|quality_review/i.test(execution), 'execution.md should record spec and quality review notes');
+      assert.ok(/task|unit|review/i.test(state), 'state.json should reflect task-loop execution details');
     },
   },
   {
@@ -612,142 +739,6 @@ const REAL_CASES = [
       });
     },
   },
-  {
-    id: 'ship-full-pr-and-staging',
-    prompt: [
-      'Follow the repo-local AW commands, skills, and docs as the source of truth.',
-      'Execute the requested AW stages for real and write files to disk.',
-      'Do not modify commands/, skills/, docs/, defaults/, or tests/.',
-      'Use feature slug `contact-sync-api`.',
-      'This is a microservice repo with an explicit staging pipeline configured.',
-      'The end goal is a full cycle that includes planning, implementation, verification, PR creation, and staging version deployment.',
-      'Implementation target: add a `normalizeBatchId(batchId)` helper that trims whitespace and lowercases batch ids before queueing.',
-      '',
-      '/aw:ship Take this contact sync API contract through PR creation and staging version deployment in a microservice repo.',
-    ].join('\n'),
-    setup(workspaceDir) {
-      writeFile(
-        workspaceDir,
-        'contracts/contact-sync-api.md',
-        [
-          '# Contact Sync API Contract',
-          '',
-          '## Endpoint',
-          '`POST /contact-sync/jobs`',
-          '',
-          '## Behavior',
-          '- Accepts `locationId` and `batchId`.',
-          '- Normalizes `batchId` by trimming whitespace and lowercasing it before queueing.',
-          '- Deduplicates duplicate retry requests by normalized `batchId`.',
-          '- Returns `202 Accepted` when the job is queued.',
-        ].join('\n')
-      );
-
-      writeFile(
-        workspaceDir,
-        '.aw_sdlc/profile.yml',
-        [
-          'version: 1',
-          'extends: ghl-microservice-standard',
-          '',
-          'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-api',
-        ].join('\n')
-      );
-
-      writeFile(
-        workspaceDir,
-        'package.json',
-        JSON.stringify(
-          {
-            name: 'contact-sync-api',
-            version: '1.0.0',
-            private: true,
-            scripts: {
-              test: 'node --test tests/contact-sync.test.js',
-              'type-check': 'node scripts/type-check.js',
-              lint: 'node scripts/lint.js',
-              build: 'node scripts/build.js',
-            },
-          },
-          null,
-          2
-        )
-      );
-
-      writeFile(
-        workspaceDir,
-        'src/contact-sync.js',
-        [
-          "function queueContactSyncJob(locationId, batchId) {",
-          "  return { status: 'queued', locationId, batchId };",
-          '}',
-          '',
-          'module.exports = { queueContactSyncJob };',
-        ].join('\n')
-      );
-
-      writeFile(
-        workspaceDir,
-        'tests/contact-sync.test.js',
-        [
-          "const test = require('node:test');",
-          "const assert = require('node:assert/strict');",
-          "const { queueContactSyncJob } = require('../src/contact-sync');",
-          '',
-          "test('queues a normalized contact sync job', () => {",
-          "  const result = queueContactSyncJob('loc_123', ' Batch_ABC ');",
-          "  assert.equal(result.status, 'queued');",
-          "  assert.equal(result.batchId, 'batch_abc');",
-          '});',
-        ].join('\n')
-      );
-
-      writeFile(workspaceDir, 'scripts/type-check.js', "console.log('type-check ok');\n");
-      writeFile(workspaceDir, 'scripts/lint.js', "console.log('lint ok');\n");
-      writeFile(workspaceDir, 'scripts/build.js', "console.log('build ok');\n");
-
-      writeFile(
-        workspaceDir,
-        'PR_DESCRIPTION.md',
-        [
-          '# Summary',
-          '',
-          '- Implemented contact sync batch normalization.',
-          '',
-          '## Verification Checklist',
-          '- [x] Tests run locally',
-          '- [x] Type-check completed',
-          '- [x] Lint completed',
-          '- [x] Build completed',
-          '- [x] I verified the PR description reflects what I tested',
-        ].join('\n')
-      );
-    },
-    assert(workspaceDir) {
-      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/spec.md'), 'spec.md was not created');
-      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md'), 'execution.md was not created');
-      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md'), 'verification.md was not created');
-      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/release.md'), 'release.md was not created');
-      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/state.json'), 'state.json was not created');
-      const source = readFile(workspaceDir, 'src/contact-sync.js');
-      const verification = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md');
-      const release = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/release.md');
-      assert.ok(/normalizeBatchId/.test(source), 'src/contact-sync.js should call normalizeBatchId');
-      assert.ok(/trim\(\)/.test(source) && /toLowerCase\(\)/.test(source), 'the implementation should normalize the batch id');
-      assert.ok(/PASS|PASS_WITH_NOTES/i.test(verification), 'verification.md should contain an overall pass state');
-      assert.ok(/PR|pull request/i.test(release), 'release.md should mention PR creation');
-      assertReleaseEvidence(release, {
-        providerPattern: /ghl-ai/i,
-        mechanismPattern: /versioned-service-staging|service staging/i,
-        versionedLinksPattern: /versioned|developer_version|staging|health/i,
-        buildLinksPattern: /jenkins|pipeline|contact-sync-api|build/i,
-        testingAutomationPattern: /github|actions|jenkins|test|automation|not available|blocked/i,
-      });
-    },
-  },
 ];
 
 if (process.argv.includes('--list-cases')) {
@@ -796,6 +787,7 @@ function run() {
       snapshot,
       caseId: testCase.id,
       overlayPaths: AW_CONTEXT_PATHS,
+      workspaceMode: testCase.workspaceMode,
     });
 
     try {

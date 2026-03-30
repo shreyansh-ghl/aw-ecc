@@ -9,7 +9,7 @@ trigger: User requests implementation of approved work, or `/aw:ship` needs to m
 ## Purpose
 
 `aw-execute` owns implementation only.
-It reads approved planning inputs, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
+It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
 
 ## Inputs
 
@@ -38,11 +38,36 @@ Always:
 
 1. load the approved execution input
 2. choose the smallest correct execution mode
-3. implement the required change without reopening planning
-4. run relevant local validation commands when available
-5. write `.aw_docs/features/<feature_slug>/execution.md`
-6. update `.aw_docs/features/<feature_slug>/state.json`
-7. hand off to `aw-verify`
+3. break non-trivial work into explicit task units
+4. package the minimum correct context for the current task unit instead of reopening the entire plan every time
+5. implement the required change without reopening planning
+6. run a `spec_review` before marking a task unit complete
+7. run a `quality_review` before handing off
+8. run relevant local validation commands when available
+9. write `.aw_docs/features/<feature_slug>/execution.md`
+10. update `.aw_docs/features/<feature_slug>/state.json`
+11. hand off to `aw-verify`
+
+## Task-Unit Orchestration
+
+When the execution input implies more than one meaningful step, use this internal loop:
+
+1. identify the next task unit
+2. name the task goal, affected files, and required inputs
+3. build only that unit
+4. run `spec_review`
+5. run `quality_review`
+6. either mark the unit complete or stop on a named blocker
+
+Independent units may be flagged as `parallel_candidate`, but the public surface remains a single `/aw:execute` stage.
+
+## TDD Policy
+
+For code changes, prefer test-first or failure-first behavior where the repo can support it.
+
+- reuse an existing failing test if it already captures the bug
+- add or update the smallest correct automated test when the behavior is testable
+- record test limitations in `execution.md` instead of silently skipping them
 
 ## Hard Gates
 
@@ -50,6 +75,8 @@ Always:
 - stop cleanly on blockers instead of guessing
 - do not deploy from `aw-execute`
 - do not silently skip tests when the repo has runnable checks
+- do not mark multi-step work complete without recording task-unit progress
+- do not skip `aw-prepare` when repo state could make execution unsafe
 
 ## Execution Report
 
@@ -57,6 +84,8 @@ Always:
 
 - selected mode
 - approved inputs used
+- task units completed
+- spec review and quality review outcomes
 - files changed
 - key implementation notes
 - commands run
@@ -71,6 +100,8 @@ Always:
 - `stage: "execute"`
 - `mode`
 - `status`
+- completed task units
+- pending task units or blockers
 - written artifacts
 - key validation commands
 - recommended next commands
@@ -80,6 +111,7 @@ Always:
 Always end with:
 
 - `Selected Mode`
+- `Task Loop`
 - `Inputs Used`
 - `Files Changed`
 - `Validation Run`

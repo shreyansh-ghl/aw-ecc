@@ -14,6 +14,20 @@ run() {
   "$@"
 }
 
+run_optional_test_group() {
+  local pattern="$1"
+  local title_prefix="$2"
+  local matched=0
+
+  while IFS= read -r test_file; do
+    [[ -n "$test_file" ]] || continue
+    matched=1
+    run "$title_prefix $(basename "$test_file" .js)" node "$test_file"
+  done < <(find "$ROOT_DIR/tests/evals" -maxdepth 1 -type f -name "$pattern" | sort)
+
+  return 0
+}
+
 run_deterministic() {
   run "Goal gates" node "$ROOT_DIR/tests/evals/aw-sdlc-goal-gates.test.js"
   run "Command contract completeness" node "$ROOT_DIR/tests/evals/aw-sdlc-command-contract-completeness.test.js"
@@ -22,7 +36,13 @@ run_deterministic() {
   run "Ship command" node "$ROOT_DIR/tests/evals/aw-sdlc-ship-command.test.js"
   run "Customer coverage" node "$ROOT_DIR/tests/evals/aw-sdlc-customer-coverage.test.js"
   run "Default session coverage" node "$ROOT_DIR/tests/evals/aw-sdlc-default-session-coverage.test.js"
+  run "Session hook precedence" node "$ROOT_DIR/tests/evals/aw-sdlc-session-hook-precedence.test.js"
   run "GHL staging baselines" node "$ROOT_DIR/tests/evals/aw-sdlc-ghl-staging-baselines.test.js"
+  run "Eval workspace isolation" node "$ROOT_DIR/tests/evals/aw-sdlc-eval-workspace-isolation.test.js"
+  run_optional_test_group "aw-sdlc-prepare-*.test.js" "Preparation"
+  run_optional_test_group "aw-sdlc-execute-*.test.js" "Execution"
+  run_optional_test_group "aw-sdlc-verify-*.test.js" "Verification"
+  run_optional_test_group "aw-sdlc-install*.test.js" "Installability"
   run "Real coverage" node "$ROOT_DIR/tests/evals/aw-sdlc-real-coverage.test.js"
 }
 

@@ -1,7 +1,6 @@
 const assert = require('assert');
 const { readFileSync } = require('fs');
-
-const DOC_PATH = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/docs/aw-sdlc-command-contracts.md';
+const { COMMAND_CONTRACTS_PATH } = require('./lib/aw-sdlc-paths');
 
 const REQUIRED_SECTIONS = [
   '### Role',
@@ -45,7 +44,7 @@ function extractSection(documentText, commandName) {
 function run() {
   console.log('\n=== AW SDLC Command Contract Completeness ===\n');
 
-  const content = readFileSync(DOC_PATH, 'utf8');
+  const content = readFileSync(COMMAND_CONTRACTS_PATH, 'utf8');
   let passed = 0;
   let failed = 0;
 

@@ -7,14 +7,15 @@
 #   ./test-skill-triggers.sh codex             # Test Codex only
 #   ./test-skill-triggers.sh --quick           # Run only 2 fast tests
 #
-# Each test sends a prompt via `<cli> -p "<prompt>"` and checks if the
-# expected skill name appears in the output.
+# Each test sends a prompt via `<cli> -p "<prompt>"` and heuristically checks
+# whether the expected AW route or routing language appears in the output.
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results"
-WORKSPACE_DIR="${WORKSPACE_DIR:-/Users/prathameshai/Documents/Agentic Workspace}"
+DEFAULT_WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$DEFAULT_WORKSPACE_DIR}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 MAX_TURNS=3
 QUICK_MODE=false
@@ -51,17 +52,17 @@ run_with_timeout() {
 # Format: "prompt|expected_pattern|description"
 # expected_pattern is grep -i pattern. Use semicolons for OR (converted to pipe for grep -iE)
 FULL_TEST_CASES=(
-  "I want to add a contact sync worker to the backend. What skill should you invoke first?|brainstorm|Feature request triggers brainstorm"
+  "I want to add a contact sync worker to the backend. What route should you take first?|/aw:plan;plan|Feature request triggers plan"
   "A test is failing in users.service.ts. According to the SDLC pipeline, what approach should be used before proposing fixes?|debug;root cause;TDD;systematic;investigate|Bug fix triggers debug/TDD"
-  "list the SDLC skills in the pipeline. Just the skill names.|brainstorm|SDLC skills visible"
-  "Implementation is done and all tasks pass. What is the next step in the SDLC pipeline?|verify|Completion triggers verify"
-  "I need to create a new NestJS API endpoint for contacts. What is the first SDLC skill?|brainstorm|API creation triggers brainstorm"
-  "review the code changes in this PR|review|Code review request"
+  "list the aw SDLC public routes in the pipeline. One per line.|/aw:plan;/aw:execute;/aw:verify;/aw:deploy;/aw:ship|SDLC routes visible"
+  "Implementation is done and all tasks pass. What is the next step in the SDLC pipeline?|/aw:verify;verify|Completion triggers verify"
+  "I need to create a new NestJS API endpoint for contacts. What is the first AW route?|/aw:plan;plan|API creation triggers plan"
+  "review the code changes in this PR|/aw:verify;verify|Code review request"
 )
 
 QUICK_TEST_CASES=(
-  "list the aw-* SDLC skills you have access to. One per line.|brainstorm|SDLC skills visible"
-  "I want to add a contact sync worker. What skill should you invoke first?|brainstorm|Feature triggers brainstorm"
+  "list the aw SDLC public routes you have access to. One per line.|/aw:plan;/aw:execute;/aw:verify;/aw:deploy;/aw:ship|SDLC routes visible"
+  "I want to add a contact sync worker. What route should you invoke first?|/aw:plan;plan|Feature triggers plan"
 )
 
 # --- CLI-specific prompt command ---

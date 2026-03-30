@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REAL_OUTCOMES = path.join(REPO_ROOT, 'tests/evals/aw-sdlc-real-outcomes.test.js');
 const CHECKLIST_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-real-eval-checklist.md');
 const CONFIDENCE_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-confidence-plan.md');

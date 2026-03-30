@@ -1,8 +1,8 @@
 const assert = require('assert');
 const path = require('path');
 const { createRepoSnapshot } = require('./lib/repo-snapshot');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 

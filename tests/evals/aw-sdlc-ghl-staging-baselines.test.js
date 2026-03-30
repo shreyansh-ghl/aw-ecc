@@ -1,10 +1,12 @@
 const assert = require('assert');
 const { readFileSync } = require('fs');
-
-const PLATFORM_DOCS_BASELINES = '/Users/prathameshai/Documents/Agentic Workspace/platform-docs/.aw_registry/platform/core/defaults/aw-sdlc/profiles.yml';
-const ECC_SYNCED_BASELINES = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/defaults/aw-sdlc/profiles.yml';
-const CONFIG_DOC = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/docs/aw-sdlc-verify-deploy-configuration.md';
-const RESEARCH_DOC = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/docs/aw-sdlc-ghl-staging-research.md';
+const {
+  PLATFORM_DOCS_BASELINES_PATH,
+  ECC_BASELINES_PATH,
+  CONFIG_DOC_PATH,
+  RESEARCH_DOC_PATH,
+  pathExists,
+} = require('./lib/aw-sdlc-paths');
 
 function test(name, fn) {
   try {
@@ -21,15 +23,20 @@ function test(name, fn) {
 function run() {
   console.log('\n=== AW SDLC GHL Staging Baselines ===\n');
 
-  const platformBaselines = readFileSync(PLATFORM_DOCS_BASELINES, 'utf8');
-  const eccBaselines = readFileSync(ECC_SYNCED_BASELINES, 'utf8');
-  const configDoc = readFileSync(CONFIG_DOC, 'utf8');
-  const researchDoc = readFileSync(RESEARCH_DOC, 'utf8');
+  const hasPlatformDocsBaselines = pathExists(PLATFORM_DOCS_BASELINES_PATH);
+  const platformBaselines = hasPlatformDocsBaselines ? readFileSync(PLATFORM_DOCS_BASELINES_PATH, 'utf8') : '';
+  const eccBaselines = readFileSync(ECC_BASELINES_PATH, 'utf8');
+  const baselineCatalog = hasPlatformDocsBaselines ? platformBaselines : eccBaselines;
+  const configDoc = readFileSync(CONFIG_DOC_PATH, 'utf8');
+  const researchDoc = readFileSync(RESEARCH_DOC_PATH, 'utf8');
 
   let passed = 0;
   let failed = 0;
 
-  if (test('ECC synced baseline matches the canonical platform-docs baseline', () => {
+  if (test('ECC synced baseline matches the canonical platform-docs baseline when available', () => {
+    if (!hasPlatformDocsBaselines) {
+      return;
+    }
     assert.strictEqual(eccBaselines, platformBaselines, 'aw-ecc baseline snapshot is out of sync with platform-docs');
   })) passed++; else failed++;
 
@@ -39,13 +46,13 @@ function run() {
       'ghl-microservice-standard',
       'ghl-worker-standard',
     ]) {
-      assert.ok(platformBaselines.includes(`${baseline}:`), `Missing baseline ${baseline}`);
+      assert.ok(baselineCatalog.includes(`${baseline}:`), `Missing baseline ${baseline}`);
     }
   })) passed++; else failed++;
 
   if (test('local validation requires unit testing in the baselines', () => {
-    assert.ok(platformBaselines.includes('- unit'), 'Expected unit testing to be listed in local validation');
-    assert.ok(platformBaselines.includes('required_minimums:'), 'Expected explicit local validation minimums');
+    assert.ok(baselineCatalog.includes('- unit'), 'Expected unit testing to be listed in local validation');
+    assert.ok(baselineCatalog.includes('required_minimums:'), 'Expected explicit local validation minimums');
   })) passed++; else failed++;
 
   if (test('PR governance enforces PR description checklist verification', () => {
@@ -57,23 +64,23 @@ function run() {
       'required_approvals_present',
       'quality_gates_green',
     ]) {
-      assert.ok(platformBaselines.includes(check), `Missing PR governance check ${check}`);
+      assert.ok(baselineCatalog.includes(check), `Missing PR governance check ${check}`);
     }
   })) passed++; else failed++;
 
   if (test('staging deployment uses GHL AI transport with concrete MFA, service, and worker mechanisms', () => {
-    assert.ok(platformBaselines.includes('provider: ghl-ai'), 'Missing GHL AI staging transport');
+    assert.ok(baselineCatalog.includes('provider: ghl-ai'), 'Missing GHL AI staging transport');
     for (const mechanism of [
       'mechanism: versioned-mfa-staging',
       'mechanism: versioned-service-staging',
       'mechanism: versioned-worker-staging',
     ]) {
-      assert.ok(platformBaselines.includes(mechanism), `Missing staging mechanism ${mechanism}`);
+      assert.ok(baselineCatalog.includes(mechanism), `Missing staging mechanism ${mechanism}`);
     }
   })) passed++; else failed++;
 
   if (test('current baseline intentionally disables production deploys by default', () => {
-    const productionDisabledMatches = platformBaselines.match(/production:\n\s+enabled: false/g) || [];
+    const productionDisabledMatches = baselineCatalog.match(/production:\n\s+enabled: false/g) || [];
     assert.ok(productionDisabledMatches.length >= 4, 'Expected production to be disabled across the baseline set');
   })) passed++; else failed++;
 

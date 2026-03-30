@@ -16,6 +16,7 @@ This is the public verification command. It intentionally includes review, testi
 ## Role
 
 Produce objective evidence that the work is correct, compliant, and ready for release.
+`FAIL` is a valid verify outcome, but the stage is incomplete until `verification.md` and `state.json` are written.
 
 ## Modes
 
@@ -62,12 +63,43 @@ Produce objective evidence that the work is correct, compliant, and ready for re
 - unit testing belongs in `local_validation`
 - PR governance cannot pass if the PR checklist says verification is incomplete
 - deploy must not happen before verify succeeds
+- blocking findings require an explicit repair loop recommendation
+- repaired work must be re-reviewed before release readiness can pass
+- failing validation is not a reason to skip `verification.md` or `state.json`; the failed verify artifact is the evidence
 
 ## Must Not Do
 
 - must not claim success from intuition alone
 - must not hide blocking findings inside summary prose
 - must not implement code while verifying
+- must not treat debugging as optional when a bug fix remains inconclusive
+
+## Repair Loop
+
+When findings block release:
+
+1. list the blocking findings with evidence
+2. name the required repair scope
+3. recommend `/aw:execute` as the next stage
+4. require re-review after the repair
+5. persist the failing verification artifact before returning
+
+Verification should preserve the distinction between:
+
+- `PASS`
+- `PASS_WITH_NOTES`
+- `FAIL`
+
+## TDD and Debugging Checks
+
+For bug fixes and behavioral changes, verify should check whether execution used the smallest correct test-first or failure-first discipline.
+
+When the result is still uncertain, include a debugging trace covering:
+
+- reproduction
+- root-cause hypothesis
+- confirming evidence
+- next probe
 
 ## Recommended Next Commands
 
@@ -77,6 +109,7 @@ Produce objective evidence that the work is correct, compliant, and ready for re
 ## Internal Routing
 
 Verification should use `aw-verify` and load repo/baseline-specific playbooks as configured.
+It may emit a repair loop back to `aw-execute`, but `/aw:verify` remains the public stage boundary.
 
 ## Final Output Shape
 
@@ -85,6 +118,7 @@ Always end with:
 - `Layer Results`
 - `Evidence`
 - `Findings`
+- `Repair Loop`
 - `PR Readiness`
 - `Release Readiness`
 - `Overall Status`

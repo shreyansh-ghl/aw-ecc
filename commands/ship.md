@@ -17,17 +17,20 @@ It should orchestrate the existing stage commands instead of replacing them.
 ## Role
 
 Move work from its current state to the requested release outcome by composing `/aw:plan`, `/aw:execute`, `/aw:verify`, and `/aw:deploy` in the smallest correct sequence.
+After selecting that sequence, keep moving through it in the same `/aw:ship` run until the requested end state is achieved or a blocking condition makes the next stage unsafe.
 
 If the requested release outcome is compound, such as PR creation followed by staging deployment, `/aw:ship` should keep the same stage order and ask `/aw:deploy` to run the explicit release sequence.
+
+Internally, `/aw:ship` may invoke a hidden preparation layer before risky work starts, but the public command surface must stay unchanged.
 
 ## Modes
 
 | Mode | Use when | Stages |
 |---|---|---|
-| `build-ready` | the user wants planning completed only to handoff-ready state | `plan` |
-| `implement` | planning exists and the user wants code built and validated | `execute -> verify` |
-| `release` | work is already verified and should become a PR, branch, or staging outcome | `deploy` |
-| `full` | the user wants end-to-end movement from idea or approved input to release outcome | `plan -> execute -> verify -> deploy` |
+| `build-ready` | the user wants planning completed only to handoff-ready state | `prepare -> plan` |
+| `implement` | planning exists and the user wants code built and validated | `prepare -> execute -> verify` |
+| `release` | work is already verified and should become a PR, branch, or staging outcome | `prepare -> deploy` |
+| `full` | the user wants end-to-end movement from idea or approved input to release outcome | `prepare -> plan -> execute -> verify -> deploy` |
 
 ## Required Inputs
 
@@ -57,6 +60,7 @@ If the requested release outcome is compound, such as PR creation followed by st
 |---|---|
 | `intake` | classify current state, desired end state, and missing prerequisites |
 | `stage-selection` | choose the smallest correct sequence of public AW stages |
+| `prepare` | validate branch/worktree isolation and setup prerequisites through the internal `aw-prepare` layer |
 | `plan` | create missing planning artifacts when required |
 | `execute` | implement approved work |
 | `verify` | collect evidence, review, governance, and readiness |
@@ -66,9 +70,12 @@ If the requested release outcome is compound, such as PR creation followed by st
 ## Hard Gates
 
 - do not run unnecessary stages
+- do not skip the hidden setup gate before risky implementation or release work
 - do not skip verify before deploy
 - do not deploy to staging or production without the required checks
 - stop cleanly on blockers and report the blocking stage
+- if `.git` metadata is missing only because the repo is running as a source snapshot or eval workspace, continue in degraded mode and record blocked or simulated release evidence instead of stopping before artifact generation
+- do not stop after `plan`, `execute`, or `verify` when `/aw:ship` still owns later stages in the selected flow and there is no blocker
 
 ## Must Not Do
 
@@ -91,12 +98,15 @@ For stage-specific work, prefer the stage commands directly.
 
 `/aw:ship` should orchestrate:
 
+- `aw-prepare`
 - `aw-plan`
 - `aw-execute`
 - `aw-verify`
 - `aw-deploy`
 
+`aw-prepare` is internal only and must not become a public command.
 It may use `aw-brainstorm` or `aw-finish` only as compatibility helpers, not as the canonical path.
+When `aw-prepare` detects a snapshot workspace without live git metadata, `/aw:ship` should keep planning, execution, verification, and evidence-writing stages moving unless the next action requires a real external side effect.
 
 ## Final Output Shape
 

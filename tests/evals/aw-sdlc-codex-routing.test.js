@@ -4,8 +4,8 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { createRepoSnapshot } = require('./lib/repo-snapshot');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const CLI = process.env.AW_SDLC_EVAL_CLI || 'codex';
 const TIMEOUT_MS = Number(process.env.AW_SDLC_EVAL_TIMEOUT_MS || 120000);
@@ -146,8 +146,8 @@ function buildPrompt(userPrompt) {
     'Before deciding, inspect commands/ and skills/using-aw-skills/SKILL.md as needed.',
     'Return exactly these three lines and nothing else.',
     'Replace the placeholder choices with one actual selected value. Do not repeat the option list.',
-    'AW_EVAL_MODE: plan',
-    'AW_EVAL_COMMAND: /aw:plan',
+    'AW_EVAL_MODE: <plan|execute|verify|deploy|ship|unknown>',
+    'AW_EVAL_COMMAND: </aw:plan|/aw:execute|/aw:verify|/aw:deploy|/aw:ship|unknown>',
     'AW_EVAL_REASON: short reason here',
     '',
     `User request: ${userPrompt}`,

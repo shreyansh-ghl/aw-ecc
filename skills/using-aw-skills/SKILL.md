@@ -111,12 +111,16 @@ Examples:
 
 - "Create a PR for this verified work."
 - "Deploy this verified worker to staging."
+- "Deploy this verified Communities feed MFA to staging."
+- "Deploy this verified microservice change to staging."
 
 If the user asks for more than one release outcome in sequence, such as PR creation followed by staging deployment, prefer `/aw:ship` instead of `/aw:deploy`.
 
 ### Route to `/aw:ship`
 
 Use only when the user clearly wants an end-to-end flow in one go, or when the user asks for multiple release outcomes in sequence.
+
+Treat `ship` as a first-class public route name, not as an unnamed composite label.
 
 Examples:
 
