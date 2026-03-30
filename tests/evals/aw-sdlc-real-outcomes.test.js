@@ -9,6 +9,7 @@ const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const CLI = process.env.AW_SDLC_EVAL_CLI || 'codex';
 const TIMEOUT_MS = Number(process.env.AW_SDLC_EVAL_TIMEOUT_MS || 240000);
+const REASONING_EFFORT = process.env.AW_SDLC_EVAL_REASONING_EFFORT || 'medium';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
 const AW_CONTEXT_PATHS = [
@@ -31,9 +32,26 @@ const AW_CONTEXT_PATHS = [
   'skills/aw-ship/SKILL.md',
   'skills/aw-brainstorm/SKILL.md',
   'skills/aw-finish/SKILL.md',
+  'skills/aw-review-loop/SKILL.md',
+  'skills/aw-systematic-debugging/SKILL.md',
   'docs/aw-sdlc-command-contracts.md',
   'docs/aw-sdlc-command-skill-architecture.md',
   'docs/aw-sdlc-verify-deploy-configuration.md',
+  'defaults/aw-sdlc/profiles.yml',
+];
+
+const AW_SHIP_FAST_PATHS = [
+  'AGENTS.md',
+  'commands/execute.md',
+  'commands/verify.md',
+  'commands/deploy.md',
+  'commands/ship.md',
+  'skills/using-aw-skills/SKILL.md',
+  'skills/aw-prepare/SKILL.md',
+  'skills/aw-execute/SKILL.md',
+  'skills/aw-verify/SKILL.md',
+  'skills/aw-deploy/SKILL.md',
+  'skills/aw-ship/SKILL.md',
   'defaults/aw-sdlc/profiles.yml',
 ];
 
@@ -100,7 +118,7 @@ function assertReleaseEvidence(release, options = {}) {
 }
 
 function runPrompt(workspaceDir, prompt) {
-  const result = spawnSync(CLI, ['exec', '--skip-git-repo-check', prompt], {
+  const result = spawnSync(CLI, ['exec', '-c', `model_reasoning_effort="${REASONING_EFFORT}"`, '--skip-git-repo-check', prompt], {
     cwd: workspaceDir,
     encoding: 'utf8',
     timeout: TIMEOUT_MS,
@@ -111,6 +129,15 @@ function runPrompt(workspaceDir, prompt) {
     signal: result.signal,
     output: `${result.stdout || ''}\n${result.stderr || ''}`.trim(),
   };
+}
+
+function summarizeCliOutput(output) {
+  if (!output) {
+    return 'CLI produced no output.';
+  }
+
+  const lines = output.trim().split('\n');
+  return lines.slice(-40).join('\n');
 }
 
 const REAL_CASES = [
@@ -676,6 +703,165 @@ const REAL_CASES = [
     },
   },
   {
+    id: 'ship-unverified-to-staging',
+    prompt: [
+      'Follow the repo-local AW commands and skills as the source of truth.',
+      'Execute the requested AW stage for real and write files to disk.',
+      'Do not modify commands/, skills/, docs/, defaults/, or tests/.',
+      'Use feature slug `contact-sync-api`.',
+      'The technical spec and task plan are already approved, so do not reopen planning.',
+      'This request starts from approved but unverified scope.',
+      'Stay inside one /aw:ship run and use the minimum correct fast path to reach staging.',
+      'If verify finds one bounded execution gap, repair it in the same /aw:ship run and continue.',
+      'The run is only complete when execution.md, verification.md, release.md, and state.json are written under .aw_docs/features/contact-sync-api/.',
+      'Write the stage artifacts in order: execution.md, then verification.md, then release.md.',
+      'A code diff, shell transcript, or narrative summary is not a valid substitute for those artifact files.',
+      'If the staging action cannot perform a real external side effect in this workspace, still write release.md with blocked or simulated evidence before stopping.',
+      'After those files are written, stop immediately and return the final ship summary.',
+      '',
+      '/aw:ship Take this approved contact sync implementation plan through execution, verification, and staging in a microservice repo.',
+    ].join('\n'),
+    overlayPaths: AW_SHIP_FAST_PATHS,
+    setup(workspaceDir) {
+      writeFile(
+        workspaceDir,
+        '.aw_sdlc/profile.yml',
+        [
+          'version: 1',
+          'extends: ghl-microservice-standard',
+          '',
+          'deploy:',
+          '  modes:',
+          '    staging:',
+          '      pipeline: staging/job/team/job/contact-sync-api',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        'package.json',
+        JSON.stringify(
+          {
+            name: 'contact-sync-api',
+            version: '1.0.0',
+            private: true,
+            scripts: {
+              test: 'node --test tests/contact-sync.test.js',
+              'type-check': 'node scripts/type-check.js',
+              lint: 'node scripts/lint.js',
+              build: 'node scripts/build.js',
+            },
+          },
+          null,
+          2
+        )
+      );
+
+      writeFile(
+        workspaceDir,
+        'src/contact-sync.js',
+        [
+          "function queueContactSyncJob(locationId, batchId) {",
+          "  return { status: 'queued', locationId, batchId };",
+          '}',
+          '',
+          'module.exports = { queueContactSyncJob };',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        'tests/contact-sync.test.js',
+        [
+          "const test = require('node:test');",
+          "const assert = require('node:assert/strict');",
+          "const { queueContactSyncJob } = require('../src/contact-sync');",
+          '',
+          "test('queues a normalized contact sync job', () => {",
+          "  const result = queueContactSyncJob('loc_123', ' Batch_ABC ');",
+          "  assert.equal(result.status, 'queued');",
+          "  assert.equal(result.batchId, 'batch_abc');",
+          '});',
+        ].join('\n')
+      );
+
+      writeFile(workspaceDir, 'scripts/type-check.js', "console.log('type-check ok');\n");
+      writeFile(workspaceDir, 'scripts/lint.js', "console.log('lint ok');\n");
+      writeFile(workspaceDir, 'scripts/build.js', "console.log('build ok');\n");
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/spec.md',
+        [
+          '# Contact Sync Spec',
+          '',
+          '## Approved Execution Change',
+          '- Add `src/contact-sync/normalize-batch-id.js`.',
+          '- Export `normalizeBatchId(batchId)` that trims whitespace and lowercases the batch id.',
+          '- Update `src/contact-sync.js` to use the helper before returning the queued payload.',
+          '- After implementation, verify the work and prepare staging release evidence.',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/tasks.md',
+        [
+          '# Contact Sync Tasks',
+          '',
+          '## Task 1',
+          '- Goal: add `src/contact-sync/normalize-batch-id.js` and wire it into `src/contact-sync.js`.',
+          '- Validation: run `npm run test` after the helper is connected.',
+          '- Worker ownership: implementer -> `src/contact-sync.js`, `src/contact-sync/normalize-batch-id.js`.',
+          '',
+          '## Task 2',
+          '- Goal: run `npm run type-check`, `npm run lint`, and `npm run build`, then capture verification and staging evidence.',
+          '- Validation: record the command results in the stage artifacts.',
+          '- Parallel Candidate: no.',
+        ].join('\n')
+      );
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/state.json',
+        JSON.stringify(
+          {
+            feature_slug: 'contact-sync-api',
+            stage: 'plan',
+            status: 'approved',
+            written_artifacts: ['spec.md', 'tasks.md', 'state.json'],
+            recommended_next_commands: ['/aw:execute', '/aw:ship'],
+          },
+          null,
+          2
+        )
+      );
+    },
+    assert(workspaceDir) {
+      assert.ok(exists(workspaceDir, 'src/contact-sync/normalize-batch-id.js'), 'helper should be created during ship');
+      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md'), 'execution.md should be created during ship');
+      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md'), 'verification.md should be created during ship');
+      assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/release.md'), 'release.md should be created during ship');
+      const source = readFile(workspaceDir, 'src/contact-sync.js');
+      const helper = readFile(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
+      const execution = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md');
+      const verification = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/verification.md');
+      const release = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/release.md');
+      assert.ok(/normalizeBatchId/.test(source), 'src/contact-sync.js should call normalizeBatchId during ship');
+      assert.ok(/trim\(\)/.test(helper) && /toLowerCase\(\)/.test(helper), 'helper should normalize batch id during ship');
+      assert.ok(/RED|GREEN|REFACTOR|failure-first|task|worker/i.test(execution), 'execution.md should capture runtime execution discipline during ship');
+      assert.ok(/PASS|PASS_WITH_NOTES/i.test(verification), 'verification.md should pass before release during ship');
+      assert.ok(/staging/i.test(release), 'release.md should capture staging outcome');
+      assertReleaseEvidence(release, {
+        providerPattern: /ghl-ai/i,
+        mechanismPattern: /versioned-service-staging|service staging/i,
+        versionedLinksPattern: /versioned|developer_version|staging|health/i,
+        buildLinksPattern: /jenkins|pipeline|contact-sync-api|build/i,
+        testingAutomationPattern: /github|actions|jenkins|test|automation|not available|blocked/i,
+      });
+    },
+  },
+  {
     id: 'ship-verified-to-staging',
     prompt: [
       'Follow the repo-local AW commands, skills, and docs as the source of truth.',
@@ -786,7 +972,7 @@ function run() {
       repoRoot: REPO_ROOT,
       snapshot,
       caseId: testCase.id,
-      overlayPaths: AW_CONTEXT_PATHS,
+      overlayPaths: testCase.overlayPaths || AW_CONTEXT_PATHS,
       workspaceMode: testCase.workspaceMode,
     });
 
@@ -796,9 +982,13 @@ function run() {
 
       if (test(testCase.id, () => {
         if (result.status !== 0) {
-          throw new Error(`CLI exited with status ${result.status}\n${result.output}`);
+          throw new Error(`CLI exited with status ${result.status}\n${summarizeCliOutput(result.output)}`);
         }
-        testCase.assert(workspace.workspaceDir);
+        try {
+          testCase.assert(workspace.workspaceDir);
+        } catch (error) {
+          throw new Error(`${error.message}\nCLI tail:\n${summarizeCliOutput(result.output)}`);
+        }
       })) {
         passed++;
       } else {

@@ -62,15 +62,16 @@ Current target matrix:
 3. `execute-approved-spec`
 4. `execute-docs-only`
 5. `verify-pr-governance`
-6. `deploy-microservice-staging`
-7. `deploy-microfrontend-staging`
-8. `deploy-worker-staging`
-9. `ship-verified-to-staging`
-10. `ship-full-pr-and-staging`
+6. `verify-failing-change-requires-repair-loop`
+7. `deploy-microservice-staging`
+8. `deploy-microfrontend-staging`
+9. `deploy-worker-staging`
+10. `ship-unverified-to-staging`
+11. `ship-verified-to-staging`
 
 Exit bar:
 
-- all 10 real cases pass
+- all 11 real cases pass
 - suite must pass in isolated temp workspaces
 - suite should also pass in isolated git-worktree mode
 

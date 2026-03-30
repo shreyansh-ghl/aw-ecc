@@ -34,6 +34,13 @@ This branch should ship two concrete install references:
 - `.codex/INSTALL.md` for the Codex repo-local reference install
 - `docs/aw-sdlc-supported-harnesses.md` for the cross-harness capability map
 
+The supported harness install set should also include:
+
+- `AGENTS.md`
+- `.claude/INSTALL.md`
+- `.cursor/INSTALL.md`
+- `.opencode/INSTALL.md`
+
 These docs must describe the same public surface:
 
 - `/aw:plan`

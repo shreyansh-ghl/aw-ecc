@@ -10,6 +10,7 @@ trigger: User requests implementation of approved work, or `/aw:ship` needs to m
 
 `aw-execute` owns implementation only.
 It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, uses `aw-systematic-debugging` when bug work is still uncertain, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
+For non-trivial work, it should behave like a bounded internal worker system rather than one long undifferentiated implementation step.
 
 ## Inputs
 
@@ -41,13 +42,14 @@ Always:
 3. break non-trivial work into explicit task units
 4. package the minimum correct context for the current task unit instead of reopening the entire plan every time
 5. when the work is a bug fix or failing-behavior repair, capture reproduction and root-cause evidence before patching
-6. implement the required change without reopening planning
-7. run a `spec_review` before marking a task unit complete
-8. run a `quality_review` before handing off
-9. run relevant local validation commands when available
-10. write `.aw_docs/features/<feature_slug>/execution.md`
-11. update `.aw_docs/features/<feature_slug>/state.json`
-12. hand off to `aw-verify`
+6. assign clear internal ownership for the current task unit
+7. implement the required change without reopening planning
+8. run a `spec_review` before marking a task unit complete
+9. run a `quality_review` before handing off
+10. run relevant local validation commands when available
+11. write `.aw_docs/features/<feature_slug>/execution.md`
+12. update `.aw_docs/features/<feature_slug>/state.json`
+13. hand off to `aw-verify`
 
 ## Task-Unit Orchestration
 
@@ -62,14 +64,39 @@ When the execution input implies more than one meaningful step, use this interna
 
 Independent units may be flagged as `parallel_candidate`, but the public surface remains a single `/aw:execute` stage.
 
+## Internal Worker Roles
+
+For non-trivial work, treat execution as four bounded internal roles:
+
+- `implementer` owns the current code or config change
+- `spec_reviewer` checks the task unit against the approved spec
+- `quality_reviewer` checks maintainability, reliability, and stage readiness
+- `parallel_worker` is optional and only valid when the write scope is safely disjoint
+
+These roles stay inside `/aw:execute`.
+They must not become new public commands.
+
+## Runtime Discipline
+
+When task units are independent enough to run in parallel:
+
+- assign disjoint file ownership first
+- do not let parallel workers edit the same file set
+- keep the context pack limited to the current task unit
+- merge back into a single execution record with explicit ownership notes
+
+When work is not clearly independent, stay sequential.
+
 ## TDD Policy
 
 For code changes, prefer explicit RED-GREEN-REFACTOR or failure-first behavior where the repo can support it.
 
 - reuse an existing failing test if it already captures the bug
 - add or update the smallest correct automated test when the behavior is testable
+- capture a concrete failing signal before broad behavior changes whenever the repo can support it
 - record the `RED` signal, the minimal `GREEN` change, and any `REFACTOR` follow-up in `execution.md`
 - record test limitations in `execution.md` instead of silently skipping them
+- when a new failing automated test is not practical, record the reproduction signal and why that was the smallest correct substitute
 
 For bug-oriented work, use `aw-systematic-debugging` to drive:
 
@@ -88,6 +115,8 @@ For bug-oriented work, use `aw-systematic-debugging` to drive:
 - do not skip `aw-prepare` when repo state could make execution unsafe
 - do not claim a bug is fixed without either a failing-test signal or an equivalent reproduction signal
 - do not skip the debugging trail when the root cause was initially uncertain
+- do not run overlapping parallel workers on the same write scope
+- do not leave worker ownership implicit for non-trivial task units
 
 ## Execution Report
 
@@ -96,6 +125,7 @@ For bug-oriented work, use `aw-systematic-debugging` to drive:
 - selected mode
 - approved inputs used
 - task units completed
+- worker ownership for each non-trivial task unit
 - spec review and quality review outcomes
 - RED-GREEN-REFACTOR or failure-first evidence when code behavior changed
 - debugging trace when bug work required root-cause isolation
@@ -125,6 +155,7 @@ Always end with:
 
 - `Selected Mode`
 - `Task Loop`
+- `Worker Roles`
 - `Inputs Used`
 - `Files Changed`
 - `Validation Run`

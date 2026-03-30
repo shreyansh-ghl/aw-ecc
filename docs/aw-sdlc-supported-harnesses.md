@@ -40,6 +40,16 @@ Internal helpers such as `aw-brainstorm`, `aw-prepare`, `aw-review-loop`, `aw-sy
 | `Cursor` | supported | project-level prompts or rules map intent to the AW public stage surface | explicit stage prompts stay thinner than the underlying workflow implementation |
 | `OpenCode` | supported | repo-local stage docs and skills loaded as the control-plane layer | the harness executes tools, while AW SDLC keeps stage and artifact ownership |
 
+## Harness Install References
+
+This repo should keep a concrete install reference for each supported harness:
+
+- `AGENTS.md`
+- `.codex/INSTALL.md`
+- `.claude/INSTALL.md`
+- `.cursor/INSTALL.md`
+- `.opencode/INSTALL.md`
+
 ## Portable Install Checklist
 
 For any harness, an install is acceptable only if all of the following are true:
@@ -56,6 +66,7 @@ For any harness, an install is acceptable only if all of the following are true:
 Codex is the reference harness for this repo.
 The install should make these repo-local paths available as the control-plane source of truth:
 
+- `AGENTS.md`
 - `commands/`
 - `skills/`
 - `defaults/aw-sdlc/`

@@ -35,7 +35,8 @@ The current target set is:
 7. `deploy-microservice-staging`
 8. `deploy-microfrontend-staging`
 9. `deploy-worker-staging`
-10. `ship-verified-to-staging`
+10. `ship-unverified-to-staging`
+11. `ship-verified-to-staging`
 
 ## Checklist by Stage
 
@@ -139,8 +140,9 @@ Versioned staging deployment evidence means:
 - expected stage artifacts created
 - unnecessary stage artifacts are not recreated
 - verification evidence exists before deploy
+- one-shot execution from approved but unverified scope can still complete execute -> verify -> deploy when the flow is bounded
 - setup or prerequisite findings are recorded before risky implementation or release work when the flow requires them
-- release outcome captures the requested PR and/or staging result
+- release outcome captures the requested staging result
 - the end-to-end artifact set is coherent enough to hand to another engineer without extra explanation
 
 ## Live External Checklist

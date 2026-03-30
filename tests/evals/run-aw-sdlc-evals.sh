@@ -40,6 +40,7 @@ run_deterministic() {
   run "Session hook precedence" node "$ROOT_DIR/tests/evals/aw-sdlc-session-hook-precedence.test.js"
   run "GHL staging baselines" node "$ROOT_DIR/tests/evals/aw-sdlc-ghl-staging-baselines.test.js"
   run "Eval workspace isolation" node "$ROOT_DIR/tests/evals/aw-sdlc-eval-workspace-isolation.test.js"
+  run_optional_test_group "aw-sdlc-plan-*.test.js" "Plan"
   run_optional_test_group "aw-sdlc-brainstorm-*.test.js" "Brainstorm"
   run_optional_test_group "aw-sdlc-prepare-*.test.js" "Preparation"
   run_optional_test_group "aw-sdlc-execute-*.test.js" "Execution"

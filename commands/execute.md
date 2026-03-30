@@ -64,6 +64,7 @@ For multi-step execution, `/aw:execute` should internally use:
 
 - `task_unit` planning for the next implementation slice
 - `context_pack` limited to the files and artifacts needed for that slice
+- explicit worker ownership for non-trivial task units
 - `spec_review` after the implementation step
 - `quality_review` before handoff
 
@@ -76,6 +77,7 @@ For code changes:
 - prefer test-first or failure-first work where feasible
 - do not claim completion for a behavioral change without naming the relevant tests or explaining why they were unavailable
 - record test limitations explicitly when the repo cannot support the desired validation
+- for non-trivial behavior changes, record a concrete failing signal or equivalent reproduction before broad fixes
 
 ## Hard Gates
 
@@ -104,6 +106,7 @@ Always end with:
 
 - `Mode`
 - `Task Units`
+- `Worker Roles`
 - `Changes`
 - `Validation`
 - `Blockers`

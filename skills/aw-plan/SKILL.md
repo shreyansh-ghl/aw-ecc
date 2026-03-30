@@ -13,6 +13,9 @@ It creates the minimum correct planning artifact set for the request and always 
 
 - `.aw_docs/features/<feature_slug>/`
 
+When planning is required, the output should be execution-ready for a fresh worker with limited repo context.
+That means the plan should reduce guesswork around files, validation, order, and handoff risks instead of stopping at vague prose.
+
 ## Required Behavior
 
 Always:
@@ -21,8 +24,9 @@ Always:
 2. infer or honor the feature slug
 3. detect which planning artifact(s) already exist
 4. create only the missing artifact(s) required by the request
-5. update `.aw_docs/features/<feature_slug>/state.json`
-6. stop after planning and recommend the next stage
+5. make every created artifact concrete enough for the next stage to proceed without re-planning
+6. update `.aw_docs/features/<feature_slug>/state.json`
+7. stop after planning and recommend the next stage
 
 ## Planning Modes
 
@@ -81,6 +85,8 @@ Capture:
 - failure modes
 - acceptance criteria
 - verification targets
+- expected changed files or modules when those can be inferred safely
+- key commands, migrations, or rollout constraints that execution must honor
 
 ### `tasks.md`
 
@@ -90,6 +96,40 @@ Break implementation into small, executable chunks with:
 - steps
 - acceptance
 - task type: `code`, `infra`, `docs`, `migration`, or `config`
+- validation command or evidence target
+- dependency or ordering note when sequencing matters
+- `parallel_candidate` only when the write scope is safely disjoint
+
+## Plan Richness
+
+When the request is in `technical`, `tasks`, or `full` mode, planning should be specific enough that execution does not have to rediscover the shape of the work.
+
+Prefer including:
+
+- likely changed files and what each one is responsible for
+- the minimal validation commands or evidence expected after implementation
+- sequencing notes for dependent tasks
+- bounded parallel candidates for disjoint work
+- key risks, blockers, or rollback constraints
+
+The goal is not maximum verbosity.
+The goal is minimum ambiguity.
+
+## Execution-Ready Tasks
+
+`tasks.md` should avoid vague tasks such as:
+
+- "implement feature"
+- "fix bug"
+- "update code as needed"
+
+Prefer task units that name:
+
+- goal
+- file scope
+- change intent
+- acceptance check
+- validation command or evidence target
 
 ## Hard Gates
 
@@ -97,6 +137,7 @@ Break implementation into small, executable chunks with:
 - do not require `prd.md` for a technical-only request that is already well-defined
 - do not force unrelated artifacts
 - do not silently broaden a narrow planning request into full planning
+- do not produce handoff tasks so vague that execution must re-plan the file scope
 
 ## State File
 
@@ -117,5 +158,6 @@ Always end with:
 - `Route`
 - `Mode`
 - `Created`
+- `Execution Readiness`
 - `Missing`
 - `Next`

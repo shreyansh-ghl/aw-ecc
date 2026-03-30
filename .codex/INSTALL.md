@@ -8,11 +8,14 @@ Use this repo as a repo-local AW SDLC control plane inside Codex without dependi
 
 Codex should treat these repo-local paths as the source of truth:
 
+- `AGENTS.md`
 - `commands/`
 - `skills/`
 - `defaults/aw-sdlc/`
 - `docs/aw-sdlc-command-contracts.md`
 - `docs/aw-sdlc-command-skill-architecture.md`
+
+The root `AGENTS.md` should provide the first repo-local instruction layer so Codex does not fall back to a parent workspace prompt when running AW SDLC flows in isolation.
 
 ## Runtime Rule
 

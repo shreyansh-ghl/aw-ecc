@@ -61,6 +61,17 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 3. Only expand to multiple artifacts if the user explicitly asks for them or a blocking prerequisite is missing.
 4. Use existing artifacts as inputs when they are already sufficient.
 5. Do not require a PRD for a technical request that is already well defined.
+6. When writing technical or task artifacts, make them concrete enough for execution to proceed without re-planning file scope, validation, and task order.
+
+## Planning Depth
+
+When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
+
+- likely file scope
+- concrete task goals
+- validation commands or evidence targets
+- dependency or ordering notes
+- bounded parallel candidates only when write scope is disjoint
 
 ## Hard Gates
 
@@ -92,7 +103,9 @@ This command may still use internal helpers where useful, but the public contrac
 Always end with:
 
 - `Route`
+- `Mode`
 - `Created`
 - `Summary`
+- `Execution Readiness`
 - `Missing`
 - `Next`
