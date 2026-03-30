@@ -1,117 +1,121 @@
 ---
-name: platform-core-aw-plan
-description: Creates a detailed, step-by-step implementation plan from an approved spec — with real code blocks, file paths, and 2-5 minute task granularity.
-trigger: Spec approved in aw-brainstorm, or user requests an implementation plan for a defined feature.
+name: aw-plan
+description: Create the minimum correct planning artifacts under `.aw_docs/features/<feature_slug>/` and stop cleanly before implementation.
+trigger: User requests planning, a missing planning artifact blocks execution, or `/aw:ship` needs to move work into a build-ready state.
 ---
 
 # AW Plan
 
-## Output
+## Purpose
 
-Save the plan to `docs/plans/YYYY-MM-DD-<feature>.md`.
+`aw-plan` owns planning only.
+It creates the minimum correct planning artifact set for the request and always writes deterministic outputs under:
 
-## Process
+- `.aw_docs/features/<feature_slug>/`
 
-### 1. Research
+## Required Behavior
 
-Before writing the plan:
+Always:
 
-- **Scan repo** — Read relevant source files, tests, configs. Understand current patterns, naming conventions, and module structure.
-- **GitHub search** — Run `gh search code` and `gh search repos` to find existing implementations, templates, and patterns that can be reused or adapted.
-- **Read .aw_rules** — Load all applicable `.aw_rules` files for the domains touched by this feature. These are non-negotiable constraints.
-- **Check dependencies** — Identify packages, services, or infrastructure that must exist before implementation begins.
+1. load repo context, relevant platform docs, and relevant `.aw_rules`
+2. infer or honor the feature slug
+3. detect which planning artifact(s) already exist
+4. create only the missing artifact(s) required by the request
+5. update `.aw_docs/features/<feature_slug>/state.json`
+6. stop after planning and recommend the next stage
 
-### 2. Plan Format
+## Planning Modes
 
-Each task in the plan MUST follow this structure:
+| Mode | Use when | Primary outputs |
+|---|---|---|
+| `product` | problem, scope, or acceptance criteria are unclear | `prd.md`, `state.json` |
+| `design` | UX behavior or interface design must be defined | `design.md`, `designs/`, `state.json` |
+| `technical` | implementation approach or architecture must be defined | `spec.md`, `state.json` |
+| `tasks` | implementation work needs to be broken into steps | `tasks.md`, `state.json` |
+| `full` | multiple planning artifacts are missing | missing artifacts in order, plus `state.json` |
 
-```markdown
-### Task 1: <descriptive name> [code]
+## Artifact Rules
 
-**Files:**
-- `src/modules/feature/feature.service.ts` (create)
-- `src/modules/feature/feature.service.spec.ts` (create)
+- write artifacts only under `.aw_docs/features/<feature_slug>/`
+- use only deterministic names:
+  - `prd.md`
+  - `design.md`
+  - `designs/`
+  - `spec.md`
+  - `tasks.md`
+  - `state.json`
+- do not write planning artifacts to `docs/plans/`
+- do not create random filenames
+- do not write implementation code
 
-**Steps:**
-- [ ] Step 1 description (~2 min)
-- [ ] Step 2 description (~3 min)
-- [ ] Step 3 description (~2 min)
+## Authoring Guidance
 
-**Implementation:**
-\```typescript
-// Actual code — no pseudocode, no placeholders
-export class FeatureService {
-  constructor(private readonly repo: FeatureRepository) {}
+### `prd.md`
 
-  async findByLocationId(locationId: string): Promise<Feature[]> {
-    return this.repo.find({ locationId });
-  }
-}
-\```
+Capture:
 
-**Acceptance:**
-- [ ] Service returns features filtered by locationId
-- [ ] Unit test covers happy path and empty result
-```
+- goal
+- scope
+- non-goals
+- acceptance criteria
+- risks or dependencies
 
-### 3. Granularity
+### `design.md`
 
-- Each step should take **2-5 minutes** to execute.
-- If a step takes longer, break it down further.
-- Each task should be independently executable and verifiable.
-- Use checkboxes for progress tracking.
+Capture:
 
-### 4. No Placeholders Rule
+- routes or flows
+- states
+- interaction rules
+- accessibility notes
+- references to `designs/`
 
-The following patterns are **BANNED** in plan code blocks:
+### `spec.md`
 
-| Banned Pattern | What to Write Instead |
-|---|---|
-| `// TODO: implement` | Actual implementation code |
-| `// ... rest of the code` | All remaining code |
-| `/* add logic here */` | The actual logic |
-| `throw new Error('Not implemented')` | Real error handling or implementation |
-| `any` type annotations | Proper TypeScript types |
-| `// similar to above` | The actual repeated code |
+Capture:
 
-If you cannot write the real code, the research step was insufficient. Go back and research more.
+- implementation goal
+- scope
+- interfaces or contracts
+- technical approach
+- failure modes
+- acceptance criteria
+- verification targets
 
-### 5. Task Types
+### `tasks.md`
 
-Tag each task with its type:
+Break implementation into small, executable chunks with:
 
-- **[code]** — Source code implementation (service, controller, component, etc.)
-- **[infra]** — Infrastructure changes (Helm, Terraform, Dockerfile, CI/CD)
-- **[docs]** — Documentation updates (README, API docs, architecture docs)
-- **[migration]** — Data migration scripts (database schema, data transforms)
-- **[config]** — Configuration changes (env vars, feature flags, secrets)
+- files
+- steps
+- acceptance
+- task type: `code`, `infra`, `docs`, `migration`, or `config`
 
-### 6. Self-Review
+## Hard Gates
 
-Before presenting the plan, verify:
+- do not write code
+- do not require `prd.md` for a technical-only request that is already well-defined
+- do not force unrelated artifacts
+- do not silently broaden a narrow planning request into full planning
 
-- [ ] **Spec coverage** — Every acceptance criterion from the spec has at least one task addressing it.
-- [ ] **Placeholder scan** — Zero banned placeholder patterns exist in code blocks.
-- [ ] **Type consistency** — All TypeScript types are real, imported, and consistent across tasks.
-- [ ] **File path accuracy** — All file paths match the repo's actual directory structure.
-- [ ] **Dependency order** — Tasks are ordered so dependencies are created before consumers.
-- [ ] **Test coverage** — Every [code] task includes corresponding test files and steps.
+## State File
 
-## Platform Context
+`state.json` should record at least:
 
-| Domain Signal | Platform Skills to Load |
-|---|---|
-| NestJS module, service, controller | `platform-services-nestjs-module-structure` |
-| DTO, validation, class-validator | `platform-services-dto-validation` |
-| MongoDB schema, index | `platform-data-mongodb-patterns` |
-| Firestore collection | `platform-data-firestore-patterns` |
-| Redis cache, pub/sub | `platform-data-redis-patterns` |
-| Vue component, composable | `platform-frontend-vue-development` |
-| Helm chart, deployment | `platform-infra-kubernetes-workloads` |
-| Terraform resource | `platform-infra-terraform-iac` |
-| Worker, queue | `platform-services-worker-patterns` |
-| Auth, IAM, guard | `platform-services-authentication-authorization` |
+- `feature_slug`
+- `stage: "plan"`
+- `mode`
+- `status`
+- written artifacts
+- key inputs
+- recommended next commands
 
-## Next Skill
+## Final Output Shape
 
-> After the plan is reviewed and approved, invoke **`aw-execute`** to implement each task.
+Always end with:
+
+- `Route`
+- `Mode`
+- `Created`
+- `Missing`
+- `Next`

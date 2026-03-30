@@ -1,5 +1,5 @@
 ---
-name: platform-core-aw-brainstorm
+name: aw-brainstorm
 description: Use before any creative work — explores context, proposes approaches, and produces an approved design spec before code is written.
 trigger: User asks to build, create, add, implement, or design something new.
 ---

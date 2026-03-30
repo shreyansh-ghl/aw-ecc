@@ -1,109 +1,163 @@
 ---
-name: platform-core-using-aw-skills
-description: Session-start routing — discovers all available skills and ensures the right skill is invoked for every task.
+name: aw-using-aw-skills
+description: Session-start routing for the minimal AW SDLC surface. Prefer intent-based routing to plan, execute, verify, and deploy.
 trigger: Every session start. Loaded automatically via session-start hook.
 ---
 
 # Using AW Skills
 
-<!-- EXTREMELY-IMPORTANT -->
-> **If there is even a 1% chance that a skill applies to the current task, you MUST invoke it.**
-> Do not rationalize skipping a skill. Do not answer directly when a skill exists.
-> Skills contain domain knowledge, platform rules, and proven workflows that you do not have in your base training.
-<!-- /EXTREMELY-IMPORTANT -->
+This skill defines the public AW SDLC interface and how requests should be routed.
 
-## Priority Order
+The public surface should stay intentionally small:
 
-1. **User instructions** — Explicit user requests always override everything.
-2. **AW skills** — If a skill matches the task, invoke it before responding.
-3. **Default prompt** — Only fall back to default behavior when no skill applies.
+- `/aw:plan`
+- `/aw:execute`
+- `/aw:verify`
+- `/aw:deploy`
 
-## Skill Matching Tables
+Users should not be required to remember commands.
+When the request is clear, route by intent automatically and keep the scope narrow.
 
-### SDLC Pipeline Skills
+There is also one explicit power command:
 
-| Trigger | Skill | Description |
+- `/aw:ship`
+
+`/aw:ship` is for clearly end-to-end requests.
+It should not become the default route for normal stage-specific work.
+
+## Routing Priority
+
+1. Explicit user instructions
+2. Explicit public AW commands
+3. Intent-based routing to the minimal public command surface
+4. Domain skills needed to do the selected work well
+5. Explicit composite workflows when the user clearly asks for an end-to-end flow
+
+## Public Command Roles
+
+| Command | Role | Primary outcomes |
 |---|---|---|
-| Build, create, add, implement, design | `platform-core-aw-brainstorm` | Explore approaches, produce approved design spec |
-| Plan, break down, steps, implementation plan | `platform-core-aw-plan` | Create detailed implementation plan from spec |
-| Execute, implement, code, build (with plan) | `platform-core-aw-execute` | Execute plan tasks with subagents |
-| Verify, check, test, validate, review | `platform-core-aw-verify` | Evidence-based verification with 5 reviewers |
-| Finish, PR, merge, deploy, integrate | `platform-core-aw-finish` | Integrate verified work |
+| `/aw:plan` | Create the minimum correct planning artifacts | `prd.md`, `design.md`, `designs/`, `spec.md`, `tasks.md`, `state.json` |
+| `/aw:execute` | Implement approved work without reopening planning | `execution.md`, `state.json`, code/docs/config/infra changes |
+| `/aw:verify` | Produce evidence, review findings, governance checks, and release readiness | `verification.md`, `state.json` |
+| `/aw:deploy` | Create the release outcome for verified work | `release.md`, `state.json`, PR/branch/deploy evidence |
 
-### Domain Skills (by file type)
+## Intent Routing
 
-| File Pattern | Skills to Consider |
-|---|---|
-| `*.controller.ts`, `*.service.ts` | `platform-services-*` (API design, NestJS, auth) |
-| `*.vue`, `composables/*.ts` | `platform-frontend-*` (Vue, Highrise, i18n) |
-| `*.schema.ts`, `*.repository.ts` | `platform-data-*` (MongoDB, Firestore, Redis) |
-| `*.dart`, `lib/**` | `platform-mobile-*` (Flutter, high_rise_ui) |
-| `Dockerfile*`, `helm/**`, `*.tf` | `platform-infra-*` (k8s, Terraform, CI/CD) |
-| `*.spec.ts`, `*.test.ts` | `platform-core-tdd-patterns` |
-| `*.worker.ts` | `platform-services-worker-patterns` |
+Default to one primary route.
+Only expand into multi-stage flow when the user explicitly asks for end-to-end work.
 
-### Operational Skills
+### Route to `/aw:plan`
 
-| Trigger | Skill |
-|---|---|
-| Fix bug, debug, error | `platform-core-fix-bug` |
-| Incident, outage, alert | `platform-core-incident-report` |
-| Commit, push, git | `platform-core-auto-commit` |
-| Publish docs, update docs site | `platform-core-publish-docs` |
+Use when the request is about:
 
-### Review Skills
+- PRD creation
+- design planning
+- technical specs
+- architecture
+- implementation task breakdown
+- getting work to build-ready state
 
-| Trigger | Skill |
-|---|---|
-| Code review, review PR | `platform-review-code-review` |
-| Security review, audit | `platform-review-security-review` |
-| Architecture review | `platform-review-architecture-review` |
+Examples:
 
-### Workflow Commands
+- "Create a PRD for contact sync."
+- "Design the onboarding flow."
+- "Create the implementation spec."
+- "Break this into execution tasks."
 
-| Command | Description |
-|---|---|
-| `/aw:revex-ship` | Full ship workflow (brainstorm -> finish) |
-| `/aw:revex-plan` | Plan a feature |
-| `/aw:revex-review` | Code review workflow |
-| `/aw:revex-deploy` | Deployment workflow |
+### Route to `/aw:execute`
 
-## .aw_rules Always Active
+Use when the request is about:
 
-The `.aw_rules` directory contains platform-specific rules that are ALWAYS active regardless of which skill is invoked. These include:
+- implementing approved work
+- coding a bug fix
+- applying infra or config changes
+- writing docs from approved scope
+- continuing partially implemented work
 
-- Backend rules (logger, DTO, locationId, IAM)
-- Frontend rules (Vue 3, Highrise, i18n)
-- Data rules (Firestore, MongoDB, Redis)
-- Infra rules (Helm, Terraform, Jenkins)
-- Security rules (secrets, auth, XSS)
+Examples:
 
-## Red Flags Rationalization Table
+- "Implement the approved worker spec."
+- "Fix this retry bug."
+- "Apply the staging config changes."
 
-| Rationalization | Why It Is Wrong |
-|---|---|
-| "This is too simple for a skill" | Skills contain platform rules you will violate without them. |
-| "I already know how to do this" | You know general patterns, not platform-specific conventions. |
-| "The user just wants a quick answer" | Quick wrong answers cost more than slow correct ones. |
-| "No skill exactly matches" | If 1% matches, invoke it. Partial match > no match. |
-| "I'll check the rules myself" | Skills load rules automatically. Manual checking misses things. |
-| "The skill will slow things down" | Rework from skipped rules is slower than loading a skill. |
+### Route to `/aw:verify`
 
-## How to Invoke Skills
+Use when the request is about:
 
-Skills are invoked via the Skill tool:
+- review
+- validation
+- readiness
+- testing and evidence
+- PR checklist/governance
+- platform docs or `.aw_rules` compliance
 
-```
-Skill(skill: "platform-core-aw-brainstorm")
-Skill(skill: "platform-core-aw-plan")
-Skill(skill: "platform-core-aw-execute")
-```
+Examples:
 
-Or via slash commands:
+- "Review and validate this implementation."
+- "Is this ready for staging?"
+- "Check this PR against the guidelines."
 
-```
-/aw:revex-ship
-/aw:revex-plan
-```
+### Route to `/aw:deploy`
 
-When a skill is loaded, follow its instructions completely before returning to the user.
+Use when the request is about a single release outcome, such as:
+
+- creating a PR
+- branch handoff
+- staging deployment
+- production deployment
+
+Examples:
+
+- "Create a PR for this verified work."
+- "Deploy this verified worker to staging."
+
+If the user asks for more than one release outcome in sequence, such as PR creation followed by staging deployment, prefer `/aw:ship` instead of `/aw:deploy`.
+
+### Route to `/aw:ship`
+
+Use only when the user clearly wants an end-to-end flow in one go, or when the user asks for multiple release outcomes in sequence.
+
+Examples:
+
+- "Take this from idea to ship."
+- "Do the whole flow."
+- "Build this end to end."
+- "Ship this from approved spec to staging."
+- "Take this change through PR creation and staging version deployment."
+- "Create the PR and then deploy it to staging."
+
+## Scope Guardrails
+
+- A direct code request should not drift into design or product work.
+- A design request should not drift into coding.
+- A deploy request should not reopen planning.
+- A verify request should not silently implement code.
+- A technical planning request must not force a PRD first when the request is already well defined.
+
+## Internal Helpers
+
+The public interface stays minimal even if internal helpers are still present.
+
+- `aw:brainstorm` may be used internally for discovery-heavy ideation only
+- `aw:finish` is legacy compatibility only and should not be advertised as a public stage
+- `aw:code-review` is a compatibility alias under `/aw:verify`
+- `aw:tdd` is a compatibility alias under `/aw:execute`
+- `aw:ship` is the explicit composite workflow when a single end-to-end command is desired
+
+## Domain Skills
+
+After choosing the public route, load the relevant domain skills for the actual work:
+
+- backend and worker code -> `platform-services-*`
+- frontend and design-system work -> `platform-frontend-*`, `platform-design:*`
+- data and migrations -> `platform-data:*`
+- infra and deployment -> `platform-infra:*`
+- test and quality systems -> `platform-sdet:*`
+- review depth -> `platform-review:*`
+
+## Rules Always Active
+
+Relevant `.aw_rules` and platform docs remain active regardless of which public command is selected.
+
+Use them as constraints and source of truth, not as a reason to broaden scope.

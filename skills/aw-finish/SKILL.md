@@ -1,10 +1,13 @@
 ---
-name: platform-core-aw-finish
+name: aw-finish
 description: Integrates verified work — creates PR, merges, deploys, or stages. Saves learnings for future sessions.
 trigger: aw-verify has passed, or user requests integration of completed work.
 ---
 
 # AW Finish
+
+This is a legacy compatibility skill.
+The canonical public release stage is now `/aw:deploy` backed by `aw-deploy`.
 
 ## HARD-GATE
 

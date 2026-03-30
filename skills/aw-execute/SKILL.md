@@ -1,105 +1,87 @@
 ---
-name: platform-core-aw-execute
-description: Executes an approved implementation plan by dispatching one subagent per task — with mode-specific workflows, 2-stage review loops, and automatic escalation.
-trigger: Plan approved in aw-plan, or user requests execution of an existing plan.
+name: aw-execute
+description: Implement approved work from `.aw_docs/features/<feature_slug>/` planning artifacts and write deterministic execution evidence.
+trigger: User requests implementation of approved work, or `/aw:ship` needs to move from planning into implementation.
 ---
 
 # AW Execute
 
-## Process
+## Purpose
 
-1. **Read Plan** — Load the plan from `docs/plans/YYYY-MM-DD-<feature>.md`.
-2. **Extract Tasks** — Parse all tasks with their types, files, steps, and code blocks.
-3. **Per Task** — For each task in dependency order:
-   a. **Dispatch Implementer** — Send the task to a subagent with the appropriate mode.
-   b. **Spec Review** — Verify the output matches the spec's acceptance criteria.
-   c. **Quality Review** — Verify code quality, platform rules, and test coverage.
-4. **Aggregate Results** — Collect all task results and transition to verification.
+`aw-execute` owns implementation only.
+It reads approved planning inputs, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
 
-## Modes
+## Inputs
 
-Each task type maps to a specific execution mode:
+Preferred approved inputs live under:
 
-| Task Type | Mode | Reference |
+- `.aw_docs/features/<feature_slug>/spec.md`
+- `.aw_docs/features/<feature_slug>/tasks.md`
+- `.aw_docs/features/<feature_slug>/design.md`
+- `.aw_docs/features/<feature_slug>/prd.md`
+
+If the user supplies an already-approved direct technical request, use that as the execution input without forcing unrelated artifacts.
+
+## Execution Modes
+
+| Mode | Use when | Primary outputs |
 |---|---|---|
-| `[code]` | TDD (Red-Green-Refactor) | [mode-code.md](references/mode-code.md) |
-| `[infra]` | Dry-run first, then apply | [mode-infra.md](references/mode-infra.md) |
-| `[docs]` | Write, self-review, commit | [mode-docs.md](references/mode-docs.md) |
-| `[migration]` | Staged rollout with rollback | [mode-migration.md](references/mode-migration.md) |
-| `[config]` | Validate, apply, verify | Same as `[infra]` |
+| `code` | source code implementation is required | code changes, tests, `execution.md`, `state.json` |
+| `infra` | Helm, Terraform, CI/CD, or runtime setup changes are required | infra/config changes, `execution.md`, `state.json` |
+| `docs` | documentation-only work is required | docs changes, `execution.md`, `state.json` |
+| `migration` | schema or data rollout work is required | migration changes, rollback notes, `execution.md`, `state.json` |
+| `config` | feature flags or runtime configuration are required | config changes, `execution.md`, `state.json` |
 
-## Debug Mode
+## Required Behavior
 
-### Iron Law
+Always:
 
-> **No fix may be applied without first identifying the root cause.**
-> Guessing and patching symptoms is forbidden.
+1. load the approved execution input
+2. choose the smallest correct execution mode
+3. implement the required change without reopening planning
+4. run relevant local validation commands when available
+5. write `.aw_docs/features/<feature_slug>/execution.md`
+6. update `.aw_docs/features/<feature_slug>/state.json`
+7. hand off to `aw-verify`
 
-### 4-Phase Investigation
+## Hard Gates
 
-1. **Reproduce** — Run the failing test or command. Capture exact error output.
-2. **Isolate** — Narrow down to the smallest reproducing case. Check: is it data? Logic? Config? Dependency?
-3. **Root Cause** — Identify the exact line, value, or condition causing the failure. State it explicitly.
-4. **Fix** — Apply the minimal fix that addresses the root cause. Re-run to confirm.
+- do not invent product or design work during execution
+- stop cleanly on blockers instead of guessing
+- do not deploy from `aw-execute`
+- do not silently skip tests when the repo has runnable checks
 
-### 3+ Fails = Stop
+## Execution Report
 
-If the same task fails 3 or more times after attempted fixes:
+`execution.md` should capture:
 
-- **STOP execution** immediately.
-- **Report** the task, error history, and attempted fixes to the user.
-- **Do not** continue guessing. Wait for user guidance.
+- selected mode
+- approved inputs used
+- files changed
+- key implementation notes
+- commands run
+- blockers or concerns
+- recommended next stage
 
-## 2-Stage Review Loop
+## State File
 
-Every task output goes through two review stages before it is marked complete:
+`state.json` should record at least:
 
-### Stage 1: Spec Compliance
+- `feature_slug`
+- `stage: "execute"`
+- `mode`
+- `status`
+- written artifacts
+- key validation commands
+- recommended next commands
 
-- Does the output match the task's acceptance criteria?
-- Does it align with the original spec from `aw-brainstorm`?
-- Are all files listed in the task created or modified?
+## Final Output Shape
 
-### Stage 2: Quality
+Always end with:
 
-- Does the code follow platform rules (`.aw_rules`)?
-- Are tests written and passing?
-- Is error handling comprehensive?
-- Are types correct (no `any`)?
-- Is the code under 400 lines per file?
-
-## Model Selection
-
-| Task Complexity | Model | When |
-|---|---|---|
-| Simple (rename, config, docs) | **Haiku** | Single-file changes, boilerplate, checklists |
-| Standard (service, component, test) | **Sonnet** | Most implementation tasks, code generation |
-| Complex (architecture, multi-service) | **Opus** | Cross-cutting concerns, complex debugging, trade-off decisions |
-
-## Implementer Status Handling
-
-Each implementer subagent returns one of these statuses:
-
-| Status | Action |
-|---|---|
-| `DONE` | Mark task complete. Proceed to next task. |
-| `DONE_WITH_CONCERNS` | Mark task complete. Log concerns for `aw-verify` to check. |
-| `NEEDS_CONTEXT` | Provide missing context (file contents, API docs, etc.) and re-dispatch. |
-| `BLOCKED` | Stop execution. Report blocker to user with full context. |
-
-## Platform Context
-
-| Domain Signal | Platform Skills to Load |
-|---|---|
-| TDD, test, coverage | `platform-core-tdd-patterns` |
-| NestJS, controller, service | `platform-services-nestjs-module-structure` |
-| Vue, component, template | `platform-frontend-vue-development` |
-| Helm, k8s, deploy | `platform-infra-kubernetes-workloads` |
-| MongoDB, schema, migration | `platform-data-mongodb-patterns` |
-| Auth, IAM, guard | `platform-services-authentication-authorization` |
-| Worker, queue, pub/sub | `platform-services-worker-patterns` |
-| Logger, observability | `platform-services-logging` |
-
-## Next Skill
-
-> After all tasks are executed, invoke **`aw-verify`** to run evidence-based verification.
+- `Selected Mode`
+- `Inputs Used`
+- `Files Changed`
+- `Validation Run`
+- `Blockers`
+- `Recommended Next`

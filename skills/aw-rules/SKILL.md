@@ -1,5 +1,5 @@
 ---
-name: platform-core-aw-rules
+name: aw-rules
 description: Create, audit, fix, and score .aw_rules reference files grounded in real platform docs, skills, and codebase. Use when adding new rules, reviewing rule PRs, checking for hallucinated APIs, or improving rule quality.
 trigger: when the user says /aw-rules, asks to create/add/audit/verify/fix/score rules, check rules for hallucinations, or manage .aw_rules content
 ---

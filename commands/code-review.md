@@ -1,53 +1,19 @@
-# Code Review
-
-Comprehensive security and quality review of uncommitted changes:
-
-1. Get changed files: git diff --name-only HEAD
-
-2. For each changed file, check for:
-
-**Security Issues (CRITICAL):**
-- Hardcoded credentials, API keys, tokens
-- SQL injection vulnerabilities
-- XSS vulnerabilities  
-- Missing input validation
-- Insecure dependencies
-- Path traversal risks
-
-**Code Quality (HIGH):**
-- Functions > 50 lines
-- Files > 800 lines
-- Nesting depth > 4 levels
-- Missing error handling
-- console.log statements
-- TODO/FIXME comments
-- Missing JSDoc for public APIs
-
-**Best Practices (MEDIUM):**
-- Mutation patterns (use immutable instead)
-- Emoji usage in code/comments
-- Missing tests for new code
-- Accessibility issues (a11y)
-
-3. Generate report with:
-   - Severity: CRITICAL, HIGH, MEDIUM, LOW
-   - File location and line numbers
-   - Issue description
-   - Suggested fix
-
-4. Block commit if CRITICAL or HIGH issues found
-
-Never approve code with security vulnerabilities!
-
+---
+name: aw:code-review
+description: Compatibility alias for aw:verify when the user asks specifically for code review.
+argument-hint: "<PR, diff, branch, or review target>"
+status: alias
+stage: verify
+aliases-to: aw:verify
 ---
 
-## GHL Platform Integration
+# Code Review
 
-Also activate ALL `platform-review-*` agents in parallel.
-Also activate the domain-specific platform agent:
+`/aw:code-review` is a compatibility alias.
 
-- Backend/services → `platform-services-*`
-- Frontend/UI → `platform-frontend-*`
-- Data layer → `platform-data-*`
+The public verification surface is `/aw:verify`, which includes:
 
-For ALL activated agents: read frontmatter → load each skill from `skills:` array.
+- code review
+- local validation
+- PR governance
+- readiness checks

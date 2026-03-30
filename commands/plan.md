@@ -1,130 +1,98 @@
 ---
-description: Restate requirements, assess risks, and create step-by-step implementation plan. WAIT for user CONFIRM before touching any code.
+name: aw:plan
+description: Define the minimum correct planning artifacts for the request without drifting into execution.
+argument-hint: "<goal, request, or existing artifact>"
+status: active
+stage: plan
+internal_skill: aw-plan
 ---
 
-# Plan Command
+# Plan
 
-This command invokes the **planner** agent to create a comprehensive implementation plan before writing any code.
+Use `/aw:plan` to decide what needs to be planned and to produce only the planning artifacts required for the request.
 
-## What This Command Does
+This is the public planning command.
+It should stay narrow by default and should not write implementation code.
 
-1. **Restate Requirements** - Clarify what needs to be built
-2. **Identify Risks** - Surface potential issues and blockers
-3. **Create Step Plan** - Break down implementation into phases
-4. **Wait for Confirmation** - MUST receive user approval before proceeding
+## Role
 
-## When to Use
+Turn an idea, requirement, approved design, or technical request into the minimum correct planning artifacts for execution.
 
-Use `/aw:plan` when:
-- Starting a new feature
-- Making significant architectural changes
-- Working on complex refactoring
-- Multiple files/components will be affected
-- Requirements are unclear or ambiguous
+## Modes
 
-## How It Works
+| Mode | Use when | Primary outputs |
+|---|---|---|
+| `product` | problem, scope, or acceptance criteria are unclear | `prd.md`, `state.json` |
+| `design` | UX behavior or interface design must be defined | `design.md`, `designs/`, `state.json` |
+| `technical` | implementation approach or architecture must be defined | `spec.md`, `state.json` |
+| `tasks` | implementation work needs to be broken into steps | `tasks.md`, `state.json` |
+| `full` | multiple planning artifacts are missing | missing artifacts in order, plus `state.json` |
 
-The planner agent will:
+## Required Inputs
 
-1. **Analyze the request** and restate requirements in clear terms
-2. **Break down into phases** with specific, actionable steps
-3. **Identify dependencies** between components
-4. **Assess risks** and potential blockers
-5. **Estimate complexity** (High/Medium/Low)
-6. **Present the plan** and WAIT for your explicit confirmation
+- the user request
+- repo context
+- relevant platform docs
+- relevant `.aw_rules`
 
-## Example Usage
+## Optional Inputs
 
-```
-User: /aw:plan I need to add real-time notifications when markets resolve
+- existing `prd.md`
+- existing `design.md`
+- existing `designs/`
+- existing `spec.md`
+- existing `tasks.md`
+- tickets, bug reports, screenshots, API contracts, or Figma links
 
-Agent (planner):
-# Implementation Plan: Real-Time Market Resolution Notifications
+## Outputs
 
-## Requirements Restatement
-- Send notifications to users when markets they're watching resolve
-- Support multiple notification channels (in-app, email, webhook)
-- Ensure notifications are delivered reliably
-- Include market outcome and user's position result
+- `.aw_docs/features/<feature_slug>/state.json`
+- one or more of:
+  - `prd.md`
+  - `design.md`
+  - `designs/`
+  - `spec.md`
+  - `tasks.md`
 
-## Implementation Phases
+## Execution Rules
 
-### Phase 1: Database Schema
-- Add notifications table with columns: id, user_id, market_id, type, status, created_at
-- Add user_notification_preferences table for channel preferences
-- Create indexes on user_id and market_id for performance
+1. Classify the request into one primary mode first.
+2. Default to single-scope planning.
+3. Only expand to multiple artifacts if the user explicitly asks for them or a blocking prerequisite is missing.
+4. Use existing artifacts as inputs when they are already sufficient.
+5. Do not require a PRD for a technical request that is already well defined.
 
-### Phase 2: Notification Service
-- Create notification service in lib/notifications.ts
-- Implement notification queue using BullMQ/Redis
-- Add retry logic for failed deliveries
-- Create notification templates
+## Hard Gates
 
-### Phase 3: Integration Points
-- Hook into market resolution logic (when status changes to "resolved")
-- Query all users with positions in market
-- Enqueue notifications for each user
+- do not write implementation code
+- do not run deploy steps
+- do not force unrelated artifacts
+- do not invent product or design work for a technical-only request
 
-### Phase 4: Frontend Components
-- Create NotificationBell component in header
-- Add NotificationList modal
-- Implement real-time updates via Supabase subscriptions
-- Add notification preferences page
+## Must Not Do
 
-## Dependencies
-- Redis (for queue)
-- Email service (SendGrid/Resend)
-- Supabase real-time subscriptions
+- must not jump directly into `/aw:execute`
+- must not create random artifact names
+- must not silently broaden scope
 
-## Risks
-- HIGH: Email deliverability (SPF/DKIM required)
-- MEDIUM: Performance with 1000+ users per market
-- MEDIUM: Notification spam if markets resolve frequently
-- LOW: Real-time subscription overhead
+## Recommended Next Commands
 
-## Estimated Complexity: MEDIUM
-- Backend: 4-6 hours
-- Frontend: 3-4 hours
-- Testing: 2-3 hours
-- Total: 9-13 hours
+- `/aw:execute`
+- `/aw:verify` if the user wants the planning artifacts reviewed before implementation
 
-**WAITING FOR CONFIRMATION**: Proceed with this plan? (yes/no/modify)
-```
+## Internal Routing
 
-## Important Notes
+This command may still use internal helpers where useful, but the public contract remains `/aw:plan`.
 
-**CRITICAL**: The planner agent will **NOT** write any code until you explicitly confirm the plan with "yes" or "proceed" or similar affirmative response.
+- discovery-heavy ideation may use `aw:brainstorm` internally
+- implementation planning should use `aw-plan`
 
-If you want changes, respond with:
-- "modify: [your changes]"
-- "different approach: [alternative]"
-- "skip phase 2 and do phase 3 first"
+## Final Output Shape
 
-## Integration with Other Commands
+Always end with:
 
-After planning:
-- Use `/aw:tdd` to implement with test-driven development
-- Use `/aw:build-fix` if build errors occur
-- Use `/aw:code-review` to review completed implementation
-
-## Related Agents
-
-This command invokes the `planner` agent provided by ECC.
-
-For manual installs, the source file lives at:
-`agents/planner.md`
-
----
-
-## GHL Platform Integration
-
-Also activate the matching platform agent by task domain:
-
-- Backend/services → `platform-services-*`
-- Frontend/UI → `platform-frontend-*`
-- Data layer → `platform-data-*`
-- Infra/deploy → `platform-infra-*`
-- Testing/QA → `platform-sdet-*`
-
-For ALL activated agents: read frontmatter → load each skill from `skills:` array.
-
+- `Route`
+- `Created`
+- `Summary`
+- `Missing`
+- `Next`

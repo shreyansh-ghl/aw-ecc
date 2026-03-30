@@ -53,11 +53,16 @@ while IFS= read -r cmd_file; do
 done < <(find "$AW_REGISTRY_ROOT" -path "*/commands/*.md" -type f 2>/dev/null | sort)
 
 # --- Read using-aw-skills SKILL.md ---
-ROUTING_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
 ROUTING_SKILL_CONTENT=""
-if [[ -f "$ROUTING_SKILL_PATH" ]]; then
-  ROUTING_SKILL_CONTENT=$(cat "$ROUTING_SKILL_PATH")
-fi
+for ROUTING_SKILL_PATH in \
+  "$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md" \
+  "$AW_REGISTRY_ROOT/skills/using-aw-skills/SKILL.md"
+do
+  if [[ -f "$ROUTING_SKILL_PATH" ]]; then
+    ROUTING_SKILL_CONTENT=$(cat "$ROUTING_SKILL_PATH")
+    break
+  fi
+done
 
 # --- Combine into additionalContext ---
 CONTEXT="# AW Session Context
