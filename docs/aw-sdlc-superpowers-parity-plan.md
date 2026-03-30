@@ -29,7 +29,7 @@ Goal: absorb Superpowers-style setup behavior without expanding the public comma
 - verify branch or worktree isolation before risky work
 - detect dirty repo state and missing prerequisites early
 - record setup evidence in deterministic artifacts
-- status: started
+- status: foundational implementation complete in this branch
 
 ## Phase 3: Stronger Execute Orchestrator
 
@@ -40,7 +40,7 @@ Goal: make `/aw:execute` behave like a real task runner, not just a thin prompt.
 - run a spec-compliance pass before a task can be marked complete
 - run a code-quality or reliability review pass after compliance
 - support controlled parallel workers for independent tasks
-- status: started
+- status: core orchestration and task-loop coverage complete in this branch
 
 ## Phase 4: Review and Repair Loops
 
@@ -50,7 +50,7 @@ Goal: match the practical execution discipline that makes Superpowers feel compl
 - harden TDD as execution policy instead of a public command
 - add a systematic debugging path for bug-fix execution
 - make release evidence distinguish simulated, blocked, and real external actions
-- status: started
+- status: review-loop and debugging foundations complete in this branch
 
 ## Phase 5: Productization
 
@@ -60,7 +60,7 @@ Goal: make AW SDLC portable and installable across environments.
 - convert cross-repo assumptions into optional integration inputs
 - add disposable smoke coverage for real routing and release flows
 - document the capability map: what AW SDLC owns vs what the harness owns
-- status: started
+- status: install docs and deterministic productization coverage complete in this branch
 
 ## Acceptance Bar
 
@@ -73,9 +73,11 @@ Parity means:
 - evals are portable and can prove behavior outside one workstation
 - the public AW SDLC contract remains cleaner than the larger workflow vocabulary it borrows from
 
-## Active Parallel Tracks
+## Landed In This Branch
 
 - hidden preparation layer under `aw-prepare`
-- stronger `/aw:execute` orchestration
+- stronger `/aw:execute` orchestration with task loops and failure-first guidance
 - findings -> fix -> re-review loop inside `/aw:verify`
-- installability and productization hardening
+- internal `aw-review-loop` and `aw-systematic-debugging` helpers
+- deeper internal `aw-brainstorm` and safer compatibility `aw-finish`
+- installability docs and deterministic productization hardening

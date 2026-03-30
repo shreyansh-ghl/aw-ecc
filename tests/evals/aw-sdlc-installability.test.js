@@ -18,6 +18,8 @@ function run() {
   console.log('\n=== AW SDLC Installability ===\n');
 
   const installPlan = readFileSync(`${REPO_ROOT}/docs/aw-sdlc-installability-plan.md`, 'utf8');
+  const supportedHarnesses = readFileSync(`${REPO_ROOT}/docs/aw-sdlc-supported-harnesses.md`, 'utf8');
+  const codexInstall = readFileSync(`${REPO_ROOT}/.codex/INSTALL.md`, 'utf8');
   const triggerHarness = readFileSync(`${REPO_ROOT}/skills/using-aw-skills/tests/test-skill-triggers.sh`, 'utf8');
   const configDoc = readFileSync(CONFIG_DOC_PATH, 'utf8');
   let passed = 0;
@@ -26,6 +28,23 @@ function run() {
   if (test('installability plan exists and defines the product boundary', () => {
     assert.ok(installPlan.includes('## Product Boundary'));
     assert.ok(installPlan.includes('portable install guidance'));
+    assert.ok(installPlan.includes('Portable Smoke Bar'));
+  })) passed++; else failed++;
+
+  if (test('supported harness guide describes the minimal public surface across harnesses', () => {
+    for (const token of ['Codex', 'Claude Code', 'Cursor', 'OpenCode']) {
+      assert.ok(supportedHarnesses.includes(token), `supported harnesses guide is missing ${token}`);
+    }
+    for (const token of ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy', '/aw:ship']) {
+      assert.ok(supportedHarnesses.includes(token), `supported harnesses guide is missing ${token}`);
+    }
+  })) passed++; else failed++;
+
+  if (test('Codex install guide is repo-local and routing-first', () => {
+    assert.ok(codexInstall.includes('repo-local'));
+    assert.ok(codexInstall.includes('skills/using-aw-skills/SKILL.md'));
+    assert.ok(codexInstall.includes('commands/'));
+    assert.ok(codexInstall.includes('.aw_docs/features/<feature_slug>/'));
   })) passed++; else failed++;
 
   if (test('trigger harness is repo-relative and aligned to the minimal public surface', () => {

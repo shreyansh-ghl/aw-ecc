@@ -1,57 +1,82 @@
 ---
 name: aw-brainstorm
-description: Use before any creative work — explores context, proposes approaches, and produces an approved design spec before code is written.
-trigger: User asks to build, create, add, implement, or design something new.
+description: Internal discovery helper that deepens pre-code exploration, compares approaches, and hands an approved direction to aw-plan without expanding the public command surface.
+trigger: Internal only. Invoked by aw-plan or aw-ship when discovery is still too fuzzy for direct planning.
 ---
 
 # AW Brainstorm
 
-## HARD-GATE
+## Purpose
 
-> **No code may be written until the design spec is approved by the user.**
-> This skill produces a spec document. Implementation happens in `aw-plan` and `aw-execute`.
+`aw-brainstorm` is an internal depth skill.
+It should make the planning input sharper, not create a parallel public workflow or a second artifact system.
 
-## Checklist
+The canonical public route for planning remains `/aw:plan`.
 
-1. **Explore Context** — Read the user's request carefully. Identify the domain, scope, and constraints. Scan relevant files in the repo to understand current state.
-2. **Load Platform Context** — Use the Platform Context table below to load relevant platform skills based on domain signals in the request.
-3. **Ask Questions (1 at a time)** — Ask clarifying questions one at a time. Do not batch questions. Wait for a response before asking the next. Stop when you have enough to propose approaches.
-4. **Propose 2-3 Approaches** — Present 2-3 distinct approaches with trade-offs. Each approach should include: summary, pros, cons, effort estimate, and risk level.
-5. **Present Design** — Once the user selects an approach, expand it into a full design with: architecture, data flow, component breakdown, edge cases, and constraints.
-6. **Write Spec** — Save the approved design to `docs/specs/YYYY-MM-DD-<topic>.md` with:
-   - Problem statement
-   - Chosen approach with rationale
-   - Architecture / component design
-   - Data model changes (if any)
-   - API changes (if any)
-   - Edge cases and error handling
-   - Acceptance criteria
-   - Out of scope
-7. **Self-Review** — Review the spec for completeness, feasibility, and alignment with platform rules. Flag any gaps.
-8. **User Reviews** — Present the spec to the user for final approval. Incorporate feedback.
-9. **Transition to aw-plan** — Once approved, invoke `aw-plan` to create the implementation plan.
+## Hard Gate
+
+No implementation code may be written while discovery is still open.
+This skill stops at an approved direction and hands that direction to `aw-plan`.
+
+## Discovery Loop
+
+Use this loop only when direct planning would otherwise guess:
+
+1. inspect the current request, repo context, and relevant constraints
+2. identify the unknowns, assumptions, and decision points
+3. ask at most one clarifying question at a time when a real decision is blocked
+4. propose 2-3 distinct approaches with trade-offs
+5. recommend one approach explicitly
+6. confirm the chosen direction or record the current best default
+7. hand the approved direction to `aw-plan`
+
+## Required Output
+
+Produce a discovery summary that `aw-plan` can consume without redoing the ideation step.
+
+The summary should capture:
+
+- problem framing
+- assumptions and open questions
+- compared approaches
+- chosen approach with rationale
+- major risks
+- constraints and non-goals
+- what planning artifact should come next
+
+## Artifact Rule
+
+`aw-brainstorm` should not create a second planning file system or revive any legacy non-deterministic planning path.
+
+If it needs to persist discovery context, keep it inside:
+
+- `.aw_docs/features/<feature_slug>/state.json`
+
+or pass it directly into `aw-plan`.
+
+`aw-plan` remains responsible for canonical planning artifacts such as `prd.md`, `design.md`, `spec.md`, and `tasks.md`.
 
 ## Platform Context
 
 | Domain Signal | Platform Skills to Load |
 |---|---|
-| API, controller, endpoint | `platform-services-api-design`, `platform-services-rate-limiting` |
-| Vue, component, UI | `platform-frontend-vue-development`, `platform-frontend-highrise-design-system` |
-| Database, schema, collection | `platform-data-mongodb-patterns`, `platform-data-firestore-patterns` |
-| Auth, IAM, permissions | `platform-services-authentication-authorization` |
-| Deploy, k8s, helm | `platform-infra-kubernetes-workloads`, `platform-infra-ci-cd-pipelines` |
-| Worker, queue, pub/sub | `platform-services-worker-patterns` |
-| Mobile, Flutter, dart | `platform-mobile-flutter-development` |
-| Multi-tenant, locationId | `platform-services-multi-tenancy` |
+| API, controller, endpoint | `api-design`, `platform-services:development`, `platform-services:rate-limiting` |
+| Vue, component, UI | `platform-frontend:vue-development`, `platform-frontend:highrise-compliance`, `platform-design:system` |
+| Database, schema, collection | `platform-data:mongodb-patterns`, `platform-data:firestore-patterns` |
+| Auth, IAM, permissions | `platform-services:authentication-authorization` |
+| Deploy, k8s, helm | `platform-infra:kubernetes-workloads`, `platform-infra:jenkins-pipelines` |
+| Worker, queue, pub/sub | `platform-services:worker-patterns`, `platform-infra:pubsub-messaging` |
+| Multi-tenant, locationId | `platform-services:multi-tenancy` |
 
 ## Anti-Patterns
 
-- **Jumping to code** — Writing implementation before the spec is approved violates the HARD-GATE.
-- **Batching questions** — Asking 5 questions at once overwhelms the user. Ask one, wait, repeat.
-- **Single approach** — Always present at least 2 options so the user can make an informed choice.
-- **Vague spec** — A spec without acceptance criteria is not a spec. Be specific and testable.
-- **Ignoring platform rules** — The spec must align with `.aw_rules` and platform conventions. Load and check them.
+- jumping straight to code or implementation planning without resolving the real decision
+- batching many questions at once
+- presenting only one approach when meaningful alternatives exist
+- writing final planning artifacts directly instead of routing through `aw-plan`
+- reopening brainstorming after the direction is already clear
+- ignoring platform rules, repo context, or known constraints
 
 ## Next Skill
 
-> After the spec is approved, invoke **`aw-plan`** to create the implementation plan.
+After the direction is approved, invoke `aw-plan`.

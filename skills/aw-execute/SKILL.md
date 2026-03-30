@@ -9,7 +9,7 @@ trigger: User requests implementation of approved work, or `/aw:ship` needs to m
 ## Purpose
 
 `aw-execute` owns implementation only.
-It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
+It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, uses `aw-systematic-debugging` when bug work is still uncertain, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
 
 ## Inputs
 
@@ -40,13 +40,14 @@ Always:
 2. choose the smallest correct execution mode
 3. break non-trivial work into explicit task units
 4. package the minimum correct context for the current task unit instead of reopening the entire plan every time
-5. implement the required change without reopening planning
-6. run a `spec_review` before marking a task unit complete
-7. run a `quality_review` before handing off
-8. run relevant local validation commands when available
-9. write `.aw_docs/features/<feature_slug>/execution.md`
-10. update `.aw_docs/features/<feature_slug>/state.json`
-11. hand off to `aw-verify`
+5. when the work is a bug fix or failing-behavior repair, capture reproduction and root-cause evidence before patching
+6. implement the required change without reopening planning
+7. run a `spec_review` before marking a task unit complete
+8. run a `quality_review` before handing off
+9. run relevant local validation commands when available
+10. write `.aw_docs/features/<feature_slug>/execution.md`
+11. update `.aw_docs/features/<feature_slug>/state.json`
+12. hand off to `aw-verify`
 
 ## Task-Unit Orchestration
 
@@ -63,11 +64,19 @@ Independent units may be flagged as `parallel_candidate`, but the public surface
 
 ## TDD Policy
 
-For code changes, prefer test-first or failure-first behavior where the repo can support it.
+For code changes, prefer explicit RED-GREEN-REFACTOR or failure-first behavior where the repo can support it.
 
 - reuse an existing failing test if it already captures the bug
 - add or update the smallest correct automated test when the behavior is testable
+- record the `RED` signal, the minimal `GREEN` change, and any `REFACTOR` follow-up in `execution.md`
 - record test limitations in `execution.md` instead of silently skipping them
+
+For bug-oriented work, use `aw-systematic-debugging` to drive:
+
+- reproduction
+- expected vs actual behavior
+- root-cause hypothesis
+- confirming probe before broad fixes
 
 ## Hard Gates
 
@@ -77,6 +86,8 @@ For code changes, prefer test-first or failure-first behavior where the repo can
 - do not silently skip tests when the repo has runnable checks
 - do not mark multi-step work complete without recording task-unit progress
 - do not skip `aw-prepare` when repo state could make execution unsafe
+- do not claim a bug is fixed without either a failing-test signal or an equivalent reproduction signal
+- do not skip the debugging trail when the root cause was initially uncertain
 
 ## Execution Report
 
@@ -86,6 +97,8 @@ For code changes, prefer test-first or failure-first behavior where the repo can
 - approved inputs used
 - task units completed
 - spec review and quality review outcomes
+- RED-GREEN-REFACTOR or failure-first evidence when code behavior changed
+- debugging trace when bug work required root-cause isolation
 - files changed
 - key implementation notes
 - commands run

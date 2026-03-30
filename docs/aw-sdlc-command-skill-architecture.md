@@ -44,8 +44,10 @@ Subskills should stay focused and reusable.
 Examples:
 
 - code review
+- review request and re-review loops
 - local validation
 - E2E validation
+- systematic debugging
 - PR governance
 - staging deployment
 - versioned MFA deployment
@@ -123,6 +125,7 @@ Primary skill:
 Typical supporting skills:
 
 - `platform-core-fix-bug`
+- `aw-systematic-debugging`
 - `platform-services:*`
 - `platform-frontend:*`
 - `platform-data:*`
@@ -137,6 +140,8 @@ Primary skill:
 
 Typical supporting skills:
 
+- `aw-review-loop`
+- `aw-systematic-debugging`
 - `platform-review:code-review-pr`
 - `platform-review:security-review`
 - `platform-review:architecture-review`
@@ -202,6 +207,10 @@ skills/
     SKILL.md
   aw-finish/
     SKILL.md
+  aw-review-loop/
+    SKILL.md
+  aw-systematic-debugging/
+    SKILL.md
   using-aw-skills/
     SKILL.md
     hooks/
@@ -221,8 +230,9 @@ To avoid duplication and drift:
 1. Never define the full workflow twice.
 2. Commands should describe the contract, not every detailed implementation step.
 3. Stage skills should implement the workflow, not redefine the public UX.
-4. Compatibility aliases should point back to the canonical public command.
-5. Intent-based routing should resolve to a public command first, not directly to a random subskill.
+4. Internal helpers such as `aw-brainstorm`, `aw-finish`, `aw-review-loop`, and `aw-systematic-debugging` should deepen behavior without becoming extra public stages.
+5. Compatibility aliases should point back to the canonical public command.
+6. Intent-based routing should resolve to a public command first, not directly to a random subskill.
 
 ## Test Rules
 
