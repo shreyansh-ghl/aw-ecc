@@ -100,10 +100,10 @@ done
 CONTEXT="# AW Session Context
 
 ## First Response Rule
-Before any substantive response, select one AW public route from the repo-local router.
-Honor an explicit AW command first.
-Otherwise choose the smallest correct route by intent, then load deeper domain skills.
-Do not start with generic implementation, review, or deploy advice before route selection.
+Before any substantive response, select the smallest correct AW skill stack from the repo-local router.
+Honor an explicit AW command and its mapped stage skill first.
+Otherwise choose the needed process skill, primary stage skill, and matching route by intent, then load deeper domain skills.
+Do not start with generic implementation, review, or deploy advice before skill selection.
 
 ## Available Skills
 ${SKILLS_LIST}

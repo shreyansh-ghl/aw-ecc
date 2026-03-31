@@ -57,11 +57,11 @@ Examples:
 
 The intended stack is:
 
-`intent -> command -> primary stage skill -> subskills -> deterministic outputs`
+`intent -> process skill(s) -> primary stage skill -> public command contract -> subskills -> deterministic outputs`
 
 This supports both:
 
-- intent-based routing for default UX
+- skill-first routing for default UX
 - explicit command use for deterministic workflows
 
 ## Public Commands
@@ -239,7 +239,7 @@ To avoid duplication and drift:
 3. Stage skills should implement the workflow, not redefine the public UX.
 4. Internal helpers such as `aw-brainstorm`, `aw-finish`, `aw-review-loop`, and `aw-systematic-debugging` should deepen behavior without becoming extra public stages.
 5. Compatibility aliases should point back to the canonical public command.
-6. Intent-based routing should resolve to a public command first, not directly to a random subskill.
+6. Skill-first routing should resolve to the smallest correct AW skill stack first and the matching public command with it, not jump directly to a random domain subskill.
 
 ## Test Rules
 
@@ -249,7 +249,7 @@ The test harness should verify:
 2. every public command declares one primary stage skill
 3. every declared primary stage skill exists
 4. internal/deprecated/alias commands are not treated as active public stages
-5. intent routing resolves to the right public command
+5. skill-first routing resolves to the right primary stage skill and public command
 6. public commands and stage skills stay in sync
 
 ## Final Recommendation
@@ -267,7 +267,7 @@ Use:
 That gives us:
 
 - a minimal explicit interface
-- good intent-based routing
+- good skill-first routing
 - deterministic artifacts
 - reusable internal capabilities
 - testable boundaries

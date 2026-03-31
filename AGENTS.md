@@ -26,12 +26,12 @@ Those stay internal behind the AW stage boundary.
 
 Before any substantive response:
 
-1. resolve the request to one AW public route
-2. prefer the explicit public command when the user names it
-3. otherwise choose the smallest correct AW stage by intent
-4. only after the route is selected, load deeper domain or internal helper behavior
+1. select the smallest correct AW skill stack first
+2. prefer the explicit public command and its mapped stage skill when the user names it
+3. otherwise choose the needed process skill, primary stage skill, and matching public route by intent
+4. only after the skill stack is selected, load deeper domain behavior or ask clarifying questions
 
-Do not begin with generic workflow commentary, implementation advice, or release guidance before the AW route is selected.
+Do not begin with generic workflow commentary, implementation advice, or release guidance before the AW skill stack is selected.
 Do not bypass repo-local AW routing just because a global or parent workspace instruction layer also exists.
 
 ## Fast Path

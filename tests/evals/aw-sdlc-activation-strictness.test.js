@@ -32,24 +32,26 @@ function run() {
   let passed = 0;
   let failed = 0;
 
-  if (test('repo-local AGENTS requires AW route selection before substantive response', () => {
+  if (test('repo-local AGENTS requires AW skill-stack selection before substantive response', () => {
     const agents = snapshot.readFile('AGENTS.md');
     for (const phrase of [
       'Before any substantive response',
-      'resolve the request to one AW public route',
+      'select the smallest correct AW skill stack first',
       'Do not begin with generic workflow commentary',
     ]) {
       assert.ok(agents.includes(phrase), `AGENTS.md is missing "${phrase}"`);
     }
   })) passed++; else failed++;
 
-  if (test('router skill encodes always-on activation before deeper behavior', () => {
+  if (test('router skill encodes skill-first activation before deeper behavior', () => {
     const skill = snapshot.readFile('skills/using-aw-skills/SKILL.md');
     for (const phrase of [
       '## Always-On Activation',
-      'Before any substantive response, this router must select one AW public route.',
-      'only after that route is selected, load deeper domain skills or internal helpers',
-      'Do not start with generic implementation, review, or deploy advice before route selection.',
+      'Before any substantive response, this router must select the smallest correct AW skill stack and matching public route.',
+      '## The Rule',
+      '## Skill Priority',
+      'only after the required AW skills are selected, load deeper domain skills or ask clarifying questions',
+      'Do not start with generic implementation, review, or deploy advice before skill selection.',
     ]) {
       assert.ok(skill.includes(phrase), `router skill is missing "${phrase}"`);
     }
@@ -87,8 +89,8 @@ function run() {
 
       for (const phrase of [
         '## First Response Rule',
-        'select one AW public route from the repo-local router',
-        'Do not start with generic implementation, review, or deploy advice before route selection.',
+        'select the smallest correct AW skill stack from the repo-local router',
+        'Do not start with generic implementation, review, or deploy advice before skill selection.',
       ]) {
         assert.ok(context.includes(phrase), `hook context is missing "${phrase}"`);
       }
