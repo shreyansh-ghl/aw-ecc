@@ -76,6 +76,23 @@ For non-trivial work, treat execution as four bounded internal roles:
 These roles stay inside `/aw:execute`.
 They must not become new public commands.
 
+## Worker Runtime Assets
+
+The internal worker system must be backed by repo-local runtime assets instead of prose alone:
+
+- `skills/aw-execute/references/worker-implementer.md`
+- `skills/aw-execute/references/worker-spec-reviewer.md`
+- `skills/aw-execute/references/worker-quality-reviewer.md`
+- `skills/aw-execute/references/worker-parallel-worker.md`
+- `node skills/aw-execute/scripts/build-worker-bundle.js --feature <slug> --tasks-file .aw_docs/features/<slug>/tasks.md`
+
+For non-trivial work, generate a worker bundle before dispatch so each task unit has:
+
+- explicit role prompts
+- bounded task-unit ownership
+- review ordering
+- optional orchestration-plan output for parallel candidates
+
 ## Runtime Discipline
 
 When task units are independent enough to run in parallel:
@@ -84,6 +101,7 @@ When task units are independent enough to run in parallel:
 - do not let parallel workers edit the same file set
 - keep the context pack limited to the current task unit
 - merge back into a single execution record with explicit ownership notes
+- prefer a generated worker bundle over ad hoc hand-written sub-prompts
 
 When work is not clearly independent, stay sequential.
 

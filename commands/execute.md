@@ -69,6 +69,7 @@ For multi-step execution, `/aw:execute` should internally use:
 - `quality_review` before handoff
 
 Task units may be parallelizable internally, but the public contract remains one `/aw:execute` stage.
+When the task loop needs concrete worker assets, generate them with `node skills/aw-execute/scripts/build-worker-bundle.js --feature <slug> --tasks-file .aw_docs/features/<slug>/tasks.md` and use the repo-local worker reference files.
 
 ## Test Discipline
 

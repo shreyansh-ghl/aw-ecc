@@ -25,4 +25,4 @@ Iteration: 1
 - **Files:** `skills/aw-execute/SKILL.md`, `commands/execute.md`, `skills/aw-execute/references/*`, `skills/aw-execute/scripts/*`, `tests/evals/*worker*`
 - **Patterns:** bounded task-unit manifests, implementer/spec-review/quality-review templates, repo-local worker bundle generator
 - **Related solutions:** none found in `content/solutions/`
-- **Status:** pending
+- **Status:** done
