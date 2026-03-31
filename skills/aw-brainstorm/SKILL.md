@@ -16,23 +16,56 @@ The canonical public route for planning remains `/aw:plan`.
 ## Hard Gate
 
 No implementation code may be written while discovery is still open.
-This skill stops at an approved direction and hands that direction to `aw-plan`.
+This skill stops at an approved direction and hands that direction to `aw-spec-author` through `aw-plan`.
+In other words, the public handoff is still: invoke `aw-plan`.
 
 ## Discovery Loop
 
 Use this loop only when direct planning would otherwise guess:
 
-1. inspect the current request, repo context, and relevant constraints
-2. identify the unknowns, assumptions, and decision points
-3. ask at most one clarifying question at a time when a real decision is blocked
-4. propose 2-3 distinct approaches with trade-offs
-5. recommend one approach explicitly
-6. confirm the chosen direction or record the current best default
-7. hand the approved direction to `aw-plan`
+1. explore project context first:
+   - current files
+   - docs
+   - recent commits or adjacent artifacts when useful
+2. decide whether the request is actually one feature or multiple independent subsystems
+3. if the scope is too large for one spec, decompose it before detailed design work
+4. identify the unknowns, assumptions, and decision points
+5. ask at most one clarifying question at a time when a real decision is blocked
+6. propose 2-3 distinct approaches with trade-offs
+7. recommend one approach explicitly
+8. present the proposed direction in a way the user can approve or correct
+9. confirm the chosen direction or record the current best default
+10. run a quick self-review for placeholders, contradictions, ambiguity, and overscope
+11. hand the approved direction to `aw-spec-author` through `aw-plan`
+
+## Scope Check
+
+Before deepening the design, decide whether the request needs decomposition.
+
+If the request spans multiple independent subsystems, do not force one giant planning artifact.
+Break it into smaller spec-worthy scopes and continue with the smallest correct slice.
+If the request is too large for one spec, decompose it before moving on.
+
+## Design Expectations
+
+Discovery should be concrete enough that the next planning step does not need to rediscover the core shape of the work.
+
+Capture:
+
+- problem framing
+- purpose and success criteria
+- constraints
+- compared approaches
+- chosen approach with rationale
+- major risks
+- non-goals
+- the next planning artifact that should be written
+
+If the topic is visual and the active harness supports it, a browser-based visual companion may be offered as its own message before visual questions.
 
 ## Required Output
 
-Produce a discovery summary that `aw-plan` can consume without redoing the ideation step.
+Produce a discovery summary that `aw-plan` and `aw-spec-author` can consume without redoing the ideation step.
 
 The summary should capture:
 
@@ -79,4 +112,4 @@ or pass it directly into `aw-plan`.
 
 ## Next Skill
 
-After the direction is approved, invoke `aw-plan`.
+After the direction is approved, invoke `aw-plan`, which should then invoke `aw-spec-author`.

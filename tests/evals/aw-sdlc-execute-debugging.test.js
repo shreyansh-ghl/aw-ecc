@@ -31,6 +31,9 @@ function run() {
       'record the `RED` signal',
       'failing-test signal',
       'debugging trace',
+      'NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST',
+      'Verify RED',
+      'Verify GREEN',
     ]) {
       assert.ok(executeSkill.includes(phrase), `execute skill is missing ${phrase}`);
     }
@@ -39,7 +42,11 @@ function run() {
   if (test('execute can invoke systematic debugging for bug-oriented work', () => {
     assert.ok(executeSkill.includes('aw-systematic-debugging'));
     for (const phrase of [
-      'capture a reproduction signal',
+      'The Four Phases',
+      'Phase 1: Root Cause Investigation',
+      'Phase 2: Pattern Analysis',
+      'Phase 3: Hypothesis and Testing',
+      'Phase 4: Implementation',
       'current hypothesis',
       'confirming probe',
     ]) {

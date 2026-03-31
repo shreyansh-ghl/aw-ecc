@@ -50,13 +50,16 @@ Implement approved work using the correct execution mode and stop cleanly on blo
 ## Execution Rules
 
 1. Load the approved planning input before changing code.
-2. Run the hidden preparation gate first when repo state, isolation, or baseline setup could affect safe execution.
-3. Select the execution mode explicitly.
-4. Break non-trivial work into explicit task units.
-5. Implement in dependency order, one task unit at a time.
-6. Run a spec-compliance review before marking a task unit complete.
-7. Run a code-quality review before handing off.
-8. Hand off to `/aw:verify` instead of claiming readiness without evidence.
+2. Review the approved plan critically before starting implementation.
+3. If the plan is underspecified, contradictory, or missing a critical dependency, stop and route back to `/aw:plan`.
+4. Run the hidden preparation gate first when repo state, isolation, or baseline setup could affect safe execution.
+5. Select the execution mode explicitly.
+6. Break non-trivial work into explicit task units.
+7. Implement in dependency order, one task unit at a time.
+8. Mark the active task unit in progress, then completed only after validation.
+9. Run a spec-compliance review before marking a task unit complete.
+10. Run a code-quality review before handing off.
+11. Hand off to `/aw:verify` instead of claiming readiness without evidence.
 
 ## Internal Task Loop
 
@@ -76,6 +79,8 @@ When the task loop needs concrete worker assets, generate them with `node skills
 For code changes:
 
 - prefer test-first or failure-first work where feasible
+- Verify RED before broad code changes
+- Verify GREEN before moving to the next task unit
 - do not claim completion for a behavioral change without naming the relevant tests or explaining why they were unavailable
 - record test limitations explicitly when the repo cannot support the desired validation
 - for non-trivial behavior changes, record a concrete failing signal or equivalent reproduction before broad fixes
@@ -86,6 +91,7 @@ For code changes:
 - blockers must be reported explicitly
 - repeated failure must stop guessing and surface the blocker
 - task-unit completion requires spec and quality review notes
+- do not guess through a broken plan when `/aw:plan` should be revisited
 
 ## Must Not Do
 

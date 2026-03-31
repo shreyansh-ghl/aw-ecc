@@ -111,6 +111,9 @@ Primary skill:
 
 Typical supporting skills:
 
+- `aw-brainstorm`
+- `aw-spec-author`
+- `aw-task-planner`
 - product/spec-writing skills
 - design planning skills
 - architecture/design skills
@@ -206,6 +209,10 @@ skills/
   aw-brainstorm/
     SKILL.md
   aw-finish/
+    SKILL.md
+  aw-spec-author/
+    SKILL.md
+  aw-task-planner/
     SKILL.md
   aw-review-loop/
     SKILL.md

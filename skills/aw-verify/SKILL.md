@@ -10,6 +10,7 @@ trigger: User requests review or validation, implementation is complete, or `/aw
 
 No verification claim is valid without evidence.
 Run real commands where the repo supports them and capture the output in the verification artifact.
+No completion claim survives stale evidence after the code has changed.
 
 ## Purpose
 
@@ -45,6 +46,7 @@ Always:
 10. update `.aw_docs/features/<feature_slug>/state.json`
 11. route to `aw-deploy` only when overall status passes
 12. treat a failing verify run as incomplete until the failure evidence, repair loop, and next-step recommendation are persisted to disk
+13. require fresh evidence after repair before any prior failure can be considered cleared
 
 ## Local Validation
 
@@ -70,6 +72,16 @@ Verification owns the findings loop:
 Do not treat a bare findings list as complete verification unless the next action is explicit.
 Failing command output is still evidence, and verification is not complete until that failure is captured in `verification.md` and `state.json`.
 
+## Fresh Evidence Rule
+
+After implementation changes, prior validation output becomes stale for the affected scope.
+
+Verification must:
+
+- rerun the relevant checks
+- request re-review when blocking findings were fixed
+- avoid success claims based on pre-fix evidence
+
 ## TDD and Debugging Expectations
 
 For bug fixes and behavioral changes, verify should check whether execution respected the smallest correct test-first or failure-first discipline.
@@ -82,6 +94,15 @@ When the work is still inconclusive or bug-oriented, include a debugging trace:
 - next probe if the result is still uncertain
 
 If the cause is still uncertain, invoke `aw-systematic-debugging` before closing the verify outcome.
+
+## Review Request and Reception
+
+Verification uses `aw-review-loop` to both request and receive review:
+
+- request the narrowest correct review scope
+- classify findings by severity and evidence
+- avoid treating reviewer acknowledgment as proof
+- require fresh evidence before findings move to resolved
 
 ## PR Governance
 
@@ -107,6 +128,7 @@ Confirm at least:
 - do not skip command output when checks can be run
 - do not deploy from `aw-verify`
 - do not return early on failure before writing `verification.md` and `state.json`
+- do not clear blocking findings on stale validation output
 
 ## Verification Report
 

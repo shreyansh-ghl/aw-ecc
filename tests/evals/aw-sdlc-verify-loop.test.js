@@ -32,6 +32,8 @@ function run() {
     assert.ok(verifyCommand.includes('recommend `/aw:execute` as the next stage'));
     assert.ok(verifySkill.includes('verification is not complete until that failure is captured'));
     assert.ok(verifyCommand.includes('failed verify artifact is the evidence'));
+    assert.ok(verifySkill.includes('Fresh Evidence Rule'));
+    assert.ok(verifyCommand.includes('stale evidence'));
   })) passed++; else failed++;
 
   if (test('verify strengthens debugging and TDD-as-policy expectations', () => {

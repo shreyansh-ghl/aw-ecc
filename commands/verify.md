@@ -60,6 +60,7 @@ Produce objective evidence that the work is correct, compliant, and ready for re
 ## Hard Gates
 
 - no pass claim without evidence
+- no completion claim survives stale evidence after code changes
 - unit testing belongs in `local_validation`
 - PR governance cannot pass if the PR checklist says verification is incomplete
 - deploy must not happen before verify succeeds
@@ -82,7 +83,8 @@ When findings block release:
 2. name the required repair scope
 3. recommend `/aw:execute` as the next stage
 4. require re-review after the repair
-5. persist the failing verification artifact before returning
+5. rerun the affected checks instead of reusing pre-fix evidence
+6. persist the failing verification artifact before returning
 
 Verification should preserve the distinction between:
 

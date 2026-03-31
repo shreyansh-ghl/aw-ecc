@@ -38,29 +38,48 @@ If the user supplies an already-approved direct technical request, use that as t
 Always:
 
 1. load the approved execution input
-2. choose the smallest correct execution mode
-3. break non-trivial work into explicit task units
-4. package the minimum correct context for the current task unit instead of reopening the entire plan every time
-5. when the work is a bug fix or failing-behavior repair, capture reproduction and root-cause evidence before patching
-6. assign clear internal ownership for the current task unit
-7. implement the required change without reopening planning
-8. run a `spec_review` before marking a task unit complete
-9. run a `quality_review` before handing off
-10. run relevant local validation commands when available
-11. write `.aw_docs/features/<feature_slug>/execution.md`
-12. update `.aw_docs/features/<feature_slug>/state.json`
-13. hand off to `aw-verify`
+2. critically review the approved input before changing code
+3. if the plan has a critical gap, contradiction, or missing dependency, stop and route back to `aw-plan`
+4. choose the smallest correct execution mode
+5. break non-trivial work into explicit task units
+6. package the minimum correct context for the current task unit instead of reopening the entire plan every time
+7. when the work is a bug fix or failing-behavior repair, capture reproduction and root-cause evidence before patching
+8. assign clear internal ownership for the current task unit
+9. implement the required change without reopening planning
+10. run a `spec_review` before marking a task unit complete
+11. run a `quality_review` before handing off
+12. run relevant local validation commands when available
+13. write `.aw_docs/features/<feature_slug>/execution.md`
+14. update `.aw_docs/features/<feature_slug>/state.json`
+15. hand off to `aw-verify`
+
+## Plan Intake Review
+
+Before execution starts, review the approved input critically.
+
+Stop and route back to planning when the plan has any of these problems:
+
+- missing file scope for a non-trivial task
+- undefined helper, interface, type, or command
+- contradictory instructions across `spec.md`, `tasks.md`, or `design.md`
+- no meaningful failing signal for a behavioral change when the repo can support one
+- hidden dependency or environment assumption that execution would have to guess
+
+Execution should not "fill in the blanks" on critical plan gaps.
 
 ## Task-Unit Orchestration
 
 When the execution input implies more than one meaningful step, use this internal loop:
 
 1. identify the next task unit
+2. mark it as `in_progress`
 2. name the task goal, affected files, and required inputs
-3. build only that unit
-4. run `spec_review`
-5. run `quality_review`
-6. either mark the unit complete or stop on a named blocker
+3. follow the approved task steps exactly when `tasks.md` provides step-level instructions
+4. build only that unit
+5. run `spec_review`
+6. run `quality_review`
+7. either mark the unit complete or stop on a named blocker
+8. mark completed units explicitly before moving on
 
 Independent units may be flagged as `parallel_candidate`, but the public surface remains a single `/aw:execute` stage.
 
@@ -107,7 +126,19 @@ When work is not clearly independent, stay sequential.
 
 ## TDD Policy
 
-For code changes, prefer explicit RED-GREEN-REFACTOR or failure-first behavior where the repo can support it.
+For code changes, use explicit RED-GREEN-REFACTOR or failure-first behavior wherever the repo can support it.
+
+The iron law is:
+
+`NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST`
+
+When a runnable automated test is practical:
+
+- write the failing test first
+- Verify RED by watching it fail for the expected reason
+- write the minimal change
+- Verify GREEN by rerunning the relevant checks and confirming the expected pass
+- refactor only after green
 
 - reuse an existing failing test if it already captures the bug
 - add or update the smallest correct automated test when the behavior is testable
@@ -115,6 +146,7 @@ For code changes, prefer explicit RED-GREEN-REFACTOR or failure-first behavior w
 - record the `RED` signal, the minimal `GREEN` change, and any `REFACTOR` follow-up in `execution.md`
 - record test limitations in `execution.md` instead of silently skipping them
 - when a new failing automated test is not practical, record the reproduction signal and why that was the smallest correct substitute
+- if production code was written before the failing signal existed, do not treat that as compliant TDD; rewrite the slice from the failing signal forward
 
 For bug-oriented work, use `aw-systematic-debugging` to drive:
 
@@ -122,6 +154,16 @@ For bug-oriented work, use `aw-systematic-debugging` to drive:
 - expected vs actual behavior
 - root-cause hypothesis
 - confirming probe before broad fixes
+
+## When to Stop and Ask for Help
+
+Stop execution instead of guessing when:
+
+- a dependency or environment prerequisite is missing
+- the approved plan cannot be executed as written
+- verification fails repeatedly on the same task unit
+- the root cause is still unclear after the next confirming probe
+- the work would require coding directly on `main` or `master` without explicit consent
 
 ## Hard Gates
 
@@ -135,6 +177,7 @@ For bug-oriented work, use `aw-systematic-debugging` to drive:
 - do not skip the debugging trail when the root cause was initially uncertain
 - do not run overlapping parallel workers on the same write scope
 - do not leave worker ownership implicit for non-trivial task units
+- do not push through critical plan gaps that should have sent the work back to planning
 
 ## Execution Report
 
@@ -161,6 +204,7 @@ For bug-oriented work, use `aw-systematic-debugging` to drive:
 - `stage: "execute"`
 - `mode`
 - `status`
+- plan intake result
 - completed task units
 - pending task units or blockers
 - written artifacts

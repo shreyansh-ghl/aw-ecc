@@ -76,6 +76,12 @@ Examples:
 - "Create the implementation spec."
 - "Break this into execution tasks."
 
+Internal planning should then use the smallest correct graph:
+
+- `aw-brainstorm` for fuzzy or overscoped requests
+- `aw-spec-author` for the technical contract
+- `aw-task-planner` for execution-ready `tasks.md`
+
 ### Route to `/aw:execute`
 
 Use when the request is about:

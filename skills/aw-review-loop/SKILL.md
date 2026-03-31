@@ -28,6 +28,34 @@ The public review surface remains `/aw:verify`.
 7. mark findings as resolved, partially resolved, or unresolved
 8. require re-review before prior blocking findings can be considered cleared
 
+## Requested Review Pattern
+
+Every review request should name:
+
+- what is being reviewed
+- why it is being reviewed now
+- which findings would block release or handoff
+- what evidence already exists
+
+Request the smallest correct review for the current stage instead of asking for an unfocused "look over everything."
+
+## Receiving Findings
+
+When findings come back:
+
+- do not collapse them into performative agreement
+- acknowledge the technical issue or ask for the smallest needed clarification
+- translate blocking findings into a repair scope for `aw-execute`
+- keep advisory findings visible without pretending they were blockers
+
+## Re-review Discipline
+
+After repairs:
+
+- compare against the original finding, not against a vague memory
+- require fresh evidence for any claimed resolution
+- keep findings `partially resolved` when only part of the issue moved
+
 ## Findings Format
 
 Every finding should include:
@@ -44,6 +72,7 @@ Every finding should include:
 - do not treat “looks good” as a complete review result
 - do not mark a blocking finding resolved without comparing it to the updated work
 - do not create a new public review command
+- do not treat review acknowledgment as equivalent to review resolution
 
 ## Final Output Shape
 

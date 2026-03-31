@@ -32,6 +32,23 @@ function run() {
       'Execution-Ready Tasks',
       'validation command or evidence target',
       'parallel_candidate',
+      'Internal Skill Graph',
+      'aw-spec-author',
+      'aw-task-planner',
+    ]) {
+      assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
+    }
+  })) passed++; else failed++;
+
+  if (test('plan requires recipe-level task depth instead of vague implementation bullets', () => {
+    for (const phrase of [
+      '2-5 minutes',
+      'exact file paths',
+      'exact commands and expected outcomes',
+      'commit boundaries',
+      'No Placeholders',
+      'Plan Self-Review',
+      'Execution Handoff',
     ]) {
       assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
     }
@@ -39,9 +56,14 @@ function run() {
 
   if (test('public plan command stays thin while requiring concrete planning depth', () => {
     assert.ok(planCommand.includes('## Planning Depth'));
-    assert.ok(planCommand.includes('file scope'));
+    assert.ok(planCommand.includes('exact file paths'));
+    assert.ok(planCommand.includes('2-5 minute checkbox steps'));
+    assert.ok(planCommand.includes('exact commands with expected failure or pass signals'));
     assert.ok(planCommand.includes('validation commands or evidence targets'));
     assert.ok(planCommand.includes('Execution Readiness'));
+    assert.ok(planCommand.includes('aw-brainstorm'));
+    assert.ok(planCommand.includes('aw-spec-author'));
+    assert.ok(planCommand.includes('aw-task-planner'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

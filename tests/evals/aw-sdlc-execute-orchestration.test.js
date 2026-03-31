@@ -30,6 +30,8 @@ function run() {
     assert.ok(executeCommand.includes('## Internal Task Loop'));
     assert.ok(executeSkill.includes('task units completed'));
     assert.ok(executeCommand.includes('task_unit'));
+    assert.ok(executeSkill.includes('mark it as `in_progress`'));
+    assert.ok(executeCommand.includes('Mark the active task unit in progress'));
   })) passed++; else failed++;
 
   if (test('execute requires spec and quality review before handoff', () => {
@@ -40,6 +42,18 @@ function run() {
       'code-quality review',
     ]) {
       assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `Missing execute guidance for ${phrase}`);
+    }
+  })) passed++; else failed++;
+
+  if (test('execute reviews plans critically before coding and routes back on critical gaps', () => {
+    for (const phrase of [
+      'Plan Intake Review',
+      'route back to `aw-plan`',
+      'missing file scope for a non-trivial task',
+      'undefined helper, interface, type, or command',
+      'do not guess through a broken plan',
+    ]) {
+      assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `Missing execute intake guidance for ${phrase}`);
     }
   })) passed++; else failed++;
 

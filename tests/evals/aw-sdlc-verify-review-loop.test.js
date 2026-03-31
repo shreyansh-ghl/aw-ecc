@@ -31,6 +31,7 @@ function run() {
       'review scope requested',
       'mark prior findings as resolved, partially resolved, or unresolved',
       'finding resolution state during re-review',
+      'fresh evidence after repair',
     ]) {
       assert.ok(verifySkill.includes(phrase), `verify skill is missing ${phrase}`);
     }
@@ -42,6 +43,9 @@ function run() {
       'code quality',
       'translate blocking findings into a repair scope',
       'resolved, partially resolved, or unresolved',
+      'Requested Review Pattern',
+      'Receiving Findings',
+      'Re-review Discipline',
     ]) {
       assert.ok(reviewLoopSkill.includes(phrase), `review-loop skill is missing ${phrase}`);
     }
