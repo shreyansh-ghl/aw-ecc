@@ -116,6 +116,7 @@ For stage-specific work, prefer the stage commands directly.
 
 `aw-prepare` is internal only and must not become a public command.
 It may use `aw-brainstorm` or `aw-finish` only as compatibility helpers, not as the canonical path.
+When preparation materializes a dedicated branch-backed worktree, it should persist `.aw_docs/features/<feature_slug>/workspace.json` so later finish or deploy steps can reuse the same lifecycle metadata.
 When `aw-prepare` detects a snapshot workspace without live git metadata, `/aw:ship` should keep planning, execution, verification, and evidence-writing stages moving unless the next action requires a real external side effect.
 
 ## Final Output Shape

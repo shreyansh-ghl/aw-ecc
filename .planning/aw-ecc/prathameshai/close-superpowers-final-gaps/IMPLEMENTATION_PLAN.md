@@ -18,7 +18,7 @@ Iteration: 1
 - **Files:** `skills/aw-prepare/SKILL.md`, `skills/aw-finish/SKILL.md`, `skills/aw-ship/SKILL.md`, `commands/ship.md`, `skills/aw-prepare/scripts/*`, `tests/evals/*worktree*`
 - **Patterns:** branch-backed worktree creation, workspace metadata handoff, safe cleanup rules
 - **Related solutions:** none found in `content/solutions/`
-- **Status:** pending
+- **Status:** done
 
 ### 3. Productize the internal worker runtime for aw-execute
 - **Why:** AW describes worker roles well but still lacks concrete worker runtime assets and bundle generation.

@@ -18,6 +18,7 @@ Always check the smallest correct set of:
 - current branch or worktree isolation
 - dirty tracked or untracked state that could contaminate the requested work
 - feature slug and artifact baseline
+- workspace metadata handoff for the active feature
 - obvious runnable baseline validation when it is cheap and safe
 - deploy-target prerequisites when the next stage is release-oriented
 
@@ -41,6 +42,30 @@ When isolation is weaker than `isolated-worktree`, preparation should recommend 
 - stash or isolate unrelated local changes
 - continue in degraded snapshot mode with blocked external side effects
 
+## Operational Lifecycle
+
+When a dedicated worktree is the right isolation boundary, use the repo-local orchestration helpers instead of leaving setup implicit:
+
+- `node scripts/orchestrate-worktrees.js <plan.json>` to render the branch-backed worktree plan
+- `node scripts/orchestrate-worktrees.js <plan.json> --execute` to create the worktree session
+- `node scripts/orchestration-status.js <plan.json|session-name>` to inspect the resulting orchestration snapshot
+
+For single-worker isolation, a one-worker orchestration plan is valid.
+Do not invent a separate workflow for "simple" worktree creation.
+
+## Workspace Metadata
+
+When preparation creates, selects, or reuses an isolated workspace, persist `.aw_docs/features/<feature_slug>/workspace.json` with the minimum useful fields:
+
+- `feature_slug`
+- `isolation_level`
+- `branch_name`
+- `worktree_path`
+- `coordination_dir`
+- `cleanup_policy`
+- `status_command`
+- `recommended_next`
+
 ## Required Behavior
 
 1. detect whether the work is running in an isolated branch or worktree
@@ -48,9 +73,10 @@ When isolation is weaker than `isolated-worktree`, preparation should recommend 
 3. confirm the intended feature slug and relevant AW artifact directory
 4. recommend the smallest isolation action when the current workspace is weaker than ideal
 5. capture baseline commands that should be rerun later when practical
-6. hand back a preparation summary to the calling stage
-7. when repo metadata is unavailable because the work is running inside a source snapshot or eval workspace, record degraded isolation as a warning and continue when local artifact work is still safe
-8. only hard-block on missing git metadata when the next action truly requires live branch, PR, or deployment execution that cannot be represented safely as blocked evidence
+6. write or update `workspace.json` when a dedicated branch or worktree is selected
+7. hand back a preparation summary to the calling stage
+8. when repo metadata is unavailable because the work is running inside a source snapshot or eval workspace, record degraded isolation as a warning and continue when local artifact work is still safe
+9. only hard-block on missing git metadata when the next action truly requires live branch, PR, or deployment execution that cannot be represented safely as blocked evidence
 
 ## Hard Gates
 
@@ -75,6 +101,7 @@ Preparation output should capture:
 - blockers or warnings
 - recommended next stage
 - whether the stage is continuing in degraded snapshot mode
+- workspace metadata path, when written
 
 ## Final Output Shape
 
@@ -87,4 +114,5 @@ Always end with:
 - `Artifacts Found`
 - `Baseline Checks`
 - `Warnings`
+- `Workspace Metadata`
 - `Recommended Next`

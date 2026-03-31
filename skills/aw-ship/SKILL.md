@@ -78,6 +78,7 @@ Before execution or deploy-oriented work:
 
 - run `aw-prepare`
 - confirm branch or worktree isolation is acceptable for the requested flow
+- use `.aw_docs/features/<feature_slug>/workspace.json` when preparation materialized a dedicated worktree lifecycle
 - confirm required artifacts and setup prerequisites exist
 - stop early if setup blockers make the next stage unsafe
 - if repo metadata is missing only because the work is running in a source snapshot or eval workspace, record the degraded isolation warning and continue with local artifact stages

@@ -23,6 +23,13 @@ Use this skill to close out verified branch work safely:
 - execute the selected path
 - clean up the worktree only when appropriate
 
+If `.aw_docs/features/<feature_slug>/workspace.json` exists, use it as the source of truth for:
+
+- the active branch and worktree path
+- cleanup policy
+- orchestration coordination directory
+- the recommended `node scripts/orchestration-status.js ...` status command
+
 Staging or production deployment requests should stay on `aw-deploy`.
 
 ## Completion Flow
@@ -36,6 +43,7 @@ Staging or production deployment requests should stay on `aw-deploy`.
    - discard
 4. execute the selected path
 5. clean up the worktree when the selected path requires cleanup
+6. update or clear `workspace.json` to reflect the final cleanup decision
 
 ## Required Options
 
@@ -46,22 +54,26 @@ Staging or production deployment requests should stay on `aw-deploy`.
 - merge the verified branch
 - rerun the minimum correct verification
 - remove the branch or worktree when safe
+- clear `workspace.json` when cleanup completed successfully
 
 ### Option 2: Push and Create PR
 
 - push the branch
 - create or update the PR with concise summary and test plan
 - keep the worktree if the branch remains active
+- preserve `workspace.json` for the active branch lifecycle
 
 ### Option 3: Keep As-Is
 
 - keep the branch and worktree intact
 - report the branch name and next expected action
+- keep `workspace.json` intact for follow-up work
 
 ### Option 4: Discard
 
 - require explicit confirmation
 - delete the branch or worktree only after confirmation
+- remove `workspace.json` only after cleanup succeeds
 
 ## Worktree Cleanup Rule
 

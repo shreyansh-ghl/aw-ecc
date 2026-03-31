@@ -4,59 +4,79 @@
 const fs = require('fs');
 const path = require('path');
 
-const { inspectSessionTarget } = require('./lib/session-adapters/registry');
+const { slugify } = require('./lib/tmux-worktree-orchestrator');
 
 function usage() {
-  console.log([
-    'Usage:',
-    '  node scripts/orchestration-status.js <session-name|plan.json> [--write <output.json>]',
-    '',
-    'Examples:',
-    '  node scripts/orchestration-status.js workflow-visual-proof',
-    '  node scripts/orchestration-status.js .claude/plan/workflow-visual-proof.json',
-    '  node scripts/orchestration-status.js .claude/plan/workflow-visual-proof.json --write /tmp/snapshot.json'
-  ].join('\n'));
+  console.error('Usage: node scripts/orchestration-status.js <plan.json|session-name>');
 }
 
-function parseArgs(argv) {
-  const args = argv.slice(2);
-  const target = args.find(arg => !arg.startsWith('--'));
-  const writeIndex = args.indexOf('--write');
-  const writePath = writeIndex >= 0 ? args[writeIndex + 1] : null;
+function buildPlanSnapshot(planPath, planConfig) {
+  const repoRoot = path.resolve(planConfig.repoRoot || path.dirname(planPath));
+  const sessionId = slugify(planConfig.sessionName || path.basename(planPath, path.extname(planPath)));
 
-  return { target, writePath };
+  return {
+    schemaVersion: 'ecc.session.v1',
+    adapterId: 'dmux-tmux',
+    session: {
+      id: sessionId,
+      kind: 'orchestrated',
+      state: 'planned',
+      repoRoot,
+      sourceTarget: {
+        type: 'plan',
+        value: planPath,
+      },
+    },
+    workers: [],
+    aggregates: {
+      workerCount: 0,
+      states: {},
+      healths: {},
+    },
+  };
+}
+
+function buildSessionSnapshot(sessionName) {
+  return {
+    schemaVersion: 'ecc.session.v1',
+    adapterId: 'dmux-tmux',
+    session: {
+      id: slugify(sessionName),
+      kind: 'orchestrated',
+      state: 'unknown',
+      repoRoot: null,
+      sourceTarget: {
+        type: 'session',
+        value: sessionName,
+      },
+    },
+    workers: [],
+    aggregates: {
+      workerCount: 0,
+      states: {},
+      healths: {},
+    },
+  };
 }
 
 function main() {
-  const { target, writePath } = parseArgs(process.argv);
-
+  const target = process.argv[2];
   if (!target) {
     usage();
     process.exit(1);
   }
 
-  const snapshot = inspectSessionTarget(target, {
-    cwd: process.cwd(),
-    adapterId: 'dmux-tmux'
-  });
-  const json = JSON.stringify(snapshot, null, 2);
+  const resolvedTarget = path.resolve(process.cwd(), target);
+  let snapshot;
 
-  if (writePath) {
-    const absoluteWritePath = path.resolve(writePath);
-    fs.mkdirSync(path.dirname(absoluteWritePath), { recursive: true });
-    fs.writeFileSync(absoluteWritePath, json + '\n', 'utf8');
+  if (fs.existsSync(resolvedTarget) && fs.statSync(resolvedTarget).isFile()) {
+    const planConfig = JSON.parse(fs.readFileSync(resolvedTarget, 'utf8'));
+    snapshot = buildPlanSnapshot(resolvedTarget, planConfig);
+  } else {
+    snapshot = buildSessionSnapshot(target);
   }
 
-  console.log(json);
+  process.stdout.write(`${JSON.stringify(snapshot, null, 2)}\n`);
 }
 
-if (require.main === module) {
-  try {
-    main();
-  } catch (error) {
-    console.error(`[orchestration-status] ${error.message}`);
-    process.exit(1);
-  }
-}
-
-module.exports = { main };
+main();
