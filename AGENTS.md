@@ -21,6 +21,18 @@ Those stay internal behind the AW stage boundary.
 - Route by intent when the request is clear.
 - Use `/aw:ship` only for explicit end-to-end or multi-release requests.
 
+## Activation Rule
+
+Before any substantive response:
+
+1. resolve the request to one AW public route
+2. prefer the explicit public command when the user names it
+3. otherwise choose the smallest correct AW stage by intent
+4. only after the route is selected, load deeper domain or internal helper behavior
+
+Do not begin with generic workflow commentary, implementation advice, or release guidance before the AW route is selected.
+Do not bypass repo-local AW routing just because a global or parent workspace instruction layer also exists.
+
 ## Fast Path
 
 When `.aw_docs/features/<feature_slug>/spec.md` and concrete approved execution inputs already exist:

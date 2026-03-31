@@ -25,6 +25,17 @@ There is also one explicit power command:
 `/aw:ship` is for clearly end-to-end requests.
 It should not become the default route for normal stage-specific work.
 
+## Always-On Activation
+
+Before any substantive response, this router must select one AW public route.
+
+- explicit user command -> honor that command first
+- clear intent -> map to the smallest correct AW public route
+- only after that route is selected, load deeper domain skills or internal helpers
+
+Do not start with generic implementation, review, or deploy advice before route selection.
+Do not leave the active route implicit for non-trivial work.
+
 ## Routing Priority
 
 1. Explicit user instructions
@@ -138,6 +149,8 @@ Examples:
 - A deploy request should not reopen planning.
 - A verify request should not silently implement code.
 - A technical planning request must not force a PRD first when the request is already well defined.
+- Do not produce a substantive non-routing response before the AW route is selected.
+- Do not skip repo-local AW routing because a parent workspace or global registry also has instructions.
 
 ## Internal Helpers
 

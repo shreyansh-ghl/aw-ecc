@@ -11,7 +11,7 @@ Iteration: 1
 - **Files:** `AGENTS.md`, `skills/using-aw-skills/SKILL.md`, `skills/using-aw-skills/hooks/session-start.sh`, `tests/evals/*activation*`
 - **Patterns:** repo-local first-response contract, session-start route enforcement
 - **Related solutions:** none found in `content/solutions/`
-- **Status:** pending
+- **Status:** done
 
 ### 2. Add operational worktree lifecycle support
 - **Why:** `aw-prepare` currently classifies and recommends, but does not provide a concrete lifecycle helper that `aw-ship` and `aw-finish` can rely on.

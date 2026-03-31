@@ -99,6 +99,12 @@ done
 # --- Combine into additionalContext ---
 CONTEXT="# AW Session Context
 
+## First Response Rule
+Before any substantive response, select one AW public route from the repo-local router.
+Honor an explicit AW command first.
+Otherwise choose the smallest correct route by intent, then load deeper domain skills.
+Do not start with generic implementation, review, or deploy advice before route selection.
+
 ## Available Skills
 ${SKILLS_LIST}
 

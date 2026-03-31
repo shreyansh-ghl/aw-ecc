@@ -38,6 +38,7 @@ run_deterministic() {
   run "Customer coverage" node "$ROOT_DIR/tests/evals/aw-sdlc-customer-coverage.test.js"
   run "Default session coverage" node "$ROOT_DIR/tests/evals/aw-sdlc-default-session-coverage.test.js"
   run "Session hook precedence" node "$ROOT_DIR/tests/evals/aw-sdlc-session-hook-precedence.test.js"
+  run_optional_test_group "aw-sdlc-activation-*.test.js" "Activation"
   run "GHL staging baselines" node "$ROOT_DIR/tests/evals/aw-sdlc-ghl-staging-baselines.test.js"
   run "Eval workspace isolation" node "$ROOT_DIR/tests/evals/aw-sdlc-eval-workspace-isolation.test.js"
   run_optional_test_group "aw-sdlc-plan-*.test.js" "Plan"
