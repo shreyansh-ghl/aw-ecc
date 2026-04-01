@@ -1,14 +1,14 @@
 ---
-name: aw-task-planner
-description: Internal task-planning helper that turns an approved spec into a recipe-level tasks.md artifact for aw-execute.
+name: aw-tasks
+description: Internal task helper that turns an approved spec into a recipe-level tasks.md artifact for aw-execute.
 trigger: Internal only. Invoked by aw-plan after spec authoring or when an existing spec must be expanded into execution-ready tasks.
 ---
 
-# AW Task Planner
+# AW Tasks
 
 ## Purpose
 
-`aw-task-planner` owns `tasks.md`.
+`aw-tasks` owns `tasks.md`.
 It turns an approved technical contract into a fresh-worker execution recipe without adding a new public planning command.
 
 The canonical public route remains `/aw:plan`.

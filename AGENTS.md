@@ -20,7 +20,7 @@ Those stay internal behind the AW stage boundary.
 - Prefer `skills/using-aw-skills/SKILL.md` for repo-local routing.
 - Route by intent when the request is clear.
 - Use `/aw:ship` only for explicit end-to-end or multi-release requests.
-- Keep the public route at `/aw:plan` even when planning internally uses `aw-brainstorm`, `aw-spec-author`, and `aw-task-planner`.
+- Keep the public route at `/aw:plan` even when planning internally uses `aw-brainstorm`, `aw-spec`, and `aw-tasks`.
 
 ## Activation Rule
 

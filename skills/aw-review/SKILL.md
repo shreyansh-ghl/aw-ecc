@@ -1,14 +1,14 @@
 ---
-name: aw-review-loop
-description: Internal review orchestration helper that requests targeted review, normalizes findings, and drives fix and re-review loops without creating a new public command.
+name: aw-review
+description: Internal review helper that requests targeted review, normalizes findings, and drives fix and re-review loops without creating a new public command.
 trigger: Internal only. Invoked by aw-verify when review findings must be requested, classified, and revisited after fixes.
 ---
 
-# AW Review Loop
+# AW Review
 
 ## Purpose
 
-`aw-review-loop` is a reusable internal helper for review rigor.
+`aw-review` is a reusable internal helper for review rigor.
 It turns broad review requests into explicit findings, repair scope, and re-review outcomes.
 
 The public review surface remains `/aw:verify`.

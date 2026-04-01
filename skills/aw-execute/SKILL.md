@@ -9,7 +9,7 @@ trigger: User requests implementation of approved work, or `/aw:ship` needs to m
 ## Purpose
 
 `aw-execute` owns implementation only.
-It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, uses `aw-systematic-debugging` when bug work is still uncertain, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
+It reads approved planning inputs, may run `aw-prepare` as a hidden setup gate, uses `aw-debug` when bug work is still uncertain, makes the minimum correct changes, runs the relevant local checks when possible, and writes execution evidence.
 For non-trivial work, it should behave like a bounded internal worker system rather than one long undifferentiated implementation step.
 
 ## Inputs
@@ -148,7 +148,7 @@ When a runnable automated test is practical:
 - when a new failing automated test is not practical, record the reproduction signal and why that was the smallest correct substitute
 - if production code was written before the failing signal existed, do not treat that as compliant TDD; rewrite the slice from the failing signal forward
 
-For bug-oriented work, use `aw-systematic-debugging` to drive:
+For bug-oriented work, use `aw-debug` to drive:
 
 - reproduction
 - expected vs actual behavior

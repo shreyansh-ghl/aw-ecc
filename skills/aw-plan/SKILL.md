@@ -35,8 +35,8 @@ Always:
 Use the smallest correct internal route:
 
 - fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`
-- approved direction but missing technical contract -> `aw-spec-author`
-- approved spec but missing execution recipe -> `aw-task-planner`
+- approved direction but missing technical contract -> `aw-spec`
+- approved spec but missing execution recipe -> `aw-tasks`
 - already execution-ready tasks -> stop and recommend `aw-execute`
 
 Do not collapse all of these responsibilities back into one vague planning pass.
@@ -89,7 +89,7 @@ Capture:
 
 ### `spec.md`
 
-Canonical internal owner: `aw-spec-author`
+Canonical internal owner: `aw-spec`
 
 Capture:
 
@@ -105,7 +105,7 @@ Capture:
 
 ### `tasks.md`
 
-Canonical internal owner: `aw-task-planner`
+Canonical internal owner: `aw-tasks`
 
 Start with a short header that captures:
 

@@ -22,21 +22,21 @@ function run() {
 
   const brainstormSkill = snapshot.readFile('skills/aw-brainstorm/SKILL.md');
   const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
-  const specAuthorSkill = snapshot.readFile('skills/aw-spec-author/SKILL.md');
-  const taskPlannerSkill = snapshot.readFile('skills/aw-task-planner/SKILL.md');
+  const specAuthorSkill = snapshot.readFile('skills/aw-spec/SKILL.md');
+  const taskPlannerSkill = snapshot.readFile('skills/aw-tasks/SKILL.md');
   let passed = 0;
   let failed = 0;
 
   if (test('repo ships dedicated spec-author and task-planner internal skills', () => {
-    assert.ok(snapshot.fileExists('skills/aw-spec-author/SKILL.md'));
-    assert.ok(snapshot.fileExists('skills/aw-task-planner/SKILL.md'));
+    assert.ok(snapshot.fileExists('skills/aw-spec/SKILL.md'));
+    assert.ok(snapshot.fileExists('skills/aw-tasks/SKILL.md'));
   })) passed++; else failed++;
 
   if (test('aw-plan routes work through an explicit internal planning graph', () => {
     for (const phrase of [
       'fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`',
-      'approved direction but missing technical contract -> `aw-spec-author`',
-      'approved spec but missing execution recipe -> `aw-task-planner`',
+      'approved direction but missing technical contract -> `aw-spec`',
+      'approved spec but missing execution recipe -> `aw-tasks`',
       'already execution-ready tasks -> stop and recommend `aw-execute`',
     ]) {
       assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
@@ -48,7 +48,7 @@ function run() {
       'explore project context first',
       'request is too large for one spec',
       'run a quick self-review',
-      'hand the approved direction to `aw-spec-author`',
+      'hand the approved direction to `aw-spec`',
     ]) {
       assert.ok(brainstormSkill.includes(phrase), `aw-brainstorm is missing ${phrase}`);
     }

@@ -21,7 +21,7 @@ function run() {
   console.log(`\n=== AW SDLC Execute Debugging (${REF}) ===\n`);
 
   const executeSkill = snapshot.readFile('skills/aw-execute/SKILL.md');
-  const debugSkill = snapshot.readFile('skills/aw-systematic-debugging/SKILL.md');
+  const debugSkill = snapshot.readFile('skills/aw-debug/SKILL.md');
   let passed = 0;
   let failed = 0;
 
@@ -40,7 +40,7 @@ function run() {
   })) passed++; else failed++;
 
   if (test('execute can invoke systematic debugging for bug-oriented work', () => {
-    assert.ok(executeSkill.includes('aw-systematic-debugging'));
+    assert.ok(executeSkill.includes('aw-debug'));
     for (const phrase of [
       'The Four Phases',
       'Phase 1: Root Cause Investigation',

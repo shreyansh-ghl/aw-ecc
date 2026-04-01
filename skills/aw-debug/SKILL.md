@@ -1,14 +1,14 @@
 ---
-name: aw-systematic-debugging
+name: aw-debug
 description: Internal bug-fix helper that drives reproduction, root-cause isolation, confirming probes, and fix verification before work is declared complete.
 trigger: Internal only. Invoked by aw-execute or aw-verify when a bug, failing test, or uncertain behavior needs structured debugging.
 ---
 
-# AW Systematic Debugging
+# AW Debug
 
 ## Purpose
 
-`aw-systematic-debugging` is the internal debugging playbook.
+`aw-debug` is the internal debugging playbook.
 It keeps bug work from devolving into guess-and-patch behavior.
 
 ## Iron Law

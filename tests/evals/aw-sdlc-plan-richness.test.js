@@ -33,8 +33,8 @@ function run() {
       'validation command or evidence target',
       'parallel_candidate',
       'Internal Skill Graph',
-      'aw-spec-author',
-      'aw-task-planner',
+      'aw-spec',
+      'aw-tasks',
     ]) {
       assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
     }
@@ -62,8 +62,8 @@ function run() {
     assert.ok(planCommand.includes('validation commands or evidence targets'));
     assert.ok(planCommand.includes('Execution Readiness'));
     assert.ok(planCommand.includes('aw-brainstorm'));
-    assert.ok(planCommand.includes('aw-spec-author'));
-    assert.ok(planCommand.includes('aw-task-planner'));
+    assert.ok(planCommand.includes('aw-spec'));
+    assert.ok(planCommand.includes('aw-tasks'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

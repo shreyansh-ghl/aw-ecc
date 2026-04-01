@@ -15,7 +15,7 @@ No completion claim survives stale evidence after the code has changed.
 ## Purpose
 
 `aw-verify` owns evidence, review, governance, and readiness.
-It uses `aw-review-loop` for findings rigor and may invoke `aw-systematic-debugging` when root cause is still unclear.
+It uses `aw-review` for findings rigor and may invoke `aw-debug` when root cause is still unclear.
 It must not write new implementation code unless the user explicitly switches back to execution.
 A `FAIL` result still counts as a completed verify stage only after the failure artifact is written to disk.
 
@@ -38,7 +38,7 @@ Always:
 2. compare the work against `.aw_docs/features/<feature_slug>/spec.md` when present
 3. run local validation commands when available
 4. inspect `PR_DESCRIPTION.md` or equivalent PR checklist when present
-5. request the smallest correct review scope through `aw-review-loop`
+5. request the smallest correct review scope through `aw-review`
 6. classify findings explicitly as blocking or non-blocking
 7. when blocking findings exist, produce a repair-focused handoff back to `aw-execute`
 8. require re-review after repair instead of carrying prior evidence forward
@@ -93,11 +93,11 @@ When the work is still inconclusive or bug-oriented, include a debugging trace:
 - confirming evidence
 - next probe if the result is still uncertain
 
-If the cause is still uncertain, invoke `aw-systematic-debugging` before closing the verify outcome.
+If the cause is still uncertain, invoke `aw-debug` before closing the verify outcome.
 
 ## Review Request and Reception
 
-Verification uses `aw-review-loop` to both request and receive review:
+Verification uses `aw-review` to both request and receive review:
 
 - request the narrowest correct review scope
 - classify findings by severity and evidence

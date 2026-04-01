@@ -32,12 +32,12 @@ const AW_CONTEXT_PATHS = [
   'skills/aw-ship/SKILL.md',
   'skills/aw-brainstorm/SKILL.md',
   'skills/aw-finish/SKILL.md',
-  'skills/aw-review-loop/SKILL.md',
-  'skills/aw-systematic-debugging/SKILL.md',
+  'skills/aw-review/SKILL.md',
+  'skills/aw-debug/SKILL.md',
   'docs/aw-sdlc-command-contracts.md',
   'docs/aw-sdlc-command-skill-architecture.md',
   'docs/aw-sdlc-verify-deploy-configuration.md',
-  'defaults/aw-sdlc/profiles.yml',
+  'defaults/aw-sdlc/baseline-profiles.yml',
 ];
 
 const AW_SHIP_FAST_PATHS = [
@@ -52,7 +52,7 @@ const AW_SHIP_FAST_PATHS = [
   'skills/aw-verify/SKILL.md',
   'skills/aw-deploy/SKILL.md',
   'skills/aw-ship/SKILL.md',
-  'defaults/aw-sdlc/profiles.yml',
+  'defaults/aw-sdlc/baseline-profiles.yml',
 ];
 
 function ensureCliAvailable(cliName) {

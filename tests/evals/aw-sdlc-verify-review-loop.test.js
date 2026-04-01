@@ -21,12 +21,12 @@ function run() {
   console.log(`\n=== AW SDLC Verify Review Loop (${REF}) ===\n`);
 
   const verifySkill = snapshot.readFile('skills/aw-verify/SKILL.md');
-  const reviewLoopSkill = snapshot.readFile('skills/aw-review-loop/SKILL.md');
+  const reviewLoopSkill = snapshot.readFile('skills/aw-review/SKILL.md');
   let passed = 0;
   let failed = 0;
 
   if (test('verify uses an explicit review-loop helper and tracks re-review resolution state', () => {
-    assert.ok(verifySkill.includes('aw-review-loop'));
+    assert.ok(verifySkill.includes('aw-review'));
     for (const phrase of [
       'review scope requested',
       'mark prior findings as resolved, partially resolved, or unresolved',

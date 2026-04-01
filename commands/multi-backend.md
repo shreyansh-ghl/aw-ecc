@@ -163,8 +163,8 @@ Integrate review feedback, execute optimization after user confirmation.
 
 Also activate the matching platform agent by task domain:
 
-- Backend/services → `platform-services-*`
-- Data layer → `platform-data-*`
-- Infra/deploy → `platform-infra-*`
+- Backend/services → `platform-services:*`
+- Data layer → `platform-data:*`
+- Infra/deploy → `platform-infra:*`
 
 For ALL activated agents: read frontmatter → load each skill from `skills:` array.

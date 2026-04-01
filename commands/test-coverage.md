@@ -73,5 +73,5 @@ Overall:               67%     84%  ✅
 ## GHL Platform Integration
 
 Also activate the matching `platform-sdet-*` agent.
-Also activate the domain-specific platform agent (backend → `platform-services-*`, frontend → `platform-frontend-*`).
+Also activate the domain-specific platform agent (backend → `platform-services:*`, frontend → `platform-frontend:*`).
 For ALL activated agents: read frontmatter → load each skill from `skills:` array.

@@ -1,14 +1,14 @@
 ---
-name: aw-spec-author
-description: Internal spec-authoring helper that turns an approved direction into a deterministic technical spec without writing implementation tasks or code.
+name: aw-spec
+description: Internal spec helper that turns an approved direction into a deterministic technical spec without writing implementation tasks or code.
 trigger: Internal only. Invoked by aw-plan after discovery is approved or when a technical contract must be written before task planning.
 ---
 
-# AW Spec Author
+# AW Spec
 
 ## Purpose
 
-`aw-spec-author` owns the technical contract layer inside AW planning.
+`aw-spec` owns the technical contract layer inside AW planning.
 It turns an approved direction into `.aw_docs/features/<feature_slug>/spec.md` without collapsing directly into implementation tasks.
 
 The public planning route remains `/aw:plan`.
@@ -22,7 +22,7 @@ The public planning route remains `/aw:plan`.
 5. run a fast self-review before handing the spec forward
 6. stop and surface approval questions when the proposed technical direction materially changes the user-approved design
 7. update `.aw_docs/features/<feature_slug>/state.json`
-8. hand the approved spec to `aw-task-planner`
+8. hand the approved spec to `aw-tasks`
 
 ## Required `spec.md` Content
 

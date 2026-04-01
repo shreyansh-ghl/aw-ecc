@@ -60,8 +60,8 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 2. Default to single-scope planning.
 3. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
 4. Use existing artifacts as inputs when they are already sufficient.
-5. Route approved technical direction through `aw-spec-author` before task planning.
-6. Route approved specs through `aw-task-planner` when execution-ready tasks are missing or stale.
+5. Route approved technical direction through `aw-spec` before task planning.
+6. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
 7. Do not require a PRD for a technical request that is already well defined.
 8. When writing technical or task artifacts, make them concrete enough for execution to proceed without re-planning file scope, validation, and task order.
 
@@ -103,8 +103,8 @@ When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 This command may still use internal helpers where useful, but the public contract remains `/aw:plan`.
 
 - discovery-heavy ideation should use `aw-brainstorm`
-- technical contract authoring should use `aw-spec-author`
-- execution-recipe task writing should use `aw-task-planner`
+- technical contract authoring should use `aw-spec`
+- execution-recipe task writing should use `aw-tasks`
 - the primary stage skill remains `aw-plan`
 
 ## Final Output Shape

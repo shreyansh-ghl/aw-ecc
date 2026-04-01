@@ -64,6 +64,15 @@ This supports both:
 - skill-first routing for default UX
 - explicit command use for deterministic workflows
 
+## Naming Layers
+
+Keep each layer named for one job only:
+
+- `/aw:*` names are the public commands developers use
+- `aw-*` names are repo-local stage or helper skills
+- `registry.json` is the external platform catalog of available entries
+- `baseline-profiles.yml` is the repo-local policy snapshot that selects playbooks by baseline
+
 ## Public Commands
 
 The minimal public interface remains:
@@ -112,8 +121,8 @@ Primary skill:
 Typical supporting skills:
 
 - `aw-brainstorm`
-- `aw-spec-author`
-- `aw-task-planner`
+- `aw-spec`
+- `aw-tasks`
 - product/spec-writing skills
 - design planning skills
 - architecture/design skills
@@ -127,8 +136,8 @@ Primary skill:
 
 Typical supporting skills:
 
-- `platform-core-fix-bug`
-- `aw-systematic-debugging`
+- `fix-bug`
+- `aw-debug`
 - `platform-services:*`
 - `platform-frontend:*`
 - `platform-data:*`
@@ -143,8 +152,8 @@ Primary skill:
 
 Typical supporting skills:
 
-- `aw-review-loop`
-- `aw-systematic-debugging`
+- `aw-review`
+- `aw-debug`
 - `platform-review:code-review-pr`
 - `platform-review:security-review`
 - `platform-review:architecture-review`
@@ -210,13 +219,13 @@ skills/
     SKILL.md
   aw-finish/
     SKILL.md
-  aw-spec-author/
+  aw-spec/
     SKILL.md
-  aw-task-planner/
+  aw-tasks/
     SKILL.md
-  aw-review-loop/
+  aw-review/
     SKILL.md
-  aw-systematic-debugging/
+  aw-debug/
     SKILL.md
   using-aw-skills/
     SKILL.md
@@ -237,7 +246,7 @@ To avoid duplication and drift:
 1. Never define the full workflow twice.
 2. Commands should describe the contract, not every detailed implementation step.
 3. Stage skills should implement the workflow, not redefine the public UX.
-4. Internal helpers such as `aw-brainstorm`, `aw-finish`, `aw-review-loop`, and `aw-systematic-debugging` should deepen behavior without becoming extra public stages.
+4. Internal helpers such as `aw-brainstorm`, `aw-finish`, `aw-review`, and `aw-debug` should deepen behavior without becoming extra public stages.
 5. Compatibility aliases should point back to the canonical public command.
 6. Skill-first routing should resolve to the smallest correct AW skill stack first and the matching public command with it, not jump directly to a random domain subskill.
 

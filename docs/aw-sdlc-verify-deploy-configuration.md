@@ -150,12 +150,12 @@ platform-docs/.aw_registry/platform/core/defaults/aw-sdlc/
 
 ```text
 defaults/aw-sdlc/
-  profiles.yml
+  baseline-profiles.yml
 ```
 
 Resolution order should be:
 
-1. repo-local `profile.yml`
+1. repo-local profile override
 2. detected GHL baseline profile by repo archetype
 3. GHL safe fallback profile
 4. fail closed for actions the fallback does not allow
@@ -609,7 +609,7 @@ and not coupled to:
 The intended 90% defaults are the YAML baseline catalogs:
 
 - [profiles.yml](/Users/prathameshai/Documents/Agentic%20Workspace/platform-docs/.aw_registry/platform/core/defaults/aw-sdlc/profiles.yml)
-- [profiles.yml](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/defaults/aw-sdlc/profiles.yml)
+- [baseline-profiles.yml](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/defaults/aw-sdlc/baseline-profiles.yml)
 
 Use the safe fallback only when archetype detection fails:
 

@@ -16,7 +16,7 @@ The canonical public route for planning remains `/aw:plan`.
 ## Hard Gate
 
 No implementation code may be written while discovery is still open.
-This skill stops at an approved direction and hands that direction to `aw-spec-author` through `aw-plan`.
+This skill stops at an approved direction and hands that direction to `aw-spec` through `aw-plan`.
 In other words, the public handoff is still: invoke `aw-plan`.
 
 ## Discovery Loop
@@ -36,7 +36,7 @@ Use this loop only when direct planning would otherwise guess:
 8. present the proposed direction in a way the user can approve or correct
 9. confirm the chosen direction or record the current best default
 10. run a quick self-review for placeholders, contradictions, ambiguity, and overscope
-11. hand the approved direction to `aw-spec-author` through `aw-plan`
+11. hand the approved direction to `aw-spec` through `aw-plan`
 
 ## Scope Check
 
@@ -65,7 +65,7 @@ If the topic is visual and the active harness supports it, a browser-based visua
 
 ## Required Output
 
-Produce a discovery summary that `aw-plan` and `aw-spec-author` can consume without redoing the ideation step.
+Produce a discovery summary that `aw-plan` and `aw-spec` can consume without redoing the ideation step.
 
 The summary should capture:
 
@@ -112,4 +112,4 @@ or pass it directly into `aw-plan`.
 
 ## Next Skill
 
-After the direction is approved, invoke `aw-plan`, which should then invoke `aw-spec-author`.
+After the direction is approved, invoke `aw-plan`, which should then invoke `aw-spec`.

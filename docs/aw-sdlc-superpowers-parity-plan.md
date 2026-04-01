@@ -78,6 +78,6 @@ Parity means:
 - hidden preparation layer under `aw-prepare`
 - stronger `/aw:execute` orchestration with task loops and failure-first guidance
 - findings -> fix -> re-review loop inside `/aw:verify`
-- internal `aw-review-loop` and `aw-systematic-debugging` helpers
+- internal `aw-review` and `aw-debug` helpers
 - deeper internal `aw-brainstorm` and safer compatibility `aw-finish`
 - installability docs and deterministic productization hardening

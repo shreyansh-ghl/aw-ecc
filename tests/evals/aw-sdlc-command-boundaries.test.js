@@ -7,7 +7,7 @@ const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
 const PUBLIC_COMMANDS = ['plan', 'execute', 'verify', 'deploy', 'ship'];
-const INTERNAL_HELPER_TOKENS = ['aw-review-loop', 'aw-systematic-debugging'];
+const INTERNAL_HELPER_TOKENS = ['aw-review', 'aw-debug'];
 const LEGACY_HELPERS = [
   { command: 'brainstorm', canonical: '/aw:plan' },
   { command: 'finish', canonical: '/aw:deploy' },
@@ -60,8 +60,8 @@ function run() {
   })) passed++; else failed++;
 
   if (test('specialized review and debugging behavior lives in internal skills', () => {
-    const reviewLoop = snapshot.readFile('skills/aw-review-loop/SKILL.md');
-    const debugging = snapshot.readFile('skills/aw-systematic-debugging/SKILL.md');
+    const reviewLoop = snapshot.readFile('skills/aw-review/SKILL.md');
+    const debugging = snapshot.readFile('skills/aw-debug/SKILL.md');
     assert.ok(reviewLoop.includes('Requested Review'));
     assert.ok(reviewLoop.includes('Re-review Status'));
     assert.ok(debugging.includes('Reproduction'));

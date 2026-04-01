@@ -29,7 +29,7 @@ Every supported harness install must preserve these commands as the canonical pu
 - `/aw:deploy`
 - `/aw:ship`
 
-Internal helpers such as `aw-brainstorm`, `aw-prepare`, `aw-review-loop`, `aw-systematic-debugging`, and `aw-finish` may exist, but they must not become new public stages.
+Internal helpers such as `aw-brainstorm`, `aw-prepare`, `aw-review`, `aw-debug`, and `aw-finish` may exist, but they must not become new public stages.
 
 ## Support Matrix
 

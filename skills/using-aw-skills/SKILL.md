@@ -1,5 +1,5 @@
 ---
-name: aw-using-aw-skills
+name: using-aw-skills
 description: Session-start skill-first routing for the minimal AW SDLC surface. Check the smallest correct AW skill stack before any substantive response.
 trigger: Every session start. Loaded automatically via session-start hook.
 ---
@@ -75,8 +75,8 @@ When multiple AW skills could apply, use this order:
 
 1. process skills first:
    - `aw-brainstorm`
-   - `aw-systematic-debugging`
-   - `aw-review-loop`
+   - `aw-debug`
+   - `aw-review`
    - `aw-prepare`
 2. primary stage skill second:
    - `aw-plan`
@@ -124,8 +124,8 @@ Examples:
 Internal planning should then use the smallest correct graph:
 
 - `aw-brainstorm` for fuzzy or overscoped requests
-- `aw-spec-author` for the technical contract
-- `aw-task-planner` for execution-ready `tasks.md`
+- `aw-spec` for the technical contract
+- `aw-tasks` for execution-ready `tasks.md`
 
 ### Route to `/aw:execute`
 
@@ -217,8 +217,8 @@ The public interface stays minimal even if internal helpers are still present.
 
 After choosing the primary stage skill and public route, load the relevant domain skills for the actual work:
 
-- backend and worker code -> `platform-services-*`
-- frontend and design-system work -> `platform-frontend-*`, `platform-design:*`
+- backend and worker code -> `platform-services:*`
+- frontend and design-system work -> `platform-frontend:*`, `platform-design:*`
 - data and migrations -> `platform-data:*`
 - infra and deployment -> `platform-infra:*`
 - test and quality systems -> `platform-sdet:*`

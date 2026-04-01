@@ -161,5 +161,5 @@ Integrate review feedback, execute optimization after user confirmation.
 
 ## GHL Platform Integration
 
-Also activate the matching `platform-frontend-*` agent.
+Also activate the matching `platform-frontend:*` agent.
 For ALL activated agents: read frontmatter → load each skill from `skills:` array.
