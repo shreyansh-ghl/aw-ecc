@@ -23,7 +23,7 @@ The existing GHL review skill already runs a five-reviewer parallel code review:
 - reliability
 - maintainability
 
-This makes `platform-review:code-review-pr` the right default anchor for `verify.layers.code_review`.
+This makes `platform-review:code-review-pr` the right default anchor for `verify.code_review`.
 
 ### 2. Quality gates are a real GHL governance layer
 
@@ -35,7 +35,7 @@ That means quality gates belong in `verify`, not in a separate command.
 
 GHL testing docs already describe unit test setup and coverage expectations, including Jest-based coverage workflows and PR template reminders for unit-test verification.
 
-That means `verify.layers.local_validation` should explicitly include:
+That means `verify.local_validation` should explicitly include:
 
 - unit
 - integration
@@ -54,7 +54,7 @@ GHL has dedicated Playwright test repos by product area:
 - `revex-tests`
 - `ai-marketplace-tests`
 
-So `verify.layers.e2e_validation` must support:
+So `verify.e2e_validation` must support:
 
 - same-repo E2E
 - mapped external test repo
@@ -63,7 +63,7 @@ So `verify.layers.e2e_validation` must support:
 
 The user requirement is correct: verification should not only run checks, it should also confirm the PR description/checklist says what was verified and that the required items are actually checked.
 
-That means `verify.layers.pr_governance` should include:
+That means `verify.pr_governance` should include:
 
 - PR description present
 - PR description checklist complete

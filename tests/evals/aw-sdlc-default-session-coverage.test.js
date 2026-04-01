@@ -6,6 +6,10 @@ const {
   CONFIG_DOC_PATH,
   ECC_BASELINES_PATH,
 } = require('./lib/aw-sdlc-paths');
+const {
+  parseBaselineCatalog,
+  normalizeBaselineCatalog,
+} = require('./lib/aw-sdlc-baseline-catalog');
 
 function test(name, fn) {
   try {
@@ -24,7 +28,7 @@ function run() {
 
   const routerSkill = readFileSync(ROUTER_SKILL_PATH, 'utf8');
   const configDoc = readFileSync(CONFIG_DOC_PATH, 'utf8');
-  const baselines = readFileSync(ECC_BASELINES_PATH, 'utf8');
+  const baselines = normalizeBaselineCatalog(parseBaselineCatalog(readFileSync(ECC_BASELINES_PATH, 'utf8')));
 
   let passed = 0;
   let failed = 0;
@@ -110,17 +114,36 @@ function run() {
   })) passed++; else failed++;
 
   if (test('baseline catalog contains every provider and governance check used by the session cases', () => {
+    const governanceChecks = new Set(
+      Object.values(baselines.baselines).flatMap(baseline => baseline.verify.pr_governance.checks || [])
+    );
+    const stagingProviders = new Set(
+      Object.values(baselines.baselines).map(baseline => baseline.deploy.staging.provider).filter(Boolean)
+    );
+    const stagingMechanisms = new Set(
+      Object.values(baselines.baselines).map(baseline => baseline.deploy.staging.mechanism).filter(Boolean)
+    );
+
     for (const phrase of [
       'pr_description_present',
       'pr_description_checklist_complete',
       'pr_verification_items_checked',
-      'provider: ghl-ai',
-      'mechanism: versioned-mfa-staging',
-      'mechanism: versioned-service-staging',
-      'mechanism: versioned-worker-staging',
       'ghl-safe-fallback',
     ]) {
-      assert.ok(baselines.includes(phrase), `Baseline catalog is missing "${phrase}"`);
+      if (phrase === 'ghl-safe-fallback') {
+        assert.ok(baselines.baselines['ghl-safe-fallback'], `Baseline catalog is missing "${phrase}"`);
+      } else {
+        assert.ok(governanceChecks.has(phrase), `Baseline catalog is missing "${phrase}"`);
+      }
+    }
+
+    assert.ok(stagingProviders.has('ghl-ai'), 'Baseline catalog is missing "ghl-ai" staging provider');
+    for (const mechanism of [
+      'versioned-mfa-staging',
+      'versioned-service-staging',
+      'versioned-worker-staging',
+    ]) {
+      assert.ok(stagingMechanisms.has(mechanism), `Baseline catalog is missing "${mechanism}"`);
     }
   })) passed++; else failed++;
 

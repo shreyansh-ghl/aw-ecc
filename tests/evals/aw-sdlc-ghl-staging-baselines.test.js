@@ -7,6 +7,10 @@ const {
   RESEARCH_DOC_PATH,
   pathExists,
 } = require('./lib/aw-sdlc-paths');
+const {
+  parseBaselineCatalog,
+  normalizeBaselineCatalog,
+} = require('./lib/aw-sdlc-baseline-catalog');
 
 function test(name, fn) {
   try {
@@ -26,7 +30,11 @@ function run() {
   const hasPlatformDocsBaselines = pathExists(PLATFORM_DOCS_BASELINES_PATH);
   const platformBaselines = hasPlatformDocsBaselines ? readFileSync(PLATFORM_DOCS_BASELINES_PATH, 'utf8') : '';
   const eccBaselines = readFileSync(ECC_BASELINES_PATH, 'utf8');
-  const baselineCatalog = hasPlatformDocsBaselines ? platformBaselines : eccBaselines;
+  const parsedEccBaselines = normalizeBaselineCatalog(parseBaselineCatalog(eccBaselines));
+  const parsedPlatformBaselines = hasPlatformDocsBaselines
+    ? normalizeBaselineCatalog(parseBaselineCatalog(platformBaselines))
+    : parsedEccBaselines;
+  const baselineCatalog = hasPlatformDocsBaselines ? parsedPlatformBaselines : parsedEccBaselines;
   const configDoc = readFileSync(CONFIG_DOC_PATH, 'utf8');
   const researchDoc = readFileSync(RESEARCH_DOC_PATH, 'utf8');
 
@@ -37,7 +45,7 @@ function run() {
     if (!hasPlatformDocsBaselines) {
       return;
     }
-    assert.strictEqual(eccBaselines, platformBaselines, 'aw-ecc baseline snapshot is out of sync with platform-docs');
+    assert.deepStrictEqual(parsedEccBaselines, parsedPlatformBaselines, 'aw-ecc baseline snapshot is semantically out of sync with platform-docs');
   })) passed++; else failed++;
 
   if (test('all three staging archetypes are defined', () => {
@@ -46,16 +54,28 @@ function run() {
       'ghl-microservice-standard',
       'ghl-worker-standard',
     ]) {
-      assert.ok(baselineCatalog.includes(`${baseline}:`), `Missing baseline ${baseline}`);
+      assert.ok(baselineCatalog.baselines[baseline], `Missing baseline ${baseline}`);
     }
   })) passed++; else failed++;
 
+  if (test('repo-local snapshot uses the simplified flat verify/deploy shape', () => {
+    assert.ok(!/^\s+layers:\s*$/m.test(eccBaselines), 'baseline snapshot should not use verify.layers wrappers');
+    assert.ok(!/^\s+modes:\s*$/m.test(eccBaselines), 'baseline snapshot should not use deploy.modes wrappers');
+    assert.ok(/verify:\n\s+code_review:/m.test(eccBaselines), 'baseline snapshot should define verify sections directly');
+    assert.ok(/deploy:\n\s+pr:/m.test(eccBaselines), 'baseline snapshot should define deploy sections directly');
+  })) passed++; else failed++;
+
   if (test('local validation requires unit testing in the baselines', () => {
-    assert.ok(baselineCatalog.includes('- unit'), 'Expected unit testing to be listed in local validation');
-    assert.ok(baselineCatalog.includes('required_minimums:'), 'Expected explicit local validation minimums');
+    for (const baseline of Object.values(baselineCatalog.baselines)) {
+      const minimums = baseline.verify.local_validation.required_minimums || [];
+      assert.ok(minimums.includes('unit'), 'Expected unit testing to be listed in local validation minimums');
+    }
   })) passed++; else failed++;
 
   if (test('PR governance enforces PR description checklist verification', () => {
+    const governanceChecks = new Set(
+      Object.values(baselineCatalog.baselines).flatMap(baseline => baseline.verify.pr_governance.checks || [])
+    );
     for (const check of [
       'pr_description_present',
       'pr_description_checklist_complete',
@@ -64,24 +84,28 @@ function run() {
       'required_approvals_present',
       'quality_gates_green',
     ]) {
-      assert.ok(baselineCatalog.includes(check), `Missing PR governance check ${check}`);
+      assert.ok(governanceChecks.has(check), `Missing PR governance check ${check}`);
     }
   })) passed++; else failed++;
 
   if (test('staging deployment uses GHL AI transport with concrete MFA, service, and worker mechanisms', () => {
-    assert.ok(baselineCatalog.includes('provider: ghl-ai'), 'Missing GHL AI staging transport');
-    for (const mechanism of [
-      'mechanism: versioned-mfa-staging',
-      'mechanism: versioned-service-staging',
-      'mechanism: versioned-worker-staging',
-    ]) {
-      assert.ok(baselineCatalog.includes(mechanism), `Missing staging mechanism ${mechanism}`);
-    }
+    assert.strictEqual(baselineCatalog.baselines['ghl-microfrontend-standard'].deploy.staging.provider, 'ghl-ai');
+    assert.strictEqual(baselineCatalog.baselines['ghl-microservice-standard'].deploy.staging.provider, 'ghl-ai');
+    assert.strictEqual(baselineCatalog.baselines['ghl-worker-standard'].deploy.staging.provider, 'ghl-ai');
+
+    assert.strictEqual(baselineCatalog.baselines['ghl-microfrontend-standard'].deploy.staging.mechanism, 'versioned-mfa-staging');
+    assert.strictEqual(baselineCatalog.baselines['ghl-microservice-standard'].deploy.staging.mechanism, 'versioned-service-staging');
+    assert.strictEqual(baselineCatalog.baselines['ghl-worker-standard'].deploy.staging.mechanism, 'versioned-worker-staging');
   })) passed++; else failed++;
 
   if (test('current baseline intentionally disables production deploys by default', () => {
-    const productionDisabledMatches = baselineCatalog.match(/production:\n\s+enabled: false/g) || [];
-    assert.ok(productionDisabledMatches.length >= 4, 'Expected production to be disabled across the baseline set');
+    for (const [baselineName, baseline] of Object.entries(baselineCatalog.baselines)) {
+      assert.strictEqual(
+        baseline.deploy.production.enabled,
+        false,
+        `Expected production to be disabled for ${baselineName}`
+      );
+    }
   })) passed++; else failed++;
 
   if (test('configuration doc explains PR governance and staging-only deployment scope', () => {

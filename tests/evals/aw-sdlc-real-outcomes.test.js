@@ -573,9 +573,8 @@ const REAL_CASES = [
           'extends: ghl-microservice-standard',
           '',
           'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-api',
+          '  staging:',
+          '    pipeline: staging/job/team/job/contact-sync-api',
         ].join('\n')
       );
 
@@ -624,9 +623,8 @@ const REAL_CASES = [
           'extends: ghl-microfrontend-standard',
           '',
           'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-mfa',
+          '  staging:',
+          '    pipeline: staging/job/team/job/contact-sync-mfa',
         ].join('\n')
       );
 
@@ -673,9 +671,8 @@ const REAL_CASES = [
           'extends: ghl-worker-standard',
           '',
           'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-worker',
+          '  staging:',
+          '    pipeline: staging/job/team/job/contact-sync-worker',
         ].join('\n')
       );
 
@@ -731,9 +728,8 @@ const REAL_CASES = [
           'extends: ghl-microservice-standard',
           '',
           'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-api',
+          '  staging:',
+          '    pipeline: staging/job/team/job/contact-sync-api',
         ].join('\n')
       );
 
@@ -881,9 +877,8 @@ const REAL_CASES = [
           'extends: ghl-microservice-standard',
           '',
           'deploy:',
-          '  modes:',
-          '    staging:',
-          '      pipeline: staging/job/team/job/contact-sync-api',
+          '  staging:',
+          '    pipeline: staging/job/team/job/contact-sync-api',
         ].join('\n')
       );
 

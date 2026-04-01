@@ -18,7 +18,7 @@ const PLATFORM_DOCS_BASELINES_PATH = path.join(
   'core',
   'defaults',
   'aw-sdlc',
-  'baseline-profiles.yml'
+  'profiles.yml'
 );
 
 function pathExists(targetPath) {

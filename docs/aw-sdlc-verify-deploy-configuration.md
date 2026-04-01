@@ -204,36 +204,34 @@ version: 1
 extends: ghl-microservice-standard
 
 verify:
-  layers:
-    local_validation:
-      command_groups:
-        - unit
-        - integration
-        - lint
-        - typecheck
-        - build
-      required_minimums:
-        - unit
-        - lint
-        - typecheck
-        - build
-    e2e_validation:
-      enabled: true
-      provider: test-repo
-      repo_hint: ai-marketplace-tests
-    pr_governance:
-      checks:
-        - pr_description_present
-        - pr_description_checklist_complete
-        - pr_verification_items_checked
-        - required_status_checks_green
-        - required_approvals_present
-        - quality_gates_green
+  local_validation:
+    command_groups:
+      - unit
+      - integration
+      - lint
+      - typecheck
+      - build
+    required_minimums:
+      - unit
+      - lint
+      - typecheck
+      - build
+  e2e_validation:
+    enabled: true
+    provider: test-repo
+    repo_hint: ai-marketplace-tests
+  pr_governance:
+    checks:
+      - pr_description_present
+      - pr_description_checklist_complete
+      - pr_verification_items_checked
+      - required_status_checks_green
+      - required_approvals_present
+      - quality_gates_green
 
 deploy:
-  modes:
-    staging:
-      pipeline: staging-versions/job/team/job/contact-sync-worker
+  staging:
+    pipeline: staging-versions/job/team/job/contact-sync-worker
 ```
 
 So:
@@ -269,57 +267,56 @@ version: 1
 extends: ghl-microservice-standard
 
 verify:
-  layers:
-    code_review:
-      playbooks:
-        - platform-review:code-review-pr
-        - platform-review:security-review
-        - platform-review:reliability-review
-    local_validation:
-      command_groups:
-        - unit
-        - integration
-        - lint
-        - typecheck
-        - build
-      commands:
-        unit:
-          - pnpm test:unit
-        integration:
-          - pnpm test:integration
-        lint:
-          - pnpm lint
-        typecheck:
-          - pnpm typecheck
-        build:
-          - pnpm build
-      required_minimums:
-        - unit
-        - lint
-        - typecheck
-        - build
-    e2e_validation:
-      enabled: true
-      provider: test-repo
-      repo_hint: ai-marketplace-tests
-      playbooks:
-        - platform-sdet:test-repos-guide
-      required_for:
-        - staging
-    pr_governance:
-      checks:
-        - pr_description_present
-        - pr_description_checklist_complete
-        - pr_verification_items_checked
-        - required_status_checks_green
-        - required_approvals_present
-        - quality_gates_green
-    release_readiness:
-      checks:
-        - rollback_plan_present
-        - migration_safety_confirmed
-        - staging_smoke_recommended
-        - release_recommendation
+  code_review:
+    playbooks:
+      - platform-review:code-review-pr
+      - platform-review:security-review
+      - platform-review:reliability-review
+  local_validation:
+    command_groups:
+      - unit
+      - integration
+      - lint
+      - typecheck
+      - build
+    commands:
+      unit:
+        - pnpm test:unit
+      integration:
+        - pnpm test:integration
+      lint:
+        - pnpm lint
+      typecheck:
+        - pnpm typecheck
+      build:
+        - pnpm build
+    required_minimums:
+      - unit
+      - lint
+      - typecheck
+      - build
+  e2e_validation:
+    enabled: true
+    provider: test-repo
+    repo_hint: ai-marketplace-tests
+    playbooks:
+      - platform-sdet:test-repos-guide
+    required_for:
+      - staging
+  pr_governance:
+    checks:
+      - pr_description_present
+      - pr_description_checklist_complete
+      - pr_verification_items_checked
+      - required_status_checks_green
+      - required_approvals_present
+      - quality_gates_green
+  release_readiness:
+    checks:
+      - rollback_plan_present
+      - migration_safety_confirmed
+      - staging_smoke_recommended
+      - release_recommendation
 ```
 
 ## 9. Deploy Overrides
@@ -331,17 +328,16 @@ version: 1
 extends: ghl-worker-standard
 
 deploy:
-  modes:
-    pr:
-      provider: github-pr
-    branch:
-      provider: git-push
-    staging:
-      provider: ghl-ai
-      execution_backend: git-jenkins
-      mechanism: versioned-worker-staging
-      pipeline: staging-versions/job/team/job/contact-sync-worker
-      strategy: versioned-worker
+  pr:
+    provider: github-pr
+  branch:
+    provider: git-push
+  staging:
+    provider: ghl-ai
+    execution_backend: git-jenkins
+    mechanism: versioned-worker-staging
+    pipeline: staging-versions/job/team/job/contact-sync-worker
+    strategy: versioned-worker
   versioning:
     type: developer-version
     source: branch-or-build-id
@@ -396,7 +392,7 @@ Again: stable command, configurable execution.
 
 You specifically said code review must apply certain rules and cover different areas.
 
-That fits exactly into `verify.layers.code_review`.
+That fits exactly into `verify.code_review`.
 
 This layer should support:
 
@@ -426,7 +422,7 @@ It is a configured subset of `verify`.
 
 ## 12. What PR Governance Means In This Model
 
-This belongs in `verify.layers.pr_governance`.
+This belongs in `verify.pr_governance`.
 
 It should answer:
 
@@ -442,7 +438,7 @@ This keeps PR and approval governance distinct from code review but still inside
 
 ## 13. What Staging Readiness Means In This Model
 
-This belongs in `verify.layers.release_readiness`.
+This belongs in `verify.release_readiness`.
 
 It should answer:
 
@@ -648,11 +644,10 @@ Example:
 extends: ghl-microfrontend-standard
 
 verify:
-  layers:
-    e2e_validation:
-      enabled: true
-      provider: external-repo
-      repo_hint: ai-marketplace-tests
+  e2e_validation:
+    enabled: true
+    provider: external-repo
+    repo_hint: ai-marketplace-tests
 ```
 
 This gives strong defaults for most repos while still preventing accidental production coupling in unknown repos.
