@@ -1,7 +1,0 @@
-interface:
-  display_name: "Aw Prepare"
-  short_description: "Internal preparation layer that validates repo state, branch or worktree isolation, and execution readiness before risky AW stages begin."
-  brand_color: "#0F766E"
-  default_prompt: "Use the aw-prepare skill when its trigger applies."
-policy:
-  allow_implicit_invocation: true

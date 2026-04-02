@@ -1,7 +1,0 @@
-interface:
-  display_name: "Aw Execute"
-  short_description: "Implement approved work from `.aw_docs/features/<feature_slug>/` planning artifacts and write deterministic execution evidence."
-  brand_color: "#0F766E"
-  default_prompt: "Use the aw-execute skill when its trigger applies."
-policy:
-  allow_implicit_invocation: true

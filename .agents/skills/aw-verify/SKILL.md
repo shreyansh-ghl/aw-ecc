@@ -1,1 +1,0 @@
-../../../skills/aw-verify/SKILL.md

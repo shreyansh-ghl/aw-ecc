@@ -1,1 +1,0 @@
-../../../skills/aw-prepare/SKILL.md

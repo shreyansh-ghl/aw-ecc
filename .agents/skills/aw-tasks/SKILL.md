@@ -1,1 +1,0 @@
-../../../skills/aw-tasks/SKILL.md

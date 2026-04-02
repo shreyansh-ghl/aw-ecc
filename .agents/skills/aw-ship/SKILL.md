@@ -1,1 +1,0 @@
-../../../skills/aw-ship/SKILL.md

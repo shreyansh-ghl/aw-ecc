@@ -1,1 +1,0 @@
-../../../skills/aw-brainstorm/SKILL.md

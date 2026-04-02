@@ -1,7 +1,0 @@
-interface:
-  display_name: "Aw Tasks"
-  short_description: "Internal task helper that turns an approved spec into a recipe-level tasks.md artifact for aw-execute."
-  brand_color: "#0F766E"
-  default_prompt: "Use the aw-tasks skill when its trigger applies."
-policy:
-  allow_implicit_invocation: true

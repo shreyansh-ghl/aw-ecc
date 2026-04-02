@@ -1,1 +1,0 @@
-../../../skills/using-aw-skills/SKILL.md

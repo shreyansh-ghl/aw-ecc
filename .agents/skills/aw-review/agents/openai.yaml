@@ -1,7 +1,0 @@
-interface:
-  display_name: "Aw Review"
-  short_description: "Internal review helper that requests targeted review, normalizes findings, and drives fix and re-review loops without creating a new public command."
-  brand_color: "#0F766E"
-  default_prompt: "Use the aw-review skill when its trigger applies."
-policy:
-  allow_implicit_invocation: true

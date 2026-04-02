@@ -1,1 +1,0 @@
-../../../skills/aw-rules/SKILL.md

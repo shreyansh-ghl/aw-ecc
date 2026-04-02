@@ -1,1 +1,0 @@
-../../../skills/aw-review/SKILL.md
