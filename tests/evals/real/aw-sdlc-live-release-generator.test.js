@@ -4,6 +4,7 @@ const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
 const { buildReleaseMarkdown } = require('../lib/live-release-generator');
+const { REPO_ROOT } = require('../lib/aw-sdlc-paths');
 
 function test(name, fn) {
   try {
@@ -49,7 +50,7 @@ function run() {
       const outputPath = path.join(tmpDir, 'release.md');
       const result = spawnSync(
         'node',
-        ['/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/tests/evals/generate-aw-sdlc-live-release.js'],
+        [path.join(REPO_ROOT, 'tests/evals/generate-aw-sdlc-live-release.js')],
         {
           encoding: 'utf8',
           env: {

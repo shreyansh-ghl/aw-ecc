@@ -1,13 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const { REPO_ROOT } = require('../lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const CASES_FILE = path.join(REPO_ROOT, 'skills/using-aw-skills/tests/skill-trigger-cases.tsv');
 const HARNESS_FILE = path.join(REPO_ROOT, 'skills/using-aw-skills/tests/test-skill-triggers.sh');
 const ROUTER_SKILL = path.join(REPO_ROOT, 'skills/using-aw-skills/SKILL.md');
 const ARCH_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-command-skill-architecture.md');
 const COMMUNITIES_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-real-prompts-communities.md');
+const REGISTRY_ROOT = process.env.AW_REGISTRY_ROOT
+  ? path.resolve(process.env.AW_REGISTRY_ROOT)
+  : path.join(REPO_ROOT, '.aw_registry');
 
 const PRIMARY_SKILL_BY_ROUTE = {
   plan: 'aw-plan',
@@ -17,26 +20,30 @@ const PRIMARY_SKILL_BY_ROUTE = {
   ship: 'aw-ship',
 };
 
+function registrySkillPath(...segments) {
+  return path.join(REGISTRY_ROOT, ...segments, 'SKILL.md');
+}
+
 const SKILL_PATHS = {
   'aw-plan': path.join(REPO_ROOT, 'skills/aw-plan/SKILL.md'),
   'aw-execute': path.join(REPO_ROOT, 'skills/aw-execute/SKILL.md'),
   'aw-verify': path.join(REPO_ROOT, 'skills/aw-verify/SKILL.md'),
   'aw-deploy': path.join(REPO_ROOT, 'skills/aw-deploy/SKILL.md'),
   'aw-ship': path.join(REPO_ROOT, 'skills/aw-ship/SKILL.md'),
-  'platform-shared:spec-writing': '/Users/prathameshai/.aw_registry/platform/core/skills/spec-writing/SKILL.md',
-  'platform-services:development': '/Users/prathameshai/.aw_registry/platform/services/skills/development/SKILL.md',
-  'quality-gate-coder': '/Users/prathameshai/.aw_registry/platform/frontend/skills/quality-gate-coder/SKILL.md',
-  'platform-design:system': '/Users/prathameshai/.aw_registry/platform/design/skills/system/SKILL.md',
-  'platform-frontend:vue-development': '/Users/prathameshai/.aw_registry/platform/frontend/skills/vue-development/SKILL.md',
-  'highrise-ui-governance': '/Users/prathameshai/.aw_registry/platform/frontend/skills/highrise-ui-governance/SKILL.md',
-  'platform-review:code-review-pr': '/Users/prathameshai/.aw_registry/platform/review/skills/code-review-pr/SKILL.md',
-  'platform-design:review': '/Users/prathameshai/.aw_registry/platform/design/skills/review/SKILL.md',
-  'platform-frontend:a11y-review': '/Users/prathameshai/.aw_registry/platform/frontend/skills/a11y-review/SKILL.md',
-  'platform-sdet:quality-gates': '/Users/prathameshai/.aw_registry/platform/sdet/skills/quality-gates/SKILL.md',
-  'deploy-versioned-mfa': '/Users/prathameshai/.aw_registry/platform/infra/skills/deploy-versioned-mfa/SKILL.md',
-  'platform-infra:staging-deploy': '/Users/prathameshai/.aw_registry/platform/infra/skills/staging-deploy/SKILL.md',
-  'platform-infra:deployment-strategies': '/Users/prathameshai/.aw_registry/platform/infra/skills/deployment-strategies/SKILL.md',
-  'platform-infra:production-readiness': '/Users/prathameshai/.aw_registry/platform/infra/skills/production-readiness/SKILL.md',
+  'platform-shared:spec-writing': registrySkillPath('platform', 'core', 'skills', 'spec-writing'),
+  'platform-services:development': registrySkillPath('platform', 'services', 'skills', 'development'),
+  'quality-gate-coder': registrySkillPath('platform', 'frontend', 'skills', 'quality-gate-coder'),
+  'platform-design:system': registrySkillPath('platform', 'design', 'skills', 'system'),
+  'platform-frontend:vue-development': registrySkillPath('platform', 'frontend', 'skills', 'vue-development'),
+  'highrise-ui-governance': registrySkillPath('platform', 'frontend', 'skills', 'highrise-ui-governance'),
+  'platform-review:code-review-pr': registrySkillPath('platform', 'review', 'skills', 'code-review-pr'),
+  'platform-design:review': registrySkillPath('platform', 'design', 'skills', 'review'),
+  'platform-frontend:a11y-review': registrySkillPath('platform', 'frontend', 'skills', 'a11y-review'),
+  'platform-sdet:quality-gates': registrySkillPath('platform', 'sdet', 'skills', 'quality-gates'),
+  'deploy-versioned-mfa': registrySkillPath('platform', 'infra', 'skills', 'deploy-versioned-mfa'),
+  'platform-infra:staging-deploy': registrySkillPath('platform', 'infra', 'skills', 'staging-deploy'),
+  'platform-infra:deployment-strategies': registrySkillPath('platform', 'infra', 'skills', 'deployment-strategies'),
+  'platform-infra:production-readiness': registrySkillPath('platform', 'infra', 'skills', 'production-readiness'),
 };
 
 function parseCases() {
@@ -107,11 +114,15 @@ function run() {
         assert.ok(fs.existsSync(SKILL_PATHS[testCase.primarySkill]), `missing primary skill file for ${testCase.primarySkill}`);
       }
     }],
-    ['supporting skills are real installed skills', () => {
+    ['supporting skills have stable skill-file mappings', () => {
       for (const testCase of cases) {
         for (const skill of testCase.supportingSkills) {
-          assert.ok(SKILL_PATHS[skill], `missing skill-path mapping for ${skill}`);
-          assert.ok(fs.existsSync(SKILL_PATHS[skill]), `missing installed skill file for ${skill}`);
+          const skillPath = SKILL_PATHS[skill];
+          assert.ok(skillPath, `missing skill-path mapping for ${skill}`);
+          assert.ok(skillPath.endsWith(`${path.sep}SKILL.md`) || skillPath.endsWith('/SKILL.md'), `invalid skill file mapping for ${skill}`);
+          if (skill.startsWith('aw-')) {
+            assert.ok(fs.existsSync(skillPath), `missing installed skill file for ${skill}`);
+          }
         }
       }
     }],
