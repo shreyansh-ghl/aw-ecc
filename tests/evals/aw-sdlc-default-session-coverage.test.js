@@ -1,10 +1,15 @@
 const assert = require('assert');
 const { readFileSync } = require('fs');
 const { DEFAULT_SESSION_CASES } = require('./fixtures/aw-sdlc-default-session-cases');
-
-const ROUTER_SKILL_PATH = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/skills/using-aw-skills/SKILL.md';
-const CONFIG_DOC_PATH = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc/docs/aw-sdlc-verify-deploy-configuration.md';
-const BASELINES_PATH = '/Users/prathameshai/Documents/Agentic Workspace/platform-docs/.aw_registry/platform/core/defaults/aw-sdlc/profiles.yml';
+const {
+  ROUTER_SKILL_PATH,
+  CONFIG_DOC_PATH,
+  ECC_BASELINES_PATH,
+} = require('./lib/aw-sdlc-paths');
+const {
+  parseBaselineCatalog,
+  normalizeBaselineCatalog,
+} = require('./lib/aw-sdlc-baseline-catalog');
 
 function test(name, fn) {
   try {
@@ -23,7 +28,7 @@ function run() {
 
   const routerSkill = readFileSync(ROUTER_SKILL_PATH, 'utf8');
   const configDoc = readFileSync(CONFIG_DOC_PATH, 'utf8');
-  const baselines = readFileSync(BASELINES_PATH, 'utf8');
+  const baselines = normalizeBaselineCatalog(parseBaselineCatalog(readFileSync(ECC_BASELINES_PATH, 'utf8')));
 
   let passed = 0;
   let failed = 0;
@@ -109,22 +114,44 @@ function run() {
   })) passed++; else failed++;
 
   if (test('baseline catalog contains every provider and governance check used by the session cases', () => {
+    const governanceChecks = new Set(
+      Object.values(baselines.baselines).flatMap(baseline => baseline.verify.pr_governance.checks || [])
+    );
+    const stagingProviders = new Set(
+      Object.values(baselines.baselines).map(baseline => baseline.deploy.staging.provider).filter(Boolean)
+    );
+    const stagingMechanisms = new Set(
+      Object.values(baselines.baselines).map(baseline => baseline.deploy.staging.mechanism).filter(Boolean)
+    );
+
     for (const phrase of [
       'pr_description_present',
       'pr_description_checklist_complete',
       'pr_verification_items_checked',
-      'provider: ghl-ai',
-      'mechanism: versioned-mfa-staging',
-      'mechanism: versioned-service-staging',
-      'mechanism: versioned-worker-staging',
       'ghl-safe-fallback',
     ]) {
-      assert.ok(baselines.includes(phrase), `Baseline catalog is missing "${phrase}"`);
+      if (phrase === 'ghl-safe-fallback') {
+        assert.ok(baselines.baselines['ghl-safe-fallback'], `Baseline catalog is missing "${phrase}"`);
+      } else {
+        assert.ok(governanceChecks.has(phrase), `Baseline catalog is missing "${phrase}"`);
+      }
+    }
+
+    assert.ok(stagingProviders.has('ghl-ai'), 'Baseline catalog is missing "ghl-ai" staging provider');
+    for (const mechanism of [
+      'versioned-mfa-staging',
+      'versioned-service-staging',
+      'versioned-worker-staging',
+    ]) {
+      assert.ok(stagingMechanisms.has(mechanism), `Baseline catalog is missing "${mechanism}"`);
     }
   })) passed++; else failed++;
 
-  if (test('current router skill still needs to catch up to the minimal interface', () => {
-    assert.ok(routerSkill.includes('/aw:revex-ship') || routerSkill.includes('brainstorm'), 'Expected router skill to still reflect legacy surface for red/green migration');
+  if (test('router skill now advertises the minimal AW SDLC surface instead of legacy revex commands', () => {
+    for (const token of ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy', '/aw:ship']) {
+      assert.ok(routerSkill.includes(token), `Router skill is missing ${token}`);
+    }
+    assert.ok(!routerSkill.includes('/aw:revex-'), 'Router skill should no longer advertise legacy revex commands');
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

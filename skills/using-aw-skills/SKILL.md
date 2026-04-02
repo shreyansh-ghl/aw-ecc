@@ -1,6 +1,6 @@
 ---
-name: aw-using-aw-skills
-description: Session-start routing for the minimal AW SDLC surface. Prefer intent-based routing to plan, execute, verify, and deploy.
+name: using-aw-skills
+description: Session-start skill-first routing for the minimal AW SDLC surface. Check the smallest correct AW skill stack before any substantive response.
 trigger: Every session start. Loaded automatically via session-start hook.
 ---
 
@@ -25,13 +25,72 @@ There is also one explicit power command:
 `/aw:ship` is for clearly end-to-end requests.
 It should not become the default route for normal stage-specific work.
 
+## Always-On Activation
+
+Before any substantive response, this router must select the smallest correct AW skill stack and matching public route.
+
+- explicit user command -> honor that command and load the mapped AW stage skill first
+- clear process need -> load the needed internal process skill first
+- otherwise choose the smallest correct AW primary stage skill and matching public route by intent
+- only after the required AW skills are selected, load deeper domain skills or ask clarifying questions
+
+Do not start with generic implementation, review, or deploy advice before skill selection.
+Do not leave the active skill stack or matching route implicit for non-trivial work.
+
+## The Rule
+
+If there is even a small chance that an AW process skill, stage skill, or required domain skill applies, load it before responding.
+
+Questions count.
+Clarifying questions count.
+Quick exploration counts.
+
+The AW public command is the user-facing projection of the selected primary stage skill.
+That means AW remains command-simple for users while staying skill-first internally.
+
+## Red Flags
+
+These thoughts mean stop and load the right AW skill stack first:
+
+| Thought | Reality |
+|---|---|
+| "I can answer this quickly first" | Quick answers still need the right AW skill context. |
+| "I just need to explore a little" | Exploration is work. Load the right process or stage skill first. |
+| "This is just a clarifying question" | Clarifying questions still happen after skill selection. |
+| "I know which route this is" | Knowing the route is not the same as loading the right skill stack. |
+| "The internal helper is overkill" | If the helper applies, use it. |
+
 ## Routing Priority
 
 1. Explicit user instructions
-2. Explicit public AW commands
-3. Intent-based routing to the minimal public command surface
-4. Domain skills needed to do the selected work well
-5. Explicit composite workflows when the user clearly asks for an end-to-end flow
+2. Explicit public AW commands and their mapped primary stage skills
+3. Process skills that determine how the work should be approached
+4. Primary stage skill and matching minimal public command surface
+5. Domain skills needed to do the selected work well
+6. Explicit composite workflows when the user clearly asks for an end-to-end flow
+
+## Skill Priority
+
+When multiple AW skills could apply, use this order:
+
+1. process skills first:
+   - `aw-brainstorm`
+   - `aw-debug`
+   - `aw-review`
+   - `aw-prepare`
+2. primary stage skill second:
+   - `aw-plan`
+   - `aw-execute`
+   - `aw-verify`
+   - `aw-deploy`
+   - `aw-ship`
+3. domain skills third:
+   - backend, frontend, data, infra, review, and test capability families
+
+The selected public route should reflect the primary stage skill, not hide it.
+
+If the user includes an explicit public AW command prefix such as `/aw:plan`, `/aw:execute`, `/aw:verify`, `/aw:deploy`, or `/aw:ship`, keep that public command unless the request is malformed.
+Do not reinterpret an explicit `/aw:ship` request as `/aw:plan` just because the natural-language wording mentions planning or starting from an idea.
 
 ## Public Command Roles
 
@@ -64,6 +123,12 @@ Examples:
 - "Design the onboarding flow."
 - "Create the implementation spec."
 - "Break this into execution tasks."
+
+Internal planning should then use the smallest correct graph:
+
+- `aw-brainstorm` for fuzzy or overscoped requests
+- `aw-spec` for the technical contract
+- `aw-tasks` for execution-ready `tasks.md`
 
 ### Route to `/aw:execute`
 
@@ -111,12 +176,17 @@ Examples:
 
 - "Create a PR for this verified work."
 - "Deploy this verified worker to staging."
+- "Deploy this verified Communities feed MFA to staging."
+- "Deploy this verified microservice change to staging."
 
 If the user asks for more than one release outcome in sequence, such as PR creation followed by staging deployment, prefer `/aw:ship` instead of `/aw:deploy`.
 
 ### Route to `/aw:ship`
 
 Use only when the user clearly wants an end-to-end flow in one go, or when the user asks for multiple release outcomes in sequence.
+
+Treat `ship` as a first-class public route name, not as an unnamed composite label.
+If the request includes both PR creation and staging deployment for the same change, always choose `/aw:ship` rather than `/aw:plan` or `/aw:deploy`, even when the prompt is phrased as "take this change through ..." instead of "ship this".
 
 Examples:
 
@@ -125,6 +195,7 @@ Examples:
 - "Build this end to end."
 - "Ship this from approved spec to staging."
 - "Take this change through PR creation and staging version deployment."
+- "Take this Communities moderation API change through PR creation and staging version deployment."
 - "Create the PR and then deploy it to staging."
 
 ## Scope Guardrails
@@ -134,6 +205,8 @@ Examples:
 - A deploy request should not reopen planning.
 - A verify request should not silently implement code.
 - A technical planning request must not force a PRD first when the request is already well defined.
+- Do not produce a substantive non-routing response before the AW skill stack is selected.
+- Do not skip repo-local AW routing because a parent workspace or global registry also has instructions.
 
 ## Internal Helpers
 
@@ -147,10 +220,10 @@ The public interface stays minimal even if internal helpers are still present.
 
 ## Domain Skills
 
-After choosing the public route, load the relevant domain skills for the actual work:
+After choosing the primary stage skill and public route, load the relevant domain skills for the actual work:
 
-- backend and worker code -> `platform-services-*`
-- frontend and design-system work -> `platform-frontend-*`, `platform-design:*`
+- backend and worker code -> `platform-services-*`, then the matching installed `platform-services:*` skills
+- frontend and design-system work -> `platform-frontend-*`, then the matching installed `platform-frontend:*` and `platform-design:*` skills
 - data and migrations -> `platform-data:*`
 - infra and deployment -> `platform-infra:*`
 - test and quality systems -> `platform-sdet:*`

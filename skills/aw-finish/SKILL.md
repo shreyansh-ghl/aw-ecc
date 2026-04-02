@@ -1,133 +1,111 @@
 ---
 name: aw-finish
-description: Integrates verified work — creates PR, merges, deploys, or stages. Saves learnings for future sessions.
-trigger: aw-verify has passed, or user requests integration of completed work.
+description: Internal compatibility helper for completing a verified development branch with explicit merge, PR, keep, or discard choices and safe worktree cleanup.
+trigger: Internal only. Invoked when verified branch work is done and the next step is a branch-completion decision rather than a staging deployment.
 ---
 
 # AW Finish
 
-This is a legacy compatibility skill.
-The canonical public release stage is now `/aw:deploy` backed by `aw-deploy`.
+`aw-finish` is a legacy compatibility skill.
+The canonical public release stage remains `/aw:deploy`, but this helper still owns the branch-completion decision flow when that workflow is needed internally.
 
-## HARD-GATE
+## Hard Gate
 
-> **`aw-verify` must have passed before this skill runs.**
-> If verification failed, go back and fix the issues first. Do not skip verification.
+`aw-verify` must have passed before this skill runs.
+If verification failed, route back to `aw-execute` or `aw-verify` instead of finishing.
 
-## Integration Options
+## Purpose
 
-Present these options to the user and execute the chosen one:
+Use this skill to close out verified branch work safely:
 
-### Option 1: Create PR
+- verify tests before offering completion choices
+- present explicit branch-completion options
+- execute the selected path
+- clean up the worktree only when appropriate
 
-Create a pull request with the full context:
+If `.aw_docs/features/<feature_slug>/workspace.json` exists, use it as the source of truth for:
 
-```markdown
-## Summary
-- Spec: docs/specs/YYYY-MM-DD-<topic>.md
-- Plan: docs/plans/YYYY-MM-DD-<feature>.md
+- the active branch and worktree path
+- cleanup policy
+- orchestration coordination directory
+- the recommended `node scripts/orchestration-status.js ...` status command
 
-## Changes
-<bullet list of what was implemented>
+Staging or production deployment requests should stay on `aw-deploy`.
 
-## Verification
-- Tests: PASS (N tests, 0 failures)
-- Types: PASS
-- Lint: PASS
-- Build: PASS
-- Code Review: 5/5 reviewers passed
+## Deprecation Timeline
 
-## Test Plan
-- [ ] <manual verification step 1>
-- [ ] <manual verification step 2>
-- [ ] <manual verification step 3>
-```
+This skill is still active internally even though `/aw:finish` is deprecated as a public entrypoint.
+Keep `aw-finish` available until `/aw:deploy` fully absorbs branch-completion choices, workspace metadata reuse, and cleanup behavior.
+Public deprecation must not be interpreted as immediate removal of the internal helper.
 
-### Option 2: Merge to Main
+## Completion Flow
 
-- Ensure PR is approved (or create and auto-merge if allowed).
-- Rebase onto latest main before merging.
-- Verify CI passes after merge.
+1. verify tests and validation signals still pass
+2. determine the base branch
+3. present exactly these choices:
+   - merge locally
+   - push and create PR
+   - keep as branch
+   - discard
+4. execute the selected path
+5. clean up the worktree when the selected path requires cleanup
+6. update or clear `workspace.json` to reflect the final cleanup decision
 
-### Option 3: Stage for Deploy
+## Required Options
 
-- Push to staging branch or trigger staging deployment via Jenkins.
-- Provide staging URL and verification steps.
+### Option 1: Merge Locally
 
-### Option 4: Keep as Branch
+- switch to base branch
+- update from remote when appropriate
+- merge the verified branch
+- rerun the minimum correct verification
+- remove the branch or worktree when safe
+- clear `workspace.json` when cleanup completed successfully
 
-- Push branch to remote with `-u` flag.
-- Report branch name for later review.
+### Option 2: Push and Create PR
 
-### Option 5: Cleanup
+- push the branch
+- create or update the PR with concise summary and test plan
+- keep the worktree if the branch remains active
+- preserve `workspace.json` for the active branch lifecycle
 
-- Remove temporary files, spec drafts, or plan docs if no longer needed.
-- Ensure working directory is clean.
+### Option 3: Keep As-Is
 
-## PR Template
+- keep the branch and worktree intact
+- report the branch name and next expected action
+- keep `workspace.json` intact for follow-up work
 
-When creating a PR, use this structure:
+### Option 4: Discard
 
-```
-gh pr create --title "<type>: <short description>" --body "$(cat <<'EOF'
-## Summary
-- **Spec:** [docs/specs/YYYY-MM-DD-<topic>.md](link)
-- **Plan:** [docs/plans/YYYY-MM-DD-<feature>.md](link)
+- require explicit confirmation
+- delete the branch or worktree only after confirmation
+- remove `workspace.json` only after cleanup succeeds
 
-<1-3 bullet points describing the changes>
+## Worktree Cleanup Rule
 
-## Verification Report
-| Check | Status |
-|---|---|
-| Tests | PASS |
-| Types | PASS |
-| Build | PASS |
-| Code Review | 5/5 PASS |
-| Spec Compliance | PASS |
+Only clean up the worktree automatically for:
 
-## Test Plan
-- [ ] Verify <scenario 1>
-- [ ] Verify <scenario 2>
-- [ ] Verify <scenario 3>
-EOF
-)"
-```
+- merge-complete paths
+- confirmed discard paths
 
-## Summary Format
+Do not clean up the worktree for:
 
-After integration, present a summary:
+- keep-as-branch
+- PR-open workflows where the branch is still in active use
 
-```markdown
-## Completed
+## Hard Gates
 
-**Feature:** <feature name>
-**Branch:** <branch name>
-**PR:** <PR URL or "N/A">
-**Status:** <merged / PR created / staged / branch pushed>
+- do not offer completion choices until tests are rechecked
+- do not discard work without explicit confirmation
+- do not turn branch completion into deployment orchestration
+- do not clean up an active PR worktree by accident
 
-### What was built
-- <bullet 1>
-- <bullet 2>
+## Final Output Shape
 
-### Files changed
-- `path/to/file1.ts` (created)
-- `path/to/file2.ts` (modified)
+Always end with:
 
-### Learnings saved
-- <learning 1>
-- <learning 2>
-```
-
-## Save Learnings
-
-After completing the workflow, save learnings for future sessions:
-
-1. **Append to learnings file** — Write to `.aw_docs/learnings/<agent-slug>.md` with:
-   - What worked well
-   - What was tricky or unexpected
-   - Patterns discovered
-   - Platform rules that were relevant
-
-2. **Sync queue** — Append to `.aw_docs/learnings/_pending-sync.jsonl` for MCP sync.
-
-3. **MCP store** — Call `memory/store` with the learning context (eager, non-blocking).
+- `Verification Check`
+- `Base Branch`
+- `Completion Options`
+- `Selected Path`
+- `Cleanup Decision`

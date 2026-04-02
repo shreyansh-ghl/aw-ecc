@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Debug"
+  short_description: "Internal bug-fix helper that drives reproduction, root-cause isolation, confirming probes, and fix verification before work is declared complete."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-debug skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

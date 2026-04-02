@@ -1,0 +1,7 @@
+interface:
+  display_name: "Using Aw Skills"
+  short_description: "Session-start skill-first routing for the minimal AW SDLC surface. Check the smallest correct AW skill stack before any substantive response."
+  brand_color: "#0F766E"
+  default_prompt: "Use the using-aw-skills skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

@@ -31,11 +31,12 @@ The current target set is:
 3. `execute-approved-spec`
 4. `execute-docs-only`
 5. `verify-pr-governance`
-6. `deploy-microservice-staging`
-7. `deploy-microfrontend-staging`
-8. `deploy-worker-staging`
-9. `ship-verified-to-staging`
-10. `ship-full-pr-and-staging`
+6. `verify-failing-change-requires-repair-loop`
+7. `deploy-microservice-staging`
+8. `deploy-microfrontend-staging`
+9. `deploy-worker-staging`
+10. `ship-unverified-to-staging`
+11. `ship-verified-to-staging`
 
 ## Checklist by Stage
 
@@ -63,6 +64,8 @@ Artifact quality means:
 - `state.json` updated
 - no release artifact created
 - execution artifact clearly explains what changed and what was validated
+- execution artifact records task-unit progress when the work spans more than one meaningful step
+- execution artifact records spec-review and quality-review notes before handoff
 
 Artifact quality means:
 
@@ -87,6 +90,7 @@ Artifact quality means:
 - PR checklist quality is checked
 - required findings are clearly separated from summaries
 - readiness for PR or staging is stated directly
+- failing verification captures a repair loop and explicit re-review expectation
 
 Testing artifacts can include:
 
@@ -129,6 +133,7 @@ Versioned staging deployment evidence means:
 - testing automation build links are recorded in `release.md`
 - build status is recorded for each relevant automation entry
 - post-deploy smoke or routing evidence is recorded when available
+- when the flow is live, the artifact should contain the exact real references, not placeholders
 
 ### Ship
 
@@ -136,7 +141,9 @@ Versioned staging deployment evidence means:
 - expected stage artifacts created
 - unnecessary stage artifacts are not recreated
 - verification evidence exists before deploy
-- release outcome captures the requested PR and/or staging result
+- one-shot execution from approved but unverified scope can still complete execute -> verify -> deploy when the flow is bounded
+- setup or prerequisite findings are recorded before risky implementation or release work when the flow requires them
+- release outcome captures the requested staging result
 - the end-to-end artifact set is coherent enough to hand to another engineer without extra explanation
 
 ## Live External Checklist
@@ -153,3 +160,37 @@ The following checks must be done in real target repos before calling the SDLC f
    - microservice
    - worker
 6. The release artifact records the exact versioned staging reference, not only a generic “staging passed”.
+7. The release artifact records the exact GitHub PR URL when the flow includes PR creation.
+8. The release artifact records the exact Jenkins queue URL when a deployment trigger is queued.
+9. The release artifact records the exact Jenkins build URL for the build that actually ran.
+10. The release artifact records the exact testing automation run URL when CI or validation automation exists.
+11. The release artifact records the final build status for each real automation entry.
+
+## Required Live `release.md` Evidence
+
+When a live external flow is used, `release.md` should contain all applicable items below:
+
+1. `PR URL`
+2. `PR Status`
+3. `Jenkins Queue URL`
+4. `Jenkins Build URL`
+5. `Testing Automation URL`
+6. `Build Status`
+7. `Deployed Version` or `Version Routing Signal`
+8. `Versioned Staging Link`
+9. `Post-Deploy Validation Link` when the target archetype exposes one
+
+Accepted examples:
+
+- `PR URL`: `https://github.com/<owner>/<repo>/pull/<number>`
+- `Jenkins Queue URL`: `https://jenkins.msgsndr.net/queue/item/<id>/`
+- `Jenkins Build URL`: `https://jenkins.msgsndr.net/job/.../<build-number>/`
+- `Testing Automation URL`:
+  - `https://github.com/<owner>/<repo>/actions/runs/<id>`
+  - or a Jenkins validation job URL
+- `Versioned Staging Link`:
+  - microfrontend: `remoteEntry.js`, `spm-ts`, or `developer_version` link
+  - microservice: versioned staging service URL or health URL
+  - worker: build/deploy URL plus queue/subscription or worker health reference
+
+These fields should not be represented as only `NOT_AVAILABLE`, `UNKNOWN`, or `BLOCKED` once a real live run has completed successfully.

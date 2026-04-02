@@ -1,0 +1,1 @@
+../../../skills/aw-spec/SKILL.md

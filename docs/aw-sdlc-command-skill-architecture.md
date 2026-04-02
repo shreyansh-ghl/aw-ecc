@@ -44,8 +44,10 @@ Subskills should stay focused and reusable.
 Examples:
 
 - code review
+- review request and re-review loops
 - local validation
 - E2E validation
+- systematic debugging
 - PR governance
 - staging deployment
 - versioned MFA deployment
@@ -55,12 +57,21 @@ Examples:
 
 The intended stack is:
 
-`intent -> command -> primary stage skill -> subskills -> deterministic outputs`
+`intent -> process skill(s) -> primary stage skill -> public command contract -> subskills -> deterministic outputs`
 
 This supports both:
 
-- intent-based routing for default UX
+- skill-first routing for default UX
 - explicit command use for deterministic workflows
+
+## Naming Layers
+
+Keep each layer named for one job only:
+
+- `/aw:*` names are the public commands developers use
+- `aw-*` names are repo-local stage or helper skills
+- `registry.json` is the external platform catalog of available entries
+- `baseline-profiles.yml` is the repo-local policy snapshot that selects playbooks by baseline
 
 ## Public Commands
 
@@ -95,9 +106,22 @@ These may continue to exist, but they are not the primary public interface:
 | Command | Status | Rule |
 |---|---|---|
 | `/aw:brainstorm` | internal | helper for discovery-heavy ideation only |
-| `/aw:finish` | deprecated | legacy compatibility path replaced by `/aw:deploy` |
+| `/aw:finish` | deprecated public entrypoint | legacy compatibility path replaced by `/aw:deploy`, while `aw-finish` remains internal until branch-completion behavior is fully absorbed |
 | `/aw:code-review` | alias | compatibility alias to `/aw:verify` |
 | `/aw:tdd` | alias | compatibility alias to `/aw:execute` |
+
+## Planning Artifact Policy
+
+`.planning/<repo>/<owner>/<feature_slug>/` is a permanent repo artifact when it captures AW SDLC parity, rollout, or other gated implementation work that reviewers may need to audit later.
+
+Keep these files together inside one feature folder:
+
+- `.spec.md`
+- `IMPLEMENTATION_PLAN.md`
+- `.spec-iteration-N.md`
+
+Use a stable feature slug, keep iteration files scoped to one effort, and avoid dropping scratch notes or disposable local experiments into `.planning/`.
+If the material is not review evidence or does not need to survive the branch, keep it out of `.planning/`.
 
 ## Recommended Stage Skill Composition
 
@@ -109,6 +133,9 @@ Primary skill:
 
 Typical supporting skills:
 
+- `aw-brainstorm`
+- `aw-spec`
+- `aw-tasks`
 - product/spec-writing skills
 - design planning skills
 - architecture/design skills
@@ -122,7 +149,8 @@ Primary skill:
 
 Typical supporting skills:
 
-- `platform-core-fix-bug`
+- `fix-bug`
+- `aw-debug`
 - `platform-services:*`
 - `platform-frontend:*`
 - `platform-data:*`
@@ -137,6 +165,8 @@ Primary skill:
 
 Typical supporting skills:
 
+- `aw-review`
+- `aw-debug`
 - `platform-review:code-review-pr`
 - `platform-review:security-review`
 - `platform-review:architecture-review`
@@ -202,6 +232,14 @@ skills/
     SKILL.md
   aw-finish/
     SKILL.md
+  aw-spec/
+    SKILL.md
+  aw-tasks/
+    SKILL.md
+  aw-review/
+    SKILL.md
+  aw-debug/
+    SKILL.md
   using-aw-skills/
     SKILL.md
     hooks/
@@ -221,8 +259,9 @@ To avoid duplication and drift:
 1. Never define the full workflow twice.
 2. Commands should describe the contract, not every detailed implementation step.
 3. Stage skills should implement the workflow, not redefine the public UX.
-4. Compatibility aliases should point back to the canonical public command.
-5. Intent-based routing should resolve to a public command first, not directly to a random subskill.
+4. Internal helpers such as `aw-brainstorm`, `aw-finish`, `aw-review`, and `aw-debug` should deepen behavior without becoming extra public stages.
+5. Compatibility aliases should point back to the canonical public command.
+6. Skill-first routing should resolve to the smallest correct AW skill stack first and the matching public command with it, not jump directly to a random domain subskill.
 
 ## Test Rules
 
@@ -232,7 +271,7 @@ The test harness should verify:
 2. every public command declares one primary stage skill
 3. every declared primary stage skill exists
 4. internal/deprecated/alias commands are not treated as active public stages
-5. intent routing resolves to the right public command
+5. skill-first routing resolves to the right primary stage skill and public command
 6. public commands and stage skills stay in sync
 
 ## Final Recommendation
@@ -250,7 +289,7 @@ Use:
 That gives us:
 
 - a minimal explicit interface
-- good intent-based routing
+- good skill-first routing
 - deterministic artifacts
 - reusable internal capabilities
 - testable boundaries

@@ -7,9 +7,11 @@ PARALLELISM="${AW_SDLC_EVAL_PARALLELISM:-2}"
 
 : "${AW_SDLC_EVAL_REF:=WORKTREE}"
 : "${AW_SDLC_EVAL_CLI:=codex}"
-: "${AW_SDLC_EVAL_WORKSPACE_MODE:=git-worktree}"
+: "${AW_SDLC_EVAL_WORKSPACE_MODE:=git-init}"
+: "${AW_SDLC_EVAL_WORKSPACE_BASE_DIR:=$RESULT_DIR/workspaces}"
 
 mkdir -p "$RESULT_DIR"
+mkdir -p "$AW_SDLC_EVAL_WORKSPACE_BASE_DIR"
 
 CASE_IDS=()
 while IFS= read -r case_id; do
@@ -33,7 +35,7 @@ run_case() {
   fi
 }
 
-export ROOT_DIR RESULT_DIR AW_SDLC_EVAL_REF AW_SDLC_EVAL_CLI AW_SDLC_EVAL_WORKSPACE_MODE
+export ROOT_DIR RESULT_DIR AW_SDLC_EVAL_REF AW_SDLC_EVAL_CLI AW_SDLC_EVAL_WORKSPACE_MODE AW_SDLC_EVAL_WORKSPACE_BASE_DIR
 export -f run_case
 
 printf '%s\n' "${CASE_IDS[@]}" | xargs -I{} -P "$PARALLELISM" bash -lc 'run_case "$@"' _ {}
@@ -45,6 +47,7 @@ echo
 echo "=== AW SDLC Real Outcomes Parallel Summary ==="
 echo "Result dir: $RESULT_DIR"
 echo "Workspace mode: $AW_SDLC_EVAL_WORKSPACE_MODE"
+echo "Workspace base dir: $AW_SDLC_EVAL_WORKSPACE_BASE_DIR"
 echo "Parallelism: $PARALLELISM"
 
 for case_id in "${CASE_IDS[@]}"; do

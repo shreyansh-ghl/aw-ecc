@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Brainstorm"
+  short_description: "Internal discovery helper that deepens pre-code exploration, compares approaches, and hands an approved direction to aw-plan without expanding the public command surface."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-brainstorm skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

@@ -2,12 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REAL_OUTCOMES = path.join(REPO_ROOT, 'tests/evals/aw-sdlc-real-outcomes.test.js');
 const CHECKLIST_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-real-eval-checklist.md');
 const CONFIDENCE_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-confidence-plan.md');
 const COMMUNITIES_PROMPTS_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-real-prompts-communities.md');
+const RUNNER_SCRIPT = path.join(REPO_ROOT, 'tests/evals/run-aw-sdlc-evals.sh');
 
 function test(name, fn) {
   try {
@@ -47,6 +48,7 @@ function run() {
   const checklist = fs.readFileSync(CHECKLIST_DOC, 'utf8');
   const confidencePlan = fs.readFileSync(CONFIDENCE_DOC, 'utf8');
   const communitiesPrompts = fs.readFileSync(COMMUNITIES_PROMPTS_DOC, 'utf8');
+  const runner = fs.readFileSync(RUNNER_SCRIPT, 'utf8');
 
   if (test('real-outcome suite contains at least 10 examples', () => {
     assert.ok(cases.length >= 10, `expected at least 10 cases, found ${cases.length}`);
@@ -80,6 +82,15 @@ function run() {
     assert.ok(checklist.includes('build status is recorded for each relevant automation entry'), 'build status guidance is missing');
   })) passed++; else failed++;
 
+  if (test('real checklist requires exact live external artifact links', () => {
+    assert.ok(checklist.includes('PR URL'), 'PR URL requirement is missing');
+    assert.ok(checklist.includes('Jenkins Queue URL'), 'Jenkins queue URL requirement is missing');
+    assert.ok(checklist.includes('Jenkins Build URL'), 'Jenkins build URL requirement is missing');
+    assert.ok(checklist.includes('Testing Automation URL'), 'testing automation URL requirement is missing');
+    assert.ok(checklist.includes('Versioned Staging Link'), 'versioned staging link requirement is missing');
+    assert.ok(checklist.includes('These fields should not be represented as only `NOT_AVAILABLE`'), 'live non-placeholder guidance is missing');
+  })) passed++; else failed++;
+
   if (test('real checklist doc names every real example case', () => {
     for (const caseId of cases) {
       assert.ok(checklist.includes(`\`${caseId}\``), `missing case in checklist doc: ${caseId}`);
@@ -99,6 +110,14 @@ function run() {
     assert.ok(confidencePlan.includes('GitHub or CI status evidence'), 'confidence plan is missing GitHub/CI evidence gate');
     assert.ok(confidencePlan.includes('testing automation links'), 'confidence plan is missing testing automation link gate');
     assert.ok(confidencePlan.includes('build status'), 'confidence plan is missing build status gate');
+    assert.ok(confidencePlan.includes('Jenkins queue URL'), 'confidence plan is missing Jenkins queue URL gate');
+    assert.ok(confidencePlan.includes('Jenkins build URL'), 'confidence plan is missing Jenkins build URL gate');
+    assert.ok(confidencePlan.includes('AW_SDLC_LIVE_RELEASE_FILE'), 'confidence plan is missing live artifact gate command');
+  })) passed++; else failed++;
+
+  if (test('runner exposes a live-artifacts mode', () => {
+    assert.ok(runner.includes('run_live_artifacts'), 'runner is missing live-artifacts function');
+    assert.ok(runner.includes('live-artifacts'), 'runner is missing live-artifacts mode');
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

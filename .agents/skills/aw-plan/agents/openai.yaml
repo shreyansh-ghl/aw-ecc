@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Plan"
+  short_description: "Create the minimum correct planning artifacts under `.aw_docs/features/<feature_slug>/` and stop cleanly before implementation."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-plan skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

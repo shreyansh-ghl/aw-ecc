@@ -17,3 +17,8 @@ The public verification surface is `/aw:verify`, which includes:
 - local validation
 - PR governance
 - readiness checks
+
+See:
+
+- `skills/aw-verify/SKILL.md` for the canonical verify-stage contract
+- `skills/aw-review/SKILL.md` for targeted review, findings normalization, and re-review loops

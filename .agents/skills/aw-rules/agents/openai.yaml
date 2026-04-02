@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Rules"
+  short_description: "Create, audit, fix, and score .aw_rules reference files grounded in real platform docs, skills, and codebase. Use when adding new rules, reviewing rule PRs, checking for hallucinated APIs, or improving rule quality."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-rules skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

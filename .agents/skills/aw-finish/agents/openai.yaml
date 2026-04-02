@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Finish"
+  short_description: "Internal compatibility helper for completing a verified development branch with explicit merge, PR, keep, or discard choices and safe worktree cleanup."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-finish skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

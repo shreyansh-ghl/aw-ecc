@@ -4,8 +4,8 @@ const path = require('path');
 const assert = require('assert');
 const { spawnSync } = require('child_process');
 const { createRepoSnapshot } = require('./lib/repo-snapshot');
+const { REPO_ROOT } = require('./lib/aw-sdlc-paths');
 
-const REPO_ROOT = '/Users/prathameshai/Documents/Agentic Workspace/aw-ecc';
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const CLI = process.env.AW_SDLC_EVAL_CLI || 'codex';
 const TIMEOUT_MS = Number(process.env.AW_SDLC_EVAL_TIMEOUT_MS || 120000);
@@ -89,23 +89,30 @@ function buildPrompt(userPrompt) {
     'You are evaluating both the public routing and the first internal execution stage for this AW SDLC repo snapshot.',
     'Use only the repo-local command and skill files as the source of truth.',
     'Inspect commands/ and skills/using-aw-skills/SKILL.md before deciding.',
-    'Return exactly these lines and nothing else:',
-    'AW_EVAL_PUBLIC_COMMAND: </aw:plan|/aw:execute|/aw:verify|/aw:deploy|unknown>',
-    'AW_EVAL_INTERNAL_STAGE: <plan|execute|verify|deploy|brainstorm|finish|unknown>',
-    'AW_EVAL_INTERNAL_COMMAND: </aw:plan|/aw:execute|/aw:verify|/aw:deploy|/aw:brainstorm|/aw:finish|unknown>',
-    'AW_EVAL_INTERNAL_SKILL: <aw-plan|aw-execute|aw-verify|aw-deploy|aw-brainstorm|aw-finish|unknown>',
-    'AW_EVAL_REASON: <one short sentence>',
+    'Return exactly these lines and nothing else.',
+    'Replace each example value with one actual selected value. Do not repeat the option list.',
+    'AW_EVAL_PUBLIC_COMMAND: /aw:plan',
+    'AW_EVAL_INTERNAL_STAGE: plan',
+    'AW_EVAL_INTERNAL_COMMAND: /aw:plan',
+    'AW_EVAL_INTERNAL_SKILL: aw-plan',
+    'AW_EVAL_REASON: short reason here',
     '',
     `User request: ${userPrompt}`,
   ].join('\n');
 }
 
 function runPrompt(workspaceDir, prompt) {
-  const result = spawnSync(CLI, ['exec', '--skip-git-repo-check', prompt], {
+  const outputFile = path.join(workspaceDir, '.aw-stage-resolution-last-message.txt');
+  const result = spawnSync(CLI, ['exec', '--skip-git-repo-check', '--output-last-message', outputFile, prompt], {
     cwd: workspaceDir,
     encoding: 'utf8',
     timeout: TIMEOUT_MS,
   });
+
+  if (fs.existsSync(outputFile)) {
+    return fs.readFileSync(outputFile, 'utf8').trim();
+  }
+
   return `${result.stdout || ''}\n${result.stderr || ''}`.trim();
 }
 

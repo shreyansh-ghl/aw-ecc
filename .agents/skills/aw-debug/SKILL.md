@@ -1,0 +1,1 @@
+../../../skills/aw-debug/SKILL.md

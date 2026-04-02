@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Test harness for verifying SDLC skill auto-triggering across AI CLIs.
+# Public AW surface under test: /aw:plan, /aw:execute, /aw:verify,
+# /aw:deploy, and /aw:ship.
 #
 # Usage:
 #   ./test-skill-triggers.sh                  # Test all available CLIs
@@ -7,14 +9,16 @@
 #   ./test-skill-triggers.sh codex             # Test Codex only
 #   ./test-skill-triggers.sh --quick           # Run only 2 fast tests
 #
-# Each test sends a prompt via `<cli> -p "<prompt>"` and checks if the
-# expected skill name appears in the output.
+# Each test sends a prompt via `<cli> -p "<prompt>"` and heuristically checks
+# whether the expected AW route or routing language appears in the output.
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULTS_DIR="$SCRIPT_DIR/results"
-WORKSPACE_DIR="${WORKSPACE_DIR:-/Users/prathameshai/Documents/Agentic Workspace}"
+CASES_FILE="$SCRIPT_DIR/skill-trigger-cases.tsv"
+DEFAULT_WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$DEFAULT_WORKSPACE_DIR}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 MAX_TURNS=3
 QUICK_MODE=false
@@ -47,22 +51,27 @@ run_with_timeout() {
   fi
 }
 
-# --- Test Cases ---
-# Format: "prompt|expected_pattern|description"
-# expected_pattern is grep -i pattern. Use semicolons for OR (converted to pipe for grep -iE)
-FULL_TEST_CASES=(
-  "I want to add a contact sync worker to the backend. What skill should you invoke first?|brainstorm|Feature request triggers brainstorm"
-  "A test is failing in users.service.ts. According to the SDLC pipeline, what approach should be used before proposing fixes?|debug;root cause;TDD;systematic;investigate|Bug fix triggers debug/TDD"
-  "list the SDLC skills in the pipeline. Just the skill names.|brainstorm|SDLC skills visible"
-  "Implementation is done and all tasks pass. What is the next step in the SDLC pipeline?|verify|Completion triggers verify"
-  "I need to create a new NestJS API endpoint for contacts. What is the first SDLC skill?|brainstorm|API creation triggers brainstorm"
-  "review the code changes in this PR|review|Code review request"
-)
+load_test_cases() {
+  local mode_filter="$1"
+  local -n out_cases="$2"
 
-QUICK_TEST_CASES=(
-  "list the aw-* SDLC skills you have access to. One per line.|brainstorm|SDLC skills visible"
-  "I want to add a contact sync worker. What skill should you invoke first?|brainstorm|Feature triggers brainstorm"
-)
+  if [ ! -f "$CASES_FILE" ]; then
+    echo "Missing cases file: $CASES_FILE" >&2
+    exit 1
+  fi
+
+  while IFS=$'\t' read -r mode prompt expected_pattern description expected_route primary_skill supporting_skills; do
+    if [ -z "${mode:-}" ] || [[ "$mode" == \#* ]]; then
+      continue
+    fi
+
+    if [ "$mode_filter" = "quick" ] && [ "$mode" != "quick" ]; then
+      continue
+    fi
+
+    out_cases+=("$prompt|$expected_pattern|$description|$expected_route|$primary_skill|$supporting_skills")
+  done < "$CASES_FILE"
+}
 
 # --- CLI-specific prompt command ---
 run_prompt() {
@@ -80,7 +89,7 @@ run_prompt() {
         > "$output_file" 2>&1 || true
       ;;
     codex)
-      run_with_timeout 120 codex exec --skip-git-repo-check "$prompt" \
+      run_with_timeout 120 codex exec --skip-git-repo-check --sandbox read-only "$prompt" \
         > "$output_file" 2>&1 || true
       ;;
     cursor)
@@ -190,25 +199,16 @@ run_cli_tests() {
   local fail=0
 
   local total
-  if $QUICK_MODE; then
-    total=${#QUICK_TEST_CASES[@]}
-  else
-    total=${#FULL_TEST_CASES[@]}
-  fi
+  local -a test_cases=()
+  if $QUICK_MODE; then load_test_cases "quick" test_cases; else load_test_cases "full" test_cases; fi
+  total=${#test_cases[@]}
 
   echo ""
   printf "${BLUE}=== Testing: %s (%d tests) ===${NC}\n" "$cli" "$total"
   echo ""
 
-  local -a test_cases
-  if $QUICK_MODE; then
-    test_cases=("${QUICK_TEST_CASES[@]}")
-  else
-    test_cases=("${FULL_TEST_CASES[@]}")
-  fi
-
   for i in "${!test_cases[@]}"; do
-    IFS='|' read -r prompt expected_pattern description <<< "${test_cases[$i]}"
+    IFS='|' read -r prompt expected_pattern description expected_route primary_skill supporting_skills <<< "${test_cases[$i]}"
     if run_test "$cli" "$prompt" "$expected_pattern" "$description" "$i"; then
       ((pass++)) || true
     else
@@ -225,8 +225,8 @@ run_cli_tests() {
 # --- Generate report ---
 generate_report() {
   local report_file="$RESULTS_DIR/report_${TIMESTAMP}.md"
-  local -a rpt_cases
-  if $QUICK_MODE; then rpt_cases=("${QUICK_TEST_CASES[@]}"); else rpt_cases=("${FULL_TEST_CASES[@]}"); fi
+  local -a rpt_cases=()
+  if $QUICK_MODE; then load_test_cases "quick" rpt_cases; else load_test_cases "full" rpt_cases; fi
 
   cat > "$report_file" << HEADER
 # Skill Trigger Test Report
@@ -243,17 +243,17 @@ HEADER
   for cli in "$@"; do
     echo "### $cli" >> "$report_file"
     echo "" >> "$report_file"
-    echo "| # | Test | Expected | Result |" >> "$report_file"
-    echo "|---|------|----------|--------|" >> "$report_file"
+    echo "| # | Test | Route | Primary Skill | Expected Pattern | Result |" >> "$report_file"
+    echo "|---|------|-------|---------------|------------------|--------|" >> "$report_file"
 
     for i in "${!rpt_cases[@]}"; do
-      IFS='|' read -r prompt expected_pattern description <<< "${rpt_cases[$i]}"
+      IFS='|' read -r prompt expected_pattern description expected_route primary_skill supporting_skills <<< "${rpt_cases[$i]}"
       local output_file="$RESULTS_DIR/${cli}_${i}_${TIMESTAMP}.txt"
       local result="not_run"
       if [ -f "$output_file" ]; then
         result=$(check_skill_triggered "$output_file" "$expected_pattern")
       fi
-      echo "| $i | $description | \`${expected_pattern:0:30}\` | $result |" >> "$report_file"
+      echo "| $i | $description | \`${expected_route}\` | \`${primary_skill}\` | \`${expected_pattern:0:30}\` | $result |" >> "$report_file"
     done
     echo "" >> "$report_file"
   done
@@ -295,8 +295,9 @@ main() {
     exit 1
   fi
 
-  local test_count
-  if $QUICK_MODE; then test_count=${#QUICK_TEST_CASES[@]}; else test_count=${#FULL_TEST_CASES[@]}; fi
+  local -a all_cases=()
+  if $QUICK_MODE; then load_test_cases "quick" all_cases; else load_test_cases "full" all_cases; fi
+  local test_count=${#all_cases[@]}
 
   echo "======================================="
   echo "  Skill Trigger Test Harness"

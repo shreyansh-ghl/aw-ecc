@@ -1,24 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Find .aw_registry root by walking up from this script's location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-AW_REGISTRY_ROOT="$SCRIPT_DIR"
-while [[ "$AW_REGISTRY_ROOT" != "/" ]]; do
-  if [[ -d "$AW_REGISTRY_ROOT/.aw_registry" ]]; then
-    AW_REGISTRY_ROOT="$AW_REGISTRY_ROOT/.aw_registry"
+LOCAL_ROOT=""
+SEARCH_ROOT="$SCRIPT_DIR"
+while [[ "$SEARCH_ROOT" != "/" ]]; do
+  if [[ -f "$SEARCH_ROOT/skills/using-aw-skills/SKILL.md" ]]; then
+    LOCAL_ROOT="$SEARCH_ROOT"
     break
   fi
-  # Check if we ARE inside .aw_registry
-  if [[ "$(basename "$AW_REGISTRY_ROOT")" == ".aw_registry" ]]; then
-    break
-  fi
-  AW_REGISTRY_ROOT="$(dirname "$AW_REGISTRY_ROOT")"
+  SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
 done
 
-if [[ ! -d "$AW_REGISTRY_ROOT" ]]; then
+AW_REGISTRY_ROOT=""
+SEARCH_ROOT="$SCRIPT_DIR"
+while [[ "$SEARCH_ROOT" != "/" ]]; do
+  if [[ -d "$SEARCH_ROOT/.aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT/.aw_registry"
+    break
+  fi
+  if [[ "$(basename "$SEARCH_ROOT")" == ".aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT"
+    break
+  fi
+  SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
+done
+
+if [[ -z "$LOCAL_ROOT" && -z "$AW_REGISTRY_ROOT" ]]; then
   echo '{"hookSpecificOutput": {"additionalContext": "WARNING: .aw_registry not found. AW skills unavailable."}}'
   exit 0
+fi
+
+ROOT_CANDIDATES=()
+if [[ -n "$LOCAL_ROOT" ]]; then
+  ROOT_CANDIDATES+=("$LOCAL_ROOT")
+fi
+if [[ -n "$AW_REGISTRY_ROOT" ]]; then
+  ROOT_CANDIDATES+=("$AW_REGISTRY_ROOT")
 fi
 
 # --- Discover all skills ---
@@ -32,7 +50,11 @@ while IFS= read -r skill_file; do
   if [[ -n "$skill_name" ]]; then
     SKILLS_LIST="${SKILLS_LIST}- ${skill_name}: ${skill_desc}\n"
   fi
-done < <(find "$AW_REGISTRY_ROOT" -path "*/skills/*/SKILL.md" -type f 2>/dev/null | sort)
+done < <(
+  for root in "${ROOT_CANDIDATES[@]}"; do
+    find "$root" -path "*/skills/*/SKILL.md" -type f 2>/dev/null
+  done | sort -u
+)
 
 # --- Discover all commands ---
 COMMANDS_LIST=""
@@ -50,14 +72,24 @@ while IFS= read -r cmd_file; do
   if [[ -n "$cmd_basename" ]]; then
     COMMANDS_LIST="${COMMANDS_LIST}- ${cmd_basename}: ${cmd_desc}\n"
   fi
-done < <(find "$AW_REGISTRY_ROOT" -path "*/commands/*.md" -type f 2>/dev/null | sort)
+done < <(
+  for root in "${ROOT_CANDIDATES[@]}"; do
+    find "$root" -path "*/commands/*.md" -type f 2>/dev/null
+  done | sort -u
+)
 
 # --- Read using-aw-skills SKILL.md ---
 ROUTING_SKILL_CONTENT=""
-for ROUTING_SKILL_PATH in \
-  "$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md" \
-  "$AW_REGISTRY_ROOT/skills/using-aw-skills/SKILL.md"
-do
+ROUTING_SKILL_PATHS=()
+if [[ -n "$LOCAL_ROOT" ]]; then
+  ROUTING_SKILL_PATHS+=("$LOCAL_ROOT/skills/using-aw-skills/SKILL.md")
+fi
+if [[ -n "$AW_REGISTRY_ROOT" ]]; then
+  ROUTING_SKILL_PATHS+=("$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md")
+  ROUTING_SKILL_PATHS+=("$AW_REGISTRY_ROOT/skills/using-aw-skills/SKILL.md")
+fi
+
+for ROUTING_SKILL_PATH in "${ROUTING_SKILL_PATHS[@]}"; do
   if [[ -f "$ROUTING_SKILL_PATH" ]]; then
     ROUTING_SKILL_CONTENT=$(cat "$ROUTING_SKILL_PATH")
     break
@@ -66,6 +98,12 @@ done
 
 # --- Combine into additionalContext ---
 CONTEXT="# AW Session Context
+
+## First Response Rule
+Before any substantive response, select the smallest correct AW skill stack from the repo-local router.
+Honor an explicit AW command and its mapped stage skill first.
+Otherwise choose the needed process skill, primary stage skill, and matching route by intent, then load deeper domain skills.
+Do not start with generic implementation, review, or deploy advice before skill selection.
 
 ## Available Skills
 ${SKILLS_LIST}

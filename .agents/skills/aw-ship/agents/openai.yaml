@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Ship"
+  short_description: "End-to-end orchestration skill that composes aw-plan, aw-execute, aw-verify, and aw-deploy into one explicit shipping workflow."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-ship skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

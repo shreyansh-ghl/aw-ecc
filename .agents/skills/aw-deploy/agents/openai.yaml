@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Deploy"
+  short_description: "Turn verified work into the requested release outcome, with explicit GHL staging provider resolution and deterministic release artifacts."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-deploy skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true

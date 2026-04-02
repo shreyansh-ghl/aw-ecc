@@ -14,3 +14,9 @@ replaced-by: aw:deploy
 
 Use `/aw:deploy` as the public release entrypoint.
 This helper may remain available temporarily for compatibility or migration.
+
+## Deprecation Timeline
+
+`/aw:finish` is deprecated only as a public entrypoint.
+The internal `aw-finish` skill remains active until `/aw:deploy` fully absorbs the branch-completion decision flow and workspace cleanup metadata.
+Do not remove the compatibility helper before that migration is complete.

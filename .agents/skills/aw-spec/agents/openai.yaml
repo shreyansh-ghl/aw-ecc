@@ -1,0 +1,7 @@
+interface:
+  display_name: "Aw Spec"
+  short_description: "Internal spec helper that turns an approved direction into a deterministic technical spec without writing implementation tasks or code."
+  brand_color: "#0F766E"
+  default_prompt: "Use the aw-spec skill when its trigger applies."
+policy:
+  allow_implicit_invocation: true
