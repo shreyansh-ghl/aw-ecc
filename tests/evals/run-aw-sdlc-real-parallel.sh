@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REAL_TEST_FILE="$ROOT_DIR/tests/evals/real/aw-sdlc-real-outcomes.test.js"
 RESULT_DIR="$ROOT_DIR/tests/results/real-outcomes-$(date +%Y%m%d-%H%M%S)"
 PARALLELISM="${AW_SDLC_EVAL_PARALLELISM:-2}"
 
@@ -17,7 +18,7 @@ CASE_IDS=()
 while IFS= read -r case_id; do
   [[ -n "$case_id" ]] || continue
   CASE_IDS+=("$case_id")
-done < <(node "$ROOT_DIR/tests/evals/aw-sdlc-real-outcomes.test.js" --list-cases)
+done < <(node "$REAL_TEST_FILE" --list-cases)
 
 run_case() {
   local case_id="$1"
@@ -28,7 +29,7 @@ run_case() {
     AW_SDLC_EVAL_REF="$AW_SDLC_EVAL_REF" \
     AW_SDLC_EVAL_CLI="$AW_SDLC_EVAL_CLI" \
     AW_SDLC_EVAL_WORKSPACE_MODE="$AW_SDLC_EVAL_WORKSPACE_MODE" \
-    node "$ROOT_DIR/tests/evals/aw-sdlc-real-outcomes.test.js" >"$log_file" 2>&1; then
+    node "$REAL_TEST_FILE" >"$log_file" 2>&1; then
     echo 0 > "$exit_file"
   else
     echo $? > "$exit_file"
