@@ -4,12 +4,24 @@
 
 ## What is this?
 
-`aw-ecc` is GoHighLevel's private fork of ECC. It ships all 60 commands, 28 agents, 125 skills, all rules, hooks, and MCP configs from upstream ECC — unchanged. The only additions are ~6 lines appended to 14 commands that activate GHL platform agents alongside ECC agents.
+`aw-ecc` is GoHighLevel's private fork of ECC. It keeps the upstream ECC engine, then layers in AW SDLC routing, GHL platform integration, repo-local defaults, and eval coverage for GoHighLevel workflows. The current catalog exposed by this repo is 28 agents, 139 skills, and 65 commands.
+
+## Quick Start Snapshot
+
+Installing `aw-ecc` gives your workspace access to 28 agents, 139 skills, and 65 commands.
+
+| Surface | Availability |
+| --- | --- |
+| Agents | ✅ 28 agents |
+| Skills | ✅ 139 skills |
+| Commands | ✅ 65 commands |
+
+These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
 
 ## How it works
 
 ```
-aw-ecc (this repo)  = the engine  — ECC as-is + GHL platform integration on ~14 commands
+aw-ecc (this repo)  = the engine  — ECC baseline + AW SDLC routing + GHL platform integration
 platform/           = the brain   — GHL domain knowledge (NestJS, Vue, Highrise, multi-tenancy, events)
 aw init             = the glue    — shallow-clone aw-ecc → run installer → aw link for platform/
 ```
@@ -26,12 +38,14 @@ Result: `.cursor/` has 46 agents, 218 skills, 60 commands — all discoverable b
 
 ## What changed from upstream ECC
 
-| Change | Files | Lines |
-|--------|-------|-------|
-| GHL Platform Integration section appended | 14 command files | ~6 lines each |
-| Rebrand | package.json, README.md | name + version |
+| Change | Scope |
+|--------|-------|
+| AW SDLC public-stage routing (`/aw:plan`, `/aw:execute`, `/aw:verify`, `/aw:deploy`, `/aw:ship`) | commands, skills, defaults, docs |
+| GHL platform integration guidance for command routing | command contracts + router skill |
+| Repo-local staging and verification confidence artifacts | docs, defaults, evals |
+| Rebrand and package metadata | package.json, README.md |
 
-Zero hooks added. Zero lines modified in ECC originals. All changes are additive appends.
+The repo still tracks upstream ECC, but it now carries meaningful repo-local AW SDLC behavior on top of the upstream baseline.
 
 ### GHL Platform Integration (appended to commands)
 
@@ -61,13 +75,13 @@ This is a fork of [affaan-m/everything-claude-code](https://github.com/affaan-m/
 git remote add upstream https://github.com/affaan-m/everything-claude-code.git
 git fetch upstream
 git merge upstream/main
-# Resolve conflicts (only in ~14 command files — appended sections)
+# Resolve conflicts in the repo-local AW SDLC command, skill, and doc layers
 git tag v1.x.0
 ```
 
 ## Important
 
-If you have `everything-claude-code` installed as a Claude Code plugin, **remove it** before using aw-ecc. This repo is a superset — same content plus GHL platform integration. Running both causes duplicate skills in the IDE context.
+If you have `everything-claude-code` installed as a Claude Code plugin, **remove it** before using aw-ecc. Running both can duplicate skills, commands, and routing instructions in the IDE context.
 
 ## License
 
