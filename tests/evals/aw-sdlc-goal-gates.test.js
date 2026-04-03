@@ -7,7 +7,8 @@ const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
 function parseFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n/);
   const attributes = {};
   if (!match) return attributes;
 

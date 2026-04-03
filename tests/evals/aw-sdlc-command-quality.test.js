@@ -37,7 +37,8 @@ const COMMAND_QUALITY = [
 ];
 
 function parseFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n/);
   const attributes = {};
   if (!match) return attributes;
 
