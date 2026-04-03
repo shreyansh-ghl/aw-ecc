@@ -1,0 +1,354 @@
+version: 1
+owner: platform-docs
+description: Canonical GHL SDLC baseline profiles for verify and staging-focused deploy behavior.
+
+resolution_order:
+  - repo-local-profile
+  - detected-ghl-baseline
+  - ghl-safe-fallback
+
+baselines:
+  ghl-microfrontend-standard:
+    description: Default for MFA, shell-driven frontend, iframe, and independent frontend apps.
+    verify:
+      code_review:
+        enabled: true
+        playbooks:
+          - platform-review:code-review-pr
+          - platform-frontend:code-reviewer
+          - platform-design:review
+        rulesets:
+          - platform/root
+          - platform/frontend
+          - platform/security
+          - platform/sdet
+      local_validation:
+        enabled: true
+        provider: repo-auto-detect
+        command_groups:
+          - unit
+          - integration
+          - lint
+          - typecheck
+          - build
+        required_minimums:
+          - unit
+          - lint
+          - typecheck
+          - build
+        recommended_precheck_playbooks:
+          - platform-frontend:highrise-configuration
+      e2e_validation:
+        enabled: true
+        provider: test-repo
+        playbooks:
+          - platform-sdet:test-repos-guide
+          - platform-sdet:playwright-pom
+        repo_selector: product-area-mapping
+        required_for:
+          - staging
+      external_validation:
+        enabled: true
+        providers:
+          - quality-gates
+          - sandbox-smoke
+        playbooks:
+          - platform-sdet:quality-gates
+      pr_governance:
+        enabled: true
+        checks:
+          - pr_description_present
+          - pr_description_checklist_complete
+          - pr_verification_items_checked
+          - required_status_checks_green
+          - required_approvals_present
+          - quality_gates_green
+      release_readiness:
+        enabled: true
+        checks:
+          - rollback_plan_present
+          - staging_smoke_recommended
+          - design_and_a11y_review_complete
+          - release_recommendation
+    deploy:
+      pr:
+        enabled: true
+        provider: github-pr
+      branch:
+        enabled: true
+        provider: git-push
+      staging:
+        enabled: true
+        provider: ghl-ai
+        execution_backend: git-jenkins
+        mechanism: versioned-mfa-staging
+        playbooks:
+          - deploy-versioned-mfa
+          - platform-infra:staging-deploy
+        strategy: versioned-mfa
+        pipeline_family: staging-versions
+        requires:
+          - app_registration
+          - spm_ts_consumer_deploy
+          - shared_version_string
+      production:
+        enabled: false
+        provider: unconfigured
+      versioning:
+        type: versioned-remote-entry
+        source: branch-name-normalized
+        routing_signal: developer_version
+      post_deploy_checks:
+        - pipeline_succeeded
+        - remote_entry_accessible
+        - spm_ts_consumer_versioned
+        - developer_version_header_present
+        - staging_url_smoke_passed
+      guards:
+        require_verify_status:
+          - PASS
+          - PASS_WITH_NOTES
+
+  ghl-microservice-standard:
+    description: Default for backend APIs and service repos.
+    verify:
+      code_review:
+        enabled: true
+        playbooks:
+          - platform-review:code-review-pr
+        rulesets:
+          - platform/root
+          - platform/backend
+          - platform/data
+          - platform/security
+          - platform/infra
+      local_validation:
+        enabled: true
+        provider: repo-auto-detect
+        command_groups:
+          - unit
+          - integration
+          - lint
+          - typecheck
+          - build
+        required_minimums:
+          - unit
+          - lint
+          - typecheck
+          - build
+      e2e_validation:
+        enabled: true
+        provider: optional-test-repo-or-service-smoke
+        playbooks:
+          - platform-sdet:test-repos-guide
+        required_for:
+          - staging
+      external_validation:
+        enabled: true
+        providers:
+          - quality-gates
+          - pipeline-smoke
+        playbooks:
+          - platform-sdet:quality-gates
+      pr_governance:
+        enabled: true
+        checks:
+          - pr_description_present
+          - pr_description_checklist_complete
+          - pr_verification_items_checked
+          - required_status_checks_green
+          - required_approvals_present
+          - quality_gates_green
+      release_readiness:
+        enabled: true
+        checks:
+          - rollback_plan_present
+          - migration_safety_confirmed
+          - staging_smoke_recommended
+          - release_recommendation
+    deploy:
+      pr:
+        enabled: true
+        provider: github-pr
+      branch:
+        enabled: true
+        provider: git-push
+      staging:
+        enabled: true
+        provider: ghl-ai
+        execution_backend: git-jenkins
+        mechanism: versioned-service-staging
+        playbooks:
+          - platform-infra:staging-deploy
+          - platform-infra:jenkins-pipelines
+        strategy: versioned-service
+        pipeline_family: staging-versions
+      production:
+        enabled: false
+        provider: unconfigured
+      versioning:
+        type: developer-version
+        source: branch-or-build-id
+        routing_signal: developer_version
+        env_flags:
+          - IS_VERSIONED_DEPLOYMENT
+          - DEVELOPER_VERSION
+      post_deploy_checks:
+        - pipeline_succeeded
+        - versioned_service_reachable
+        - health_endpoint_ok
+        - staging_smoke_passed
+      guards:
+        require_verify_status:
+          - PASS
+          - PASS_WITH_NOTES
+
+  ghl-worker-standard:
+    description: Default for background workers, queue consumers, and Pub/Sub workloads.
+    verify:
+      code_review:
+        enabled: true
+        playbooks:
+          - platform-review:code-review-pr
+        rulesets:
+          - platform/root
+          - platform/backend
+          - platform/data
+          - platform/security
+          - platform/infra
+      local_validation:
+        enabled: true
+        provider: repo-auto-detect
+        command_groups:
+          - unit
+          - lint
+          - typecheck
+          - build
+        required_minimums:
+          - unit
+          - lint
+          - typecheck
+          - build
+      e2e_validation:
+        enabled: false
+        provider: optional
+        required_for: []
+      external_validation:
+        enabled: true
+        providers:
+          - quality-gates
+          - worker-health-smoke
+        playbooks:
+          - platform-sdet:quality-gates
+      pr_governance:
+        enabled: true
+        checks:
+          - pr_description_present
+          - pr_description_checklist_complete
+          - pr_verification_items_checked
+          - required_status_checks_green
+          - required_approvals_present
+          - quality_gates_green
+      release_readiness:
+        enabled: true
+        checks:
+          - rollback_plan_present
+          - queue_or_subscription_ready
+          - migration_safety_confirmed
+          - release_recommendation
+    deploy:
+      pr:
+        enabled: true
+        provider: github-pr
+      branch:
+        enabled: true
+        provider: git-push
+      staging:
+        enabled: true
+        provider: ghl-ai
+        execution_backend: git-jenkins
+        mechanism: versioned-worker-staging
+        playbooks:
+          - platform-infra:staging-deploy
+          - platform-infra:jenkins-pipelines
+        strategy: versioned-worker
+        pipeline_family: staging-versions
+      production:
+        enabled: false
+        provider: unconfigured
+      versioning:
+        type: developer-version
+        source: branch-or-build-id
+        routing_signal: developer_version
+        env_flags:
+          - IS_VERSIONED_DEPLOYMENT
+          - DEVELOPER_VERSION
+      post_deploy_checks:
+        - pipeline_succeeded
+        - worker_pod_healthy
+        - subscription_consumption_ok
+        - versioned_worker_routing_confirmed
+      guards:
+        require_verify_status:
+          - PASS
+          - PASS_WITH_NOTES
+
+  ghl-safe-fallback:
+    description: Safe minimum for unknown repos; do not assume staging deploy capability.
+    verify:
+      code_review:
+        enabled: true
+        playbooks:
+          - platform-review:code-review-pr
+        rulesets:
+          - platform/root
+      local_validation:
+        enabled: true
+        provider: repo-auto-detect
+        command_groups:
+          - unit
+          - lint
+          - typecheck
+          - build
+        required_minimums:
+          - unit
+          - lint
+          - typecheck
+          - build
+      e2e_validation:
+        enabled: false
+        provider: unconfigured
+        required_for: []
+      external_validation:
+        enabled: false
+        providers: []
+      pr_governance:
+        enabled: true
+        checks:
+          - pr_description_present
+          - pr_description_checklist_complete
+          - pr_verification_items_checked
+          - required_status_checks_green
+          - required_approvals_present
+      release_readiness:
+        enabled: true
+        checks:
+          - rollback_plan_present
+          - release_recommendation
+    deploy:
+      pr:
+        enabled: true
+        provider: github-pr
+      branch:
+        enabled: true
+        provider: git-push
+      staging:
+        enabled: false
+        provider: unconfigured
+      production:
+        enabled: false
+        provider: unconfigured
+      guards:
+        require_verify_status:
+          - PASS
+          - PASS_WITH_NOTES

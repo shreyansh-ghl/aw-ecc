@@ -75,6 +75,7 @@ examples/sessions/*.tmp
 # Local drafts
 marketing/
 .dmux/
+.planning/
 
 # Temporary files
 tmp/
