@@ -35,6 +35,8 @@ PROMPTS_DEST="$CODEX_HOME/prompts"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
+HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex/hooks.json"
+HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CODEX_HOME/backups/ecc-$STAMP"
@@ -138,6 +140,7 @@ require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
+require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
 
 if ! command -v node >/dev/null 2>&1; then
   log "ERROR: node is required for MCP config merging but was not found"
@@ -153,6 +156,9 @@ run_or_echo "mkdir -p \"$BACKUP_DIR\""
 run_or_echo "cp \"$CONFIG_FILE\" \"$BACKUP_DIR/config.toml\""
 if [[ -f "$AGENTS_FILE" ]]; then
   run_or_echo "cp \"$AGENTS_FILE\" \"$BACKUP_DIR/AGENTS.md\""
+fi
+if [[ -f "$HOOKS_JSON_DEST" ]]; then
+  run_or_echo "cp \"$HOOKS_JSON_DEST\" \"$BACKUP_DIR/hooks.json\""
 fi
 
 ECC_BEGIN_MARKER="<!-- BEGIN ECC -->"
@@ -473,6 +479,13 @@ if [[ "$MODE" == "dry-run" ]]; then
   "$HOOKS_INSTALLER" --dry-run
 else
   "$HOOKS_INSTALLER"
+fi
+
+log "Installing Codex hooks.json"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] cp "%s" "%s"\n' "$HOOKS_JSON_SRC" "$HOOKS_JSON_DEST"
+else
+  run_or_echo "cp \"$HOOKS_JSON_SRC\" \"$HOOKS_JSON_DEST\""
 fi
 
 log "Running global regression sanity check"
