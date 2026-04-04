@@ -2,19 +2,19 @@
 
 **GoHighLevel Agentic Workspace Engine** — forked from [Everything Claude Code](https://github.com/affaan-m/everything-claude-code).
 
-Get instant access to 28 agents, 139 skills, and 65 commands.
+Get instant access to 29 agents, 140 skills, and 66 commands.
 
 ## What is this?
 
-`aw-ecc` is GoHighLevel's private fork of ECC. It now ships 65 commands, 28 agents, 139 skills, all rules, hooks, and MCP configs, with the AW SDLC stage surface layered on top of the original ECC foundation.
+`aw-ecc` is GoHighLevel's private fork of ECC. It now ships 66 commands, 29 agents, 140 skills, all rules, hooks, and MCP configs, with the AW SDLC stage surface layered on top of the original ECC foundation.
 
 ## Catalog Summary
 
 | Component | Availability |
 | --- | --- |
-| **Agents** | ✅ 28 agents |
-| **Commands** | ✅ 65 commands |
-| **Skills** | ✅ 139 skills |
+| **Agents** | ✅ 29 agents |
+| **Commands** | ✅ 66 commands |
+| **Skills** | ✅ 140 skills |
 
 ## How it works
 
