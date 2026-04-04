@@ -35,6 +35,8 @@ PROMPTS_DEST="$CODEX_HOME/prompts"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
+CODEX_HOOKS_DIR="$CODEX_HOME/hooks"
+CODEX_SESSION_START_HOOK="$CODEX_HOOKS_DIR/aw-session-start.sh"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CODEX_HOME/backups/ecc-$STAMP"
@@ -138,6 +140,41 @@ require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
+
+install_codex_session_hook() {
+  # Ensure Codex runs the using-aw-skills session-start hook.
+  run_or_echo "mkdir -p \"$CODEX_HOOKS_DIR\""
+  if [[ "$MODE" == "dry-run" ]]; then
+    printf '[dry-run] write %s\n' "$CODEX_SESSION_START_HOOK"
+    return
+  fi
+  cat > "$CODEX_SESSION_START_HOOK" <<'EOF'
+#!/usr/bin/env bash
+# aw-managed: codex-global-session-start
+set -euo pipefail
+
+TARGETS=(
+  "$HOME/.aw-ecc/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.aw/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
+)
+
+for target in "${TARGETS[@]}"; do
+  if [[ -f "$target" ]]; then
+    exec bash "$target"
+  fi
+done
+
+CONTEXT="# AW Session Context
+
+WARNING: AW using-aw-skills hook not found in ~/.aw_registry. Run aw init or aw pull platform."
+
+JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
+
+echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":${JSON_CONTEXT}}}"
+EOF
+  chmod +x "$CODEX_SESSION_START_HOOK"
+}
 
 if ! command -v node >/dev/null 2>&1; then
   log "ERROR: node is required for MCP config merging but was not found"
@@ -244,6 +281,9 @@ for skill_dir in "$SKILLS_SRC"/*; do
   run_or_echo "cp -R \"$skill_dir\" \"$dest\""
   skills_count=$((skills_count + 1))
 done
+
+log "Installing Codex session-start hook"
+install_codex_session_hook
 
 log "Generating prompt files from ECC commands"
 run_or_echo "mkdir -p \"$PROMPTS_DEST\""
