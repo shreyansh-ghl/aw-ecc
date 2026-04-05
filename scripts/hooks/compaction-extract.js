@@ -209,9 +209,9 @@ function run(rawInput) {
 }
 
 async function extractAndStore(rawInput) {
-  const namespace = resolveNamespace();
-  if (!namespace) {
-    console.error('[compaction-extract] No namespace configured, skipping');
+  const cfg = resolveConfig();
+  if (!cfg) {
+    console.error('[compaction-extract] No config found, skipping');
     return;
   }
 
@@ -238,7 +238,7 @@ async function extractAndStore(rawInput) {
 
   console.error(`[compaction-extract] Found ${candidates.length} candidate(s)`);
 
-  const headers = buildMcpHeaders(namespace);
+  const headers = buildMcpHeaders(cfg);
 
   for (const candidate of candidates) {
     try {
