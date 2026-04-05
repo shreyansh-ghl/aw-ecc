@@ -128,6 +128,18 @@
           }
         ],
         "description": "Save state before context compaction"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"pre:compact:memory-extract\" \"scripts/hooks/compaction-extract.js\" \"standard,strict\"",
+            "async": true,
+            "timeout": 15
+          }
+        ],
+        "description": "Extract learnings from compaction summary and store as team memories via MCP"
       }
     ],
     "SessionStart": [
