@@ -4,15 +4,11 @@
  * Priority order:
  * 1. AW_MCP_URL env var (explicit override, must include full path)
  * 2. GHL_MCP_URL env var + /agentic-workspace/mcp suffix
- * 3. Default staging URL (known-good for direct HTTP calls)
- *
- * Note: We intentionally do NOT read from Claude's settings.local.json
- * because those URLs may be internal/VPN-only addresses used by the MCP
- * bridge process, not suitable for direct HTTP calls from hooks.
+ * 3. Default local URL (MCP server runs locally)
  */
 'use strict';
 
-const DEFAULT_MCP_URL = 'https://staging.backend.leadconnectorhq.com/agentic-workspace/mcp';
+const DEFAULT_MCP_URL = 'http://localhost:3100/agentic-workspace/mcp';
 const MCP_SUFFIX = '/agentic-workspace/mcp';
 
 function resolveMcpUrl() {
