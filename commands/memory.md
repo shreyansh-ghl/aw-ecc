@@ -4,10 +4,21 @@ Store, search, or retrieve memories from the AW memory layer.
 
 ## Usage
 
-- `/memory store <content>` — Store a memory with auto-curation
-- `/memory search <query>` — Search memories by semantic similarity
-- `/memory pack <query>` — Get a token-budgeted memory pack for context injection
+- `/memory store <content> [--namespace <ns>]` — Store a memory with auto-curation
+- `/memory search <query> [--namespace <ns>]` — Search memories by semantic similarity
+- `/memory pack <query> [--namespace <ns>]` — Get a token-budgeted memory pack for context injection
 - `/memory stats` — Show memory statistics
+
+### Namespace scoping
+
+The `--namespace` flag controls which namespace a memory is stored under or searched within. When omitted, layered defaults apply:
+
+1. **Explicit** — `--namespace commerce/payments` targets that namespace directly
+2. **Single include** — if `.sync-config.json` has one `include[]` path, that namespace is used automatically
+3. **Multi include** — multiple paths: for STORE, curation LLM picks the best namespace; for SEARCH, all paths are queried (union)
+4. **Fallback** — `cfg.namespace` or `"platform"` (org-level scope)
+
+READ operations always expand the namespace into its full ancestry chain (e.g. `commerce/payments` → `commerce/payments, commerce, platform`).
 
 ## Behavior
 
