@@ -315,6 +315,18 @@
           }
         ],
         "description": "Session end lifecycle marker (non-blocking)"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"session:end:memory-feedback\" \"scripts/hooks/session-end-feedback.js\" \"standard,strict\"",
+            "async": true,
+            "timeout": 15
+          }
+        ],
+        "description": "Send memory feedback for memories injected during the session via MCP"
       }
     ]
   }
