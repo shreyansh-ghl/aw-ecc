@@ -283,6 +283,18 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"stop:memory-extract\" \"scripts/hooks/session-end-extract.js\" \"standard,strict\"",
+            "async": true,
+            "timeout": 20
+          }
+        ],
+        "description": "Extract learnings from session transcript and store as team memories via MCP"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"stop:evaluate-session\" \"scripts/hooks/evaluate-session.js\" \"minimal,standard,strict\"",
             "async": true,
             "timeout": 10

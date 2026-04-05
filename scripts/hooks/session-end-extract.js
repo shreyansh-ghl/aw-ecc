@@ -232,32 +232,50 @@ async function sendImplicitFeedback(servedData, transcriptContent, headers) {
 }
 
 async function main() {
-  const sessionSummary = process.env.SESSION_SUMMARY || '';
-  const sessionDuration = parseInt(process.env.SESSION_DURATION_MINUTES || '0', 10);
+  // Try to get transcript content from multiple sources:
+  // 1. stdin JSON with transcript_path (from Stop hook — Claude Code provides this)
+  // 2. SESSION_SUMMARY env var (manual/test invocation)
+  let transcriptContent = '';
+  let transcriptPath = '';
 
-  // Only extract from sessions > 5 minutes (PRD resolved decision)
-  if (sessionDuration < MIN_SESSION_MINUTES) {
-    console.log('[memory-extract] Session too short, skipping');
-    return;
+  try {
+    const input = JSON.parse(stdinData);
+    if (input.transcript_path && fs.existsSync(input.transcript_path)) {
+      transcriptPath = input.transcript_path;
+      transcriptContent = fs.readFileSync(input.transcript_path, 'utf8');
+    }
+  } catch {
+    // Not JSON or no transcript_path
   }
 
-  // Try stdin JSON for transcript, fall back to env
-  let transcriptContent = sessionSummary;
   if (!transcriptContent) {
-    try {
-      const input = JSON.parse(stdinData);
-      if (input.transcript_path) {
-        if (fs.existsSync(input.transcript_path)) {
-          transcriptContent = fs.readFileSync(input.transcript_path, 'utf8');
-        }
-      }
-    } catch {
-      // No transcript available
-    }
+    transcriptContent = process.env.SESSION_SUMMARY || '';
   }
 
   if (!transcriptContent) {
     console.log('[memory-extract] No session summary or transcript, skipping');
+    return;
+  }
+
+  // Estimate session duration from transcript file age or served memory timestamp
+  let sessionDuration = parseInt(process.env.SESSION_DURATION_MINUTES || '0', 10);
+  if (sessionDuration === 0 && transcriptPath) {
+    try {
+      const stat = fs.statSync(transcriptPath);
+      sessionDuration = Math.floor((Date.now() - stat.birthtimeMs) / 60000);
+    } catch { /* best effort */ }
+  }
+  if (sessionDuration === 0) {
+    // Check served memory timestamp as a proxy for session start
+    const servedData = loadServedMemoryIds();
+    if (servedData && servedData.timestamp) {
+      sessionDuration = Math.floor((Date.now() - servedData.timestamp) / 60000);
+    }
+  }
+
+  // Only extract from sessions > 5 minutes (PRD resolved decision)
+  if (sessionDuration > 0 && sessionDuration < MIN_SESSION_MINUTES) {
+    console.log(`[memory-extract] Session too short (${sessionDuration}min < ${MIN_SESSION_MINUTES}min), skipping`);
     return;
   }
 
