@@ -41,17 +41,32 @@ process.stdin.on('end', () => {
 });
 
 /**
- * Resolve namespace from .sync-config.json.
+ * Resolve config from .sync-config.json.
  */
-function resolveNamespace() {
+function resolveConfig() {
   try {
     const configPath = path.join(AW_HOME, REGISTRY_DIR, '.sync-config.json');
     if (!fs.existsSync(configPath)) return null;
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    return config.namespace || null;
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch {
     return null;
   }
+}
+
+/**
+ * Compute full ancestry chain for namespace paths.
+ * E.g. ['commerce/payments'] → ['commerce/payments', 'commerce', 'platform']
+ */
+function computeAncestry(paths) {
+  const result = new Set();
+  for (const p of paths) {
+    const segments = p.split('/');
+    for (let i = segments.length; i >= 1; i--) {
+      result.add(segments.slice(0, i).join('/'));
+    }
+  }
+  result.add('platform');
+  return [...result];
 }
 
 /**
@@ -74,11 +89,27 @@ function resolveGhToken() {
 }
 
 /**
- * Build MCP request headers with namespace and auth.
+ * Build MCP request headers with namespace-scoped paths and auth.
  */
-function buildMcpHeaders(namespace) {
+function buildMcpHeaders(cfg) {
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
-  if (namespace) headers['X-Namespace'] = namespace;
+
+  // Namespace-scoped: send ancestry paths from include[]
+  const includes = cfg?.include || [];
+  const paths = [...includes];
+  if (!paths.some(p => p === 'platform' || p.startsWith('platform/'))) {
+    paths.push('platform');
+  }
+  if (paths.length > 0) {
+    headers['X-Namespace-Paths'] = paths.join(',');
+  }
+
+  // GitHub user for individual-layer portability
+  if (cfg?.user) headers['X-Github-User'] = cfg.user;
+
+  // Backwards compat: keep X-Namespace
+  if (cfg?.namespace) headers['X-Namespace'] = cfg.namespace;
+
   const token = resolveGhToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
@@ -230,9 +261,9 @@ async function main() {
     return;
   }
 
-  // Resolve namespace and build headers for MCP calls
-  const namespace = resolveNamespace();
-  const headers = namespace ? buildMcpHeaders(namespace) : { 'Content-Type': 'application/json' };
+  // Resolve config and build namespace-scoped headers for MCP calls
+  const cfg = resolveConfig();
+  const headers = buildMcpHeaders(cfg);
 
   // --- Phase 1: Send implicit feedback for served memories ---
   const servedData = loadServedMemoryIds();
