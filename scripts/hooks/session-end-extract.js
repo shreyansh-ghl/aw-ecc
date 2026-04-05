@@ -101,7 +101,7 @@ function buildMcpHeaders(cfg) {
     paths.push('platform');
   }
   if (paths.length > 0) {
-    headers['X-Namespace-Paths'] = paths.join(',');
+    headers['X-Resolved-Paths'] = paths.join(',');
   }
 
   // GitHub user for individual-layer portability

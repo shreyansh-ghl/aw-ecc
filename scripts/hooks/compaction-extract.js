@@ -26,17 +26,31 @@ const MAX_CANDIDATES = 5; // Keep it small — fires frequently
 const MAX_STDIN = 512 * 1024; // 512KB — compaction summaries are smaller
 
 /**
- * Resolve namespace from .sync-config.json.
+ * Resolve full config from .sync-config.json.
  */
-function resolveNamespace() {
+function resolveConfig() {
   try {
     const configPath = path.join(AW_HOME, REGISTRY_DIR, '.sync-config.json');
     if (!fs.existsSync(configPath)) return null;
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    return config.namespace || null;
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch {
     return null;
   }
+}
+
+/**
+ * Compute full ancestry chain for namespace paths.
+ */
+function computeAncestry(paths) {
+  const result = new Set();
+  for (const p of paths) {
+    const segments = p.split('/');
+    for (let i = segments.length; i >= 1; i--) {
+      result.add(segments.slice(0, i).join('/'));
+    }
+  }
+  result.add('platform');
+  return [...result];
 }
 
 /**
@@ -61,9 +75,18 @@ function resolveGhToken() {
 /**
  * Build MCP request headers.
  */
-function buildMcpHeaders(namespace) {
+function buildMcpHeaders(cfg) {
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
-  if (namespace) headers['X-Namespace'] = namespace;
+
+  const includes = cfg?.include || [];
+  if (includes.length > 0) {
+    const ancestryPaths = computeAncestry(includes);
+    headers['X-Resolved-Paths'] = ancestryPaths.join(',');
+  }
+
+  if (cfg?.user) headers['X-Github-User'] = cfg.user;
+  if (cfg?.namespace) headers['X-Namespace'] = cfg.namespace;
+
   const token = resolveGhToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;

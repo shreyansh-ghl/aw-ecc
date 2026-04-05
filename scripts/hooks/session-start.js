@@ -34,18 +34,32 @@ const REGISTRY_DIR = '.aw_registry';
 const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
 
 /**
- * Resolve namespace from .sync-config.json in the AW registry directory.
- * Returns the namespace string or null if not configured.
+ * Resolve full config from .sync-config.json in the AW registry directory.
  */
-function resolveNamespace() {
+function resolveConfig() {
   try {
     const configPath = path.join(AW_HOME, REGISTRY_DIR, '.sync-config.json');
     if (!fs.existsSync(configPath)) return null;
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    return config.namespace || null;
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch {
     return null;
   }
+}
+
+/**
+ * Compute full ancestry chain for namespace paths.
+ * E.g. ['commerce/payments'] → ['commerce/payments', 'commerce', 'platform']
+ */
+function computeAncestry(paths) {
+  const result = new Set();
+  for (const p of paths) {
+    const segments = p.split('/');
+    for (let i = segments.length; i >= 1; i--) {
+      result.add(segments.slice(0, i).join('/'));
+    }
+  }
+  result.add('platform');
+  return [...result];
 }
 
 /**
@@ -68,11 +82,24 @@ function resolveGhToken() {
 }
 
 /**
- * Build MCP request headers with namespace and auth.
+ * Build MCP request headers with namespace-scoped paths and auth.
  */
-function buildMcpHeaders(namespace) {
+function buildMcpHeaders(cfg) {
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
-  if (namespace) headers['X-Namespace'] = namespace;
+
+  // Namespace-scoped: send ancestry paths from include[]
+  const includes = cfg?.include || [];
+  if (includes.length > 0) {
+    const ancestryPaths = computeAncestry(includes);
+    headers['X-Resolved-Paths'] = ancestryPaths.join(',');
+  }
+
+  // GitHub user for individual-layer portability
+  if (cfg?.user) headers['X-Github-User'] = cfg.user;
+
+  // Backwards compat: keep X-Namespace
+  if (cfg?.namespace) headers['X-Namespace'] = cfg.namespace;
+
   const token = resolveGhToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
@@ -182,13 +209,13 @@ async function injectMemoryPack() {
   }
 
   // 2. Try L1: MCP memory_pack / memory_search (needs network)
-  const namespace = resolveNamespace();
-  if (!namespace) {
-    log('[SessionStart] No namespace and no local cache, skipping memory injection');
+  const cfg = resolveConfig();
+  if (!cfg?.namespace && !cfg?.include?.length) {
+    log('[SessionStart] No namespace config and no local cache, skipping memory injection');
     return;
   }
 
-  const headers = buildMcpHeaders(namespace);
+  const headers = buildMcpHeaders(cfg);
 
   // Quick health check
   try {
