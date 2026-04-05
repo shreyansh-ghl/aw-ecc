@@ -22,6 +22,60 @@ const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
 const MAX_CANDIDATES = 10;
 const MIN_SESSION_MINUTES = 5;
 const MAX_STDIN = 1024 * 1024;
+const MAX_TRANSCRIPT_BYTES = 2 * 1024 * 1024; // Read last 2MB of transcript
+
+/**
+ * Extract human-readable text from a Claude Code JSONL transcript.
+ * Pulls assistant message text and user messages, skipping tool calls
+ * and binary/JSON noise.
+ */
+function extractTextFromTranscript(transcriptPath) {
+  try {
+    const stat = fs.statSync(transcriptPath);
+    // Read last portion of file to stay within budget
+    const fd = fs.openSync(transcriptPath, 'r');
+    const start = Math.max(0, stat.size - MAX_TRANSCRIPT_BYTES);
+    const buf = Buffer.alloc(Math.min(stat.size, MAX_TRANSCRIPT_BYTES));
+    fs.readSync(fd, buf, 0, buf.length, start);
+    fs.closeSync(fd);
+
+    const raw = buf.toString('utf8');
+    const lines = raw.split('\n').filter(Boolean);
+    const textParts = [];
+
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        // Extract assistant text content
+        const msg = entry.message || entry;
+        if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+          for (const block of msg.content) {
+            if (block.type === 'text' && block.text) {
+              textParts.push(block.text);
+            }
+          }
+        }
+        // Extract user messages
+        if (msg.role === 'user' && typeof msg.content === 'string') {
+          textParts.push(msg.content);
+        }
+        if (msg.role === 'user' && Array.isArray(msg.content)) {
+          for (const block of msg.content) {
+            if (block.type === 'text' && block.text) {
+              textParts.push(block.text);
+            }
+          }
+        }
+      } catch { /* skip unparseable lines */ }
+    }
+
+    return textParts.join('\n');
+  } catch (err) {
+    console.log(`[memory-extract] Failed to parse transcript: ${err.message}`);
+    // Fall back to raw content
+    return fs.readFileSync(transcriptPath, 'utf8');
+  }
+}
 
 let stdinData = '';
 process.stdin.setEncoding('utf8');
@@ -242,7 +296,7 @@ async function main() {
     const input = JSON.parse(stdinData);
     if (input.transcript_path && fs.existsSync(input.transcript_path)) {
       transcriptPath = input.transcript_path;
-      transcriptContent = fs.readFileSync(input.transcript_path, 'utf8');
+      transcriptContent = extractTextFromTranscript(input.transcript_path);
     }
   } catch {
     // Not JSON or no transcript_path
