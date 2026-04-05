@@ -14,7 +14,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const MCP_BASE_URL = process.env.AW_MCP_URL || 'http://localhost:3100/agentic-workspace/mcp';
+const { resolveMcpUrl } = require('../lib/mcp-url');
+const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
 const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');

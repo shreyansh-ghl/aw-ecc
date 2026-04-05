@@ -27,7 +27,8 @@ const { getPackageManager, getSelectionPrompt } = require('../lib/package-manage
 const { listAliases } = require('../lib/session-aliases');
 const { detectProjectType } = require('../lib/project-detect');
 
-const MCP_BASE_URL = process.env.AW_MCP_URL || 'http://localhost:3100/agentic-workspace/mcp';
+const { resolveMcpUrl } = require('../lib/mcp-url');
+const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
 const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
@@ -160,75 +161,126 @@ function getRepoSlug() {
 }
 
 /**
- * Inject memory pack from MCP backend into session context.
+ * Inject team memory into session context.
+ *
+ * Strategy: Read from local filesystem cache (L0) first — zero latency,
+ * no network dependency. Falls back to MCP memory_pack / memory_search
+ * if local cache is missing or stale.
+ *
+ * The local cache is written by `aw memory sync` and lives at
+ * ~/.aw_registry/memory/ with .md files grouped by overlay.
  */
 async function injectMemoryPack() {
+  // 1. Try L0: local filesystem cache (fastest, most reliable)
+  const memoryDir = path.join(os.homedir(), '.aw_registry', 'memory');
+  const localContent = readLocalMemoryFiles(memoryDir);
+
+  if (localContent) {
+    output(`<team-memory source="local-cache" dir="${memoryDir}">\n${localContent}\n</team-memory>`);
+    log(`[SessionStart] Injected team memory from local cache`);
+    return;
+  }
+
+  // 2. Try L1: MCP memory_pack / memory_search (needs network)
   const namespace = resolveNamespace();
   if (!namespace) {
-    log('[SessionStart] No namespace in .sync-config.json, skipping memory pack');
+    log('[SessionStart] No namespace and no local cache, skipping memory injection');
     return;
   }
 
   const headers = buildMcpHeaders(namespace);
 
-  // Quick health check — try a lightweight call with short timeout
+  // Quick health check
   try {
     const healthResponse = await fetch(MCP_BASE_URL, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 0,
-        method: 'tools/list',
-        params: {},
-      }),
+      body: JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'tools/list', params: {} }),
       signal: AbortSignal.timeout(3000),
     });
     if (!healthResponse.ok) {
-      log('[SessionStart] Memory MCP not reachable, skipping memory pack');
+      log('[SessionStart] Memory MCP not reachable and no local cache');
       return;
     }
   } catch {
-    log('[SessionStart] Memory MCP not reachable, skipping memory pack');
+    log('[SessionStart] Memory MCP not reachable and no local cache');
     return;
   }
 
   const repoSlug = getRepoSlug();
-  log(`[SessionStart] Requesting memory pack for ${repoSlug}...`);
+  log(`[SessionStart] No local cache, requesting memory pack from MCP for ${repoSlug}...`);
 
   try {
-    const result = await callMcpTool('memory_pack', {
+    let packContent = '';
+    let servedIds = [];
+    let memoriesCount = 0;
+
+    // Try memory_pack first, fall back to memory_search
+    const packResult = await callMcpTool('memory_pack', {
       query: `Starting session in ${repoSlug}`,
       token_budget: 3500,
     }, headers);
 
-    if (!result) {
-      log('[SessionStart] Memory pack returned empty result');
-      return;
-    }
+    const packError = packResult?.text?.includes('Unknown tool') || packResult?.error;
 
-    // Extract memory content and served IDs
-    const packContent = result.text || result.pack || result.content || '';
-    const servedIds = result.memory_ids || result.served_ids || result.ids || [];
-    const memoriesCount = result.memories_count || result.count || servedIds.length || 0;
-    const budgetUsed = result.budget_used || result.token_usage || '';
+    if (packResult && !packError) {
+      packContent = packResult.text || packResult.pack || packResult.content || '';
+      servedIds = packResult.memory_ids || packResult.served_ids || packResult.ids || [];
+      memoriesCount = packResult.memories_count || packResult.count || servedIds.length || 0;
+    } else {
+      log('[SessionStart] memory_pack not available, trying memory_search');
+      const searchResult = await callMcpTool('memory_search', {
+        query: `${repoSlug} development patterns decisions`,
+        limit: 20,
+      }, headers);
+
+      const memories = Array.isArray(searchResult) ? searchResult
+        : (searchResult?.memories || searchResult?.results || []);
+
+      if (memories.length > 0) {
+        servedIds = memories.map(m => m.id).filter(Boolean);
+        memoriesCount = memories.length;
+        packContent = memories.map(m => {
+          const tags = [m.layer, ...(m.overlay || []), ...(m.angle || [])].filter(Boolean);
+          const prefix = tags.length > 0 ? `[${tags.join(',')}] ` : '';
+          return `- ${prefix}${m.content || m.text || ''}`;
+        }).join('\n');
+      }
+    }
 
     if (!packContent && memoriesCount === 0) {
       log('[SessionStart] Memory pack empty — no relevant memories found');
       return;
     }
 
-    // Save served memory IDs for the feedback loop at session end
-    if (servedIds.length > 0) {
-      saveServedMemoryIds(servedIds);
-    }
+    if (servedIds.length > 0) saveServedMemoryIds(servedIds);
 
-    // Output memory pack wrapped in a clear tag for agent consumption
-    const budgetLabel = budgetUsed ? ` budget-used="${budgetUsed}"` : '';
-    output(`<team-memory source="memory-pack" memories="${memoriesCount}"${budgetLabel}>\n${packContent}\n</team-memory>`);
+    output(`<team-memory source="memory-pack" memories="${memoriesCount}">\n${packContent}\n</team-memory>`);
     log(`[SessionStart] Injected memory pack: ${memoriesCount} memories`);
   } catch (err) {
     log(`[SessionStart] Memory pack failed: ${err.message}`);
+  }
+}
+
+/**
+ * Read all .md files from the local memory cache directory.
+ * Returns combined content string or null if no files found.
+ */
+function readLocalMemoryFiles(memoryDir) {
+  try {
+    if (!fs.existsSync(memoryDir)) return null;
+    const files = fs.readdirSync(memoryDir).filter(f => f.endsWith('.md'));
+    if (files.length === 0) return null;
+
+    const parts = [];
+    for (const file of files) {
+      const content = fs.readFileSync(path.join(memoryDir, file), 'utf8').trim();
+      if (content) parts.push(content);
+    }
+    return parts.length > 0 ? parts.join('\n\n') : null;
+  } catch (err) {
+    log(`[SessionStart] Failed to read local memory files: ${err.message}`);
+    return null;
   }
 }
 
