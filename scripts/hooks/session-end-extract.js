@@ -273,6 +273,14 @@ async function main() {
 /**
  * Extract candidate memories from session content.
  * Identifies decisions, patterns, and pitfalls using keyword markers.
+ *
+ * Quality filter: skips vague summaries and code/path lines to keep only
+ * actionable, specific memories.
+ *
+ * GOOD: "NestJS services must use @platform-core/logger, never console.log"
+ * GOOD: "Migration 035 added score_memories_3d() — use this for memory retrieval"
+ * BAD:  "We worked on the memory system today"
+ * BAD:  "Fixed a bug"
  */
 function extractCandidates(content) {
   const candidates = [];
@@ -281,14 +289,22 @@ function extractCandidates(content) {
   const decisionMarkers = /\b(decided|chose|selected|went with|prefer|always|never)\b/i;
   const patternMarkers = /\b(pattern|convention|approach|best practice|standard)\b/i;
   const pitfallMarkers = /\b(bug|error|issue|problem|fix|resolved|workaround)\b/i;
+
+  // Lines that are too generic to be useful memories
+  const genericPatterns = /^(we (worked|did|made|built)|fixed (a |the )?bug$|updated (the |some )?code|made (some )?changes)/i;
+  // Lines that are mostly code or file paths, not human insights
+  const codePathPatterns = /^(- \/|diff --git|import |const |function )/;
+
   const seen = new Set();
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Skip short lines and duplicates
-    if (trimmed.length < 20) continue;
+    // Skip short lines, duplicates, generic fluff, and code/path lines
+    if (trimmed.length < 30) continue;
     if (seen.has(trimmed)) continue;
+    if (genericPatterns.test(trimmed)) continue;
+    if (codePathPatterns.test(trimmed)) continue;
 
     if (decisionMarkers.test(trimmed)) {
       candidates.push({ content: trimmed, type: 'decision' });
