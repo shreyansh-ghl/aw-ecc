@@ -83,15 +83,22 @@ Keep each layer named for one job only:
 
 ## Public Commands
 
-The public interface stays intentionally small, but it now reflects the real lifecycle more clearly:
+The public interface stays intentionally small.
+The default delivery lifecycle is:
 
 - `/aw:plan`
 - `/aw:build`
-- `/aw:investigate`
 - `/aw:test`
 - `/aw:review`
 - `/aw:deploy`
 - `/aw:ship`
+
+There is also one conditional diagnostic route:
+
+- `/aw:investigate`
+
+`/aw:investigate` is first-class, but it is not part of the default happy path.
+Use it for bugs, alerts, regressions, and unclear runtime failures before returning to the main flow.
 
 Compatibility entrypoints may remain during migration:
 
@@ -109,6 +116,14 @@ Compatibility entrypoints may remain during migration:
 | `/aw:review` | `aw-review` | findings-oriented review, governance, and readiness decisions |
 | `/aw:deploy` | `aw-deploy` | create one requested release outcome |
 | `/aw:ship` | `aw-ship` | own launch, rollout safety, rollback readiness, and release closeout |
+
+Default happy path:
+
+`/aw:plan -> /aw:build -> /aw:test -> /aw:review -> /aw:deploy -> /aw:ship`
+
+Conditional path:
+
+`/aw:investigate -> /aw:build`
 
 There is also one explicit internal composite workflow:
 
@@ -254,6 +269,7 @@ Typical supporting skills:
 
 `aw-yolo` is the only internal composite workflow skill.
 It should orchestrate `aw-plan`, `aw-build`, `aw-test`, `aw-review`, `aw-deploy`, and `aw-ship` instead of replacing them.
+It should only insert `aw-investigate` when the request or runtime evidence actually requires diagnosis first.
 
 ## Repo Layout
 

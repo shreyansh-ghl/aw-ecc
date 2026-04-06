@@ -32,6 +32,17 @@ The public surface should stay intentionally small, but each phase should be obv
 - `/aw:deploy`
 - `/aw:ship`
 
+Default delivery flow:
+
+- `/aw:plan` -> `/aw:build` -> `/aw:test` -> `/aw:review` -> `/aw:deploy` -> `/aw:ship`
+
+Conditional route:
+
+- `/aw:investigate`
+
+`/aw:investigate` is a first-class route for bugs, alerts, regressions, and unclear root cause.
+It should not be treated as a mandatory phase in every request.
+
 Compatibility entrypoints remain available during migration:
 
 - `/aw:execute` -> `/aw:build`
@@ -178,7 +189,7 @@ If the user explicitly uses `/aw:execute` or `/aw:verify`, preserve the compatib
 |---|---|---|
 | `/aw:plan` | Create the minimum correct planning artifacts | `prd.md`, `design.md`, `designs/`, `spec.md`, `tasks.md`, `state.json` |
 | `/aw:build` | Implement approved work without reopening planning | `execution.md`, `state.json`, code/docs/config/infra changes |
-| `/aw:investigate` | Reproduce, localize, and confirm bugs or alerts before broad fixes | `investigation.md`, `state.json`, repro and root-cause evidence |
+| `/aw:investigate` | Conditionally reproduce, localize, and confirm bugs or alerts before broad fixes | `investigation.md`, `state.json`, repro and root-cause evidence |
 | `/aw:test` | Produce fresh QA evidence for the requested feature, bugfix, or release scope | `verification.md`, `state.json` |
 | `/aw:review` | Produce findings, governance outcomes, and readiness decisions | `verification.md`, `state.json` |
 | `/aw:deploy` | Create one requested release outcome | `release.md`, `state.json`, PR/branch/deploy evidence |
@@ -188,6 +199,8 @@ If the user explicitly uses `/aw:execute` or `/aw:verify`, preserve the compatib
 
 Default to one primary route.
 Only expand into multi-stage flow when the user explicitly asks for end-to-end work.
+
+The normal delivery flow does not include `/aw:investigate` unless diagnosis is required first.
 
 ### Route to `/aw:plan`
 

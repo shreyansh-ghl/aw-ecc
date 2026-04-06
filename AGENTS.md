@@ -22,6 +22,13 @@ Keep the public interface intentionally small, but make each stage legible:
 - `/aw:deploy`
 - `/aw:ship`
 
+The default delivery flow is:
+
+- `/aw:plan` -> `/aw:build` -> `/aw:test` -> `/aw:review` -> `/aw:deploy` -> `/aw:ship`
+
+`/aw:investigate` is a conditional bug, alert, and unclear-root-cause route.
+It is available as a first-class command, but it is not part of the default happy-path sequence.
+
 Compatibility entrypoints may remain during migration:
 
 - `/aw:execute` -> compatibility alias to `/aw:build`
@@ -74,6 +81,7 @@ When `.aw_docs/features/<feature_slug>/spec.md` and concrete approved execution 
 - do not reopen planning only because richer artifacts are absent
 - prefer the smallest correct execution sequence
 - for approved implementation work, use `prepare -> build`
+- for bugs or alerts with unclear cause, insert `investigate` before `build`
 - for proving quality, use `test -> review`
 - for verified release work, use `deploy -> ship` only when rollout or closeout is actually requested
 - use `aw-yolo` only when the user explicitly wants the whole flow automated in one pass

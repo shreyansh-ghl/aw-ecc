@@ -44,15 +44,21 @@ Result: the workspace gets the repo-local AW command surface plus linked GHL pla
 
 ## AW Stage Model
 
-The repo-local AW surface favors explicit lifecycle phases:
+The default AW delivery flow is:
 
 - `/aw:plan` -> define the approved technical path
 - `/aw:build` -> implement approved work in thin, reversible slices
-- `/aw:investigate` -> reproduce, localize, and confirm bugs or alerts before broad fixes
 - `/aw:test` -> prove the requested QA scope with fresh evidence
 - `/aw:review` -> findings, governance, and readiness decisions
 - `/aw:deploy` -> perform one release action
 - `/aw:ship` -> launch, rollout, rollback readiness, and release closeout
+
+There is also one conditional diagnostic route:
+
+- `/aw:investigate` -> reproduce, localize, and confirm bugs or alerts before broad fixes
+
+`/aw:investigate` is intentionally not part of every happy-path request.
+Use it when the problem is real but the cause is still unclear, then return to `/aw:build`, `/aw:test`, or `/aw:review` as needed.
 
 Compatibility entrypoints remain available during migration:
 
@@ -67,7 +73,7 @@ For the smallest newcomer-friendly path through the repo, see [docs/aw-ecc-core-
 
 | Change | Scope |
 |--------|-------|
-| AW SDLC public-stage routing (`/aw:plan`, `/aw:build`, `/aw:investigate`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`) | commands, skills, defaults, docs |
+| AW SDLC public-stage routing (`/aw:plan`, `/aw:build`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`, plus conditional `/aw:investigate`) | commands, skills, defaults, docs |
 | Compatibility routing for legacy `/aw:execute` and `/aw:verify` entrypoints | commands, skills, router docs |
 | GHL baseline operating standards for review, QA, frontend quality, governance, and rollout safety | defaults, references, stage skills |
 | Repo-local staging and verification confidence artifacts | docs, defaults, evals |
