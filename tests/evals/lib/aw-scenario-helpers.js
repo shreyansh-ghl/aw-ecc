@@ -18,6 +18,15 @@ const REGISTRY_ROOT = process.env.AW_REGISTRY_ROOT
   ? path.resolve(process.env.AW_REGISTRY_ROOT)
   : path.join(REPO_ROOT, '.aw', '.aw_registry');
 
+function isExternalRegistryPath(skillPath) {
+  const relativePath = path.relative(REPO_ROOT, skillPath);
+  return relativePath.startsWith('..');
+}
+
+function hasRegistryContent() {
+  return fs.existsSync(REGISTRY_ROOT);
+}
+
 function registrySkillPath(...segments) {
   return path.join(REGISTRY_ROOT, ...segments, 'SKILL.md');
 }
@@ -102,6 +111,11 @@ function readPathFromSnapshotOrDisk(snapshot, absolutePath) {
 
 function skillExists(snapshot, skillName) {
   const skillPath = skillPathFor(skillName);
+  const isExternalRegistrySkill = isExternalRegistryPath(skillPath);
+
+  if (isExternalRegistrySkill && !hasRegistryContent()) {
+    return;
+  }
 
   if (snapshot.isWorktree()) {
     if (!fs.existsSync(skillPath)) {
