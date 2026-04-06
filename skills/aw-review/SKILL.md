@@ -28,11 +28,11 @@ Do not use as a hidden helper that replaces explicit review intent.
    Pull in platform review, design, accessibility, and quality-gate playbooks from the resolved baseline.
 3. Review across the five core axes.
    Correctness, readability and simplicity, architecture, security, and performance.
-   Use `references/review-findings-severity.md`.
+   Use `../../references/review-findings-severity.md`.
    For readability and maintainability concerns, load `code-simplification`.
    For public contract or boundary changes, load `api-and-interface-design`.
-   For security-sensitive work, load `security-and-hardening` and `references/security-checklist.md`.
-   For performance-sensitive work, load `performance-optimization` and `references/performance-checklist.md`.
+   For security-sensitive work, load `security-and-hardening` and `../../references/security-checklist.md`.
+   For performance-sensitive work, load `performance-optimization` and `../../references/performance-checklist.md`.
    For branch hygiene, save-point quality, or reviewability concerns, load `git-workflow-and-versioning`.
 4. Classify findings explicitly.
    Separate blocking findings from advisory notes.

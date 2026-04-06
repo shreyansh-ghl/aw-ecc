@@ -34,7 +34,7 @@ This skill makes the agent classify trust boundaries, harden them deliberately, 
 2. Harden the entry points.
    Validate input, apply authn/authz, enforce tenant or ownership scoping, and reject malformed or over-broad requests early.
 3. Protect secrets and configuration.
-   Use `references/security-checklist.md`.
+   Use `../../references/security-checklist.md`.
    Secrets must stay out of source, logs, screenshots, and error payloads.
 4. Reduce abuse and blast radius.
    Add rate limits, safe defaults, least privilege, error handling, and logging that helps operators without leaking sensitive data.

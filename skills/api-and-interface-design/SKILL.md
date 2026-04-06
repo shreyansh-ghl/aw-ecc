@@ -31,7 +31,7 @@ This applies to REST and GraphQL APIs, TypeScript contracts, event payloads, com
    user clients, internal services, frontend callers, workers, or shared packages.
 2. Define the contract before the implementation.
    Write the request and response shape, error semantics, idempotency rules, and ordering guarantees before coding the handler.
-   Use `references/interface-stability.md` and `api-design` when the surface is HTTP-facing.
+   Use `../../references/interface-stability.md` and `api-design` when the surface is HTTP-facing.
 3. Treat observable behavior as part of the contract.
    Apply Hyrum's Law thinking:
    if consumers can observe it, they may depend on it.

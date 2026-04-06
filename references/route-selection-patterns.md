@@ -19,6 +19,7 @@ Use alongside `using-aw-skills`.
 
 Do not insert `/aw:investigate` into a normal happy-path request unless diagnosis is actually required first.
 Do not insert `aw-yolo` unless the user explicitly wants one-run orchestration.
+When `aw-yolo` is selected, start from the first unsatisfied stage, not automatically from `/aw:plan`.
 
 ## Route Map
 

@@ -166,7 +166,7 @@ For code behavior, prefer task steps close to:
 - commit the focused slice
 
 Each step should usually be small enough to fit in about 2-5 minutes.
-Use `references/task-sizing-and-checkpoints.md` when sizing or checkpointing gets fuzzy.
+Use `../../references/task-sizing-and-checkpoints.md` when sizing or checkpointing gets fuzzy.
 
 ## Execution-Ready Tasks
 
@@ -200,7 +200,7 @@ Prefer including:
 The goal is not maximum verbosity.
 The goal is minimum ambiguity.
 
-Use `references/task-sizing-and-checkpoints.md` when task sizing, checkpoint placement, or phase boundaries start getting fuzzy.
+Use `../../references/task-sizing-and-checkpoints.md` when task sizing, checkpoint placement, or phase boundaries start getting fuzzy.
 
 ## Task Sizing Guidelines
 

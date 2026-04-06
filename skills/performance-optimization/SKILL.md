@@ -34,7 +34,7 @@ Performance work should improve a real bottleneck, not just produce clever code.
    - query efficiency
    - throughput or batch time
 2. Establish a baseline.
-   Use `references/performance-checklist.md`.
+   Use `../../references/performance-checklist.md`.
    Capture the current measurement before touching code.
 3. Localize the bottleneck.
    Identify whether the cost is in:

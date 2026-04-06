@@ -38,6 +38,7 @@ Do not introduce public commands for preparation, hidden review-loop helpers, de
 Those stay internal behind the AW stage boundary.
 
 `aw-yolo` is an explicit internal orchestration skill for end-to-end automation.
+It starts from the first unsatisfied stage and runs only the smallest correct remaining sequence.
 It is opt-in, not the default public mental model.
 
 ## Migration Note
@@ -60,6 +61,7 @@ Prefer the AW SDLC files above over inherited global ECC workflow guidance when 
 - Route by intent when the request is clear.
 - Use `/aw:ship` for launch, rollout, rollback readiness, and release closeout work.
 - Use `aw-yolo` only when the user explicitly asks for one-run end-to-end automation.
+- When selected, do not restart from planning by habit; begin at the first unsatisfied stage.
 - Keep the public route at `/aw:plan` even when planning internally uses `aw-brainstorm`, `aw-spec`, and `aw-tasks`.
 
 ## Activation Rule
@@ -85,6 +87,7 @@ When `.aw_docs/features/<feature_slug>/spec.md` and concrete approved execution 
 - for proving quality, use `test -> review`
 - for verified release work, use `deploy -> ship` only when rollout or closeout is actually requested
 - use `aw-yolo` only when the user explicitly wants the whole flow automated in one pass
+- use it to orchestrate stages, not to collapse stage evidence or boundaries
 
 ## Artifact Contract
 

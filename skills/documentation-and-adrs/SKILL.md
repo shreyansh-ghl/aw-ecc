@@ -35,7 +35,7 @@ Code tells future readers what exists. Documentation and ADRs tell them why it e
    - inline gotcha or architectural comment
 2. Capture the why before it evaporates.
    Write the context, constraints, alternatives, and consequences while the decision is fresh.
-   Use `references/adr-and-docs.md`.
+   Use `../../references/adr-and-docs.md`.
 3. Keep docs close to the surface they explain.
    Public contracts should document behavior near the contract.
    Architecture decisions should link to the affected subsystem.

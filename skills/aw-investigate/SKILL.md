@@ -25,7 +25,7 @@ Do not use once the cause is already clear and implementation is ready.
 1. Capture the failure signal.
    Record the trigger, expected behavior, actual behavior, and current blast radius.
 2. Reproduce or isolate.
-   Use `aw-debug` and `references/debug-triage.md`.
+   Use `aw-debug` and `../../references/debug-triage.md`.
    For browser-visible issues, load `browser-testing-with-devtools`.
    Prefer the smallest confirming probe over speculative patching.
 3. Load the right org-standard context.

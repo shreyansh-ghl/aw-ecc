@@ -30,7 +30,7 @@ Treat branches as sandboxes, commits as save points, and history as operational 
    For parallel work or risky experiments, use worktrees instead of branch thrash.
 2. Size the work before committing.
    Break the change into logical slices that can be explained, reviewed, and reverted independently.
-   Use `references/git-save-points.md` when save-point discipline matters.
+   Use `../../references/git-save-points.md` when save-point discipline matters.
 3. Commit each successful increment.
    The pattern is:
    implement slice -> verify slice -> commit slice.

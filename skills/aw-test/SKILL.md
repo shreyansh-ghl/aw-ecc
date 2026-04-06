@@ -24,18 +24,18 @@ Do not use for findings-oriented review or launch closeout.
 ## Workflow
 
 1. Select the smallest correct QA scope.
-   Use `references/test-scope-and-evidence.md`.
+   Use `../../references/test-scope-and-evidence.md`.
    Distinguish feature QA, bugfix regression proof, UI runtime proof, and release QA.
 2. Resolve org standards.
    Load the resolved GHL baseline profile.
    Pull in the required local validation, E2E, external validation, sandbox, and quality-gate expectations.
 3. Run the right checks.
-   Use `references/testing-patterns.md` for test structure.
-   For frontend work, load `references/frontend-quality-checklist.md`.
-   For accessibility-sensitive UI, load `references/accessibility-checklist.md`.
+   Use `../../references/testing-patterns.md` for test structure.
+   For frontend work, load `../../references/frontend-quality-checklist.md`.
+   For accessibility-sensitive UI, load `../../references/accessibility-checklist.md`.
    For substantial UI validation, load `frontend-ui-engineering`.
    For live browser, DOM, console, network, or runtime-proof work, load `browser-testing-with-devtools`.
-   For performance-sensitive paths, load `performance-optimization` and `references/performance-checklist.md`.
+   For performance-sensitive paths, load `performance-optimization` and `../../references/performance-checklist.md`.
 4. Record evidence, not vibes.
    Name which commands ran, what passed, what failed, and what was unavailable.
 5. Decide the handoff.

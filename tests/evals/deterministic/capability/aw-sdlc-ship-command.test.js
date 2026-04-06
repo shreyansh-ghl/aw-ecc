@@ -80,7 +80,7 @@ function run() {
   })) passed++; else failed++;
 
   if (test('ship uses the launch checklist and rollback readiness as hard expectations', () => {
-    assert.ok(skillContent.includes('references/ship-launch-checklist.md'));
+    assert.ok(skillContent.includes('../../references/ship-launch-checklist.md'));
     assert.ok(commandContent.includes('rollback plan or blocker'));
     assert.ok(skillContent.includes('rollback readiness is documented'));
   })) passed++; else failed++;
@@ -104,6 +104,13 @@ function run() {
   if (test('aw-yolo stops cleanly on blockers instead of pretending the whole run succeeded', () => {
     assert.ok(yoloSkill.includes('Stop cleanly on blockers.'));
     assert.ok(yoloSkill.includes('Name the blocking stage and the smallest safe next action.'));
+  })) passed++; else failed++;
+
+  if (test('aw-yolo explains how to choose the starting stage from the current state', () => {
+    assert.ok(yoloSkill.includes('Classify the current starting state.'));
+    assert.ok(yoloSkill.includes('Smallest correct remaining flow'));
+    assert.ok(yoloSkill.includes('Do not reopen already satisfied stages unless the current stage fails'));
+    assert.ok(yoloSkill.includes('The run is complete only when:'));
   })) passed++; else failed++;
 
   if (test('ship does not use code diffs as a substitute for release evidence', () => {

@@ -80,7 +80,7 @@ function run() {
 
     assert.ok(testSkill.includes('frontend-ui-engineering'));
     assert.ok(testSkill.includes('performance-optimization'));
-    assert.ok(testSkill.includes('references/accessibility-checklist.md'));
+    assert.ok(testSkill.includes('../../references/accessibility-checklist.md'));
 
     assert.ok(review.includes('code-simplification'));
     assert.ok(review.includes('security-and-hardening'));

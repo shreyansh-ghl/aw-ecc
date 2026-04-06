@@ -35,7 +35,7 @@ This legacy heading maps to the gated workflow below.
    If the request spans multiple independent subsystems, decompose it before writing one giant spec.
 3. Define the stable contract.
    Name interfaces, boundaries, file responsibilities, rollout constraints, and failure modes.
-   Use `references/interface-stability.md` when an API or contract is changing.
+   Use `../../references/interface-stability.md` when an API or contract is changing.
 4. Write `spec.md` for a fresh planner or builder.
    Make it specific enough that `aw-tasks` can proceed without rediscovering the architecture.
 5. Run a fast review pass.

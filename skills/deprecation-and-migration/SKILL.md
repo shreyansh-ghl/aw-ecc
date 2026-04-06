@@ -45,7 +45,7 @@ This skill helps decide what should be removed, how consumers move safely, and w
 5. Remove the legacy path only after real usage is gone.
    Delete the old code, tests, docs, config, and deprecation notices once they have served their purpose.
 6. Document the lifecycle decision.
-   Use `references/deprecation-and-migration.md` and `documentation-and-adrs` when future engineers need the why and the removal plan.
+   Use `../../references/deprecation-and-migration.md` and `documentation-and-adrs` when future engineers need the why and the removal plan.
 
 ## Common Rationalizations
 

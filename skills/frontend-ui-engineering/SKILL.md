@@ -33,10 +33,10 @@ This skill treats design quality, accessibility, responsive behavior, interactio
    Implement semantic layout, component boundaries, and state flow first.
    Visual detail should reinforce the structure, not compensate for a weak structure.
 4. Treat accessibility as a first-class requirement.
-   Use `references/accessibility-checklist.md` and `references/frontend-quality-checklist.md`.
+   Use `../../references/accessibility-checklist.md` and `../../references/frontend-quality-checklist.md`.
    Keyboard support, focus behavior, labels, semantics, and contrast are part of done.
 5. Pair UI work with proof.
-   Use `references/testing-patterns.md` for behavior tests and runtime evidence.
+   Use `../../references/testing-patterns.md` for behavior tests and runtime evidence.
    For complex UI or interaction work, verify the behavior in a browser, not just in code.
 6. Check responsive behavior intentionally.
    Confirm the key flow still works across the relevant viewport sizes and input states.

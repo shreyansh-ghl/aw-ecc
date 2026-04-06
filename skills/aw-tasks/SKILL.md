@@ -34,7 +34,7 @@ This legacy heading maps to the detailed planning process below.
    Name the exact files to create, modify, or verify before defining tasks.
 3. Break the work into vertical slices.
    Prefer end-to-end slices and checkpointed phases over horizontal batches.
-   Use `references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
+   Use `../../references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
 4. Write tasks as fresh-worker instructions.
    Include explicit file paths, commands, expected outcomes, and commit boundaries.
 5. Review the task list before handoff.

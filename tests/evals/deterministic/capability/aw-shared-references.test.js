@@ -28,44 +28,44 @@ const SKILL_REFERENCE_REQUIREMENTS = [
   {
     skillPath: 'skills/using-aw-skills/SKILL.md',
     references: [
-      'references/context-loading-and-intake.md',
-      'references/route-selection-patterns.md',
-      'references/domain-skill-loading.md',
+      '../../references/context-loading-and-intake.md',
+      '../../references/route-selection-patterns.md',
+      '../../references/domain-skill-loading.md',
     ],
   },
   {
     skillPath: 'skills/aw-plan/SKILL.md',
-    references: ['references/task-sizing-and-checkpoints.md'],
+    references: ['../../references/task-sizing-and-checkpoints.md'],
   },
   {
     skillPath: 'skills/aw-build/SKILL.md',
     references: [
-      'references/build-increments.md',
-      'references/testing-patterns.md',
-      'references/frontend-quality-checklist.md',
-      'references/interface-stability.md',
-      'references/git-save-points.md',
+      '../../references/build-increments.md',
+      '../../references/testing-patterns.md',
+      '../../references/frontend-quality-checklist.md',
+      '../../references/interface-stability.md',
+      '../../references/git-save-points.md',
     ],
   },
   {
     skillPath: 'skills/aw-investigate/SKILL.md',
-    references: ['references/debug-triage.md'],
+    references: ['../../references/debug-triage.md'],
   },
   {
     skillPath: 'skills/aw-test/SKILL.md',
     references: [
-      'references/test-scope-and-evidence.md',
-      'references/testing-patterns.md',
-      'references/frontend-quality-checklist.md',
+      '../../references/test-scope-and-evidence.md',
+      '../../references/testing-patterns.md',
+      '../../references/frontend-quality-checklist.md',
     ],
   },
   {
     skillPath: 'skills/aw-review/SKILL.md',
-    references: ['references/review-findings-severity.md'],
+    references: ['../../references/review-findings-severity.md'],
   },
   {
     skillPath: 'skills/aw-ship/SKILL.md',
-    references: ['references/ship-launch-checklist.md'],
+    references: ['../../references/ship-launch-checklist.md'],
   },
 ];
 

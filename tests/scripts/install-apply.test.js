@@ -238,6 +238,8 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(claudeRoot, 'agents', 'architect.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'hooks', 'hooks.json')));
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'references', 'testing-patterns.md')));
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'references', 'route-selection-patterns.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'scripts', 'hooks', 'session-end.js')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'plugin.json')));
 

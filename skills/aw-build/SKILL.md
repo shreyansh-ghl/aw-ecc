@@ -28,21 +28,21 @@ Do not use for vague ideation, unclear bugs, or release-only work.
 2. Select the smallest correct build mode.
    Choose `code`, `infra`, `docs`, `migration`, or `config`.
 3. Slice the work before editing.
-   Use `references/build-increments.md` to keep changes thin, reversible, and rollback-friendly.
+   Use `../../references/build-increments.md` to keep changes thin, reversible, and rollback-friendly.
    For multi-file or high-risk work, load `incremental-implementation`.
 4. Build one slice at a time.
    For behavior changes, require RED-GREEN or a concrete failing signal.
-   Use `references/testing-patterns.md` when test structure needs support.
+   Use `../../references/testing-patterns.md` when test structure needs support.
 5. Apply org standards during the slice.
    Respect `.aw_rules`, relevant platform playbooks, and the resolved GHL baseline.
    When context quality or scope focus is degrading, load `context-engineering`.
-   For frontend work, load `references/frontend-quality-checklist.md`.
+   For frontend work, load `../../references/frontend-quality-checklist.md`.
    For non-trivial UI work, load `frontend-ui-engineering`.
-   For interface changes, load `references/interface-stability.md` and `api-and-interface-design`.
+   For interface changes, load `../../references/interface-stability.md` and `api-and-interface-design`.
    For deprecation, removal, or migration slices, load `deprecation-and-migration`.
 6. Record evidence and boundaries.
    Note what changed, what did not change, and which checks were run.
-   Use `references/git-save-points.md` when the work needs explicit save-point discipline.
+   Use `../../references/git-save-points.md` when the work needs explicit save-point discipline.
    For non-trivial commit boundaries, branch hygiene, or worktree isolation, load `git-workflow-and-versioning`.
 7. Hand off cleanly.
    Route to `aw-test` for QA proof or `aw-review` when the work needs findings, governance, or readiness decisions.

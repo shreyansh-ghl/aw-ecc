@@ -32,7 +32,7 @@ Each slice should leave the system in a working, testable, reviewable state befo
    Name the failing signal, acceptance check, or runtime evidence that will prove the slice is real.
 3. Implement only that slice.
    Avoid adjacent cleanup and hidden follow-on work.
-   Use `references/build-increments.md` when sizing or rollback shape is fuzzy.
+   Use `../../references/build-increments.md` when sizing or rollback shape is fuzzy.
 4. Verify immediately.
    Run the smallest relevant check:
    - targeted test
@@ -40,7 +40,7 @@ Each slice should leave the system in a working, testable, reviewable state befo
    - runtime/browser proof
    - migration validation
 5. Save the progress cleanly.
-   Use `references/git-save-points.md` when the work benefits from explicit commit discipline.
+   Use `../../references/git-save-points.md` when the work benefits from explicit commit discipline.
    A good save point is small, passing, and easy to explain.
 6. Decide whether to continue or hand off.
    If the slice is complete and the request now needs QA, review, or release work, stop and hand off.

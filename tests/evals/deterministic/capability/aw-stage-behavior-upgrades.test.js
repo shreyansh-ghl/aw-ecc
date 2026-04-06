@@ -100,7 +100,7 @@ function run() {
 
   if (test('investigate requires reproduction and evidence before broad fixes', () => {
     assert.ok(investigateCommand.includes('Reproduce'));
-    assert.ok(investigateSkill.includes('Use `aw-debug` and `references/debug-triage.md`'));
+    assert.ok(investigateSkill.includes('Use `aw-debug` and `../../references/debug-triage.md`'));
     assert.ok(investigateCommand.includes('must not guess through an unclear root cause'));
     assert.ok(investigateSkill.includes('Prefer the smallest confirming probe over speculative patching.'));
   })) passed++; else failed++;

@@ -38,7 +38,7 @@ Do not guess through missing release inputs when `aw-prepare` should be used fir
    Start from deploy evidence, review status, known risks, and rollout intent.
    If release inputs or workspace readiness are unclear, run the internal `aw-prepare` gate first instead of guessing.
 2. Apply the launch checklist.
-   Use `references/ship-launch-checklist.md`.
+   Use `../../references/ship-launch-checklist.md`.
    Load `ci-cd-and-automation` when release automation, staged rollout, or rollback machinery is part of the ship decision.
 3. Confirm rollback posture.
    If rollback is unclear, do not claim launch readiness.

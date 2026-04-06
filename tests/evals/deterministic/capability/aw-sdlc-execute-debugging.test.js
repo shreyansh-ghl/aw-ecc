@@ -31,7 +31,7 @@ function run() {
     for (const phrase of [
       'failing signal',
       'RED-GREEN',
-      'references/testing-patterns.md',
+      '../../references/testing-patterns.md',
     ]) {
       assert.ok(buildSkill.includes(phrase) || debugSkill.includes(phrase), `build/debug skill is missing ${phrase}`);
     }

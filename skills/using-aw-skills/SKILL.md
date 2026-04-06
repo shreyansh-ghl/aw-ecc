@@ -83,6 +83,7 @@ There is also one explicit internal power workflow:
 
 `aw-yolo` is for clearly end-to-end requests where the user wants one-run automation.
 It should not become the default route for normal stage-specific work.
+When it is selected, begin at the first unsatisfied stage rather than restarting the lifecycle from the top.
 
 ## Core Operating Behaviors
 
@@ -172,7 +173,7 @@ The selected public route should reflect the primary stage skill, not hide it.
 
 Use one primary route unless the user explicitly asks for end-to-end orchestration.
 
-For route examples, explicit routing priority, and scope guardrails, see [references/route-selection-patterns.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/references/route-selection-patterns.md).
+For route examples, explicit routing priority, and scope guardrails, see [`../../references/route-selection-patterns.md`](../../references/route-selection-patterns.md).
 
 ## Failure Modes to Avoid
 
@@ -206,7 +207,7 @@ After the primary stage is selected, load the portable craft skill that best sha
 - `documentation-and-adrs`
 
 Load them because they improve the selected stage, not because they create a new public route.
-For domain families, cross-cutting guidance, and org-standard loading, see [references/domain-skill-loading.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/references/domain-skill-loading.md).
+For domain families, cross-cutting guidance, and org-standard loading, see [`../../references/domain-skill-loading.md`](../../references/domain-skill-loading.md).
 
 ## Platform Skill Loading
 
@@ -227,7 +228,7 @@ Use `using-platform-skills` to decide the first supporting platform skills for t
 Load context in the smallest order that reduces uncertainty without flooding the session.
 Start with repo-local contracts and approved AW artifacts before broad code search or domain docs.
 
-See [references/context-loading-and-intake.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/references/context-loading-and-intake.md).
+See [`../../references/context-loading-and-intake.md`](../../references/context-loading-and-intake.md).
 
 ## Org Standards Always On
 
@@ -239,7 +240,7 @@ When the selected stage falls inside a resolved baseline profile, the stage must
 
 Frontend work should still inherit HighRise, accessibility, responsive, and review expectations.
 Release work should still inherit governance, rollback, and evidence expectations.
-See [references/domain-skill-loading.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/references/domain-skill-loading.md).
+See [`../../references/domain-skill-loading.md`](../../references/domain-skill-loading.md).
 
 ## Skill Rules
 

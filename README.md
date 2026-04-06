@@ -66,6 +66,7 @@ Compatibility entrypoints remain available during migration:
 - `/aw:verify` -> `/aw:test`, `/aw:review`, or the smallest correct combined verification flow
 
 For explicit end-to-end automation, the repo uses the internal `aw-yolo` orchestration skill instead of overloading `ship`.
+`aw-yolo` starts from the first unsatisfied stage and runs only the smallest correct remaining sequence.
 
 For the smallest newcomer-friendly path through the repo, see [docs/aw-ecc-core-bundle.md](./docs/aw-ecc-core-bundle.md).
 

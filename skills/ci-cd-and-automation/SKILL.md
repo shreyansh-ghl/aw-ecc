@@ -28,7 +28,7 @@ CI/CD should enforce linting, typing, tests, builds, security checks, previews, 
 1. Define the gate order from cheapest to most expensive.
    Move checks left where possible:
    lint -> typecheck -> unit/integration tests -> build -> security -> preview or deploy gates.
-   Use `references/ci-quality-gates.md`.
+   Use `../../references/ci-quality-gates.md`.
 2. Keep local and CI commands aligned.
    A change should be verifiable the same way locally and in automation.
    Avoid hidden CI-only behavior unless it is truly environment-specific.

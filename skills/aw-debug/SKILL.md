@@ -26,7 +26,7 @@ It keeps bug work from devolving into guess-and-patch behavior.
 5. Update the hypothesis based on evidence, not intuition.
 6. Only then hand back to investigation, build, test, or review.
 
-Use `references/debug-triage.md` for the stable checklist.
+Use `../../references/debug-triage.md` for the stable checklist.
 
 ## Common Rationalizations
 
