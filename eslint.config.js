@@ -3,7 +3,13 @@ const globals = require('globals');
 
 module.exports = [
     {
-        ignores: ['.opencode/dist/**', '.cursor/**', 'node_modules/**']
+        ignores: [
+            '.opencode/dist/**',
+            '.cursor/**',
+            'node_modules/**',
+            'tests/results/**',
+            'skills/using-aw-skills/tests/results/**'
+        ]
     },
     js.configs.recommended,
     {

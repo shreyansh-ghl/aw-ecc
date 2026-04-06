@@ -801,7 +801,7 @@ function runSystemValidationFallback(workspaceDir, caseRecord, profile, caseResu
   };
 }
 
-function analyzeQualityGaps({ caseRecord, profile, workspaceDir, candidateSummary, candidatePr, executionArtifact }) {
+function analyzeQualityGaps({ profile, workspaceDir, candidateSummary }) {
   const changedFiles = listWorkspaceDiffFiles(workspaceDir);
   const gaps = [];
 

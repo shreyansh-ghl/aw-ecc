@@ -3,7 +3,6 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const { REPO_ROOT } = require('./aw-sdlc-paths');
 
-const WORKSPACE_ROOT = path.dirname(REPO_ROOT);
 const FIXTURE_PATH = path.join(REPO_ROOT, 'tests/evals/fixtures/aw-revex-history-benchmark.json');
 const ARTIFACTS_ROOT = path.join(REPO_ROOT, 'tests/evals/fixtures/revex-history');
 const JUDGE_RUBRIC_PATH = path.join(REPO_ROOT, 'tests/evals/fixtures/aw-revex-history-judge-rubric.md');
@@ -22,10 +21,6 @@ function resolveRepoPath(repoRelativePath) {
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
-}
-
-function readFileIfExists(filePath) {
-  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
 }
 
 function writeFile(filePath, content) {
@@ -309,7 +304,7 @@ function buildSuccessCriteria(repo, summary, route) {
   return criteria;
 }
 
-function buildVerificationExpectations(repo, summary, route) {
+function buildVerificationExpectations(_repo, summary, _route) {
   const expectations = [];
 
   expectations.push('record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow');
@@ -529,7 +524,7 @@ function buildBaselineMetadata(repo, summary, route, primarySkill, supportingSki
   };
 }
 
-function buildTaskCard(pack, repo, summary, route, successCriteria, verificationExpectations) {
+function buildTaskCard(pack, _repo, summary, route, successCriteria, _verificationExpectations) {
   return {
     taskSummary: buildTaskSummary(summary),
     taskType: inferChangeKind(summary),
@@ -564,8 +559,8 @@ function writeCaseArtifacts(pack, repo, summary, route, primarySkill, supporting
   const verificationExpectations = buildVerificationExpectations(repo, summary, route);
   const userPrompt = buildUserPrompt(repo, summary, route, affectedSurface, successCriteria, verificationExpectations);
 
-  writeFile(problemPath, buildProblemStatement(pack, repo, summary, route));
-  writeFile(baselinePrPath, buildBaselinePrMarkdown(pack, repo, summary, route, primarySkill, supportingSkills));
+  writeFile(problemPath, `${buildProblemStatement(pack, repo, summary, route)}\n`);
+  writeFile(baselinePrPath, `${buildBaselinePrMarkdown(pack, repo, summary, route, primarySkill, supportingSkills)}\n`);
   writeFile(
     baselineMetadataPath,
     `${JSON.stringify(buildBaselineMetadata(repo, summary, route, primarySkill, supportingSkills, warnings), null, 2)}\n`
