@@ -19,6 +19,7 @@ const path = require('path');
 const os = require('os');
 
 const { resolveMcpUrl } = require('../lib/mcp-url');
+const { isDuplicate, recordExtraction, enqueueForExtraction } = require('../lib/dedup');
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
@@ -104,7 +105,7 @@ async function callMcpTool(toolName, params, headers) {
       method: 'tools/call',
       params: { name: toolName, arguments: params },
     }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(30000),
   });
   if (!response.ok) return null;
 
@@ -175,6 +176,13 @@ async function extractAndStore(rawInput) {
     return;
   }
 
+  // Phase 3: SHA-256 dedup — skip if same content already extracted this session
+  const sessionId = process.env.CLAUDE_SESSION_ID || 'default';
+  if (isDuplicate(sessionId, summary)) {
+    console.error('[compaction-extract] Content unchanged since last extraction (dedup hit), skipping');
+    return;
+  }
+
   const headers = buildMcpHeaders(cfg);
 
   // Single MCP call: server-side LLM extraction + curation
@@ -191,8 +199,13 @@ async function extractAndStore(rawInput) {
     const updated = result?.updated ?? 0;
     const skipped = result?.skipped ?? 0;
     console.error(`[compaction-extract] Batch: ${extracted} extracted, ${created} created, ${updated} updated, ${skipped} skipped`);
+
+    // Record successful extraction for dedup
+    recordExtraction(sessionId, summary);
   } catch (err) {
-    console.error(`[compaction-extract] Batch extraction failed: ${err.message}`);
+    console.error(`[compaction-extract] Batch extraction failed, queuing offline: ${err.message}`);
+    // Queue for later if MCP unreachable
+    enqueueForExtraction(summary, 'compaction', {});
   }
 }
 

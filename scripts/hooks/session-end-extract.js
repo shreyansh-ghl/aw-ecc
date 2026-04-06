@@ -15,6 +15,7 @@ const path = require('path');
 const os = require('os');
 
 const { resolveMcpUrl } = require('../lib/mcp-url');
+const { isDuplicate, recordExtraction, cleanupDedup, enqueueForExtraction, flushQueue } = require('../lib/dedup');
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
@@ -346,8 +347,7 @@ async function main() {
     }
   }
 
-  // --- Phase 2: Extract and store new memories via server-side LLM ---
-  // Single MCP call replaces N × regex + N × memory_curated_store
+  // --- Phase 2+3: Extract via server-side LLM with dedup + offline fallback ---
   if (transcriptContent.length < 1000) {
     console.log('[memory-extract] Transcript too short for extraction (< 1000 chars)');
     return;
@@ -358,11 +358,30 @@ async function main() {
     ? transcriptContent.slice(-100000)
     : transcriptContent;
 
+  // Phase 3: SHA-256 dedup — skip if content unchanged since last extraction
+  const sessionId = process.env.CLAUDE_SESSION_ID || 'default';
+  if (isDuplicate(sessionId, extractContent)) {
+    console.log('[memory-extract] Content unchanged since last extraction (dedup hit), skipping');
+    return;
+  }
+
   // Build session metadata for better extraction quality
   const sessionMetadata = {};
   if (sessionDuration > 0) sessionMetadata.duration_minutes = sessionDuration;
   if (transcriptPath) {
     sessionMetadata.cwd = path.dirname(transcriptPath);
+  }
+
+  // Phase 3: Flush any queued offline items first
+  try {
+    const queueResult = await flushQueue((toolName, params) =>
+      callMcpTool(toolName, params, headers, 30000)
+    );
+    if (queueResult.processed > 0) {
+      console.log(`[memory-extract] Flushed offline queue: ${queueResult.processed} processed, ${queueResult.discarded} discarded`);
+    }
+  } catch (err) {
+    console.error(`[memory-extract] Queue flush failed: ${err.message}`);
   }
 
   console.log(`[memory-extract] Calling memory_batch_extract (${extractContent.length} chars)...`);
@@ -379,9 +398,17 @@ async function main() {
     const updated = result?.updated ?? 0;
     const skipped = result?.skipped ?? 0;
     console.log(`[memory-extract] Batch extract: ${extracted} extracted, ${created} created, ${updated} updated, ${skipped} skipped`);
+
+    // Record successful extraction for dedup
+    recordExtraction(sessionId, extractContent);
   } catch (err) {
-    console.error(`[memory-extract] Batch extraction failed: ${err.message}`);
+    console.error(`[memory-extract] Batch extraction failed, queuing offline: ${err.message}`);
+    // Phase 3: Queue for later if MCP unreachable
+    enqueueForExtraction(extractContent, 'session-end', sessionMetadata);
   }
+
+  // Cleanup dedup file at session end (session is over, no more extractions)
+  cleanupDedup(sessionId);
 }
 
 // extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract
