@@ -26,7 +26,7 @@ For non-trivial work, `aw-plan` should behave like a small internal planning gra
 
 **When NOT to use:** when the request is already build-ready, when the issue is really investigation rather than planning, or when the user is only asking for test, review, deploy, or ship work.
 
-## Workflow
+## The Planning Process
 
 1. Enter plan mode.
    Load repo context, relevant platform docs, and relevant `.aw_rules`.

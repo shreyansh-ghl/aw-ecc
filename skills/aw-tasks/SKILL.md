@@ -21,7 +21,7 @@ The canonical public route remains `/aw:plan`.
 
 Do not use when the request is still missing a stable technical contract.
 
-## Workflow
+## The Planning Process
 
 1. Enter task-planning mode.
    Load `.aw_docs/features/<feature_slug>/spec.md` and only the supporting design or product artifacts that matter.

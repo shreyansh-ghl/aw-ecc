@@ -22,7 +22,7 @@ The public planning route remains `/aw:plan`.
 
 Do not use when execution-ready tasks already exist or when the request is still fundamentally a product or design question.
 
-## Workflow
+## The Gated Workflow
 
 1. Enter technical planning mode.
    Read the approved direction, relevant code paths, and the smallest set of architecture context needed.
