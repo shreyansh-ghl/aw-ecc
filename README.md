@@ -24,6 +24,80 @@ Installing `aw-ecc` gives your workspace access to 28 agents, 157 skills, and 69
 
 These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
 
+## Start Here
+
+Most new users do not need to learn the whole catalog first.
+Start with the smallest obvious AW path:
+
+1. `/aw:plan` when the request still needs a spec, task breakdown, or approved direction.
+2. `/aw:execute` when the work is approved and ready to implement.
+3. `/aw:verify` when you need review, validation, or readiness evidence.
+4. `/aw:deploy` when you need one release action.
+5. `/aw:ship` only when you explicitly want the broader end-to-end or multi-release closeout flow.
+
+If you only read one additional doc after this README, read [docs/aw-ecc-core-bundle.md](./docs/aw-ecc-core-bundle.md).
+It gives the smallest newcomer-friendly path through the repo and points to the few supporting skills worth learning early.
+
+After the public stage flow feels natural, read [docs/aw-ecc-leverage-patterns.md](./docs/aw-ecc-leverage-patterns.md).
+That guide pulls together the patterns that make longer AW sessions compound instead of degrade.
+
+## Choose Your Install Profile
+
+If you are installing `aw-ecc` directly, keep the install decision as small as the stage-flow decision.
+Start with one of the built-in profiles instead of treating the full catalog as the default:
+
+| Profile | Best fit |
+| --- | --- |
+| `core` | Smallest safe baseline when you want AW stages and quality workflow support first |
+| `developer` | Best default for most day-to-day engineering work |
+| `security` | Security-heavy review and implementation work |
+| `research` | Investigation, synthesis, and content-heavy work |
+| `full` | Broadest classified surface when you explicitly want everything at once |
+
+A smaller profile plus a few targeted additions is usually easier to adopt than a full install on day one.
+The installer already supports that model:
+
+```bash
+./install.sh --target codex --profile core
+./install.sh --target cursor --profile developer --with lang:typescript --with framework:nextjs
+./install.sh --target claude --profile research --with capability:content
+```
+
+For the focused guide on when to choose each profile and when `full` is actually worth it, read [docs/aw-ecc-install-profiles.md](./docs/aw-ecc-install-profiles.md).
+
+## Use Safe Defaults
+
+`aw-ecc` should not only feel powerful.
+It should feel survivable when the runtime touches untrusted repos, PRs, docs, attachments, tool output, or MCP responses.
+
+Start with these defaults:
+
+- prefer `core` or `developer` unless you truly need broader surface area
+- keep enabled MCPs narrow per project and prefer CLI wrappers when they are sufficient
+- use isolation for untrusted work instead of giving the agent broad local access
+- require approval before unsandboxed shell, network egress, secret reads, off-repo writes, or deploy actions
+- keep memory narrow, project-scoped, and disposable for high-risk workflows
+- scan your config and agent surface before trusting it
+
+Recommended first step:
+
+```bash
+npx ecc-agentshield scan
+```
+
+For the full operating model, read [docs/aw-ecc-security-posture.md](./docs/aw-ecc-security-posture.md).
+
+## See The Proof Surface
+
+`aw-ecc` should be judged by evidence, not just by catalog size or launch copy.
+If you want to understand why the workflow is trustworthy, start with [docs/aw-ecc-proof-surface.md](./docs/aw-ecc-proof-surface.md).
+
+That guide shows:
+
+- which `.aw_docs` artifacts each stage should leave behind
+- which eval and confidence docs back the workflow
+- which three demo paths are the fastest way to show feature flow, repair-loop behavior, and ship readiness
+
 ## How it works
 
 ```text
@@ -36,7 +110,7 @@ When a developer runs `aw init`, the CLI:
 
 1. Pulls `platform/` and team namespace content
 2. Shallow-clones this repo at a pinned tag
-3. Runs `scripts/install-apply.js --target cursor --profile full`
+3. Runs `scripts/install-apply.js --target cursor --profile full` for the current bundled Cursor path
 4. Cleans up the clone
 5. Symlinks platform content into the active editor workspace
 
@@ -69,6 +143,8 @@ For explicit end-to-end automation, the repo uses the internal `aw-yolo` orchest
 `aw-yolo` starts from the first unsatisfied stage and runs only the smallest correct remaining sequence.
 
 For the smallest newcomer-friendly path through the repo, see [docs/aw-ecc-core-bundle.md](./docs/aw-ecc-core-bundle.md).
+
+If you need a slimmer setup today, run the installer directly with a smaller profile instead of relying on the bundled `aw init` default.
 
 ## What changed from upstream ECC
 

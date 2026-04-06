@@ -1,0 +1,48 @@
+{
+  "feature_slug": "install-profile-guidance",
+  "stage": "execute",
+  "mode": "docs",
+  "status": "IMPLEMENTED",
+  "route": "/aw:execute",
+  "artifacts": {
+    "execution": ".aw_docs/features/install-profile-guidance/execution.md",
+    "state": ".aw_docs/features/install-profile-guidance/state.json"
+  },
+  "written_artifacts": [
+    "execution.md",
+    "state.json"
+  ],
+  "inputs_used": [
+    "user-request:continue-on-it",
+    "README.md",
+    "docs/aw-ecc-core-bundle.md",
+    "docs/SELECTIVE-INSTALL-DESIGN.md",
+    "manifests/install-profiles.json",
+    "manifests/install-components.json",
+    "scripts/install-apply.js --help"
+  ],
+  "files_changed": [
+    "README.md",
+    "docs/aw-ecc-core-bundle.md",
+    "docs/aw-ecc-install-profiles.md"
+  ],
+  "validation_commands": [
+    "node scripts/ci/catalog.js --text",
+    "node scripts/install-apply.js --help",
+    "node scripts/install-apply.js --target codex --profile core --dry-run --json",
+    "node scripts/install-apply.js --target cursor --profile developer --with lang:typescript --with framework:nextjs --dry-run --json",
+    "node scripts/install-apply.js --target claude --profile research --with capability:content --dry-run --json",
+    "npx markdownlint README.md docs/aw-ecc-core-bundle.md docs/aw-ecc-install-profiles.md",
+    "git diff --check"
+  ],
+  "key_findings": [
+    "The installer already supports smaller profile-based installs, but the onboarding path did not surface that choice before showing the bundled full install path.",
+    "A profile guide is enough here because the existing profiles and component composition model already cover the adoption problem without adding new persona presets.",
+    "Clarifying that aw init still defaults to full prevents readers from mistaking the current bundle choice for a hard product limitation.",
+    "The documented direct-install examples now dry-run successfully in this worktree once repo dependencies are installed."
+  ],
+  "recommended_next_commands": [
+    "/aw:review",
+    "/aw:execute"
+  ]
+}

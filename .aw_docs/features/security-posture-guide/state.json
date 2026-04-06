@@ -1,0 +1,44 @@
+{
+  "feature_slug": "security-posture-guide",
+  "stage": "execute",
+  "mode": "docs",
+  "status": "IMPLEMENTED",
+  "route": "/aw:execute",
+  "artifacts": {
+    "execution": ".aw_docs/features/security-posture-guide/execution.md",
+    "state": ".aw_docs/features/security-posture-guide/state.json"
+  },
+  "written_artifacts": [
+    "execution.md",
+    "state.json"
+  ],
+  "inputs_used": [
+    "user-request:lets-do-it",
+    "README.md",
+    "SECURITY.md",
+    "the-security-guide.md",
+    "docs/token-optimization.md",
+    "docs/aw-ecc-proof-surface.md",
+    "skills/security-scan/SKILL.md"
+  ],
+  "files_changed": [
+    "README.md",
+    "docs/aw-ecc-core-bundle.md",
+    "docs/aw-ecc-proof-surface.md",
+    "docs/aw-ecc-security-posture.md"
+  ],
+  "validation_commands": [
+    "node scripts/ci/catalog.js --text",
+    "npx markdownlint README.md docs/aw-ecc-core-bundle.md docs/aw-ecc-proof-surface.md docs/aw-ecc-security-posture.md .aw_docs/features/security-posture-guide/execution.md",
+    "git diff --check"
+  ],
+  "key_findings": [
+    "The repo already had security policy and security essays, but not a concise product-facing operating model for aw-ecc itself.",
+    "The biggest trust gap in onboarding was not missing security content, but missing placement of safe defaults near install and proof guidance.",
+    "Trust for aw-ecc now reads as a combination of safe runtime boundaries and deterministic stage evidence, not only catalog size or convenience."
+  ],
+  "recommended_next_commands": [
+    "/aw:review",
+    "/aw:execute"
+  ]
+}
