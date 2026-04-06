@@ -1837,6 +1837,7 @@ async function runTests() {
       assert.ok(hooks.hooks.PreToolUse, 'Should have PreToolUse hooks');
       assert.ok(hooks.hooks.PostToolUse, 'Should have PostToolUse hooks');
       assert.ok(hooks.hooks.SessionStart, 'Should have SessionStart hooks');
+      assert.ok(hooks.hooks.UserPromptSubmit, 'Should have UserPromptSubmit hooks');
       assert.ok(hooks.hooks.SessionEnd, 'Should have SessionEnd hooks');
       assert.ok(hooks.hooks.Stop, 'Should have Stop hooks');
       assert.ok(hooks.hooks.PreCompact, 'Should have PreCompact hooks');
@@ -1874,7 +1875,9 @@ async function runTests() {
               const isSkillScript = hook.command.includes('/skills/') && (/^(bash|sh)\s/.test(hook.command) || hook.command.startsWith('${CLAUDE_PLUGIN_ROOT}/skills/'));
               const isHookShellWrapper = /^(bash|sh)\s+["']?\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/hooks\/run-with-flags-shell\.sh/.test(hook.command);
               const isSessionStartFallback = hook.command.startsWith('bash -lc') && hook.command.includes('run-with-flags.js');
-              const isManagedHookWrapper = hook.command === '"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" session-start';
+              const isManagedHookWrapper = hook.command === 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"'
+                || hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"\''
+                || hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"\'';
               assert.ok(
                 isNode || isNpx || isSkillScript || isHookShellWrapper || isSessionStartFallback || isManagedHookWrapper,
                 `Hook command should use node or approved shell wrapper: ${hook.command.substring(0, 100)}...`
@@ -1903,7 +1906,9 @@ async function runTests() {
             if (hook.type === 'command' && hook.command.includes('scripts/hooks/')) {
               // Check for the literal string "${CLAUDE_PLUGIN_ROOT}" in the command
               const isSessionStartFallback = hook.command.startsWith('bash -lc') && hook.command.includes('run-with-flags.js');
-              const hasPluginRoot = hook.command.includes('${CLAUDE_PLUGIN_ROOT}') || isSessionStartFallback;
+              const hasPluginRoot = hook.command.includes('${CLAUDE_PLUGIN_ROOT}')
+                || hook.command.includes('${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}')
+                || isSessionStartFallback;
               assert.ok(hasPluginRoot, `Script paths should use CLAUDE_PLUGIN_ROOT: ${hook.command.substring(0, 80)}...`);
             }
           }
@@ -1962,9 +1967,30 @@ async function runTests() {
       assert.ok(
         entry.hooks.some(hook =>
           hook.type === 'command'
-          && hook.command === '"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" session-start'
+          && hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"\''
         ),
-        'SessionStart should invoke the managed run-hook.cmd wrapper'
+        'SessionStart should invoke the managed session-start shell entrypoint'
+      );
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('UserPromptSubmit hook uses the managed AW prompt reminder wrapper', () => {
+      const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
+      const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+      const promptSubmit = hooks.hooks.UserPromptSubmit;
+
+      assert.ok(Array.isArray(promptSubmit) && promptSubmit.length > 0, 'Expected UserPromptSubmit hooks');
+      assert.ok(
+        promptSubmit.some(entry =>
+          Array.isArray(entry.hooks) && entry.hooks.some(hook =>
+            hook.type === 'command'
+            && hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"\''
+          )
+        ),
+        'UserPromptSubmit should invoke the managed session-start-rules-context shell entrypoint'
       );
     })
   )
@@ -1975,15 +2001,84 @@ async function runTests() {
     test('managed Claude hook wrapper assets are present', () => {
       const runHookPath = path.join(__dirname, '..', '..', 'hooks', 'run-hook.cmd');
       const sessionStartPath = path.join(__dirname, '..', '..', 'hooks', 'session-start');
+      const promptReminderPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'session-start-rules-context.sh');
 
       assert.ok(fs.existsSync(runHookPath), 'run-hook.cmd should exist');
       assert.ok(fs.existsSync(sessionStartPath), 'hooks/session-start should exist');
+      assert.ok(fs.existsSync(promptReminderPath), 'scripts/hooks/session-start-rules-context.sh should exist');
 
       const sessionStart = fs.readFileSync(sessionStartPath, 'utf8');
       assert.ok(
         sessionStart.includes('skills/using-aw-skills/hooks/session-start.sh'),
         'hooks/session-start should delegate to the AW session-start hook'
       );
+      assert.ok(
+        sessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
+        'hooks/session-start should fall back to ~/.aw_registry when installed under ~/.claude'
+      );
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    await asyncTest('session-start-rules-context emits compact AW prompt reminders', async () => {
+      if (SKIP_BASH) return;
+
+      const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'session-start-rules-context.sh');
+      const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-hook-rules-'));
+
+      try {
+        const backendDir = path.join(tempRoot, '.aw_registry', '.aw_rules', 'platform', 'backend');
+        fs.mkdirSync(backendDir, { recursive: true });
+        fs.writeFileSync(
+          path.join(backendDir, 'AGENTS.md'),
+          '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n'
+        );
+
+        const result = await runShellScript(
+          scriptPath,
+          [],
+          JSON.stringify({ cwd: tempRoot, prompt: 'Please update this NestJS controller service and DTO' }),
+          {},
+          path.join(__dirname, '..', '..')
+        );
+
+        assert.strictEqual(result.code, 0, 'session-start-rules-context should exit 0');
+        assert.ok(result.stdout.includes('[AW Router reminder]'), 'prompt reminder should mention AW routing');
+        assert.ok(result.stdout.includes('[Rule reminder'), 'prompt reminder should mention scoped rules');
+        assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'), 'prompt reminder should resolve the backend rules path');
+        assert.ok(result.stdout.includes('@platform-core/logger'), 'prompt reminder should include scoped MUST rule content');
+      } finally {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
+      }
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    await asyncTest('session-start hook emits compact routing context', async () => {
+      if (SKIP_BASH) return;
+
+      const scriptPath = path.join(__dirname, '..', '..', 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
+      const result = await runShellScript(scriptPath, [], '', {}, path.join(__dirname, '..', '..'));
+
+      assert.strictEqual(result.code, 0, 'session-start should exit 0');
+
+      const payload = JSON.parse(result.stdout);
+      assert.strictEqual(
+        payload?.hookSpecificOutput?.hookEventName,
+        'SessionStart',
+        'session-start should identify the SessionStart hook event'
+      );
+      const context = payload?.hookSpecificOutput?.additionalContext || '';
+
+      assert.ok(context.includes('# AW Session Context'), 'session-start should emit AW startup context');
+      assert.ok(context.length < 6000, `session-start context should stay compact (got ${context.length} chars)`);
+      assert.ok(!context.includes('## Available Skills'), 'session-start should not inline the full skills catalog');
+      assert.ok(!context.includes('## Available Commands'), 'session-start should not inline the full commands catalog');
+      assert.ok(!context.includes('## Routing Skill'), 'session-start should not inline the full routing skill body');
     })
   )
     passed++;
