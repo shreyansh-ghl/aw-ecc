@@ -21,6 +21,10 @@ The canonical public route remains `/aw:plan`.
 
 Do not use when the request is still missing a stable technical contract.
 
+## Workflow
+
+This legacy heading maps to the detailed planning process below.
+
 ## The Planning Process
 
 1. Enter task-planning mode.

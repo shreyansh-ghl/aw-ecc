@@ -26,6 +26,10 @@ For non-trivial work, `aw-plan` should behave like a small internal planning gra
 
 **When NOT to use:** when the request is already build-ready, when the issue is really investigation rather than planning, or when the user is only asking for test, review, deploy, or ship work.
 
+## Workflow
+
+This legacy heading maps to the detailed planning process below.
+
 ## The Planning Process
 
 1. Enter plan mode.

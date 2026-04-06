@@ -22,6 +22,10 @@ The public planning route remains `/aw:plan`.
 
 Do not use when execution-ready tasks already exist or when the request is still fundamentally a product or design question.
 
+## Workflow
+
+This legacy heading maps to the gated workflow below.
+
 ## The Gated Workflow
 
 1. Enter technical planning mode.
