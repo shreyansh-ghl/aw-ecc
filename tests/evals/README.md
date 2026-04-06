@@ -30,6 +30,13 @@ Runner scripts remain at the `tests/evals/` root:
 - `run-aw-sdlc-routing-golden-path.sh`
 - `run-aw-sdlc-ghl-ai-standalone-smoke.sh`
 
+Default `npm test` / `node tests/run-all.js` behavior is intentionally narrower than the full benchmark stack:
+
+- live routing tests under `evals/routing/` are opt-in via `AW_TEST_INCLUDE_ROUTING=1`
+- slower outcome benchmarks like `outcomes/aw-sdlc-outcomes.test.js` and `outcomes/aw-revex-history-phase2.test.js` are opt-in via `AW_TEST_INCLUDE_SLOW_OUTCOMES=1`
+
+That keeps the normal push gate deterministic and fast while preserving the heavier benchmark layers for explicit runs.
+
 RevEx Phase 2 can now be run explicitly with:
 
 - `bash tests/evals/run-aw-sdlc-evals.sh revex-history`
