@@ -28,21 +28,24 @@ const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
 const MAX_STDIN = 1024 * 1024;
 
 let stdinData = '';
-process.stdin.setEncoding('utf8');
 
-process.stdin.on('data', chunk => {
-  if (stdinData.length < MAX_STDIN) {
-    const remaining = MAX_STDIN - stdinData.length;
-    stdinData += chunk.substring(0, remaining);
-  }
-});
+if (require.main === module) {
+  process.stdin.setEncoding('utf8');
 
-process.stdin.on('end', () => {
-  main().catch(err => {
-    console.error(`[memory-feedback] Fatal: ${err.message}`);
-    process.exit(0); // Don't block session end
+  process.stdin.on('data', chunk => {
+    if (stdinData.length < MAX_STDIN) {
+      const remaining = MAX_STDIN - stdinData.length;
+      stdinData += chunk.substring(0, remaining);
+    }
   });
-});
+
+  process.stdin.on('end', () => {
+    main().catch(err => {
+      console.error(`[memory-feedback] Fatal: ${err.message}`);
+      process.exit(0); // Don't block session end
+    });
+  });
+}
 
 /**
  * Resolve namespace from .sync-config.json.
@@ -237,4 +240,14 @@ async function main() {
 
   // Pass through stdin unchanged
   process.stdout.write(stdinData);
+}
+
+// Exported for testing
+if (typeof module !== 'undefined' && module.exports && require.main !== module) {
+  module.exports = {
+    sessionUsedMemory,
+    sessionHadError,
+    loadServedMemoryIds,
+    resolveNamespace,
+  };
 }

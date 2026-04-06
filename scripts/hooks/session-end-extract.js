@@ -97,21 +97,24 @@ function stripTranscriptNoise(text) {
 }
 
 let stdinData = '';
-process.stdin.setEncoding('utf8');
 
-process.stdin.on('data', chunk => {
-  if (stdinData.length < MAX_STDIN) {
-    const remaining = MAX_STDIN - stdinData.length;
-    stdinData += chunk.substring(0, remaining);
-  }
-});
+if (require.main === module) {
+  process.stdin.setEncoding('utf8');
 
-process.stdin.on('end', () => {
-  main().catch(err => {
-    console.error(`[memory-extract] Fatal: ${err.message}`);
-    process.exit(0); // Don't block session end
+  process.stdin.on('data', chunk => {
+    if (stdinData.length < MAX_STDIN) {
+      const remaining = MAX_STDIN - stdinData.length;
+      stdinData += chunk.substring(0, remaining);
+    }
   });
-});
+
+  process.stdin.on('end', () => {
+    main().catch(err => {
+      console.error(`[memory-extract] Fatal: ${err.message}`);
+      process.exit(0); // Don't block session end
+    });
+  });
+}
 
 /**
  * Resolve config from .sync-config.json.
@@ -433,3 +436,13 @@ async function main() {
 }
 
 // extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract
+
+// Exported for testing
+if (typeof module !== 'undefined' && module.exports && require.main !== module) {
+  module.exports = {
+    stripTranscriptNoise,
+    extractTextFromTranscript,
+    computeAncestry,
+    loadServedMemoryIds,
+  };
+}

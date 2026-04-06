@@ -459,7 +459,18 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => {
-  console.error('[SessionStart] Error:', err.message);
-  process.exit(0); // Don't block on errors
-});
+// Exported for testing — guard main() to only run when script is entry point
+if (typeof module !== 'undefined' && module.exports && require.main !== module) {
+  module.exports = {
+    buildMemoryQuery,
+    inferFilters,
+    collectSessionContext,
+    saveServedMemoryIds,
+    getRepoSlug,
+  };
+} else {
+  main().catch(err => {
+    console.error('[SessionStart] Error:', err.message);
+    process.exit(0); // Don't block on errors
+  });
+}
