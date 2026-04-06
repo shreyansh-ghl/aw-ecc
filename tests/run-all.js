@@ -15,6 +15,7 @@ const TEST_GLOB = 'tests/**/*.test.js';
 const INCLUDE_SLOW_OUTCOMES = process.env.AW_TEST_INCLUDE_SLOW_OUTCOMES === '1';
 const SLOW_TESTS = new Set([
   'evals/outcomes/aw-revex-history-phase2.test.js',
+  'evals/outcomes/aw-sdlc-outcomes.test.js',
 ]);
 
 function matchesTestGlob(relativePath) {
