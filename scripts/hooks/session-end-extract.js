@@ -19,7 +19,6 @@ const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
 const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
-const MAX_CANDIDATES = 10;
 const MIN_SESSION_MINUTES = 5;
 const MAX_STDIN = 1024 * 1024;
 const MAX_TRANSCRIPT_BYTES = 2 * 1024 * 1024; // Read last 2MB of transcript
@@ -172,7 +171,7 @@ function buildMcpHeaders(cfg) {
 /**
  * Call an MCP tool via JSON-RPC 2.0.
  */
-async function callMcpTool(toolName, params, headers) {
+async function callMcpTool(toolName, params, headers, timeoutMs = 10000) {
   const response = await fetch(MCP_BASE_URL, {
     method: 'POST',
     headers: headers || { 'Content-Type': 'application/json' },
@@ -182,7 +181,7 @@ async function callMcpTool(toolName, params, headers) {
       method: 'tools/call',
       params: { name: toolName, arguments: params },
     }),
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     throw new Error(`MCP ${toolName}: ${response.status}`);
@@ -347,79 +346,42 @@ async function main() {
     }
   }
 
-  // --- Phase 2: Extract and store new memories ---
-  const candidates = extractCandidates(transcriptContent);
-
-  if (candidates.length === 0) {
-    console.log('[memory-extract] No extractable patterns found');
+  // --- Phase 2: Extract and store new memories via server-side LLM ---
+  // Single MCP call replaces N × regex + N × memory_curated_store
+  if (transcriptContent.length < 1000) {
+    console.log('[memory-extract] Transcript too short for extraction (< 1000 chars)');
     return;
   }
 
-  console.log(`[memory-extract] Found ${candidates.length} candidate(s)`);
+  // Truncate to 100K chars (tail — recent context is higher signal)
+  const extractContent = transcriptContent.length > 100000
+    ? transcriptContent.slice(-100000)
+    : transcriptContent;
 
-  for (const candidate of candidates) {
-    try {
-      const result = await callMcpTool('memory_curated_store', {
-        content: candidate.content,
-        type: candidate.type,
-        source: 'hook',
-        tags: ['auto-extracted', 'session-end'],
-      }, headers);
-      const action = (result && result.curation && result.curation.action) || 'STORED';
-      console.log(`[memory-extract] ${action}: ${candidate.content.slice(0, 60)}...`);
-    } catch (err) {
-      console.error(`[memory-extract] Failed to store: ${err.message}`);
-    }
+  // Build session metadata for better extraction quality
+  const sessionMetadata = {};
+  if (sessionDuration > 0) sessionMetadata.duration_minutes = sessionDuration;
+  if (transcriptPath) {
+    sessionMetadata.cwd = path.dirname(transcriptPath);
+  }
+
+  console.log(`[memory-extract] Calling memory_batch_extract (${extractContent.length} chars)...`);
+
+  try {
+    const result = await callMcpTool('memory_batch_extract', {
+      content: extractContent,
+      source: 'session-end',
+      session_metadata: sessionMetadata,
+    }, headers, 30000); // 30s timeout — batch extraction + curation takes time
+
+    const extracted = result?.extracted ?? 0;
+    const created = result?.created ?? 0;
+    const updated = result?.updated ?? 0;
+    const skipped = result?.skipped ?? 0;
+    console.log(`[memory-extract] Batch extract: ${extracted} extracted, ${created} created, ${updated} updated, ${skipped} skipped`);
+  } catch (err) {
+    console.error(`[memory-extract] Batch extraction failed: ${err.message}`);
   }
 }
 
-/**
- * Extract candidate memories from session content.
- * Identifies decisions, patterns, and pitfalls using keyword markers.
- *
- * Quality filter: skips vague summaries and code/path lines to keep only
- * actionable, specific memories.
- *
- * GOOD: "NestJS services must use @platform-core/logger, never console.log"
- * GOOD: "Migration 035 added score_memories_3d() — use this for memory retrieval"
- * BAD:  "We worked on the memory system today"
- * BAD:  "Fixed a bug"
- */
-function extractCandidates(content) {
-  const candidates = [];
-  const lines = content.split('\n').filter(l => l.trim());
-
-  const decisionMarkers = /\b(decided|chose|selected|went with|prefer|always|never)\b/i;
-  const patternMarkers = /\b(pattern|convention|approach|best practice|standard)\b/i;
-  const pitfallMarkers = /\b(bug|error|issue|problem|fix|resolved|workaround)\b/i;
-
-  // Lines that are too generic to be useful memories
-  const genericPatterns = /^(we (worked|did|made|built)|fixed (a |the )?bug$|updated (the |some )?code|made (some )?changes)/i;
-  // Lines that are mostly code or file paths, not human insights
-  const codePathPatterns = /^(- \/|diff --git|import |const |function )/;
-
-  const seen = new Set();
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Skip short lines, duplicates, generic fluff, and code/path lines
-    if (trimmed.length < 30) continue;
-    if (seen.has(trimmed)) continue;
-    if (genericPatterns.test(trimmed)) continue;
-    if (codePathPatterns.test(trimmed)) continue;
-
-    if (decisionMarkers.test(trimmed)) {
-      candidates.push({ content: trimmed, type: 'decision' });
-      seen.add(trimmed);
-    } else if (patternMarkers.test(trimmed)) {
-      candidates.push({ content: trimmed, type: 'pattern' });
-      seen.add(trimmed);
-    } else if (pitfallMarkers.test(trimmed)) {
-      candidates.push({ content: trimmed, type: 'pitfall' });
-      seen.add(trimmed);
-    }
-  }
-
-  return candidates.slice(0, MAX_CANDIDATES);
-}
+// extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract

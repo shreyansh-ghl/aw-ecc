@@ -22,7 +22,6 @@ const { resolveMcpUrl } = require('../lib/mcp-url');
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
-const MAX_CANDIDATES = 5; // Keep it small — fires frequently
 const MAX_STDIN = 512 * 1024; // 512KB — compaction summaries are smaller
 
 /**
@@ -140,61 +139,7 @@ function extractToolResult(result) {
   return result;
 }
 
-/**
- * Extract candidate memories from compaction summary content.
- * Uses lightweight heuristics — looks for decisions, patterns, and errors.
- *
- * Quality filter: skips vague summaries and code/path lines to keep only
- * actionable, specific memories.
- *
- * GOOD: "NestJS services must use @platform-core/logger, never console.log"
- * GOOD: "Migration 035 added score_memories_3d() — use this for memory retrieval"
- * BAD:  "We worked on the memory system today"
- * BAD:  "Fixed a bug"
- */
-function extractCandidates(content) {
-  const candidates = [];
-  const lines = content.split('\n').filter(l => l.trim());
-  const seen = new Set();
-
-  const decisionMarkers = /\b(decided|chose|selected|went with|prefer|always use|never use|switched to)\b/i;
-  const patternMarkers = /\b(pattern|convention|approach|best practice|standard|workflow|architecture)\b/i;
-  const errorMarkers = /\b(bug|error|issue|fix|resolved|workaround|root cause|regression)\b/i;
-
-  // Lines that are too generic to be useful memories
-  const genericPatterns = /^(we (worked|did|made|built)|fixed (a |the )?bug$|updated (the |some )?code|made (some )?changes)/i;
-  // Lines that are mostly code or file paths, not human insights
-  const codePathPatterns = /^(- \/|diff --git|import |const |function )/;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Skip short lines, code fences, duplicates, generic fluff, and code/path lines
-    if (trimmed.length < 30) continue;
-    if (trimmed.startsWith('```') || trimmed.startsWith('//') || trimmed.startsWith('#!')) continue;
-    if (seen.has(trimmed)) continue;
-    if (genericPatterns.test(trimmed)) continue;
-    if (codePathPatterns.test(trimmed)) continue;
-
-    let type = null;
-    if (decisionMarkers.test(trimmed)) {
-      type = 'decision';
-    } else if (patternMarkers.test(trimmed)) {
-      type = 'pattern';
-    } else if (errorMarkers.test(trimmed)) {
-      type = 'pitfall';
-    }
-
-    if (type) {
-      candidates.push({ content: trimmed.slice(0, 300), type });
-      seen.add(trimmed);
-    }
-
-    if (candidates.length >= MAX_CANDIDATES) break;
-  }
-
-  return candidates;
-}
+// extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract
 
 /**
  * run() export for in-process execution via run-with-flags.js.
@@ -230,29 +175,24 @@ async function extractAndStore(rawInput) {
     return;
   }
 
-  const candidates = extractCandidates(summary);
-  if (candidates.length === 0) {
-    console.error('[compaction-extract] No extractable patterns in compaction summary');
-    return;
-  }
-
-  console.error(`[compaction-extract] Found ${candidates.length} candidate(s)`);
-
   const headers = buildMcpHeaders(cfg);
 
-  for (const candidate of candidates) {
-    try {
-      const result = await callMcpTool('memory_curated_store', {
-        content: candidate.content,
-        type: candidate.type,
-        source: 'hook',
-        tags: ['auto-extracted', 'compaction'],
-      }, headers);
-      const action = (result && result.curation && result.curation.action) || 'STORED';
-      console.error(`[compaction-extract] ${action}: ${candidate.content.slice(0, 60)}...`);
-    } catch (err) {
-      console.error(`[compaction-extract] Failed to store: ${err.message}`);
-    }
+  // Single MCP call: server-side LLM extraction + curation
+  console.error(`[compaction-extract] Calling memory_batch_extract (${summary.length} chars)...`);
+
+  try {
+    const result = await callMcpTool('memory_batch_extract', {
+      content: summary,
+      source: 'compaction',
+    }, headers);
+
+    const extracted = result?.extracted ?? 0;
+    const created = result?.created ?? 0;
+    const updated = result?.updated ?? 0;
+    const skipped = result?.skipped ?? 0;
+    console.error(`[compaction-extract] Batch: ${extracted} extracted, ${created} created, ${updated} updated, ${skipped} skipped`);
+  } catch (err) {
+    console.error(`[compaction-extract] Batch extraction failed: ${err.message}`);
   }
 }
 
