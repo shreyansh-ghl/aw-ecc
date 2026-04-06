@@ -1,0 +1,55 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "bugfix",
+  "affectedSurface": "lc-phone:workers/helpers",
+  "userPrompt": "You are working in RevEx backend. A user-facing or runtime bug has been reported around `lc-phone:workers/helpers` in RevEx backend, and the current behavior is not reliable enough to leave as-is. Deliver the smallest safe bugfix in `lc-phone:workers/helpers` using the expected AW route `/aw:investigate`. Success criteria: resolve the user-visible or runtime issue in `lc-phone:workers/helpers` without widening scope; preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required; capture the failure mode or behavior gap clearly before proposing the patch. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show a focused regression check or narrow supporting note that addresses the original failure mode.",
+  "successCriteria": [
+    "resolve the user-visible or runtime issue in `lc-phone:workers/helpers` without widening scope",
+    "preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required",
+    "capture the failure mode or behavior gap clearly before proposing the patch"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show a focused regression check or narrow supporting note that addresses the original failure mode"
+  ],
+  "commit": {
+    "sha": "8b955d1dc0d4e8f0a1738233582df79a7bbeb93c",
+    "parentSha": "06557329314cb8c252755f44c00978afbc065043",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "fix: add optional chaining and early return in processVoiceRebillingEvent",
+    "type": "fix",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 5,
+    "deletions": 1,
+    "totalLinesChanged": 6
+  },
+  "routeExpectation": {
+    "route": "/aw:investigate",
+    "primarySkill": "aw-investigate",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation",
+      "documentation-and-adrs"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/workers/helpers/voice-intelligence.helper.ts",
+      "insertions": 5,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 8b955d1dc0d4e8f0a1738233582df79a7bbeb93c",
+    "showPatch": "git -C ../ghl-revex-backend show 8b955d1dc0d4e8f0a1738233582df79a7bbeb93c",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout 06557329314cb8c252755f44c00978afbc065043"
+  },
+  "warnings": []
+}

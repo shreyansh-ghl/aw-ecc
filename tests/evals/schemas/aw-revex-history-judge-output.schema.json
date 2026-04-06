@@ -1,0 +1,91 @@
+{
+  "$id": "aw-revex-history-judge-output.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "overall_score",
+    "verdict",
+    "dimensions",
+    "strengths",
+    "gaps",
+    "rationale"
+  ],
+  "properties": {
+    "overall_score": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "better_than_baseline",
+        "roughly_equal_to_baseline",
+        "worse_than_baseline",
+        "inconclusive"
+      ]
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "problem_coverage",
+        "correctness",
+        "scope_discipline",
+        "verification_quality",
+        "pr_quality",
+        "risk_posture"
+      ],
+      "properties": {
+        "problem_coverage": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "correctness": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "scope_discipline": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "verification_quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "pr_quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "risk_posture": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 10
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-cpaas-compliance",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "lc-cpaas-compliance:deployments/production",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `lc-cpaas-compliance:deployments/production` in RevEx backend, inside the broader `lc-cpaas-compliance` area. Deliver the smallest safe implementation in `lc-cpaas-compliance:deployments/production` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `lc-cpaas-compliance:deployments/production` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces; include delivery or rollout evidence for any release-path changes.",
+  "successCriteria": [
+    "deliver the requested implementation in `lc-cpaas-compliance:deployments/production` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces",
+    "include delivery or rollout evidence for any release-path changes"
+  ],
+  "commit": {
+    "sha": "5d49c95f51325f17c2d00fb56080eb03132e4d2c",
+    "parentSha": "d4e01a17303a51fefcd41d99269e339d3925709e",
+    "date": "2026-03-26T17:58:35+05:30",
+    "subject": "feat/udpate-service-name (#9972)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 3,
+    "insertions": 3,
+    "deletions": 3,
+    "totalLinesChanged": 6
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-cpaas-compliance/deployments/production/values.server.production.yaml",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/lc-cpaas-messages/deployments/production/values.server.production.yaml",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/lc-cpaas-voice/deployments/production/values.server.production.yaml",
+      "insertions": 1,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 5d49c95f51325f17c2d00fb56080eb03132e4d2c",
+    "showPatch": "git -C ../ghl-revex-backend show 5d49c95f51325f17c2d00fb56080eb03132e4d2c",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout d4e01a17303a51fefcd41d99269e339d3925709e"
+  },
+  "warnings": []
+}

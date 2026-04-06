@@ -1,19 +1,24 @@
 ---
 name: aw:code-review
-description: Compatibility alias for aw:verify when the user asks specifically for code review.
+description: Compatibility alias for aw:review when the user asks specifically for code review.
 argument-hint: "<PR, diff, branch, or review target>"
 status: alias
-stage: verify
-aliases-to: aw:verify
+stage: review
+aliases-to: aw:review
 ---
 
 # Code Review
 
 `/aw:code-review` is a compatibility alias.
 
-The public verification surface is `/aw:verify`, which includes:
+The canonical review surface is `/aw:review`, which includes:
 
 - code review
-- local validation
+- findings severity
 - PR governance
 - readiness checks
+
+See:
+
+- `commands/review.md` for the public review contract
+- `skills/aw-review/SKILL.md` for targeted review, findings normalization, and re-review loops

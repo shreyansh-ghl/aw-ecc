@@ -11,8 +11,8 @@ The canonical public release stage remains `/aw:deploy`, but this helper still o
 
 ## Hard Gate
 
-`aw-verify` must have passed before this skill runs.
-If verification failed, route back to `aw-execute` or `aw-verify` instead of finishing.
+`aw-test` and `aw-review` must have passed before this skill runs, or the compatibility umbrella must have recorded an equivalent verified outcome.
+If verification failed, route back to `aw-build`, `aw-test`, or `aw-review` instead of finishing.
 
 ## Purpose
 
@@ -31,6 +31,12 @@ If `.aw_docs/features/<feature_slug>/workspace.json` exists, use it as the sourc
 - the recommended `node scripts/orchestration-status.js ...` status command
 
 Staging or production deployment requests should stay on `aw-deploy`.
+
+## Deprecation Timeline
+
+This skill is still active internally even though `/aw:finish` is deprecated as a public entrypoint.
+Keep `aw-finish` available until `/aw:deploy` fully absorbs branch-completion choices, workspace metadata reuse, and cleanup behavior.
+Public deprecation must not be interpreted as immediate removal of the internal helper.
 
 ## Completion Flow
 

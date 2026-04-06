@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "yext",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "yext:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `yext:src/components` in RevEx frontend, inside the broader `yext` area. Deliver the smallest safe implementation in `yext:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `yext:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `yext:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "61bc4fe8e6385654e2f1ef99121f3cd762365a58",
+    "parentSha": "f15c53df146c291fa12b3b1d0a123aeb8c9f6d0c",
+    "date": "2026-04-01T15:03:15+05:30",
+    "subject": "fix highrise breaking changes isue (#7875)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 2,
+    "deletions": 0,
+    "totalLinesChanged": 2
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/yext/src/components/DuplicateSuppression/TableComponents/DuplicateSuppressionTable.vue",
+      "insertions": 2,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 61bc4fe8e6385654e2f1ef99121f3cd762365a58",
+    "showPatch": "git -C ../ghl-revex-frontend show 61bc4fe8e6385654e2f1ef99121f3cd762365a58",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout f15c53df146c291fa12b3b1d0a123aeb8c9f6d0c"
+  },
+  "warnings": []
+}

@@ -75,6 +75,8 @@ examples/sessions/*.tmp
 # Local drafts
 marketing/
 .dmux/
+.aw/
+.aw_docs/
 .planning/
 
 # Temporary files
@@ -88,6 +90,9 @@ temp/
 ecc2/target/
 
 # Bootstrap pipeline outputs
+tests/results/
+skills/using-aw-skills/tests/results/
+
 # Generated lock files in tool subdirectories
 .opencode/package-lock.json
 .opencode/node_modules/

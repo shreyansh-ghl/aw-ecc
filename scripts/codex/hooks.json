@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'bash \"$HOME/.codex/hooks/aw-session-start.sh\"'"
+          }
+        ],
+        "description": "Load AW routing context at session start"
+      }
+    ]
+  }
+}

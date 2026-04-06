@@ -22,7 +22,7 @@ Validate:
 - aliases and deprecations are intentional
 - the public surface stays minimal
 
-Primary failure examples:
+Historical failure examples the suite was designed to catch:
 
 - `plan` is still an alias when it should be first-class
 - `deploy` does not exist
@@ -56,9 +56,12 @@ Validate:
 Validate:
 
 - `plan` creates the right planning artifacts
-- `execute` creates `execution.md`
-- `verify` creates `verification.md`
+- `build` creates `execution.md`
+- `investigate` creates `investigation.md`
+- `test` creates `verification.md` with QA evidence
+- `review` creates `verification.md` with readiness and findings
 - `deploy` creates `release.md`
+- `ship` creates launch and closeout `release.md` evidence
 - `state.json` is updated after each stage
 
 ### Layer 4A: Real Outcome Workspace Tests
@@ -66,9 +69,11 @@ Validate:
 Validate repo-like situations with actual filesystem outcomes:
 
 - `plan` writes `spec.md` and `state.json` in a temp workspace
-- `verify` runs local validation in a temp workspace and writes `verification.md`
+- `build` writes `execution.md` and `state.json` in a temp workspace
+- `review` runs local validation and writes `verification.md`
 - `deploy` resolves the configured staging provider and writes `release.md`
-- `ship` handles already-verified work without recreating unnecessary planning artifacts
+- `ship` handles already-reviewed work without recreating unnecessary planning artifacts
+- explicit end-to-end automation uses `aw-yolo` rather than overloading `ship`
 
 These are slower than routing evals but provide much stronger confidence because they measure created files and concrete stage outcomes.
 
@@ -130,9 +135,12 @@ For customer-behavior coverage, the matrix must span:
 | Scenario | Expected result |
 |---|---|
 | `/aw:plan create a PRD` | planning mode only |
-| `/aw:execute implement approved spec` | execution mode only |
-| `/aw:verify validate completed work` | verification mode only |
+| `/aw:build implement approved spec` | build mode only |
+| `/aw:investigate diagnose a retry bug` | investigate mode only |
+| `/aw:test validate completed work` | test mode only |
+| `/aw:review assess staging readiness` | review mode only |
 | `/aw:deploy ship verified work` | release mode only |
+| `/aw:ship confirm launch readiness` | shipping mode only |
 
 ### B. No-Command Intent Scenarios
 
@@ -140,8 +148,10 @@ For customer-behavior coverage, the matrix must span:
 |---|---|
 | “Create a PRD for contact sync” | `plan` |
 | “Break this approved design into implementation tasks” | `plan` |
-| “Implement the approved worker spec” | `execute` |
-| “Review and validate this implementation” | `verify` |
+| “Implement the approved worker spec” | `build` |
+| “Investigate this worker retry failure” | `investigate` |
+| “Test this repaired worker bugfix” | `test` |
+| “Review and validate this implementation” | `review` |
 | “Ship this to staging” | `deploy` |
 
 ### C. Scope-Control Scenarios
@@ -161,9 +171,12 @@ For customer-behavior coverage, the matrix must span:
 | design planning | `design.md`, `designs/`, `state.json` |
 | technical planning | `spec.md`, `state.json` |
 | task planning | `tasks.md`, `state.json` |
-| execution | `execution.md`, updated `state.json` |
-| verification | `verification.md`, updated `state.json` |
+| build | `execution.md`, updated `state.json` |
+| investigate | `investigation.md`, updated `state.json` |
+| test | `verification.md`, updated `state.json` |
+| review | `verification.md`, updated `state.json` |
 | deploy | `release.md`, updated `state.json` |
+| ship | `release.md`, updated `state.json` |
 
 ### E. Learning Scenarios
 
@@ -179,19 +192,19 @@ For customer-behavior coverage, the matrix must span:
 | Scenario | Expected customer-facing behavior |
 |---|---|
 | “Create a PRD for contact sync” | plan only, create `prd.md`, no code |
-| “Implement the approved worker spec” | execute only, create `execution.md`, no planning artifacts |
-| “Review and validate this implementation” | verify only, create `verification.md`, no deploy action |
+| “Implement the approved worker spec” | build only, create `execution.md`, no planning artifacts |
+| “Review this PR and tell me if it is ready” | review only, create `verification.md`, no deploy action |
 | “Deploy the verified worker to staging” | deploy only, create `release.md`, no new planning |
-| “Fix this backend bug” | execute only, stay narrow, no design/PRD drift |
+| “Fix this backend bug” | investigate first, stay narrow, no design/PRD drift |
 
 ### F1. Default Session Scenarios
 
 | Scenario | Expected default session behavior |
 |---|---|
-| fresh session help | surface only `plan`, `execute`, `verify`, `deploy` |
+| fresh session help | surface only `plan`, `build`, `investigate`, `test`, `review`, `deploy`, `ship` |
 | technical plan request | route to `plan`, not PRD-first by default |
-| worker bugfix request | route to `execute`, stay narrow |
-| PR readiness request | route to `verify`, include PR governance |
+| worker bugfix request | route to `investigate` when root cause is unclear |
+| PR readiness request | route to `review`, include PR governance |
 | MFA staging deploy request | route to `deploy`, choose versioned MFA staging provider |
 | service staging deploy request | route to `deploy`, choose versioned service staging provider |
 | worker staging deploy request | route to `deploy`, choose versioned worker staging provider |
@@ -201,9 +214,9 @@ For customer-behavior coverage, the matrix must span:
 
 | Dimension | Coverage requirement |
 |---|---|
-| public commands | `plan`, `execute`, `verify`, `deploy` all represented in `core` |
+| public commands | `plan`, `build`, `investigate`, `test`, `review`, `deploy`, `ship` all represented in `core` |
 | command modes | every mode represented at least once in `full` |
-| verify layers | `code_review`, `local_validation`, `e2e_validation`, `external_validation`, `pr_governance`, `release_readiness` all represented |
+| review layers | `code_review`, `local_validation`, `e2e_validation`, `external_validation`, `pr_governance`, `release_readiness` all represented |
 | deploy layers | `preflight`, `release_path`, `pipeline_resolution`, `execution`, `post_deploy_evidence`, `learning` all represented |
 | default session behavior | minimal public surface, baseline selection, staging-provider selection, and fail-closed fallback all represented |
 | stage boundaries | every route has explicit must-not assertions against leakage |
@@ -246,11 +259,11 @@ tests/evals/run-aw-sdlc-evals.sh real-parallel
 tests/evals/run-aw-sdlc-evals.sh all
 ```
 
-## Initial Red Suite
+## Historical Red Suite
 
-The first red suite should intentionally prove these gaps:
+The original red suite intentionally proved these now-closed gaps:
 
-1. `deploy` is not yet a first-class public command
-2. `plan` is not yet a first-class public planning mode
-3. no-command intent routing still prefers internal stages over the target public surface
-4. artifact and learning contracts are not yet enforced end-to-end
+1. `deploy` was not yet a first-class public command
+2. `plan` was not yet a first-class public planning mode
+3. no-command intent routing still preferred internal stages over the target public surface
+4. artifact and learning contracts were not yet enforced end-to-end

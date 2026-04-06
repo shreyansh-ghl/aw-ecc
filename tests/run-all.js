@@ -12,6 +12,12 @@ const fs = require('fs');
 const testsDir = __dirname;
 const repoRoot = path.resolve(testsDir, '..');
 const TEST_GLOB = 'tests/**/*.test.js';
+const INCLUDE_SLOW_OUTCOMES = process.env.AW_TEST_INCLUDE_SLOW_OUTCOMES === '1';
+const INCLUDE_ROUTING_TESTS = process.env.AW_TEST_INCLUDE_ROUTING === '1';
+const SLOW_TESTS = new Set([
+  'evals/outcomes/aw-revex-history-phase2.test.js',
+  'evals/outcomes/aw-sdlc-outcomes.test.js',
+]);
 
 function matchesTestGlob(relativePath) {
   const normalized = relativePath.split(path.sep).join('/');
@@ -65,6 +71,16 @@ let totalTests = 0;
 for (const testFile of testFiles) {
   const testPath = path.join(testsDir, testFile);
   const displayPath = testFile.split(path.sep).join('/');
+
+  if (!INCLUDE_ROUTING_TESTS && displayPath.startsWith('evals/routing/')) {
+    console.log(`\n━━━ Skipping live routing test ${displayPath} (set AW_TEST_INCLUDE_ROUTING=1 to include) ━━━`);
+    continue;
+  }
+
+  if (!INCLUDE_SLOW_OUTCOMES && SLOW_TESTS.has(displayPath)) {
+    console.log(`\n━━━ Skipping slow test ${displayPath} (set AW_TEST_INCLUDE_SLOW_OUTCOMES=1 to include) ━━━`);
+    continue;
+  }
 
   if (!fs.existsSync(testPath)) {
     console.log(`⚠ Skipping ${displayPath} (file not found)`);

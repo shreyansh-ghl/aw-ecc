@@ -1,0 +1,69 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "prospecting",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "prospecting:config/index.ts",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `prospecting:config/index.ts` in RevEx backend, inside the broader `prospecting` area. Deliver the smallest safe implementation in `prospecting:config/index.ts` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `prospecting:config/index.ts` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `prospecting:config/index.ts` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "d4e01a17303a51fefcd41d99269e339d3925709e",
+    "parentSha": "fe5a46fe7e7259052bac6d6602ebf287454941f0",
+    "date": "2026-03-26T16:39:02+05:30",
+    "subject": "restore final prospect ai parity (#9937)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 4,
+    "insertions": 34,
+    "deletions": 36,
+    "totalLinesChanged": 70
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/prospecting/config/index.ts",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "apps/prospecting/src/google-maps/google-maps.controller.ts",
+      "insertions": 3,
+      "deletions": 4
+    },
+    {
+      "path": "apps/prospecting/src/prospect-ai/prospect-ai.service.ts",
+      "insertions": 29,
+      "deletions": 31
+    },
+    {
+      "path": "apps/prospecting/src/utils/constants.ts",
+      "insertions": 1,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary d4e01a17303a51fefcd41d99269e339d3925709e",
+    "showPatch": "git -C ../ghl-revex-backend show d4e01a17303a51fefcd41d99269e339d3925709e",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout fe5a46fe7e7259052bac6d6602ebf287454941f0"
+  },
+  "warnings": []
+}

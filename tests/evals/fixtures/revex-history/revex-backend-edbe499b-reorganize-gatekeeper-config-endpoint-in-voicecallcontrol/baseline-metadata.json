@@ -1,0 +1,65 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "refactor",
+  "affectedSurface": "lc-phone:src/voice-call",
+  "userPrompt": "You are working in RevEx backend. The implementation around `lc-phone:src/voice-call` in RevEx backend is carrying avoidable complexity that now needs cleanup without breaking stable behavior. Deliver the smallest safe refactor in `lc-phone:src/voice-call` using the expected AW route `/aw:build`. Success criteria: simplify or restructure `lc-phone:src/voice-call` while preserving current behavior; leave a reviewable change boundary with no unrelated cleanup; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "simplify or restructure `lc-phone:src/voice-call` while preserving current behavior",
+    "leave a reviewable change boundary with no unrelated cleanup",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "edbe499bbbc414b98e8acf4d78b746b6e45a41d4",
+    "parentSha": "b26be4799195db2bad7b949508307b13cd9db6c0",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "refactor: reorganize gatekeeper-config endpoint in VoiceCallController",
+    "type": "refactor",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 3,
+    "insertions": 20,
+    "deletions": 18,
+    "totalLinesChanged": 38
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation",
+      "code-simplification"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/src/voice-call/helpers/gatekeeper.helper.ts",
+      "insertions": 9,
+      "deletions": 7
+    },
+    {
+      "path": "apps/lc-phone/src/voice-call/voice-call.controller.ts",
+      "insertions": 9,
+      "deletions": 9
+    },
+    {
+      "path": "common/services/locations/location.service.ts",
+      "insertions": 2,
+      "deletions": 2
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary edbe499bbbc414b98e8acf4d78b746b6e45a41d4",
+    "showPatch": "git -C ../ghl-revex-backend show edbe499bbbc414b98e8acf4d78b746b6e45a41d4",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout b26be4799195db2bad7b949508307b13cd9db6c0"
+  },
+  "warnings": []
+}

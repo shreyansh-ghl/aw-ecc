@@ -300,7 +300,8 @@ cargo test --no-fail-fast
 
 - `/aw:rust-build` - Fix build errors
 - `/aw:rust-review` - Review code after implementation
-- `/aw:verify` - Run full verification loop
+- `/aw:test` - Run targeted QA and proof
+- `/aw:review` - Run readiness and findings review
 
 ## Related
 

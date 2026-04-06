@@ -2,16 +2,16 @@
 
 ## Purpose
 
-This document defines the contract for every AW SDLC command so the workflow becomes deterministic, testable, and easy to reason about.
+This document defines the contract for every AW SDLC command so the workflow stays deterministic, teachable, and testable.
 
 It does two things:
 
-1. defines the exact role of each command
-2. defines the shared contract shape that every command must follow
+1. defines the exact job each public command owns
+2. defines the shared contract shape that every public command must follow
 
 ## Contract Model
 
-Every command should define the same fields, even if some are empty.
+Every public command should define the same fields, even if some fields are intentionally short.
 
 | Field | Meaning |
 |---|---|
@@ -30,44 +30,54 @@ Every command should define the same fields, even if some are empty.
 
 ## Public Command Surface
 
-The target public interface is:
+The canonical public interface is:
 
 | Command | Public role |
 |---|---|
-| `/aw:plan` | Define what and how to build |
-| `/aw:execute` | Build the approved work |
-| `/aw:verify` | Prove quality and readiness |
-| `/aw:deploy` | Release or prepare release handoff |
+| `/aw:plan` | Define the minimum correct planning artifacts |
+| `/aw:build` | Implement approved work in thin, reversible slices |
+| `/aw:investigate` | Triage bugs, alerts, and unknown failures before patching |
+| `/aw:test` | Produce focused QA and fresh validation evidence |
+| `/aw:review` | Turn evidence into findings, governance, and readiness decisions |
+| `/aw:deploy` | Execute the requested release action |
+| `/aw:ship` | Own rollout safety, rollback readiness, and release closeout |
 
-There is also one explicit composite workflow:
+There is also one explicit internal composite workflow:
 
-| Command | Public role |
+| Skill | Role |
 |---|---|
-| `/aw:ship` | Run the minimum correct end-to-end sequence across multiple stages |
+| `aw-yolo` | Run the minimum correct multi-stage flow when the user explicitly wants full automation |
 
 ## Command/Skill Relationship
 
-AW SDLC should keep both commands and skills, but they should not be duplicate workflow definitions.
+AW SDLC keeps both commands and skills, but they should not be duplicate workflow definitions.
 
 The ownership split is:
 
 - commands own the public contract
 - primary stage skills own workflow execution
-- smaller subskills provide reusable specialist capabilities
+- subskills and references provide reusable specialist behavior
 
 The canonical mapping is:
 
 | Public command | Primary stage skill |
 |---|---|
 | `/aw:plan` | `aw-plan` |
-| `/aw:execute` | `aw-execute` |
-| `/aw:verify` | `aw-verify` |
+| `/aw:build` | `aw-build` |
+| `/aw:investigate` | `aw-investigate` |
+| `/aw:test` | `aw-test` |
+| `/aw:review` | `aw-review` |
 | `/aw:deploy` | `aw-deploy` |
+| `/aw:ship` | `aw-ship` |
 
-Intent routing should resolve to a public command first.
-The selected command may then invoke its primary stage skill and any supporting subskills.
+Compatibility mapping is:
 
-`/aw:ship` is the exception: it is a composite command that orchestrates multiple public stages in sequence.
+| Command | Status | Behavior |
+|---|---|---|
+| `/aw:execute` | compatibility | routes to `/aw:build` |
+| `/aw:verify` | compatibility | routes to `/aw:test`, `/aw:review`, or both |
+| `/aw:code-review` | alias | routes to `/aw:review` |
+| `/aw:tdd` | alias | routes to `/aw:build` in TDD mode |
 
 ## Responsibility Completeness Rule
 
@@ -93,11 +103,12 @@ Each public command must be complete within its own stage and incomplete outside
 That means:
 
 - `plan` is fully responsible for planning artifacts and not responsible for implementation
-- `execute` is fully responsible for implementation and not responsible for release
-- `verify` is fully responsible for evidence and readiness and not responsible for writing new plans
-- `deploy` is fully responsible for release outcomes and not responsible for redefining requirements
-
-This keeps every command accountable for a full stage without allowing it to absorb the whole SDLC.
+- `build` is fully responsible for implementation and not responsible for final release decisions
+- `investigate` is fully responsible for diagnosis and not responsible for pretending the fix is already proven
+- `test` is fully responsible for QA proof and not responsible for governance sign-off
+- `review` is fully responsible for findings and readiness decisions and not responsible for writing new code
+- `deploy` is fully responsible for release execution and not responsible for redefining requirements
+- `ship` is fully responsible for rollout safety and closeout and not responsible for acting as the whole SDLC
 
 ## 1. `/aw:plan`
 
@@ -113,7 +124,7 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 
 | Mode | Use when | Primary output |
 |---|---|---|
-| `product` | problem, scope, business intent is still unclear | `prd.md` |
+| `product` | problem, scope, or acceptance criteria are still unclear | `prd.md` |
 | `design` | user flow or UI behavior must be defined | `design.md` and `designs/` |
 | `technical` | technical approach must be defined | `spec.md` |
 | `tasks` | implementation breakdown is needed | `tasks.md` |
@@ -164,24 +175,25 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 
 ### Must Not Do
 
-- must not jump directly into execution
+- must not jump directly into `/aw:build`
 - must not require `prd.md` for technical planning if the request is already sufficiently defined
 - must not create random filenames
 
 ### Next Commands
 
-- `/aw:execute`
-- `/aw:verify` when the user wants planning reviewed first
+- `/aw:build`
+- `/aw:review` when the user wants planning artifacts reviewed before implementation
+- `/aw:investigate` when the real blocker is missing diagnosis rather than missing planning
 
-## 2. `/aw:execute`
+## 2. `/aw:build`
 
 ### Role
 
-Implement approved work using the correct execution mode and stop cleanly on blockers instead of guessing.
+Implement approved work using the correct build mode and stop cleanly on blockers instead of guessing.
 
 ### Stage
 
-`execute`
+`build`
 
 ### Modes
 
@@ -218,15 +230,15 @@ Implement approved work using the correct execution mode and stop cleanly on blo
 | Layer | Responsibility |
 |---|---|
 | `load` | load `spec.md`, `tasks.md`, or other approved input |
-| `mode-select` | choose the correct execution mode |
+| `mode-select` | choose the correct build mode |
 | `task-run` | implement work in dependency order |
-| `spec-review` | confirm output matches the planned acceptance |
+| `slice-verify` | validate each thin slice before expanding scope |
 | `quality-review` | confirm platform-rule and quality compliance |
-| `handoff` | transition cleanly to verification |
+| `handoff` | transition cleanly to test or review |
 
 ### Hard Gates
 
-- execution requires approved planning input
+- build requires approved planning input unless the technical request is already explicitly approved
 - no guessing after repeated failures
 - blockers must be surfaced explicitly
 
@@ -234,91 +246,203 @@ Implement approved work using the correct execution mode and stop cleanly on blo
 
 - must not re-enter planning unless a true prerequisite is missing
 - must not silently skip tests for code changes
-- must not continue after unresolved blockers
+- must not deploy as part of build
 
 ### Next Commands
 
-- `/aw:verify`
+- `/aw:test`
+- `/aw:review`
 
-## 3. `/aw:verify`
+## 3. `/aw:investigate`
 
 ### Role
 
-Produce objective evidence that the work is correct, compliant, and ready for release. `verify` is intentionally the smallest public surface that still includes code review, testing, PR governance, and release readiness.
+Diagnose bugs, alerts, incidents, or ambiguous failures before proposing a repair path.
 
 ### Stage
 
-`verify`
+`investigate`
 
 ### Modes
 
 | Mode | Use when | Expected result |
 |---|---|---|
-| `quality` | general implementation validation | evidence-based verification report |
-| `review` | findings-oriented review is requested | review findings inside verification report |
-| `readiness` | release readiness is the goal | final go/no-go recommendation |
+| `bug` | feature-level behavior is broken | repro + root-cause path |
+| `alert` | production or staging signal needs triage | alert triage + containment notes |
+| `incident` | broader operational issue needs diagnosis | evidence pack + repair path |
 
 ### Required Inputs
 
-- completed implementation or change set
-- relevant planning artifacts
+- observed failure, alert, or bug description
 - repo context
-- relevant platform docs
-- relevant `.aw_rules`
-- resolved verify profile when present
+- relevant logs, traces, screenshots, or test failures when available
 
 ### Optional Inputs
 
-- branch, PR, diff, staging URL
-- prior concerns from execute stage
+- existing reproduction
+- prior mitigation attempt
+- approved fix direction
 
 ### Outputs
 
-- `.aw_docs/features/<feature_slug>/verification.md`
+- updated `.aw_docs/features/<feature_slug>/execution.md` or investigation notes inside the feature folder
 - updated `state.json`
-- explicit overall status: `PASS`, `PASS_WITH_NOTES`, or `FAIL`
+- explicit reproduction, hypothesis, confirmed cause, and recommended next command
 
 ### Layers
 
 | Layer | Responsibility |
 |---|---|
-| `code_review` | run structured specialist review using the configured review playbooks |
-| `local_validation` | run repo-local evidence such as unit tests, integration tests, lint, typecheck, and build |
-| `e2e_validation` | run end-to-end coverage in this repo or the mapped GHL test repo |
-| `external_validation` | run external or pipeline-based checks such as sandbox or downstream smoke tests |
-| `pr_governance` | validate PR description checklist, required statuses, approvals, and quality-gate state |
-| `release_readiness` | produce go/no-go decision and next action for staging handoff or deploy |
+| `intake` | capture the failing signal and impact |
+| `repro` | get to a stable reproduction or explicit missing evidence |
+| `hypothesis` | propose likely causes |
+| `confirmation` | run the smallest confirming probe |
+| `decision` | recommend build, plan, or further investigation |
 
 ### Hard Gates
 
-- no pass claim without evidence
-- findings must be surfaced before summary if blockers exist
-- verification cannot be skipped before deploy
-- PR governance cannot pass if the PR checklist says verification is incomplete
-- local validation cannot pass if required unit tests are missing or failing
+- do not patch before the failing signal is concrete unless containment is explicitly requested
+- do not declare root cause without a confirming probe
 
 ### Must Not Do
 
-- must not claim success from intuition alone
-- must not skip command output when checks can be run
-- must not hide blocking findings inside a summary paragraph
+- must not turn ambiguous bug intake into blind implementation
+- must not erase evidence that may explain the failure
 
 ### Next Commands
 
-- `/aw:deploy`
-- `/aw:execute` if verification fails and work must return for fixes
+- `/aw:build`
+- `/aw:plan`
+- `/aw:test`
 
-### Configuration Model
-
-`verify` should use the fixed layer contract above, but fulfill it through a repo-local profile. See [aw-sdlc-verify-deploy-configuration.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/docs/aw-sdlc-verify-deploy-configuration.md).
-
-## 4. `/aw:deploy`
+## 4. `/aw:test`
 
 ### Role
 
-Convert verified work into the right release outcome: PR, branch handoff, staging deployment, or production deployment. The public contract can support production, but the current GHL baseline should focus first on staging and versioned deploys.
-Default to one release path.
-If the user explicitly asks for a compound release flow, run the requested release modes in order, usually `pr -> staging`.
+Produce focused QA evidence for a feature, fix, or release candidate.
+
+### Stage
+
+`test`
+
+### Modes
+
+| Mode | Use when | Expected result |
+|---|---|---|
+| `feature` | validate a specific feature slice | targeted proof |
+| `regression` | validate a bugfix and nearby risk area | regression evidence |
+| `release` | validate broader release readiness before review | stacked QA evidence |
+
+### Required Inputs
+
+- build output or explicit target under test
+- repo context
+- relevant test tooling, scripts, or runtime targets
+
+### Optional Inputs
+
+- prior failing test
+- runtime screenshots or recordings
+- external QA notes
+
+### Outputs
+
+- `.aw_docs/features/<feature_slug>/verification.md`
+- updated `state.json`
+- fresh evidence for review or a repair recommendation
+
+### Layers
+
+| Layer | Responsibility |
+|---|---|
+| `scope` | define the smallest correct test surface |
+| `prepare` | load the right test tools and environment expectations |
+| `execute` | run the selected checks |
+| `evidence` | capture the actual proof and failures |
+| `handoff` | route to build or review |
+
+### Hard Gates
+
+- do not claim testing happened without named evidence
+- do not run broad release QA when the user only asked for a narrow feature check
+
+### Must Not Do
+
+- must not hide failed checks inside summary prose
+- must not replace review when governance and readiness decisions are still required
+
+### Next Commands
+
+- `/aw:review`
+- `/aw:build`
+
+## 5. `/aw:review`
+
+### Role
+
+Produce findings, governance decisions, and readiness outcomes from the available evidence.
+
+### Stage
+
+`review`
+
+### Modes
+
+| Mode | Use when | Expected result |
+|---|---|---|
+| `findings` | code and implementation review is the main goal | review findings |
+| `governance` | PR checklist, approvals, and status checks matter most | governance outcome |
+| `readiness` | release recommendation is needed | go / no-go decision |
+
+### Required Inputs
+
+- test evidence, runtime proof, or prior review artifacts
+- repo context
+- relevant platform review playbooks
+
+### Optional Inputs
+
+- diff or PR URL
+- design artifacts
+- deploy intent
+
+### Outputs
+
+- `.aw_docs/features/<feature_slug>/verification.md`
+- updated `state.json`
+- explicit overall status and next action
+
+### Layers
+
+| Layer | Responsibility |
+|---|---|
+| `evidence` | review tests and runtime proof first |
+| `findings` | classify blocking and advisory findings |
+| `governance` | check approvals, checklists, and gates |
+| `readiness` | produce the release recommendation |
+| `handoff` | route to build, test, or deploy |
+
+### Hard Gates
+
+- no governance or readiness call without evidence
+- no clearing a finding on stale proof
+
+### Must Not Do
+
+- must not implement code while reviewing
+- must not hide blocking findings
+
+### Next Commands
+
+- `/aw:build`
+- `/aw:test`
+- `/aw:deploy`
+
+## 6. `/aw:deploy`
+
+### Role
+
+Execute the requested release action using the resolved org-standard staging or delivery path.
 
 ### Stage
 
@@ -328,116 +452,119 @@ If the user explicitly asks for a compound release flow, run the requested relea
 
 | Mode | Use when | Expected result |
 |---|---|---|
-| `pr` | work should be handed off for review/merge | PR created with verification context |
-| `branch` | work should remain on a branch | remote branch and summary |
-| `staging` | release should go to staging | staging handoff or deployment evidence |
-| `production` | verified work is ready for production | production deployment evidence |
+| `branch` | branch handoff only is requested | pushed branch evidence |
+| `pr` | pull request creation is requested | PR evidence |
+| `staging` | staging release is requested | staging deploy evidence |
+| `production` | production release is requested | production deploy evidence |
 
 ### Required Inputs
 
-- passing verification result
-- branch or change set
-- relevant release context
-- resolved deploy profile when present
+- review outcome that supports the requested release action
+- repo context
+- resolved staging or delivery mechanism
 
 ### Optional Inputs
 
-- PR template
-- deployment pipeline info
-- staging or production environment details
+- branch or PR metadata
+- release ticket or runbook
+- deploy notes from prior attempts
 
 ### Outputs
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `state.json`
-- release outcome artifact:
-  - PR URL
-  - branch name
-  - staging URL
-  - deployment reference
-  - versioned deployment links or routing references
-  - deployment build links
-  - testing automation build links
-  - build status summary
+- explicit release action evidence
 
 ### Layers
 
 | Layer | Responsibility |
 |---|---|
-| `preflight` | confirm verification passed and the requested release path is allowed |
-| `release_path` | select PR, branch, staging, or production path |
-| `pipeline_resolution` | resolve the `ghl-ai` transport plus the concrete GHL mechanism such as versioned MFA, versioned service, or versioned worker staging, plus future production paths when enabled by profile |
-| `execution` | perform the selected release action |
-| `post_deploy_evidence` | record the outcome, build links, testing links, build status, versioned links, and references |
-| `learning` | append learnings and sync queue |
+| `preflight` | confirm the release request is allowed |
+| `release_path` | select branch, PR, staging, or production mode |
+| `pipeline_resolution` | resolve the concrete org-standard transport |
+| `execution` | perform the requested release action |
+| `post_deploy_evidence` | record the result |
+| `learning` | capture notable release learnings when applicable |
 
 ### Hard Gates
 
-- verification must have passed
-- destructive release actions must use the selected mode only
-- compound release flows are allowed only when explicitly requested
+- never skip review before deploy
+- fail closed for unknown deploy configuration
 
 ### Must Not Do
 
-- must not bypass verification
-- must not mix multiple release paths in one run unless explicitly requested
-- must not drop the final outcome summary
+- must not invent an unstated release action
+- must not silently continue after ambiguous release config
 
 ### Next Commands
 
-- none required
-- optionally `/aw:verify` again after a staging deploy if re-validation is needed
+- `/aw:ship`
+- `none`
 
-### Configuration Model
+## 7. `/aw:ship`
 
-`deploy` should use the fixed layer contract above, but fulfill it through a repo-local profile. See [aw-sdlc-verify-deploy-configuration.md](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/docs/aw-sdlc-verify-deploy-configuration.md).
+### Role
+
+Own launch readiness, rollout safety, rollback posture, and release closeout after deploy or during final launch preparation.
+
+### Stage
+
+`ship`
+
+### Modes
+
+| Mode | Use when | Expected result |
+|---|---|---|
+| `launch` | launch readiness is the main goal | launch checklist outcome |
+| `rollout` | staged rollout management is needed | rollout notes |
+| `closeout` | the release already happened and needs closure | release closeout evidence |
+
+### Required Inputs
+
+- deploy evidence or explicit release context
+- review outcome
+- rollout or monitoring expectations
+
+### Optional Inputs
+
+- smoke test results
+- monitoring links
+- rollback notes
+
+### Outputs
+
+- `.aw_docs/features/<feature_slug>/release.md`
+- updated `state.json`
+- launch or blocker summary
+
+### Layers
+
+| Layer | Responsibility |
+|---|---|
+| `release-context` | load deploy and review context |
+| `launch-checklist` | apply the ship checklist |
+| `rollback` | confirm rollback readiness |
+| `monitoring` | name health checks and ownership |
+| `closeout` | write final launch or blocker notes |
+
+### Hard Gates
+
+- no launch confidence without rollback posture
+- no rollout closeout without monitoring expectations
+
+### Must Not Do
+
+- must not act as the old end-to-end composite workflow
+- must not skip launch safety because deploy already succeeded
+
+### Next Commands
+
+- `none`
+- `/aw:deploy` only if the rollout decision explicitly requires another release action
 
 ## Internal and Compatibility Commands
 
-These may continue to exist during migration, but they should not be the primary public UX.
+Keep helper behavior behind the stage boundary:
 
-| Command | Intended status | Contract |
-|---|---|---|
-| `/aw:brainstorm` | internal helper or alias | discovery-heavy planning helper, not the main public entrypoint |
-| `/aw:finish` | internal helper or alias | legacy completion path that should converge into `/aw:deploy` |
-| `/aw:code-review` | alias | compatibility alias to `/aw:verify` |
-| `/aw:tdd` | alias | compatibility alias to `/aw:execute` in `code` mode |
-
-## Source-of-Truth Inputs Per Command
-
-Every command should load:
-
-1. applicable command contract
-2. relevant platform docs
-3. relevant `.aw_rules`
-4. prior feature state from `state.json`
-5. prior learnings when available
-
-## Deterministic Output Rules
-
-Every command should:
-
-- write only to deterministic artifact names
-- update `state.json`
-- emit a single primary status
-- recommend only the valid next command(s)
-- stay within its own stage unless the user explicitly requested multi-stage work
-
-## How To Implement This
-
-1. Add these contract fields to every command definition.
-2. Make command validation enforce the required fields.
-3. Add tests that assert the public surface is `plan`, `execute`, `verify`, `deploy`.
-4. Add tests that assert each public command has complete responsibility coverage.
-5. Add live evals that test both public routing and internal stage resolution.
-6. Add artifact and learning E2E tests that verify file-system outcomes.
-
-## Definition of Done
-
-The command contract work is complete when:
-
-1. each public command has an explicit contract
-2. each command's layers are documented and testable
-3. compatibility aliases are intentional and validated
-4. every command has deterministic inputs and outputs
-5. the live evals and deterministic tests agree on the behavior
+- `aw-brainstorm`, `aw-spec`, `aw-tasks`, `aw-debug`, `aw-prepare`, and `aw-yolo` stay internal skills
+- `/aw:execute`, `/aw:verify`, `/aw:code-review`, and `/aw:tdd` stay compatibility or alias entrypoints only

@@ -99,7 +99,7 @@
   },
   "scripts": {
     "postinstall": "echo '\\n  ecc-universal installed!\\n  Run: npx ecc typescript\\n  Compat: npx ecc-install typescript\\n  Docs: https://github.com/affaan-m/everything-claude-code\\n'",
-    "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules",
+    "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules --ignore tests/results --ignore skills/using-aw-skills/evals/results --ignore docs/pt-BR --ignore docs/tr --ignore docs/zh-CN",
     "harness:audit": "node scripts/harness-audit.js",
     "claw": "node scripts/claw.js",
     "orchestrate:status": "node scripts/orchestration-status.js",

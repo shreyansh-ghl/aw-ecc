@@ -260,7 +260,8 @@ go test -race -cover ./...
 
 - `/aw:go-build` - Fix build errors
 - `/aw:go-review` - Review code after implementation
-- `/aw:verify` - Run full verification loop
+- `/aw:test` - Run targeted QA and proof
+- `/aw:review` - Run readiness and findings review
 
 ## Related
 

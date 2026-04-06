@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Make `verify` and `deploy`:
+Make the shared QA/review/deploy configuration:
 
 - consistent across GHL
 - configurable per repo or app
@@ -11,7 +11,7 @@ Make `verify` and `deploy`:
 
 This document focuses on the current GHL rollout scope:
 
-- strong verification
+- strong testing and review
 - PR checklist enforcement
 - versioned staging deployment
 
@@ -32,22 +32,45 @@ So:
 - ECC owns the stages, layers, and output contracts
 - GHL repos supply the commands, test runners, test repos, PR checklist rules, and staging pipelines
 
+## Transition Note
+
+The public AW interface now uses:
+
+- `/aw:plan`
+- `/aw:build`
+- `/aw:investigate`
+- `/aw:test`
+- `/aw:review`
+- `/aw:deploy`
+- `/aw:ship`
+
+The configuration model in this document still uses a shared `verify` baseline shape because the same baseline data now feeds:
+
+- `aw-test`
+- `aw-review`
+- legacy `aw-verify`
+- `aw-deploy`
+- `aw-ship`
+
+That means the config remains stable while the public command model becomes clearer.
+
 ## 1. Fixed Public Commands
 
 The public interface stays:
 
 - `/aw:plan`
-- `/aw:execute`
-- `/aw:verify`
+- `/aw:build`
+- `/aw:investigate`
+- `/aw:test`
+- `/aw:review`
 - `/aw:deploy`
+- `/aw:ship`
 
-No extra public commands are needed for code review, PR readiness, or staging readiness.
+The shared verification baseline still feeds testing, review, readiness, and deploy safety.
 
-Those are handled as configured layers inside `verify` and `deploy`.
+## 2. Fixed Verification Baseline
 
-## 2. Fixed Verify Contract
-
-`/aw:verify` should always run the same six conceptual layers, in the same order.
+The shared verification baseline should always run the same six conceptual layers, in the same order.
 
 ### Verify Layers
 
@@ -62,6 +85,12 @@ Those are handled as configured layers inside `verify` and `deploy`.
 
 These six layers are fixed.
 What changes per repo is how each layer is fulfilled.
+
+In the updated public model:
+
+- `aw-test` primarily owns `local_validation`, `e2e_validation`, and `external_validation`
+- `aw-review` primarily owns `code_review`, `pr_governance`, and `release_readiness`
+- legacy `aw-verify` may still compose both
 
 ### Local Validation Minimum
 
@@ -101,7 +130,7 @@ Production can remain disabled in the baseline profiles until the staging path i
 
 | Layer | What it owns | Typical examples |
 |---|---|---|
-| `preflight` | verification and approval preconditions | verify passed, required approvals present |
+| `preflight` | test/review approval preconditions | test and review passed, required approvals present |
 | `release_path` | select the deployment mode | PR, branch, staging |
 | `pipeline_resolution` | resolve the `ghl-ai` transport and the concrete GHL release mechanism | `ghl-ai` -> versioned MFA staging, `ghl-ai` -> versioned service staging, `ghl-ai` -> versioned worker staging |
 | `execution` | perform the selected release action | call `ghl-ai`, create PR, push branch |
@@ -362,9 +391,9 @@ When the user says:
 
 ECC should do:
 
-1. route to `/aw:verify`
+1. route to `/aw:review`
 2. resolve the repo's `.aw_sdlc/profile.yml` and selected baseline
-3. run the six verify layers in order
+3. run the relevant review-owned verification layers in order and request `/aw:test` only when fresh evidence is still missing
 4. skip any layer marked `enabled: false`
 5. use the configured playbooks, commands, and external providers for enabled layers
 6. write one `verification.md`

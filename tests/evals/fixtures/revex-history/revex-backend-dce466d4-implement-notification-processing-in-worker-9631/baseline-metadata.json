@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "yext",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "yext",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `yext` in RevEx backend, inside the broader `yext` area. Deliver the smallest safe feature in `yext` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `yext` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested feature in `yext` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "dce466d4c8a5b3ba834c7161109690085ceb39cd",
+    "parentSha": "9c48973f0d2e01df429ee7ae507955261cda7ffc",
+    "date": "2026-03-27T11:59:44+05:30",
+    "subject": "feat(yext): implement notification processing in worker (#9631)",
+    "type": "feat",
+    "scope": "yext"
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 79,
+    "deletions": 8,
+    "totalLinesChanged": 87
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/yext/workers/revex-listings-notifications-worker.ts",
+      "insertions": 79,
+      "deletions": 8
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary dce466d4c8a5b3ba834c7161109690085ceb39cd",
+    "showPatch": "git -C ../ghl-revex-backend show dce466d4c8a5b3ba834c7161109690085ceb39cd",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout 9c48973f0d2e01df429ee7ae507955261cda7ffc"
+  },
+  "warnings": []
+}

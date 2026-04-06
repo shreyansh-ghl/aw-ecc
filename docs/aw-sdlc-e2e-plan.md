@@ -13,15 +13,16 @@ The target user experience is:
 
 ## Why This Exists
 
-The current branch already moves toward an AW SDLC workflow, but the surface is still confusing:
+This plan began while the AW SDLC migration was still in progress.
+These were the historical gaps it set out to close:
 
 | Current branch state | Problem |
 |---|---|
-| `brainstorm`, `execute`, `verify`, `finish` are active | Public surface is not the same as the mental model we want to teach |
-| `plan` is a silent alias to `brainstorm` | "plan" does not yet behave like a first-class planning mode |
-| `finish` mixes merge/deploy handoff concerns | "deploy" is not explicit |
-| `verify` absorbs review behavior | This is acceptable, but it should be documented as intentional |
-| smoke tests validate stage routing only | We still need artifacts, intent routing, learning, and platform-doc grounding coverage |
+| legacy `execute`, `verify`, and `finish` aliases still exist | Compatibility paths can confuse the canonical mental model if docs are stale |
+| `plan` previously routed through internal discovery too often | planning needed to become a first-class public mode |
+| `finish` mixed merge/deploy handoff concerns | `deploy` and `ship` needed clearer ownership |
+| testing and review were historically overloaded | they needed to be separated clearly as `test` and `review` |
+| smoke tests validated stage routing only | artifacts, intent routing, learning, and platform-doc grounding still needed coverage |
 
 ## Product Goals
 
@@ -42,20 +43,23 @@ The current branch already moves toward an AW SDLC workflow, but the surface is 
 
 ## Target Public Interface
 
-Keep the public interface to four commands:
+Keep the public interface to the real lifecycle stages:
 
 | Public command | User meaning | Internal stages |
 |---|---|---|
 | `/aw:plan` | Decide what and how to build | planning stages only |
-| `/aw:execute` | Build the approved work | execution only |
-| `/aw:verify` | Validate quality and readiness | review + evidence gathering |
-| `/aw:deploy` | Ship or prepare release handoff | release stage |
+| `/aw:build` | Build the approved work | implementation only |
+| `/aw:investigate` | Diagnose unclear bugs and alerts | investigation only |
+| `/aw:test` | Produce fresh QA evidence | testing only |
+| `/aw:review` | Validate findings, governance, and readiness | review + evidence gathering |
+| `/aw:deploy` | Execute the release action | release stage |
+| `/aw:ship` | Confirm launch safety and closeout | shipping stage |
 
 Notes:
 
-- `review` stays inside `verify` to keep the surface small.
 - `brainstorm` stays internal unless we intentionally expose it later.
 - compatibility aliases can remain temporarily, but they should not be the primary UX.
+- `aw-yolo` stays internal for explicit end-to-end automation.
 
 ## Target Internal Stage Model
 
@@ -63,10 +67,13 @@ The internal workflow remains richer than the public interface:
 
 1. Discover intent
 2. Plan
-3. Execute
-4. Verify
-5. Deploy
-6. Learn
+3. Build
+4. Investigate when needed
+5. Test
+6. Review
+7. Deploy
+8. Ship
+9. Learn
 
 The public command picks the entrypoint. The system should not automatically run all later stages unless the user clearly asked for end-to-end execution.
 
@@ -76,7 +83,7 @@ Every command should define the same contract fields:
 
 | Field | Meaning |
 |---|---|
-| `mode` | `plan`, `execute`, `verify`, or `deploy` |
+| `mode` | `plan`, `build`, `investigate`, `test`, `review`, `deploy`, or `ship` |
 | `output_artifacts` | The artifact(s) this run must create or update |
 | `input_artifacts` | Artifacts that may be used if already present |
 | `missing_prerequisites` | Inputs required before the run can continue |
@@ -111,9 +118,12 @@ Use one deterministic feature folder:
 | Command | Required output | Optional outputs | Must not force |
 |---|---|---|---|
 | `plan` | `state.json` plus the planning artifact(s) needed for the active mode | `prd.md`, `design.md`, `designs/`, `spec.md`, `tasks.md` | unrelated upstream artifacts |
-| `execute` | `execution.md` plus implementation changes | updated `state.json` | `prd.md` if product mode is not active |
-| `verify` | `verification.md` | `review.md` later if we choose to split it out | deploy artifacts |
+| `build` | `execution.md` plus implementation changes | updated `state.json` | `prd.md` if product mode is not active |
+| `investigate` | `investigation.md` plus root-cause evidence | updated `state.json` | implementation changes unless explicitly approved |
+| `test` | `verification.md` plus fresh QA evidence | updated `state.json` | deploy artifacts |
+| `review` | `verification.md` plus readiness outcome | updated `state.json` | implementation work |
 | `deploy` | `release.md` | updated `state.json` | product or design artifacts |
+| `ship` | `release.md` plus launch and rollback notes | updated `state.json` | implementation work |
 
 ### Planning Artifact Rules
 
@@ -134,8 +144,10 @@ Planning should create only the artifacts that are needed:
 | User request pattern | Route |
 |---|---|
 | define, scope, research, spec, architecture, break down | `plan` |
-| build, implement, fix, change, continue coding | `execute` |
-| test, validate, review, ready, QA, check | `verify` |
+| build, implement approved work, change, continue coding | `build` |
+| investigate unclear bugs, regressions, or alerts | `investigate` |
+| test, validate, QA, prove a fix, run checks | `test` |
+| review, ready, findings, governance, staging readiness | `review` |
 | ship, release, merge, deploy, stage to production | `deploy` |
 
 ### Routing Precedence
@@ -225,9 +237,12 @@ Current base:
 Validate real harness behavior across supported CLIs:
 
 - explicit `/aw:plan`
-- explicit `/aw:execute`
-- explicit `/aw:verify`
+- explicit `/aw:build`
+- explicit `/aw:investigate`
+- explicit `/aw:test`
+- explicit `/aw:review`
 - explicit `/aw:deploy`
+- explicit `/aw:ship`
 - natural language that should route to each stage
 - compatibility aliases during migration
 
@@ -256,9 +271,12 @@ This layer is still missing and should be added next.
 | Scenario | Expected result |
 |---|---|
 | `/aw:plan` for a greenfield feature | enters planning mode and writes planning artifacts only |
-| `/aw:execute` with approved `spec.md` and `tasks.md` | executes without re-entering planning |
-| `/aw:verify` after implementation | produces evidence-oriented verification output |
-| `/aw:deploy` after verification | produces release output only |
+| `/aw:build` with approved `spec.md` and `tasks.md` | builds without re-entering planning |
+| `/aw:investigate` for an unclear bug | produces reproduction and fault-surface evidence |
+| `/aw:test` after implementation | produces fresh QA evidence |
+| `/aw:review` after testing | produces findings and readiness output |
+| `/aw:deploy` after review | produces release output only |
+| `/aw:ship` after deploy | produces launch-readiness and closeout output |
 
 ### Intent-Only Scenarios
 
@@ -266,8 +284,10 @@ This layer is still missing and should be added next.
 |---|---|
 | "Create a PRD for contact sync" | `plan` |
 | "Plan the implementation for this worker" | `plan` |
-| "Implement the approved worker plan" | `execute` |
-| "Review and validate this completed work" | `verify` |
+| "Implement the approved worker plan" | `build` |
+| "Investigate this retry failure" | `investigate` |
+| "Test this repaired bugfix" | `test` |
+| "Review and validate this completed work" | `review` |
 | "Ship this to staging" | `deploy` |
 
 ### Scope Control Scenarios
@@ -289,11 +309,11 @@ This layer is still missing and should be added next.
 
 ## Gap Between Current Branch and Target
 
-| Area | Current branch | Target |
+| Area | Historical branch state | Target |
 |---|---|---|
-| Public planning entrypoint | `plan` aliases to `brainstorm` | `plan` is a first-class public mode |
-| Release command | `finish` | `deploy` |
-| Verify vs review | merged implicitly | merged intentionally and documented |
+| Public planning entrypoint | `plan` over-relied on `brainstorm` | `plan` is a first-class public mode |
+| Release command | `finish` | `deploy` plus `ship` |
+| Test vs review | merged implicitly | separated and documented |
 | Artifact model | planning-focused only | artifacts for every command |
 | Intent router | keyword-first | mode + artifact + scope aware |
 | Learning loop | partially implied | explicit and testable |
@@ -304,13 +324,13 @@ This layer is still missing and should be added next.
 ### Phase 1: Lock the Interface
 
 - finalize the public commands
-- decide whether `finish` becomes `deploy` or aliases to it
-- document `verify` as the review-plus-evidence stage
+- keep `finish` deprecated and preserve only compatibility aliases that still help migration
+- document `execute` and `verify` as compatibility shims only
 
 ### Phase 2: Lock the Artifact Contract
 
 - finalize the feature folder layout
-- define required outputs for `plan`, `execute`, `verify`, and `deploy`
+- define required outputs for `plan`, `build`, `investigate`, `test`, `review`, `deploy`, and `ship`
 - add contract tests
 
 ### Phase 3: Lock Intent Routing
@@ -327,7 +347,7 @@ This layer is still missing and should be added next.
 
 ### Phase 5: Lock Real CLI Evidence
 
-- extend smoke tests from `plan/execute/review/verify` to `plan/execute/verify/deploy`
+- extend smoke tests across `plan/build/investigate/test/review/deploy/ship`
 - add no-command smoke prompts
 - run the suite on Codex, Claude, and Cursor where available
 

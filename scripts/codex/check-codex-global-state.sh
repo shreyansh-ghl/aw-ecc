@@ -73,7 +73,7 @@ require_file "$CONFIG_FILE" "Global config.toml"
 require_file "$AGENTS_FILE" "Global AGENTS.md"
 
 if [[ -f "$AGENTS_FILE" ]]; then
-  if rg -n '^# Everything Claude Code \(ECC\) — Agent Instructions' "$AGENTS_FILE" >/dev/null 2>&1; then
+  if rg -n '^(# Everything Claude Code \(ECC\) — Agent Instructions|# AW SDLC Repo Instructions|<!-- BEGIN ECC -->)' "$AGENTS_FILE" >/dev/null 2>&1; then
     ok "AGENTS contains ECC root instructions"
   else
     fail "AGENTS missing ECC root instructions"
@@ -130,6 +130,7 @@ declare -a required_skills=(
   strategic-compact
   tdd-workflow
   verification-loop
+  aw-debug
 )
 
 if [[ -d "$SKILLS_DIR" ]]; then
@@ -144,7 +145,7 @@ if [[ -d "$SKILLS_DIR" ]]; then
   done
 
   if [[ "$missing_skills" -eq 0 ]]; then
-    ok "All 16 ECC Codex skills are present"
+    ok "All 17 ECC Codex skills are present"
   else
     fail "$missing_skills required skills are missing"
   fi

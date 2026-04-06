@@ -1,0 +1,71 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "bugfix",
+  "affectedSurface": "lc-phone:src/twilio-accounts",
+  "userPrompt": "You are working in RevEx backend. A user-facing or runtime bug has been reported around `lc-phone:src/twilio-accounts` in RevEx backend, and the current behavior is not reliable enough to leave as-is. Deliver the smallest safe bugfix in `lc-phone:src/twilio-accounts` using the expected AW route `/aw:investigate`. Success criteria: resolve the user-visible or runtime issue in `lc-phone:src/twilio-accounts` without widening scope; preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required; capture the failure mode or behavior gap clearly before proposing the patch. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show a focused regression check or narrow supporting note that addresses the original failure mode; include delivery or rollout evidence for any release-path changes.",
+  "successCriteria": [
+    "resolve the user-visible or runtime issue in `lc-phone:src/twilio-accounts` without widening scope",
+    "preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required",
+    "capture the failure mode or behavior gap clearly before proposing the patch"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show a focused regression check or narrow supporting note that addresses the original failure mode",
+    "include delivery or rollout evidence for any release-path changes"
+  ],
+  "commit": {
+    "sha": "b7350279086f6cd5045704b25b7880c5f64578a5",
+    "parentSha": "edbe499bbbc414b98e8acf4d78b746b6e45a41d4",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "fix: add missing properties to ILocation interface",
+    "type": "fix",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 4,
+    "insertions": 53,
+    "deletions": 4,
+    "totalLinesChanged": 57
+  },
+  "routeExpectation": {
+    "route": "/aw:investigate",
+    "primarySkill": "aw-investigate",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation",
+      "documentation-and-adrs"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/src/twilio-accounts/twilio-accounts.service.ts",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/lc-phone/src/voice-call/workflow-call.service.ts",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "common/services/locations/locations.interface.ts",
+      "insertions": 29,
+      "deletions": 0
+    },
+    {
+      "path": "docs/public/phone-system/phone-system.json",
+      "insertions": 22,
+      "deletions": 2
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary b7350279086f6cd5045704b25b7880c5f64578a5",
+    "showPatch": "git -C ../ghl-revex-backend show b7350279086f6cd5045704b25b7880c5f64578a5",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout edbe499bbbc414b98e8acf4d78b746b6e45a41d4"
+  },
+  "warnings": []
+}

@@ -59,14 +59,14 @@ Current target matrix:
 
 1. `plan-technical-spec`
 2. `plan-tasks-from-spec`
-3. `execute-approved-spec`
-4. `execute-docs-only`
-5. `verify-pr-governance`
-6. `verify-failing-change-requires-repair-loop`
+3. `build-approved-spec`
+4. `build-docs-only`
+5. `review-pr-governance`
+6. `review-failing-change-requires-repair-loop`
 7. `deploy-microservice-staging`
 8. `deploy-microfrontend-staging`
 9. `deploy-worker-staging`
-10. `ship-unverified-to-staging`
+10. `yolo-unverified-to-staging`
 11. `ship-verified-to-staging`
 
 Exit bar:
@@ -90,7 +90,7 @@ Must prove:
 
 Primary checks:
 
-- checklist review against `aw-sdlc-real-eval-checklist.md`
+- checklist review against `aw-sdlc-outcomes-eval-checklist.md`
 - real artifact content assertions
 - human spot-check on representative cases
 
@@ -159,6 +159,7 @@ Must prove:
 - staging deployment can be dry-run or executed in a real configured repo
 - staging deployment uses the correct versioned path for the repo archetype
 - release artifact records versioned links, build links, testing automation links, and build status
+- release artifact records the exact PR URL, Jenkins queue URL, Jenkins build URL, and versioned staging link
 - release artifacts record real references, not only simulated blockers
 
 Required live checks:
@@ -216,7 +217,7 @@ Required result:
 Run before merging SDLC command or skill changes:
 
 ```bash
-AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=tempdir AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-real-parallel.sh
+AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=tempdir AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-outcomes-parallel.sh
 bash tests/evals/run-aw-sdlc-evals.sh live
 ```
 
@@ -232,7 +233,7 @@ Run before declaring the workflow production-ready:
 
 ```bash
 bash tests/evals/run-aw-sdlc-evals.sh live-full
-AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=git-worktree AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-real-parallel.sh
+AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=git-worktree AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-outcomes-parallel.sh
 ```
 
 Plus:
@@ -242,12 +243,59 @@ Plus:
 - live GitHub or CI status evidence in a repo with workflows
 - live staging dry-run or trigger in configured repos
 - versioned staging deployment evidence in configured repos
+- `AW_SDLC_LIVE_RELEASE_FILE=/absolute/path/to/release.md bash tests/evals/run-aw-sdlc-evals.sh live-artifacts`
 
 Required result:
 
 - all curated live suites green
 - all real suites green
 - live external integration checks complete
+
+### Live Release Capture Flow
+
+Use the release generator when you have real PR or Jenkins evidence and want a
+concrete `release.md` before running the live validator.
+
+Example:
+
+```bash
+AW_SDLC_LIVE_RELEASE_FILE=/absolute/path/to/release.md \
+AW_SDLC_GOAL="Deploy Communities Builder to staging" \
+AW_SDLC_SELECTED_MODE=staging \
+AW_SDLC_PIPELINE_PROVIDER="ghl-ai -> git-jenkins :: staging-versions/revex/ghl-revex-frontend" \
+AW_SDLC_DEPLOYED_VERSION=master \
+AW_SDLC_VERSION_ROUTING_SIGNAL="communities-builder=true" \
+AW_SDLC_VERSIONED_LINKS="https://staging.appcdn.leadconnectorhq.com/revex/communities-builder--ver--master/remoteEntry.js" \
+AW_SDLC_JENKINS_QUEUE_URL="https://jenkins.msgsndr.net/queue/item/<id>/" \
+AW_SDLC_JENKINS_BUILD_URL="https://jenkins.msgsndr.net/job/.../<build-number>/" \
+AW_SDLC_BUILD_STATUS=SUCCESS \
+node tests/evals/generate-aw-sdlc-live-release.js
+```
+
+Then validate it:
+
+```bash
+AW_SDLC_LIVE_RELEASE_FILE=/absolute/path/to/release.md \
+AW_SDLC_LIVE_KIND=microfrontend \
+AW_SDLC_LIVE_REQUIRE_PR=0 \
+bash tests/evals/run-aw-sdlc-evals.sh live-artifacts
+```
+
+Use `AW_SDLC_LIVE_REQUIRE_PR=1` for PR-plus-deploy flows.
+Use `AW_SDLC_LIVE_EXPECT_COMPLETE=0` only while a real build is still in progress.
+
+For the repo-linked golden path harness, use:
+
+```bash
+AW_SDLC_GOLDEN_REPO=GoHighLevel/ghl-revex-frontend \
+AW_SDLC_GOLDEN_PR_NUMBER=5120 \
+AW_SDLC_GOLDEN_APP=communities-builder \
+bash tests/evals/run-aw-sdlc-routing-golden-path.sh
+```
+
+That script resolves the live PR branch, attempts the production ghl-ai Jenkins
+trigger for the matching repo/app path, and writes a release artifact plus raw
+trigger evidence under `tests/results/live-golden-path-*`.
 
 ## Human Checklist
 

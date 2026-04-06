@@ -1,0 +1,398 @@
+{
+  "schemaVersion": "aw.eval.product-scenarios.v1",
+  "layer": "product",
+  "cases": [
+    {
+      "id": "communities-moderation-api-plan",
+      "layer": "product",
+      "repoArchetype": "microservice",
+      "productArea": "communities",
+      "startingState": "The moderation API direction is approved, but downstream consumers still need a stable implementation spec before any code changes begin.",
+      "userPrompt": "Create the implementation spec for the approved Communities moderation API contract and document the stable interface assumptions for downstream consumers.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": [
+        "api-and-interface-design",
+        "platform-product:knowledge",
+        "platform-services:development"
+      ],
+      "expectedArtifacts": [
+        "spec.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "stable interface contract",
+        "consumer impact notes",
+        "verification targets"
+      ],
+      "expectedMustNot": [
+        "execution.md",
+        "release.md"
+      ],
+      "expectedOrgStandards": [
+        "platform-product:knowledge",
+        "platform-services:development",
+        "api-and-interface-design"
+      ],
+      "tags": [
+        "product",
+        "communities",
+        "plan",
+        "api"
+      ]
+    },
+    {
+      "id": "communities-feed-highrise-build",
+      "layer": "product",
+      "repoArchetype": "microfrontend",
+      "productArea": "communities",
+      "startingState": "Approved planning artifacts exist and the feed UI now needs to be implemented in thin HighRise-aligned slices.",
+      "userPrompt": "Implement the approved Communities feed card update with HighRise, responsive states, accessibility guardrails, and thin save-point slices.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": [
+        "frontend-ui-engineering",
+        "incremental-implementation",
+        "highrise-ui-governance"
+      ],
+      "expectedArtifacts": [
+        "execution.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "HighRise-aligned UI slice",
+        "responsive state coverage",
+        "save-point history"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "reopened planning artifacts"
+      ],
+      "expectedOrgStandards": [
+        "highrise-ui-governance",
+        "platform-design:system",
+        "platform-frontend:accessibility",
+        "platform-frontend:vue-development"
+      ],
+      "tags": [
+        "product",
+        "communities",
+        "build",
+        "frontend"
+      ]
+    },
+    {
+      "id": "workflows-retry-alert-investigate",
+      "layer": "product",
+      "repoArchetype": "worker",
+      "productArea": "workflows",
+      "startingState": "A retry-spike alert fired for the workflow worker and the root cause still needs to be narrowed before any patch is proposed.",
+      "userPrompt": "Investigate this Workflows worker retry spike before patching anything and use logs plus worker-specific evidence to narrow the fault surface.",
+      "expectedPublicRoute": "/aw:investigate",
+      "expectedPrimarySkill": "aw-investigate",
+      "expectedSupportingSkills": [
+        "aw-debug",
+        "platform-infra:grafana",
+        "platform-services:worker-patterns"
+      ],
+      "expectedArtifacts": [
+        "investigation.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "expected versus actual behavior",
+        "fault surface",
+        "next confirming probe"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "speculative fix"
+      ],
+      "expectedOrgStandards": [
+        "platform-infra:grafana",
+        "platform-infra:log-analysis",
+        "platform-services:worker-patterns"
+      ],
+      "tags": [
+        "product",
+        "workflows",
+        "investigate",
+        "worker"
+      ]
+    },
+    {
+      "id": "communities-feed-browser-test",
+      "layer": "product",
+      "repoArchetype": "microfrontend",
+      "productArea": "communities",
+      "startingState": "The feed UI change is already implemented and now needs runtime proof across desktop, mobile, console, network, and accessibility checks.",
+      "userPrompt": "Prove this Communities feed MFA fix in the browser across desktop and mobile, verify there is no console or network regression, and capture accessibility proof.",
+      "expectedPublicRoute": "/aw:test",
+      "expectedPrimarySkill": "aw-test",
+      "expectedSupportingSkills": [
+        "browser-testing-with-devtools",
+        "frontend-ui-engineering",
+        "platform-design:review"
+      ],
+      "expectedArtifacts": [
+        "verification.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "browser runtime evidence",
+        "responsive proof",
+        "accessibility proof"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "stale verification evidence"
+      ],
+      "expectedOrgStandards": [
+        "platform-frontend:accessibility",
+        "platform-design:review",
+        "platform-sdet:playwright-pom"
+      ],
+      "tags": [
+        "product",
+        "communities",
+        "test",
+        "browser"
+      ]
+    },
+    {
+      "id": "payments-service-readiness-review",
+      "layer": "product",
+      "repoArchetype": "microservice",
+      "productArea": "payments",
+      "startingState": "Implementation and targeted QA already completed, and the next decision is readiness plus severity-tagged review findings for staging.",
+      "userPrompt": "Review this Payments service change for correctness, security, performance, and staging readiness, and record the rationale engineers will need later.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": [
+        "security-and-hardening",
+        "documentation-and-adrs",
+        "platform-review:code-review-pr"
+      ],
+      "expectedArtifacts": [
+        "verification.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "severity-tagged findings",
+        "security posture",
+        "readiness decision"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "unscoped implementation work"
+      ],
+      "expectedOrgStandards": [
+        "platform-review:code-review-pr",
+        "platform-sdet:quality-gates",
+        "documentation-and-adrs"
+      ],
+      "tags": [
+        "product",
+        "payments",
+        "review",
+        "governance"
+      ]
+    },
+    {
+      "id": "memberships-mfa-staging-deploy",
+      "layer": "product",
+      "repoArchetype": "microfrontend",
+      "productArea": "memberships",
+      "startingState": "Verification passed and the versioned MFA app now needs the correct staging provider path plus rollback-ready release evidence.",
+      "userPrompt": "Deploy this verified Memberships MFA change to staging, resolve the correct versioned deploy path, and capture rollback plus release evidence.",
+      "expectedPublicRoute": "/aw:deploy",
+      "expectedPrimarySkill": "aw-deploy",
+      "expectedSupportingSkills": [
+        "ci-cd-and-automation",
+        "deploy-versioned-mfa",
+        "platform-infra:deployment-strategies"
+      ],
+      "expectedArtifacts": [
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "resolved versioned deploy path",
+        "build and pipeline evidence",
+        "rollback posture"
+      ],
+      "expectedMustNot": [
+        "spec.md",
+        "tasks.md"
+      ],
+      "expectedOrgStandards": [
+        "deploy-versioned-mfa",
+        "platform-infra:deployment-strategies",
+        "platform-infra:production-readiness"
+      ],
+      "tags": [
+        "product",
+        "memberships",
+        "deploy",
+        "mfa"
+      ]
+    },
+    {
+      "id": "automation-worker-launch-ship",
+      "layer": "product",
+      "repoArchetype": "worker",
+      "productArea": "automation",
+      "startingState": "The worker deploy action completed and launch-closeout evidence still needs to be captured before the release is considered finished.",
+      "userPrompt": "Prepare the Automation worker release closeout with rollout notes, rollback readiness, and monitoring checkpoints before we call this launch complete.",
+      "expectedPublicRoute": "/aw:ship",
+      "expectedPrimarySkill": "aw-ship",
+      "expectedSupportingSkills": [
+        "documentation-and-adrs",
+        "ci-cd-and-automation"
+      ],
+      "expectedArtifacts": [
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "launch checklist",
+        "monitoring checkpoints",
+        "rollback note"
+      ],
+      "expectedMustNot": [
+        "execution.md",
+        "skipped verification"
+      ],
+      "expectedOrgStandards": [
+        "platform-infra:production-readiness",
+        "documentation-and-adrs"
+      ],
+      "tags": [
+        "product",
+        "automation",
+        "ship",
+        "launch"
+      ]
+    },
+    {
+      "id": "memberships-mfa-end-to-end-yolo",
+      "layer": "product",
+      "repoArchetype": "microfrontend",
+      "productArea": "memberships",
+      "startingState": "The user explicitly wants an end-to-end bounded flow through staging for an approved Memberships MFA change with release evidence preserved.",
+      "userPrompt": "Take this approved Memberships MFA change from implementation-ready inputs to staging end to end, while keeping HighRise, accessibility, review, and release evidence intact.",
+      "expectedPublicRoute": "aw-yolo",
+      "expectedPrimarySkill": "aw-yolo",
+      "expectedSupportingSkills": [
+        "frontend-ui-engineering",
+        "browser-testing-with-devtools",
+        "ci-cd-and-automation"
+      ],
+      "expectedArtifacts": [
+        "execution.md",
+        "verification.md",
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "end-to-end staged flow",
+        "frontend quality evidence",
+        "release evidence"
+      ],
+      "expectedMustNot": [
+        "skipped verification",
+        "missing release artifact"
+      ],
+      "expectedOrgStandards": [
+        "highrise-ui-governance",
+        "platform-design:system",
+        "platform-frontend:accessibility",
+        "deploy-versioned-mfa"
+      ],
+      "tags": [
+        "product",
+        "memberships",
+        "yolo",
+        "staging"
+      ]
+    },
+    {
+      "id": "legacy-webhook-migration-plan",
+      "layer": "product",
+      "repoArchetype": "microservice",
+      "productArea": "contacts",
+      "startingState": "A legacy webhook endpoint needs a safe retirement plan, but the consumer inventory, migration order, and deprecation checkpoints are still missing.",
+      "userPrompt": "Plan the migration off the legacy Contacts webhook endpoint, identify consumers, and define the deprecation path before implementation starts.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": [
+        "deprecation-and-migration",
+        "documentation-and-adrs",
+        "platform-product:knowledge"
+      ],
+      "expectedArtifacts": [
+        "spec.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "consumer inventory",
+        "migration path",
+        "deprecation checkpoints"
+      ],
+      "expectedMustNot": [
+        "execution.md",
+        "release.md"
+      ],
+      "expectedOrgStandards": [
+        "deprecation-and-migration",
+        "documentation-and-adrs",
+        "platform-product:knowledge"
+      ],
+      "tags": [
+        "product",
+        "contacts",
+        "plan",
+        "migration"
+      ]
+    },
+    {
+      "id": "queue-retry-adr-review",
+      "layer": "product",
+      "repoArchetype": "microservice",
+      "productArea": "automation",
+      "startingState": "The queue-retry approach is implemented, but the ADR trail, interface guardrails, and review record still need to be formalized.",
+      "userPrompt": "Review the queue-based retry decision, capture the ADR trail, and document the interface guardrails we need to preserve for future work.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": [
+        "documentation-and-adrs",
+        "api-and-interface-design",
+        "platform-review:code-review-pr"
+      ],
+      "expectedArtifacts": [
+        "verification.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "ADR decision record",
+        "interface guardrails",
+        "follow-up notes"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "speculative refactor"
+      ],
+      "expectedOrgStandards": [
+        "documentation-and-adrs",
+        "platform-review:code-review-pr",
+        "platform-product:knowledge"
+      ],
+      "tags": [
+        "product",
+        "automation",
+        "review",
+        "adr"
+      ]
+    }
+  ]
+}

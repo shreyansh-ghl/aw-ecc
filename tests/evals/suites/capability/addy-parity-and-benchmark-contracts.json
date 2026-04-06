@@ -1,0 +1,38 @@
+{
+  "id": "addy-parity-and-benchmark-contracts",
+  "layer": "capability",
+  "modes": ["deterministic"],
+  "owners": {
+    "commands": [],
+    "skills": [
+      "skills/code-simplification/SKILL.md",
+      "skills/incremental-implementation/SKILL.md",
+      "skills/context-engineering/SKILL.md",
+      "skills/frontend-ui-engineering/SKILL.md",
+      "skills/security-and-hardening/SKILL.md",
+      "skills/performance-optimization/SKILL.md",
+      "skills/idea-refine/SKILL.md",
+      "skills/api-and-interface-design/SKILL.md",
+      "skills/browser-testing-with-devtools/SKILL.md",
+      "skills/git-workflow-and-versioning/SKILL.md",
+      "skills/ci-cd-and-automation/SKILL.md",
+      "skills/deprecation-and-migration/SKILL.md",
+      "skills/documentation-and-adrs/SKILL.md"
+    ],
+    "agents": []
+  },
+  "tests": [
+    "tests/evals/deterministic/capability/aw-addy-parity-p1.test.js",
+    "tests/evals/deterministic/capability/aw-addy-parity-p2.test.js",
+    "tests/evals/deterministic/capability/aw-addy-validation-matrix.test.js",
+    "tests/evals/deterministic/capability/aw-eval-benchmark-scorecard.test.js"
+  ],
+  "fixtures": [
+    "tests/evals/fixtures/aw-addy-validation-cases.json",
+    "tests/evals/fixtures/aw-eval-benchmark-scorecard.json"
+  ],
+  "docs": [
+    "docs/aw-addy-validation-matrix.md",
+    "docs/aw-eval-benchmark-scorecard.md"
+  ]
+}

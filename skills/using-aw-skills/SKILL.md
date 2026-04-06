@@ -1,29 +1,130 @@
 ---
 name: using-aw-skills
-description: Session-start skill-first routing for the minimal AW SDLC surface. Check the smallest correct AW skill stack before any substantive response.
+description: Session-start skill-first routing for the AW SDLC surface. Select the smallest correct AW skill stack before any substantive response, then load deeper stage, domain, and org-standard detail on demand.
 trigger: Every session start. Loaded automatically via session-start hook.
 ---
 
 # Using AW Skills
 
-This skill defines the public AW SDLC interface and how requests should be routed.
+## Overview
 
-The public surface should stay intentionally small:
+This skill is the thin router for the AW SDLC surface.
+Its job is to:
 
-- `/aw:plan`
-- `/aw:execute`
-- `/aw:verify`
-- `/aw:deploy`
+- choose the smallest correct public route
+- choose the smallest correct AW skill stack
+- stop generic commentary until the stage is clear
+- load deeper references only when they materially change the decision
 
-Users should not be required to remember commands.
-When the request is clear, route by intent automatically and keep the scope narrow.
+Keep this file small.
+Stage behavior belongs in stage skills.
+Long examples, checklists, and loading guidance belong in shared references.
 
-There is also one explicit power command:
+This means the file should optimize for one thing first:
 
-- `/aw:ship`
+- make the right next skill obvious
 
-`/aw:ship` is for clearly end-to-end requests.
+## When to Use
+
+- at session start
+- before any substantive response
+- whenever the request might map to planning, building, investigating, testing, reviewing, deploying, or shipping work
+- whenever the user gives a vague request and the right stage still has to be selected
+
+Do not skip this skill just because the work looks small.
+
+## Skill Discovery
+
+When a task arrives, identify the current delivery phase and load the smallest correct route:
+
+```text
+Task arrives
+    │
+    ├── Vague idea, spec, or task breakdown? ───────→ /aw:plan
+    ├── Approved change to implement? ──────────────→ /aw:build
+    ├── Bug, alert, or unclear runtime failure? ────→ /aw:investigate
+    ├── Need QA proof or regression evidence? ──────→ /aw:test
+    ├── Need findings or readiness decision? ───────→ /aw:review
+    ├── Need one concrete release action? ──────────→ /aw:deploy
+    ├── Need launch or rollout closeout? ───────────→ /aw:ship
+    └── Need one-run end-to-end automation? ───────→ aw-yolo
+```
+
+Then load the supporting craft and domain skills that sharpen that route.
+If the work is in a real GHL domain, load `using-platform-skills` next.
+
+## Public Surface
+
+The public surface stays intentionally small.
+The canonical routes are the stages shown in the discovery flow above:
+
+- `/aw:plan`, `/aw:build`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`
+- `/aw:investigate`
+
+Default delivery flow:
+
+- `/aw:plan` -> `/aw:build` -> `/aw:test` -> `/aw:review` -> `/aw:deploy` -> `/aw:ship`
+
+Conditional route:
+
+- `/aw:investigate`
+
+`/aw:investigate` is a first-class route for bugs, alerts, regressions, and unclear root cause.
+It should not be treated as a mandatory phase in every request.
+
+Compatibility entrypoints remain available during migration:
+
+- `/aw:execute` -> `/aw:build`
+- `/aw:verify` -> `/aw:test`, `/aw:review`, or the smallest correct combined verification flow
+
+There is also one explicit internal power workflow:
+
+- `aw-yolo`
+
+`aw-yolo` is for clearly end-to-end requests where the user wants one-run automation.
 It should not become the default route for normal stage-specific work.
+When it is selected, begin at the first unsatisfied stage rather than restarting the lifecycle from the top.
+
+## Core Operating Behaviors
+
+These behaviors apply across every route.
+
+### 1. Surface Assumptions
+
+Name assumptions that materially change scope, architecture, rollout, or verification.
+If an assumption could change the selected route, say it early.
+
+### 2. Manage Confusion Actively
+
+If the request, spec, code, or baseline disagree:
+
+1. stop
+2. name the contradiction
+3. state the tradeoff or blocking question
+4. do not guess through it
+
+### 3. Push Back With Concrete Tradeoffs
+
+If an approach creates obvious risk, complexity, or rollout danger:
+
+- say so directly
+- name the downside
+- propose the smallest safer alternative
+
+### 4. Enforce Simplicity
+
+Prefer the smallest route and the smallest supporting skill stack.
+Do not turn a single-stage task into a hidden multi-stage workflow.
+
+### 5. Maintain Scope Discipline
+
+Touch only the stage and supporting context required for the current request.
+Do not reopen planning, implementation, or release work without a reason.
+
+### 6. Verify, Don't Assume
+
+Every route must eventually produce evidence, not just confidence.
+Proof belongs in the right stage artifact, not only in narration.
 
 ## Always-On Activation
 
@@ -46,28 +147,6 @@ Clarifying questions count.
 Quick exploration counts.
 
 The AW public command is the user-facing projection of the selected primary stage skill.
-That means AW remains command-simple for users while staying skill-first internally.
-
-## Red Flags
-
-These thoughts mean stop and load the right AW skill stack first:
-
-| Thought | Reality |
-|---|---|
-| "I can answer this quickly first" | Quick answers still need the right AW skill context. |
-| "I just need to explore a little" | Exploration is work. Load the right process or stage skill first. |
-| "This is just a clarifying question" | Clarifying questions still happen after skill selection. |
-| "I know which route this is" | Knowing the route is not the same as loading the right skill stack. |
-| "The internal helper is overkill" | If the helper applies, use it. |
-
-## Routing Priority
-
-1. Explicit user instructions
-2. Explicit public AW commands and their mapped primary stage skills
-3. Process skills that determine how the work should be approached
-4. Primary stage skill and matching minimal public command surface
-5. Domain skills needed to do the selected work well
-6. Explicit composite workflows when the user clearly asks for an end-to-end flow
 
 ## Skill Priority
 
@@ -76,156 +155,136 @@ When multiple AW skills could apply, use this order:
 1. process skills first:
    - `aw-brainstorm`
    - `aw-debug`
-   - `aw-review`
    - `aw-prepare`
-2. primary stage skill second:
+   - `aw-yolo`
+2. primary stage skills second:
    - `aw-plan`
-   - `aw-execute`
-   - `aw-verify`
+   - `aw-build`
+   - `aw-investigate`
+   - `aw-test`
+   - `aw-review`
    - `aw-deploy`
    - `aw-ship`
-3. domain skills third:
-   - backend, frontend, data, infra, review, and test capability families
+3. domain and cross-cutting skills third
 
 The selected public route should reflect the primary stage skill, not hide it.
 
-## Public Command Roles
+## Route Selection
 
-| Command | Role | Primary outcomes |
-|---|---|---|
-| `/aw:plan` | Create the minimum correct planning artifacts | `prd.md`, `design.md`, `designs/`, `spec.md`, `tasks.md`, `state.json` |
-| `/aw:execute` | Implement approved work without reopening planning | `execution.md`, `state.json`, code/docs/config/infra changes |
-| `/aw:verify` | Produce evidence, review findings, governance checks, and release readiness | `verification.md`, `state.json` |
-| `/aw:deploy` | Create the release outcome for verified work | `release.md`, `state.json`, PR/branch/deploy evidence |
+Use one primary route unless the user explicitly asks for end-to-end orchestration.
 
-## Intent Routing
+For route examples, explicit routing priority, and scope guardrails, see [`../../references/route-selection-patterns.md`](../../references/route-selection-patterns.md).
 
-Default to one primary route.
-Only expand into multi-stage flow when the user explicitly asks for end-to-end work.
+## Failure Modes to Avoid
 
-### Route to `/aw:plan`
+These patterns look productive, but they create routing drift:
 
-Use when the request is about:
+1. answering quickly before selecting a route
+2. treating exploration as exempt from routing
+3. choosing `/aw:investigate` for every bug, even when the fix is already known
+4. treating `aw-yolo` as the default because it feels convenient
+5. reopening planning during `build` without a real blocker
+6. silently implementing during `test` or `review`
+7. loading every domain skill "just in case"
+8. giving a confident answer without evidence or stage artifacts
 
-- PRD creation
-- design planning
-- technical specs
-- architecture
-- implementation task breakdown
-- getting work to build-ready state
+## Cross-Cutting Engineering Skills
 
-Examples:
+After the primary stage is selected, load the portable craft skill that best sharpens the work:
 
-- "Create a PRD for contact sync."
-- "Design the onboarding flow."
-- "Create the implementation spec."
-- "Break this into execution tasks."
+- `idea-refine`
+- `context-engineering`
+- `incremental-implementation`
+- `frontend-ui-engineering`
+- `api-and-interface-design`
+- `browser-testing-with-devtools`
+- `code-simplification`
+- `security-and-hardening`
+- `performance-optimization`
+- `git-workflow-and-versioning`
+- `ci-cd-and-automation`
+- `deprecation-and-migration`
+- `documentation-and-adrs`
 
-Internal planning should then use the smallest correct graph:
+Load them because they improve the selected stage, not because they create a new public route.
+For domain families, cross-cutting guidance, and org-standard loading, see [`../../references/domain-skill-loading.md`](../../references/domain-skill-loading.md).
 
-- `aw-brainstorm` for fuzzy or overscoped requests
-- `aw-spec` for the technical contract
-- `aw-tasks` for execution-ready `tasks.md`
+## Platform Skill Loading
 
-### Route to `/aw:execute`
+After the primary AW route is known, use `using-platform-skills` when GHL platform behavior materially affects the stage.
 
-Use when the request is about:
-
-- implementing approved work
-- coding a bug fix
-- applying infra or config changes
-- writing docs from approved scope
-- continuing partially implemented work
-
-Examples:
-
-- "Implement the approved worker spec."
-- "Fix this retry bug."
-- "Apply the staging config changes."
-
-### Route to `/aw:verify`
-
-Use when the request is about:
-
-- review
-- validation
-- readiness
-- testing and evidence
-- PR checklist/governance
-- platform docs or `.aw_rules` compliance
-
-Examples:
-
-- "Review and validate this implementation."
-- "Is this ready for staging?"
-- "Check this PR against the guidelines."
-
-### Route to `/aw:deploy`
-
-Use when the request is about a single release outcome, such as:
-
-- creating a PR
-- branch handoff
-- staging deployment
-- production deployment
-
-Examples:
-
-- "Create a PR for this verified work."
-- "Deploy this verified worker to staging."
-- "Deploy this verified Communities feed MFA to staging."
-- "Deploy this verified microservice change to staging."
-
-If the user asks for more than one release outcome in sequence, such as PR creation followed by staging deployment, prefer `/aw:ship` instead of `/aw:deploy`.
-
-### Route to `/aw:ship`
-
-Use only when the user clearly wants an end-to-end flow in one go, or when the user asks for multiple release outcomes in sequence.
-
-Treat `ship` as a first-class public route name, not as an unnamed composite label.
-
-Examples:
-
-- "Take this from idea to ship."
-- "Do the whole flow."
-- "Build this end to end."
-- "Ship this from approved spec to staging."
-- "Take this change through PR creation and staging version deployment."
-- "Create the PR and then deploy it to staging."
-
-## Scope Guardrails
-
-- A direct code request should not drift into design or product work.
-- A design request should not drift into coding.
-- A deploy request should not reopen planning.
-- A verify request should not silently implement code.
-- A technical planning request must not force a PRD first when the request is already well defined.
-- Do not produce a substantive non-routing response before the AW skill stack is selected.
-- Do not skip repo-local AW routing because a parent workspace or global registry also has instructions.
-
-## Internal Helpers
-
-The public interface stays minimal even if internal helpers are still present.
-
-- `aw:brainstorm` may be used internally for discovery-heavy ideation only
-- `aw:finish` is legacy compatibility only and should not be advertised as a public stage
-- `aw:code-review` is a compatibility alias under `/aw:verify`
-- `aw:tdd` is a compatibility alias under `/aw:execute`
-- `aw:ship` is the explicit composite workflow when a single end-to-end command is desired
-
-## Domain Skills
-
-After choosing the primary stage skill and public route, load the relevant domain skills for the actual work:
-
-- backend and worker code -> `platform-services:*`
-- frontend and design-system work -> `platform-frontend:*`, `platform-design:*`
+- backend and worker work -> `platform-services:*`
+- frontend and design-system work -> `platform-frontend:*` plus `platform-design:*`
 - data and migrations -> `platform-data:*`
-- infra and deployment -> `platform-infra:*`
-- test and quality systems -> `platform-sdet:*`
-- review depth -> `platform-review:*`
+- infra and deploy paths -> `platform-infra:*`
+- test systems and QA governance -> `platform-sdet:*`
+- review depth and readiness -> `platform-review:*`
+- product context and business behavior -> `platform-product:*`
 
-## Rules Always Active
+Use `using-platform-skills` to decide the first supporting platform skills for the selected stage.
 
-Relevant `.aw_rules` and platform docs remain active regardless of which public command is selected.
+## Context Loading
 
-Use them as constraints and source of truth, not as a reason to broaden scope.
+Load context in the smallest order that reduces uncertainty without flooding the session.
+Start with repo-local contracts and approved AW artifacts before broad code search or domain docs.
+
+See [`../../references/context-loading-and-intake.md`](../../references/context-loading-and-intake.md).
+
+## Org Standards Always On
+
+When the selected stage falls inside a resolved baseline profile, the stage must honor:
+
+- `defaults/aw-sdlc/baseline-profiles.yml`
+- relevant platform playbooks
+- relevant `.aw_rules`
+
+Frontend work should still inherit HighRise, accessibility, responsive, and review expectations.
+Release work should still inherit governance, rollback, and evidence expectations.
+See [`../../references/domain-skill-loading.md`](../../references/domain-skill-loading.md).
+
+## Skill Rules
+
+1. Check for an applicable AW route before starting real work.
+2. Use one primary route unless the user explicitly asks for end-to-end orchestration.
+3. Load process skills before stage skills when the process itself changes the right path.
+4. Load domain and craft skills only after the primary route is clear.
+5. Load `using-platform-skills` when a GHL platform family materially changes the work.
+6. When in doubt between diagnosis and implementation, choose `/aw:investigate` only if root cause is still unclear.
+7. When in doubt between a normal route and `aw-yolo`, prefer the normal route.
+
+## Typical Sequences
+
+For a normal feature:
+
+```text
+/aw:plan -> /aw:build -> /aw:test -> /aw:review -> /aw:deploy -> /aw:ship
+```
+
+For a bug with unclear root cause:
+
+```text
+/aw:investigate -> /aw:build -> /aw:test -> /aw:review
+```
+
+For a release-ready change that only needs rollout work:
+
+```text
+/aw:deploy -> /aw:ship
+```
+
+For explicit one-run automation:
+
+```text
+aw-yolo -> [smallest correct internal stage sequence]
+```
+
+## Verification
+
+Before moving past routing, confirm:
+
+- [ ] the smallest correct AW skill stack was selected first
+- [ ] the public route matches the actual stage intent
+- [ ] `/aw:investigate` was only chosen when diagnosis is actually required
+- [ ] org-standard playbooks and `.aw_rules` are loaded when the baseline requires them
+- [ ] the task is not being silently broadened into extra stages
+- [ ] `aw-yolo` is used only when the user explicitly asked for end-to-end automation

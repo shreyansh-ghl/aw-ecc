@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "gokollab-preview",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "gokollab-preview:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `gokollab-preview:src/components` in RevEx frontend, inside the broader `gokollab-preview` area. Deliver the smallest safe implementation in `gokollab-preview:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `gokollab-preview:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `gokollab-preview:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "2fefee70f84b88c0e1add17aa860e5e9e9b135ee",
+    "parentSha": "0d72fe6f68d0d3c4f3b967084980c028b00db8f2",
+    "date": "2026-04-01T18:15:35+05:30",
+    "subject": "Remove carousel buttons (#7885)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 1,
+    "deletions": 24,
+    "totalLinesChanged": 25
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/gokollab-preview/src/components/discovery-v2/sales/SalesMediaCarousel.vue",
+      "insertions": 1,
+      "deletions": 24
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 2fefee70f84b88c0e1add17aa860e5e9e9b135ee",
+    "showPatch": "git -C ../ghl-revex-frontend show 2fefee70f84b88c0e1add17aa860e5e9e9b135ee",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 0d72fe6f68d0d3c4f3b967084980c028b00db8f2"
+  },
+  "warnings": []
+}

@@ -1,0 +1,43 @@
+{
+  "id": "archetype-and-product-scenarios",
+  "layer": "archetype-and-product",
+  "modes": ["deterministic", "routing"],
+  "owners": {
+    "commands": [
+      "commands/plan.md",
+      "commands/build.md",
+      "commands/investigate.md",
+      "commands/test.md",
+      "commands/review.md",
+      "commands/deploy.md",
+      "commands/ship.md"
+    ],
+    "skills": [
+      "skills/using-aw-skills/SKILL.md",
+      "skills/aw-plan/SKILL.md",
+      "skills/aw-build/SKILL.md",
+      "skills/aw-investigate/SKILL.md",
+      "skills/aw-test/SKILL.md",
+      "skills/aw-review/SKILL.md",
+      "skills/aw-deploy/SKILL.md",
+      "skills/aw-ship/SKILL.md"
+    ],
+    "agents": []
+  },
+  "tests": [
+    "tests/evals/deterministic/scenarios/aw-archetype-scenarios.test.js",
+    "tests/evals/deterministic/scenarios/aw-product-scenarios.test.js",
+    "tests/evals/deterministic/scenarios/aw-sdlc-customer-coverage.test.js",
+    "tests/evals/routing/aw-archetype-routing.test.js",
+    "tests/evals/routing/aw-sdlc-customer-behavior.test.js"
+  ],
+  "fixtures": [
+    "tests/evals/fixtures/aw-archetype-scenarios.json",
+    "tests/evals/fixtures/aw-product-scenarios.json",
+    "tests/evals/fixtures/aw-sdlc-customer-cases.js"
+  ],
+  "docs": [
+    "docs/aw-archetype-scenario-matrix.md",
+    "docs/aw-product-scenario-matrix.md"
+  ]
+}

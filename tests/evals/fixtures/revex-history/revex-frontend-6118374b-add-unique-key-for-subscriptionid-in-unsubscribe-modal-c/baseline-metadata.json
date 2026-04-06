@@ -1,0 +1,55 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "wordpress",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "bugfix",
+  "affectedSurface": "SitesContainer",
+  "userPrompt": "You are working in RevEx frontend. A user-facing or runtime bug has been reported around `SitesContainer` in RevEx frontend, and the current behavior is not reliable enough to leave as-is. Deliver the smallest safe bugfix in `SitesContainer` using the expected AW route `/aw:investigate`. Success criteria: resolve the user-visible or runtime issue in `SitesContainer` without widening scope; preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required; capture the failure mode or behavior gap clearly before proposing the patch. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show a focused regression check or narrow supporting note that addresses the original failure mode.",
+  "successCriteria": [
+    "resolve the user-visible or runtime issue in `SitesContainer` without widening scope",
+    "preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required",
+    "capture the failure mode or behavior gap clearly before proposing the patch"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show a focused regression check or narrow supporting note that addresses the original failure mode"
+  ],
+  "commit": {
+    "sha": "6118374b9f0a8c36b141c34a3dfbccd6c6fbe30d",
+    "parentSha": "70f9a6f73a3462824c9db1d7d6a585ed26fb865a",
+    "date": "2026-04-02T12:00:35+05:30",
+    "subject": "fix(SitesContainer): add unique key for subscriptionId in unsubscribe modal components (#7776)",
+    "type": "fix",
+    "scope": "SitesContainer"
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 2,
+    "deletions": 0,
+    "totalLinesChanged": 2
+  },
+  "routeExpectation": {
+    "route": "/aw:investigate",
+    "primarySkill": "aw-investigate",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools",
+      "documentation-and-adrs"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/wordpress/src/components/containers/sites/SitesContainer.vue",
+      "insertions": 2,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 6118374b9f0a8c36b141c34a3dfbccd6c6fbe30d",
+    "showPatch": "git -C ../ghl-revex-frontend show 6118374b9f0a8c36b141c34a3dfbccd6c6fbe30d",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 70f9a6f73a3462824c9db1d7d6a585ed26fb865a"
+  },
+  "warnings": []
+}

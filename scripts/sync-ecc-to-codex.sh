@@ -29,14 +29,33 @@ AGENTS_FILE="$CODEX_HOME/AGENTS.md"
 AGENTS_ROOT_SRC="$REPO_ROOT/AGENTS.md"
 AGENTS_CODEX_SUPP_SRC="$REPO_ROOT/.codex/AGENTS.md"
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
+AW_SKILLS_SRC="$REPO_ROOT/skills"
 SKILLS_DEST="$CODEX_HOME/skills"
 PROMPTS_SRC="$REPO_ROOT/commands"
 PROMPTS_DEST="$CODEX_HOME/prompts"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
-CODEX_HOOKS_DIR="$CODEX_HOME/hooks"
-CODEX_SESSION_START_HOOK="$CODEX_HOOKS_DIR/aw-session-start.sh"
+HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex/hooks.json"
+HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
+AW_CODEX_SKILLS=(
+  "using-aw-skills"
+  "aw-plan"
+  "aw-build"
+  "aw-investigate"
+  "aw-test"
+  "aw-review"
+  "aw-yolo"
+  "aw-execute"
+  "aw-verify"
+  "aw-deploy"
+  "aw-ship"
+  "aw-brainstorm"
+  "aw-debug"
+  "aw-prepare"
+  "aw-spec"
+  "aw-tasks"
+)
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CODEX_HOME/backups/ecc-$STAMP"
@@ -134,47 +153,14 @@ MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
 require_path "$AGENTS_CODEX_SUPP_SRC" "ECC Codex AGENTS supplement"
 require_path "$SKILLS_SRC" "ECC skills directory"
+require_path "$AW_SKILLS_SRC" "ECC AW skills directory"
 require_path "$PROMPTS_SRC" "ECC commands directory"
 require_path "$HOOKS_INSTALLER" "ECC global git hooks installer"
 require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
-
-install_codex_session_hook() {
-  # Ensure Codex runs the using-aw-skills session-start hook.
-  run_or_echo "mkdir -p \"$CODEX_HOOKS_DIR\""
-  if [[ "$MODE" == "dry-run" ]]; then
-    printf '[dry-run] write %s\n' "$CODEX_SESSION_START_HOOK"
-    return
-  fi
-  cat > "$CODEX_SESSION_START_HOOK" <<'EOF'
-#!/usr/bin/env bash
-# aw-managed: codex-global-session-start
-set -euo pipefail
-
-TARGETS=(
-  "$HOME/.aw-ecc/skills/using-aw-skills/hooks/session-start.sh"
-  "$HOME/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
-  "$HOME/.aw/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
-)
-
-for target in "${TARGETS[@]}"; do
-  if [[ -f "$target" ]]; then
-    exec bash "$target"
-  fi
-done
-
-CONTEXT="# AW Session Context
-
-WARNING: AW using-aw-skills hook not found in ~/.aw_registry. Run aw init or aw pull platform."
-
-JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c 'import json, sys; print(json.dumps(sys.stdin.read()))')
-
-echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":${JSON_CONTEXT}}}"
-EOF
-  chmod +x "$CODEX_SESSION_START_HOOK"
-}
+require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
 
 if ! command -v node >/dev/null 2>&1; then
   log "ERROR: node is required for MCP config merging but was not found"
@@ -190,6 +176,9 @@ run_or_echo "mkdir -p \"$BACKUP_DIR\""
 run_or_echo "cp \"$CONFIG_FILE\" \"$BACKUP_DIR/config.toml\""
 if [[ -f "$AGENTS_FILE" ]]; then
   run_or_echo "cp \"$AGENTS_FILE\" \"$BACKUP_DIR/AGENTS.md\""
+fi
+if [[ -f "$HOOKS_JSON_DEST" ]]; then
+  run_or_echo "cp \"$HOOKS_JSON_DEST\" \"$BACKUP_DIR/hooks.json\""
 fi
 
 ECC_BEGIN_MARKER="<!-- BEGIN ECC -->"
@@ -282,8 +271,15 @@ for skill_dir in "$SKILLS_SRC"/*; do
   skills_count=$((skills_count + 1))
 done
 
-log "Installing Codex session-start hook"
-install_codex_session_hook
+log "Syncing AW stage and router skills for Codex"
+for skill_name in "${AW_CODEX_SKILLS[@]}"; do
+  skill_dir="$AW_SKILLS_SRC/$skill_name"
+  [[ -d "$skill_dir" ]] || continue
+  dest="$SKILLS_DEST/$skill_name"
+  run_or_echo "rm -rf \"$dest\""
+  run_or_echo "cp -R \"$skill_dir\" \"$dest\""
+  skills_count=$((skills_count + 1))
+done
 
 log "Generating prompt files from ECC commands"
 run_or_echo "mkdir -p \"$PROMPTS_DEST\""
@@ -513,6 +509,13 @@ if [[ "$MODE" == "dry-run" ]]; then
   "$HOOKS_INSTALLER" --dry-run
 else
   "$HOOKS_INSTALLER"
+fi
+
+log "Installing Codex hooks.json"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] cp "%s" "%s"\n' "$HOOKS_JSON_SRC" "$HOOKS_JSON_DEST"
+else
+  run_or_echo "cp \"$HOOKS_JSON_SRC\" \"$HOOKS_JSON_DEST\""
 fi
 
 log "Running global regression sanity check"

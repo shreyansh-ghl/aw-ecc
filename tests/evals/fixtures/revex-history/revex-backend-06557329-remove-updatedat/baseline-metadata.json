@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "lc-phone:src/voice-call",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `lc-phone:src/voice-call` in RevEx backend, inside the broader `lc-phone` area. Deliver the smallest safe implementation in `lc-phone:src/voice-call` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `lc-phone:src/voice-call` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `lc-phone:src/voice-call` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "06557329314cb8c252755f44c00978afbc065043",
+    "parentSha": "3468aa106898dd777010793aff8855c2013d50d5",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "remove updatedAt",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 0,
+    "deletions": 2,
+    "totalLinesChanged": 2
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/src/voice-call/helpers/gatekeeper.helper.ts",
+      "insertions": 0,
+      "deletions": 2
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 06557329314cb8c252755f44c00978afbc065043",
+    "showPatch": "git -C ../ghl-revex-backend show 06557329314cb8c252755f44c00978afbc065043",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout 3468aa106898dd777010793aff8855c2013d50d5"
+  },
+  "warnings": []
+}

@@ -1,0 +1,46 @@
+{
+  "id": "stage-behavior-and-stage-contracts",
+  "layer": "capability",
+  "modes": ["deterministic", "outcomes"],
+  "owners": {
+    "commands": [
+      "commands/build.md",
+      "commands/investigate.md",
+      "commands/test.md",
+      "commands/review.md",
+      "commands/deploy.md",
+      "commands/ship.md",
+      "commands/execute.md",
+      "commands/verify.md"
+    ],
+    "skills": [
+      "skills/aw-build/SKILL.md",
+      "skills/aw-investigate/SKILL.md",
+      "skills/aw-test/SKILL.md",
+      "skills/aw-review/SKILL.md",
+      "skills/aw-deploy/SKILL.md",
+      "skills/aw-ship/SKILL.md",
+      "skills/aw-execute/SKILL.md",
+      "skills/aw-verify/SKILL.md"
+    ],
+    "agents": []
+  },
+  "tests": [
+    "tests/evals/deterministic/capability/aw-stage-behavior-upgrades.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-execute-orchestration.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-execute-debugging.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-verify-loop.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-verify-review-loop.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-ship-command.test.js",
+    "tests/evals/outcomes/aw-sdlc-outcome-artifact-contract.test.js",
+    "tests/evals/outcomes/aw-sdlc-outcomes-coverage.test.js"
+  ],
+  "fixtures": [
+    "skills/aw-build/evals/build-stage-cases.json",
+    "skills/aw-deploy/evals/deploy-stage-cases.json"
+  ],
+  "docs": [
+    "docs/aw-sdlc-command-skill-architecture.md",
+    "docs/aw-sdlc-outcomes-eval-checklist.md"
+  ]
+}

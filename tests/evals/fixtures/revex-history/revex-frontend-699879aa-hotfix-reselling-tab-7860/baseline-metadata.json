@@ -1,0 +1,59 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "agency-dashboard",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "agency-dashboard:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `agency-dashboard:src/components` in RevEx frontend, inside the broader `agency-dashboard` area. Deliver the smallest safe implementation in `agency-dashboard:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `agency-dashboard:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `agency-dashboard:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "699879aa1fd3cd04b42266fb4cb98e288d339dc2",
+    "parentSha": "14c8d285605c3781a6fb0b4e89a289aeaefc66a2",
+    "date": "2026-04-01T11:42:20+05:30",
+    "subject": "hotfix/reselling-tab (#7860)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 2,
+    "insertions": 7,
+    "deletions": 7,
+    "totalLinesChanged": 14
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/agency-dashboard/src/components/dashboard/reselling/resellingFilters.vue",
+      "insertions": 5,
+      "deletions": 5
+    },
+    {
+      "path": "apps/agency-dashboard/src/components/dashboard/reselling/resellingTab.vue",
+      "insertions": 2,
+      "deletions": 2
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 699879aa1fd3cd04b42266fb4cb98e288d339dc2",
+    "showPatch": "git -C ../ghl-revex-frontend show 699879aa1fd3cd04b42266fb4cb98e288d339dc2",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 14c8d285605c3781a6fb0b4e89a289aeaefc66a2"
+  },
+  "warnings": []
+}

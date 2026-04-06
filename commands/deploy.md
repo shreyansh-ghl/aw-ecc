@@ -1,7 +1,7 @@
 ---
 name: aw:deploy
-description: Create the right release outcome for verified work, with concrete staging deployment behavior by GHL repo type.
-argument-hint: "<verified work, target environment, or release request>"
+description: Create one requested release outcome for work that already has the required QA, review, and readiness evidence.
+argument-hint: "<reviewed work, target environment, or release request>"
 status: active
 stage: deploy
 internal_skill: aw-deploy
@@ -9,101 +9,56 @@ internal_skill: aw-deploy
 
 # Deploy
 
-Use `/aw:deploy` to turn verified work into a PR, branch handoff, or deployment outcome.
-
-The current GHL default should focus on:
-
-- PR creation
-- branch handoff
-- staging deployment
-
-Production can stay profile-gated until the staging flow is proven.
+Use `/aw:deploy` to turn reviewed work into a PR, branch handoff, or deployment outcome.
 
 ## Role
 
-Convert verified work into the right release outcome: PR, branch handoff, staging deployment, or production deployment.
-
-Default to one release path.
-If the user explicitly asks for a compound release flow, run the requested deploy modes in order, usually `pr -> staging`.
+Perform one explicit release action with the correct GHL provider and mechanism for the current repo archetype.
 
 ## Modes
 
 | Mode | Use when | Primary outputs |
 |---|---|---|
-| `pr` | work should be handed off for review/merge | PR URL, `release.md`, `state.json` |
+| `pr` | work should be handed off for review or merge | PR URL, `release.md`, `state.json` |
 | `branch` | work should remain on a branch | branch name, `release.md`, `state.json` |
-| `staging` | verified work should go to staging | deploy evidence, `release.md`, `state.json` |
-| `production` | verified work is ready for production | deploy evidence, `release.md`, `state.json` |
+| `staging` | reviewed work should go to staging | deploy evidence, `release.md`, `state.json` |
+| `production` | explicitly approved work should go to production | deploy evidence, `release.md`, `state.json` |
 
 ## Required Inputs
 
-- passing verification result
+- passing test and review outcome, or a compatible verified state that resolves to the same evidence
 - branch or change set
 - relevant release context
 - resolved deploy profile when present
-
-## Optional Inputs
-
-- PR template
-- deployment pipeline info
-- staging environment details
 
 ## Outputs
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
-- release outcome artifact:
+- one concrete release outcome artifact:
   - PR URL
   - branch name
   - staging URL
   - deployment reference
-  - versioned deployment links or routing references
-  - deployment build links
-  - testing automation build links
-  - build status summary
+  - build links
+  - status summary
 
-## Deploy Layers
+## Deploy Rules
 
-| Layer | Responsibility |
-|---|---|
-| `preflight` | confirm verification passed and the requested path is allowed |
-| `release_path` | select PR, branch, staging, or production |
-| `pipeline_resolution` | resolve the `ghl-ai` transport plus the concrete versioned staging mechanism for the chosen repo archetype |
-| `execution` | perform the release action |
-| `post_deploy_evidence` | record build links, testing links, status, URL, health, versioned links, and routing evidence |
-| `learning` | save operational learnings and next actions |
-
-## GHL Staging Defaults
-
-When mode is `staging`, resolve the provider by repo archetype:
-
-- microfrontend -> provider `ghl-ai`, mechanism `versioned-mfa-staging`
-- microservice -> provider `ghl-ai`, mechanism `versioned-service-staging`
-- worker -> provider `ghl-ai`, mechanism `versioned-worker-staging`
-- unknown -> fail closed via `unconfigured`
-
-## Hard Gates
-
-- verification must have passed
-- destructive release actions must use the selected mode only
-- staging deploy must use the configured provider for the repo archetype
-- compound release flows are allowed only when they are explicitly requested
+1. Do one release action at a time.
+2. Resolve the provider and mechanism from repo archetype and baseline profile.
+3. Record deterministic evidence even when external execution is blocked.
+4. Hand off to `/aw:ship` when launch, rollout, rollback readiness, or release closeout is requested after deploy.
 
 ## Must Not Do
 
-- must not bypass verification
-- must not mix release paths unless explicitly requested
+- must not bypass test and review evidence
+- must not silently choose the wrong provider
 - must not reopen planning during deployment
 
 ## Recommended Next Commands
 
-- none required
-- optionally `/aw:verify` again after staging if re-validation is needed
-
-## Internal Routing
-
-Deployment should use `aw-deploy` for the primary flow.
-Legacy `aw:finish` behavior should be treated as an internal compatibility helper only.
+- `/aw:ship`
 
 ## Final Output Shape
 
@@ -112,11 +67,8 @@ Always end with:
 - `Selected Mode`
 - `Provider`
 - `Resolved Mechanism`
-- `Versioned Links`
 - `Build Links`
-- `Testing Automation Build Links`
-- `Build Status`
 - `Execution Evidence`
 - `Rollback Path`
 - `Outcome`
-- `Recommended Next`
+- `Next`

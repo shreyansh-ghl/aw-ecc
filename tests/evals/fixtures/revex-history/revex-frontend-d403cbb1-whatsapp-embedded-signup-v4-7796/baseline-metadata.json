@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "phone-integration",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "whatsapp",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `whatsapp` in RevEx frontend, inside the broader `phone-integration` area. Deliver the smallest safe feature in `whatsapp` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `whatsapp` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested feature in `whatsapp` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "d403cbb14f25aaec46bf8df024b872c37e4af13f",
+    "parentSha": "bad8540724b6d08d448818256bb853a170f182c7",
+    "date": "2026-04-01T11:38:35+05:30",
+    "subject": "feat(whatsapp): WhatsApp Embedded Signup V4 (#7796)",
+    "type": "feat",
+    "scope": "whatsapp"
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 377,
+    "deletions": 0,
+    "totalLinesChanged": 377
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/phone-integration/src/components/whatsapp-settings/Onboarding/CreateNewWabaAccount.vue",
+      "insertions": 377,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary d403cbb14f25aaec46bf8df024b872c37e4af13f",
+    "showPatch": "git -C ../ghl-revex-frontend show d403cbb14f25aaec46bf8df024b872c37e4af13f",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout bad8540724b6d08d448818256bb853a170f182c7"
+  },
+  "warnings": []
+}

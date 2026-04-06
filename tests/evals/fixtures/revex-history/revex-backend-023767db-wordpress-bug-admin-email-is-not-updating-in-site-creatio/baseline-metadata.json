@@ -1,0 +1,79 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "wordpress",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "wordpress:src/modules",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `wordpress:src/modules` in RevEx backend, inside the broader `wordpress` area. Deliver the smallest safe implementation in `wordpress:src/modules` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `wordpress:src/modules` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `wordpress:src/modules` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "023767dbe40a331e8b87f2c5dfff3e574c0d974b",
+    "parentSha": "5d49c95f51325f17c2d00fb56080eb03132e4d2c",
+    "date": "2026-03-26T18:07:27+05:30",
+    "subject": "WordPress : Bug Admin Email Is Not Updating In Site Creation (#9973)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 6,
+    "insertions": 99,
+    "deletions": 9,
+    "totalLinesChanged": 108
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/wordpress/src/modules/vendor/rocket/services/rocket-cli.service.ts",
+      "insertions": 8,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/src/pooling/interfaces/pooling.interfaces.ts",
+      "insertions": 2,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/src/pooling/providers/rocket-pool.provider.ts",
+      "insertions": 17,
+      "deletions": 9
+    },
+    {
+      "path": "apps/wordpress/src/pooling/services/pool-finalization.service.ts",
+      "insertions": 68,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/src/wordpress-events/wordpress-events.types.ts",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/workers/revex-wordpress-site-action-worker.ts",
+      "insertions": 3,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 023767dbe40a331e8b87f2c5dfff3e574c0d974b",
+    "showPatch": "git -C ../ghl-revex-backend show 023767dbe40a331e8b87f2c5dfff3e574c0d974b",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout 5d49c95f51325f17c2d00fb56080eb03132e4d2c"
+  },
+  "warnings": []
+}

@@ -166,7 +166,8 @@ The agent will stop and report if:
 
 - `/aw:kotlin-test` - Run tests after build succeeds
 - `/aw:kotlin-review` - Review code quality
-- `/aw:verify` - Full verification loop
+- `/aw:test` - Run targeted QA and proof
+- `/aw:review` - Run readiness and findings review
 
 ## Related
 

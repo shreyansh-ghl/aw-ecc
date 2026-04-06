@@ -1,0 +1,49 @@
+{
+  "id": "core-routing-surface",
+  "layer": "capability",
+  "modes": ["deterministic", "routing"],
+  "owners": {
+    "commands": [
+      "commands/plan.md",
+      "commands/build.md",
+      "commands/investigate.md",
+      "commands/test.md",
+      "commands/review.md",
+      "commands/deploy.md",
+      "commands/ship.md"
+    ],
+    "skills": [
+      "skills/using-aw-skills/SKILL.md",
+      "skills/using-platform-skills/SKILL.md",
+      "skills/aw-plan/SKILL.md",
+      "skills/aw-build/SKILL.md",
+      "skills/aw-investigate/SKILL.md",
+      "skills/aw-test/SKILL.md",
+      "skills/aw-review/SKILL.md",
+      "skills/aw-deploy/SKILL.md",
+      "skills/aw-ship/SKILL.md",
+      "skills/aw-yolo/SKILL.md"
+    ],
+    "agents": []
+  },
+  "tests": [
+    "tests/evals/deterministic/capability/aw-command-surface.test.js",
+    "tests/evals/deterministic/capability/aw-command-aliases.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-command-skill-mapping.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-default-session-coverage.test.js",
+    "tests/evals/routing/aw-sdlc-stage-resolution.test.js",
+    "tests/evals/routing/aw-sdlc-codex-routing.test.js",
+    "tests/evals/routing/aw-stage-routing-updated.test.js"
+  ],
+  "fixtures": [
+    "tests/evals/fixtures/aw-sdlc-default-session-cases.js",
+    "tests/evals/fixtures/aw-live-craft-skill-cases.json",
+    "skills/using-aw-skills/evals/skill-trigger-cases.tsv",
+    "skills/using-aw-skills/evals/test-skill-triggers.sh"
+  ],
+  "docs": [
+    "docs/aw-testing-strategy.md",
+    "docs/aw-sdlc-command-skill-architecture.md",
+    "tests/evals/README.md"
+  ]
+}
