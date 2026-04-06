@@ -2,28 +2,10 @@ const assert = require('assert');
 const path = require('path');
 const { createRepoSnapshot } = require('../../lib/repo-snapshot');
 const { REPO_ROOT } = require('../../lib/aw-sdlc-paths');
+const { parseFrontmatter } = require('../../lib/markdown-frontmatter');
 
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
-
-function parseFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
-  const attributes = {};
-  if (!match) return attributes;
-
-  for (const line of match[1].split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const separator = trimmed.indexOf(':');
-    if (separator === -1) continue;
-    const key = trimmed.slice(0, separator).trim();
-    let value = trimmed.slice(separator + 1).trim();
-    value = value.replace(/^['"]|['"]$/g, '');
-    attributes[key] = value;
-  }
-
-  return attributes;
-}
 
 function test(name, fn) {
   try {

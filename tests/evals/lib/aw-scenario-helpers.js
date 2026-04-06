@@ -23,6 +23,11 @@ function isExternalRegistryPath(skillPath) {
   return relativePath.startsWith('..');
 }
 
+function isRegistryManagedPath(skillPath) {
+  const registryPrefix = `${REGISTRY_ROOT}${path.sep}`;
+  return skillPath === REGISTRY_ROOT || skillPath.startsWith(registryPrefix);
+}
+
 function hasRegistryContent() {
   return fs.existsSync(REGISTRY_ROOT);
 }
@@ -112,8 +117,9 @@ function readPathFromSnapshotOrDisk(snapshot, absolutePath) {
 function skillExists(snapshot, skillName) {
   const skillPath = skillPathFor(skillName);
   const isExternalRegistrySkill = isExternalRegistryPath(skillPath);
+  const isRegistrySkill = isRegistryManagedPath(skillPath);
 
-  if (isExternalRegistrySkill && !hasRegistryContent()) {
+  if ((isExternalRegistrySkill || isRegistrySkill) && !hasRegistryContent()) {
     return;
   }
 

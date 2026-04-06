@@ -11,6 +11,7 @@ const {
   parseBaselineCatalog,
   normalizeBaselineCatalog,
 } = require('../../lib/aw-sdlc-baseline-catalog');
+const { normalizeLineEndings } = require('../../lib/markdown-frontmatter');
 
 function test(name, fn) {
   try {
@@ -30,6 +31,7 @@ function run() {
   const hasPlatformDocsBaselines = pathExists(PLATFORM_DOCS_BASELINES_PATH);
   const platformBaselines = hasPlatformDocsBaselines ? readFileSync(PLATFORM_DOCS_BASELINES_PATH, 'utf8') : '';
   const eccBaselines = readFileSync(ECC_BASELINES_PATH, 'utf8');
+  const normalizedEccBaselines = normalizeLineEndings(eccBaselines);
   const parsedEccBaselines = normalizeBaselineCatalog(parseBaselineCatalog(eccBaselines));
   const parsedPlatformBaselines = hasPlatformDocsBaselines
     ? normalizeBaselineCatalog(parseBaselineCatalog(platformBaselines))
@@ -59,10 +61,10 @@ function run() {
   })) passed++; else failed++;
 
   if (test('repo-local snapshot uses the simplified flat verify/deploy shape', () => {
-    assert.ok(!/^\s+layers:\s*$/m.test(eccBaselines), 'baseline snapshot should not use verify.layers wrappers');
-    assert.ok(!/^\s+modes:\s*$/m.test(eccBaselines), 'baseline snapshot should not use deploy.modes wrappers');
-    assert.ok(/verify:\n\s+code_review:/m.test(eccBaselines), 'baseline snapshot should define verify sections directly');
-    assert.ok(/deploy:\n\s+pr:/m.test(eccBaselines), 'baseline snapshot should define deploy sections directly');
+    assert.ok(!/^\s+layers:\s*$/m.test(normalizedEccBaselines), 'baseline snapshot should not use verify.layers wrappers');
+    assert.ok(!/^\s+modes:\s*$/m.test(normalizedEccBaselines), 'baseline snapshot should not use deploy.modes wrappers');
+    assert.ok(/verify:\n\s+code_review:/m.test(normalizedEccBaselines), 'baseline snapshot should define verify sections directly');
+    assert.ok(/deploy:\n\s+pr:/m.test(normalizedEccBaselines), 'baseline snapshot should define deploy sections directly');
   })) passed++; else failed++;
 
   if (test('local validation requires unit testing in the baselines', () => {
