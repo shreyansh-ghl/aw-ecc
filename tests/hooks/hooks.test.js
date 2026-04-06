@@ -1874,8 +1874,9 @@ async function runTests() {
               const isSkillScript = hook.command.includes('/skills/') && (/^(bash|sh)\s/.test(hook.command) || hook.command.startsWith('${CLAUDE_PLUGIN_ROOT}/skills/'));
               const isHookShellWrapper = /^(bash|sh)\s+["']?\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/hooks\/run-with-flags-shell\.sh/.test(hook.command);
               const isSessionStartFallback = hook.command.startsWith('bash -lc') && hook.command.includes('run-with-flags.js');
+              const isManagedHookWrapper = hook.command === '"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" session-start';
               assert.ok(
-                isNode || isNpx || isSkillScript || isHookShellWrapper || isSessionStartFallback,
+                isNode || isNpx || isSkillScript || isHookShellWrapper || isSessionStartFallback || isManagedHookWrapper,
                 `Hook command should use node or approved shell wrapper: ${hook.command.substring(0, 100)}...`
               );
             }
@@ -1944,6 +1945,45 @@ async function runTests() {
       const plugin = JSON.parse(fs.readFileSync(pluginPath, 'utf8'));
 
       assert.ok(!plugin.hooks, 'plugin.json should NOT have "hooks" field - Claude Code auto-loads hooks/hooks.json');
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('SessionStart hook uses the managed AW hook wrapper', () => {
+      const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
+      const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+      const sessionStart = hooks.hooks.SessionStart;
+
+      assert.ok(Array.isArray(sessionStart) && sessionStart.length > 0, 'Expected SessionStart hooks');
+      const entry = sessionStart[0];
+      assert.strictEqual(entry.matcher, 'startup|clear|compact');
+      assert.ok(
+        entry.hooks.some(hook =>
+          hook.type === 'command'
+          && hook.command === '"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" session-start'
+        ),
+        'SessionStart should invoke the managed run-hook.cmd wrapper'
+      );
+    })
+  )
+    passed++;
+  else failed++;
+
+  if (
+    test('managed Claude hook wrapper assets are present', () => {
+      const runHookPath = path.join(__dirname, '..', '..', 'hooks', 'run-hook.cmd');
+      const sessionStartPath = path.join(__dirname, '..', '..', 'hooks', 'session-start');
+
+      assert.ok(fs.existsSync(runHookPath), 'run-hook.cmd should exist');
+      assert.ok(fs.existsSync(sessionStartPath), 'hooks/session-start should exist');
+
+      const sessionStart = fs.readFileSync(sessionStartPath, 'utf8');
+      assert.ok(
+        sessionStart.includes('skills/using-aw-skills/hooks/session-start.sh'),
+        'hooks/session-start should delegate to the AW session-start hook'
+      );
     })
   )
     passed++;

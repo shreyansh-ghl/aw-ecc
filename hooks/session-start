@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+TARGET_SCRIPT="$ROOT_DIR/skills/using-aw-skills/hooks/session-start.sh"
+
+if [[ ! -f "$TARGET_SCRIPT" ]]; then
+  echo '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "WARNING: AW session-start hook not found in the installed aw-ecc bundle."}}'
+  exit 0
+fi
+
+exec bash "$TARGET_SCRIPT"
