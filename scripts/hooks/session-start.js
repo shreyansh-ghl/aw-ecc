@@ -188,6 +188,79 @@ function getRepoSlug() {
 }
 
 /**
+ * Phase 3 (v3): Collect rich session context for memory pack query.
+ * Branch name and recent commits are the highest-signal indicators of intent.
+ */
+function collectSessionContext(cwd) {
+  const { execSync } = require('child_process');
+  const ctx = { repoSlug: getRepoSlug(), branch: '', recentWork: '', projectType: '' };
+
+  try {
+    ctx.branch = execSync('git branch --show-current', {
+      cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 3000,
+    }).trim();
+  } catch { /* not a git repo */ }
+
+  try {
+    ctx.recentWork = execSync('git log --oneline -5 --no-merges', {
+      cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 3000,
+    }).trim();
+  } catch { /* no commits */ }
+
+  try {
+    const { detectProjectType } = require('../lib/project-detect');
+    const info = detectProjectType(cwd);
+    ctx.projectType = info.primary || '';
+  } catch { /* detect unavailable */ }
+
+  return ctx;
+}
+
+/**
+ * Phase 3 (v3): Build a rich memory pack query from session context.
+ * Branch name is the strongest intent signal — "feat/payment-webhooks" → "payment webhooks".
+ */
+function buildMemoryQuery(ctx) {
+  const parts = [];
+
+  if (ctx.branch && ctx.branch !== 'main' && ctx.branch !== 'master') {
+    const branchTopics = ctx.branch
+      .replace(/^(feat|fix|chore|refactor|hotfix)\//i, '')
+      .replace(/[-_/]/g, ' ');
+    parts.push(branchTopics);
+  }
+
+  if (ctx.recentWork) {
+    const commitTopics = ctx.recentWork
+      .split('\n')
+      .slice(0, 3)
+      .map(line => line.replace(/^[a-f0-9]+ /, '').replace(/^(feat|fix|chore|refactor|docs)(\(.*?\))?:\s*/i, ''))
+      .join(' ');
+    parts.push(commitTopics);
+  }
+
+  if (ctx.repoSlug) parts.push(ctx.repoSlug);
+  if (ctx.projectType && ctx.projectType !== 'unknown') parts.push(ctx.projectType);
+
+  return parts.join(' ').substring(0, 500) || `Development session in ${ctx.repoSlug || 'unknown project'}`;
+}
+
+/**
+ * Phase 3 (v3): Infer overlay/angle filters from branch name to narrow memory recall.
+ */
+function inferFilters(branch) {
+  if (!branch) return {};
+  const b = branch.toLowerCase();
+  if (/payment|billing|stripe|subscription/.test(b)) return { overlays: ['service', 'product'] };
+  if (/frontend|ui|component|design|css/.test(b)) return { overlays: ['surface', 'feature'] };
+  if (/infra|deploy|k8s|terraform|helm|ci/.test(b)) return { overlays: ['service'], angles: ['operational'] };
+  if (/auth|login|jwt|oauth|sso/.test(b)) return { overlays: ['service'], angles: ['technical'] };
+  if (/perf|optim|cache|redis/.test(b)) return { angles: ['operational', 'technical'] };
+  if (/test|e2e|playwright|cypress/.test(b)) return { angles: ['quality'] };
+  return {};
+}
+
+/**
  * Inject team memory into session context.
  *
  * Strategy: Read from local filesystem cache (L0) first — zero latency,
@@ -234,19 +307,22 @@ async function injectMemoryPack() {
     return;
   }
 
-  const repoSlug = getRepoSlug();
-  log(`[SessionStart] No local cache, requesting memory pack from MCP for ${repoSlug}...`);
+  // Phase 3 (v3): Collect rich context and build a targeted query
+  const ctx = collectSessionContext(process.cwd());
+  const query = buildMemoryQuery(ctx);
+  const filters = inferFilters(ctx.branch);
+  log(`[SessionStart] Memory query: "${query.substring(0, 120)}..." (branch: ${ctx.branch || 'none'})`);
 
   try {
     let packContent = '';
     let servedIds = [];
     let memoriesCount = 0;
 
-    // Try memory_pack first, fall back to memory_search
-    const packResult = await callMcpTool('memory_pack', {
-      query: `Starting session in ${repoSlug}`,
-      token_budget: 3500,
-    }, headers);
+    const packParams = { query, token_budget: 3500 };
+    if (filters.overlays) packParams.overlays = filters.overlays;
+    if (filters.angles) packParams.angles = filters.angles;
+
+    const packResult = await callMcpTool('memory_pack', packParams, headers);
 
     const packError = packResult?.text?.includes('Unknown tool') || packResult?.error;
 
@@ -257,7 +333,7 @@ async function injectMemoryPack() {
     } else {
       log('[SessionStart] memory_pack not available, trying memory_search');
       const searchResult = await callMcpTool('memory_search', {
-        query: `${repoSlug} development patterns decisions`,
+        query: query,
         limit: 20,
       }, headers);
 

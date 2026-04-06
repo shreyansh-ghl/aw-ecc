@@ -155,6 +155,60 @@ function stripTranscriptNoise(text) {
 
 // extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract
 
+const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
+
+/**
+ * Phase 3 (v3): Load served memory IDs from session-start to dedup supplemental injection.
+ */
+function loadServedMemoryIds() {
+  try {
+    const sessionId = process.env.CLAUDE_SESSION_ID || 'default';
+    const filePath = path.join(MEMORY_IDS_DIR, `${sessionId}.json`);
+    if (!fs.existsSync(filePath)) return new Set();
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    return new Set(data.ids || []);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Phase 3 (v3): Search for supplemental memories relevant to the compaction
+ * topic that weren't in the session-start pack, and output them to stdout
+ * so Claude sees them post-compaction.
+ */
+async function injectSupplementalMemories(summary, headers) {
+  try {
+    const topicQuery = summary.substring(0, 500);
+    const result = await callMcpTool('memory_search', {
+      query: topicQuery,
+      limit: 5,
+    }, headers);
+
+    const memories = Array.isArray(result) ? result
+      : (result?.memories || result?.results || []);
+    if (!memories || memories.length === 0) return;
+
+    const servedIds = loadServedMemoryIds();
+    const supplemental = memories
+      .filter(m => m.content && m.content.length < 300 && m.id && !servedIds.has(m.id))
+      .slice(0, 3);
+
+    if (supplemental.length === 0) return;
+
+    const lines = supplemental.map(m => {
+      const tags = [m.layer, ...(m.overlay || [])].filter(Boolean).join(',');
+      return `[${tags}] ${m.content}`;
+    });
+
+    const block = `\n<supplemental-memories source="compaction-retrieval" count="${supplemental.length}">\n${lines.join('\n')}\n</supplemental-memories>\n`;
+    process.stdout.write(block);
+    console.error(`[compaction-extract] Injected ${supplemental.length} supplemental memories`);
+  } catch (err) {
+    console.error(`[compaction-extract] Supplemental injection failed: ${err.message}`);
+  }
+}
+
 /**
  * run() export for in-process execution via run-with-flags.js.
  * Fires memory extraction asynchronously and returns input unchanged.
@@ -218,6 +272,9 @@ async function extractAndStore(rawInput) {
 
     // Record successful extraction for dedup
     recordExtraction(sessionId, summary);
+
+    // Phase 3 (v3): Inject supplemental memories based on compaction topic
+    await injectSupplementalMemories(summary, headers);
   } catch (err) {
     console.error(`[compaction-extract] Batch extraction failed, queuing offline: ${err.message}`);
     // Queue for later if MCP unreachable
