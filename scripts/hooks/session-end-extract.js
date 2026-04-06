@@ -4,8 +4,8 @@
  * Fires at end of Claude Code session to extract learnings and store as memories.
  *
  * Reads session transcript, identifies key learnings/decisions/patterns,
- * stores them via memory_curated_store MCP tool, and sends implicit feedback
- * for memories that were served at session start.
+ * stores them via memory_curated_store MCP tool.
+ * Feedback for served memories is handled by session-end-feedback.js (P0-1).
  *
  * Cross-platform (Windows, macOS, Linux)
  */
@@ -19,7 +19,6 @@ const { isDuplicate, recordExtraction, cleanupDedup, enqueueForExtraction, flush
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
-const MEMORY_IDS_DIR = path.join(os.tmpdir(), 'aw-memory-feedback');
 const MIN_SESSION_MINUTES = 5;
 const MAX_STDIN = 1024 * 1024;
 const MAX_TRANSCRIPT_BYTES = 2 * 1024 * 1024; // Read last 2MB of transcript
@@ -244,68 +243,6 @@ function extractToolResult(result) {
   return result;
 }
 
-/**
- * Load served memory IDs from the temp file written by session-start.js.
- * Returns { ids: string[], timestamp: number } or null.
- */
-function loadServedMemoryIds() {
-  try {
-    const sessionId = process.env.CLAUDE_SESSION_ID || 'default';
-    const filePath = path.join(MEMORY_IDS_DIR, `${sessionId}.json`);
-    if (!fs.existsSync(filePath)) return null;
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    // Clean up the temp file after reading
-    try { fs.unlinkSync(filePath); } catch { /* best effort */ }
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Evaluate served memories against session transcript and send feedback.
- *
- * Uses a simple heuristic: if the transcript content references concepts
- * that overlap with served memory IDs, the memory was likely useful.
- * Memories served but not referenced are marked as irrelevant.
- *
- * This is a lightweight approximation — the LLM-based evaluation
- * described in the PRD would require a separate API call.
- */
-async function sendImplicitFeedback(servedData, transcriptContent, headers) {
-  if (!servedData || !servedData.ids || servedData.ids.length === 0) return;
-
-  const servedIds = servedData.ids;
-  console.log(`[memory-extract] Evaluating ${servedIds.length} served memories for feedback`);
-
-  // Calculate session duration as a proxy for engagement
-  const sessionStartTs = servedData.timestamp || 0;
-  const sessionDurationMs = sessionStartTs > 0 ? Date.now() - sessionStartTs : 0;
-  const sessionMinutes = Math.floor(sessionDurationMs / 60000);
-
-  // Heuristic: if session was very short (<2 min), memories were likely not used
-  // If session was normal length, assume memories were at least somewhat useful
-  const wasShortSession = sessionMinutes < 2;
-
-  for (const memoryId of servedIds) {
-    try {
-      const feedbackType = wasShortSession ? 'invalidate' : 'validate';
-
-      await callMcpTool('memory_feedback', {
-        memory_id: memoryId,
-        feedback_type: feedbackType,
-        actor_type: 'agent',
-        actor_id: 'session-end-extract',
-        reason: `Session duration: ${sessionMinutes}min. Implicit feedback from session lifecycle.`,
-      }, headers);
-
-      console.log(`[memory-extract] Feedback sent for ${memoryId}: ${feedbackType}`);
-    } catch (err) {
-      console.error(`[memory-extract] Failed to send feedback for ${memoryId}: ${err.message}`);
-    }
-  }
-}
-
 async function main() {
   // Try to get transcript content from multiple sources:
   // 1. stdin JSON with transcript_path (from Stop hook or SessionEnd)
@@ -332,10 +269,7 @@ async function main() {
     return;
   }
 
-  // Load served memory IDs once (loadServedMemoryIds deletes the temp file after reading)
-  const servedData = loadServedMemoryIds();
-
-  // Estimate session duration from transcript file age or served memory timestamp
+  // Estimate session duration from transcript file age
   let sessionDuration = parseInt(process.env.SESSION_DURATION_MINUTES || '0', 10);
   if (sessionDuration === 0 && transcriptPath) {
     try {
@@ -343,24 +277,10 @@ async function main() {
       sessionDuration = Math.floor((Date.now() - stat.birthtimeMs) / 60000);
     } catch { /* best effort */ }
   }
-  if (sessionDuration === 0 && servedData && servedData.timestamp) {
-    sessionDuration = Math.floor((Date.now() - servedData.timestamp) / 60000);
-  }
 
   // Resolve config and build namespace-scoped headers for MCP calls
   const cfg = resolveConfig();
   const headers = buildMcpHeaders(cfg);
-
-  // --- Phase 1: Send implicit feedback for served memories ---
-  // Runs BEFORE the session duration check — short sessions still send feedback
-  // (short session → invalidate, normal session → validate)
-  if (servedData) {
-    try {
-      await sendImplicitFeedback(servedData, transcriptContent, headers);
-    } catch (err) {
-      console.error(`[memory-extract] Feedback phase failed: ${err.message}`);
-    }
-  }
 
   // Only extract from sessions > 5 minutes (PRD resolved decision)
   if (sessionDuration > 0 && sessionDuration < MIN_SESSION_MINUTES) {
@@ -443,6 +363,5 @@ if (typeof module !== 'undefined' && module.exports && require.main !== module) 
     stripTranscriptNoise,
     extractTextFromTranscript,
     computeAncestry,
-    loadServedMemoryIds,
   };
 }

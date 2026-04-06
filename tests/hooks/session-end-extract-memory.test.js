@@ -177,43 +177,24 @@ if (mod && mod.computeAncestry) {
 }
 
 // ──────────────────────────────────────────────────────
-// Test group 4: loadServedMemoryIds
+// Test group 4: feedback removed (P0-1)
 // ──────────────────────────────────────────────────────
 
-console.log('\n--- loadServedMemoryIds ---');
+console.log('\n--- feedback removed (P0-1) ---');
 
-if (mod && mod.loadServedMemoryIds) {
-  test('Returns null when file does not exist', () => {
-    const origEnv = process.env.CLAUDE_SESSION_ID;
-    process.env.CLAUDE_SESSION_ID = 'nonexistent-' + Date.now();
-    const result = mod.loadServedMemoryIds();
-    assert.strictEqual(result, null, 'Should return null for missing file');
-    process.env.CLAUDE_SESSION_ID = origEnv;
-  });
+test('loadServedMemoryIds is NOT exported (feedback moved to session-end-feedback.js)', () => {
+  assert.ok(!mod || !mod.loadServedMemoryIds, 'loadServedMemoryIds should not be exported');
+});
 
-  test('Returns data object from valid file', () => {
-    const tmpDir = path.join(os.tmpdir(), 'aw-memory-feedback');
-    try { fs.mkdirSync(tmpDir, { recursive: true }); } catch { /* exists */ }
+test('sendImplicitFeedback function does not exist in source', () => {
+  const src = fs.readFileSync(hookPath, 'utf8');
+  assert.ok(!src.includes('function sendImplicitFeedback'), 'sendImplicitFeedback should be removed');
+});
 
-    const sessionId = 'test-extract-served-' + Date.now();
-    const filePath = path.join(tmpDir, `${sessionId}.json`);
-    fs.writeFileSync(filePath, JSON.stringify({ ids: ['id-x', 'id-y'] }));
-
-    const origEnv = process.env.CLAUDE_SESSION_ID;
-    process.env.CLAUDE_SESSION_ID = sessionId;
-
-    const result = mod.loadServedMemoryIds();
-    assert.ok(result !== null, 'Should return non-null');
-    assert.deepStrictEqual(result.ids, ['id-x', 'id-y'], 'Should contain correct IDs');
-
-    process.env.CLAUDE_SESSION_ID = origEnv;
-  });
-} else {
-  test('loadServedMemoryIds function exists in source', () => {
-    const src = fs.readFileSync(hookPath, 'utf8');
-    assert.ok(src.includes('function loadServedMemoryIds'), 'loadServedMemoryIds should be defined');
-  });
-}
+test('MEMORY_IDS_DIR constant does not exist in source', () => {
+  const src = fs.readFileSync(hookPath, 'utf8');
+  assert.ok(!src.includes('MEMORY_IDS_DIR'), 'MEMORY_IDS_DIR should be removed');
+});
 
 // ──────────────────────────────────────────────────────
 // Summary
