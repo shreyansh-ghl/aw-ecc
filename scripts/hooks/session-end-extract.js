@@ -15,6 +15,7 @@ const path = require('path');
 const os = require('os');
 
 const { resolveMcpUrl } = require('../lib/mcp-url');
+const { emitMemoryTelemetry } = require('../lib/memory-telemetry');
 const { isDuplicate, recordExtraction, cleanupDedup, enqueueForExtraction, flushQueue } = require('../lib/dedup');
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
@@ -341,14 +342,31 @@ async function main() {
     const created = result?.created ?? 0;
     const updated = result?.updated ?? 0;
     const skipped = result?.skipped ?? 0;
+    const contradicted = result?.contradicted ?? 0;
     console.log(`[memory-extract] Batch extract: ${extracted} extracted, ${created} created, ${updated} updated, ${skipped} skipped`);
 
     // Record successful extraction for dedup
     recordExtraction(sessionId, extractContent);
+
+    emitMemoryTelemetry('hook.session_end.extraction', {
+      content_chars: extractContent.length,
+      candidates_extracted: extracted,
+      created,
+      updated,
+      skipped,
+      contradicted,
+    }, {
+      source: 'hook:session-end-extract',
+      namespace: sessionMetadata?.namespace,
+    });
   } catch (err) {
     console.error(`[memory-extract] Batch extraction failed, queuing offline: ${err.message}`);
-    // Phase 3: Queue for later if MCP unreachable
     enqueueForExtraction(extractContent, 'session-end', sessionMetadata);
+
+    emitMemoryTelemetry('hook.session_end.extraction_failed', {
+      error: err.message,
+      content_chars: extractContent.length,
+    }, { source: 'hook:session-end-extract' });
   }
 
   // Cleanup dedup file at session end (session is over, no more extractions)

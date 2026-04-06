@@ -28,6 +28,7 @@ const { listAliases } = require('../lib/session-aliases');
 const { detectProjectType } = require('../lib/project-detect');
 
 const { resolveMcpUrl } = require('../lib/mcp-url');
+const { emitMemoryTelemetry } = require('../lib/memory-telemetry');
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
 const REGISTRY_DIR = '.aw_registry';
@@ -360,8 +361,20 @@ async function injectMemoryPack() {
 
     output(`<team-memory source="memory-pack" memories="${memoriesCount}">\n${packContent}\n</team-memory>`);
     log(`[SessionStart] Injected memory pack: ${memoriesCount} memories`);
+
+    emitMemoryTelemetry('hook.session_start.pack_served', {
+      memories_served: memoriesCount,
+      served_ids_count: servedIds.length,
+      source: localContent ? 'local_cache' : 'mcp',
+    }, {
+      source: 'hook:session-start',
+      namespace: cfg?.namespace,
+    });
   } catch (err) {
     log(`[SessionStart] Memory pack failed: ${err.message}`);
+    emitMemoryTelemetry('hook.session_start.pack_failed', {
+      error: err.message,
+    }, { source: 'hook:session-start' });
   }
 }
 

@@ -20,6 +20,7 @@ const path = require('path');
 const os = require('os');
 
 const { resolveMcpUrl } = require('../lib/mcp-url');
+const { emitMemoryTelemetry } = require('../lib/memory-telemetry');
 
 const MCP_BASE_URL = resolveMcpUrl();
 const AW_HOME = path.join(os.homedir(), '.aw');
@@ -229,14 +230,29 @@ async function main() {
   const headers = buildMcpHeaders(namespace);
 
   // Send feedback for each served memory ID (best-effort)
+  let sentCount = 0;
+  let failedCount = 0;
   for (const memoryId of servedData.ids) {
     try {
       await sendFeedback(memoryId, feedbackType, reason, headers);
       console.error(`[memory-feedback] Sent ${feedbackType} for ${memoryId}`);
+      sentCount++;
     } catch (err) {
       console.error(`[memory-feedback] Failed for ${memoryId}: ${err.message}`);
+      failedCount++;
     }
   }
+
+  emitMemoryTelemetry('hook.session_end.feedback', {
+    feedback_type: feedbackType,
+    total_ids: servedData.ids.length,
+    sent: sentCount,
+    failed: failedCount,
+    had_error: hadError,
+  }, {
+    source: 'hook:session-end-feedback',
+    namespace,
+  });
 
   // Pass through stdin unchanged
   process.stdout.write(stdinData);
