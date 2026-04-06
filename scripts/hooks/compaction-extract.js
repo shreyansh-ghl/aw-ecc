@@ -140,6 +140,19 @@ function extractToolResult(result) {
   return result;
 }
 
+/**
+ * Strip known noise patterns from text before sending to extraction.
+ * Phase 1 (v3): Client-side pre-filter to reduce noise reaching the LLM.
+ */
+function stripTranscriptNoise(text) {
+  return text
+    .replace(/^\s*\{["\s]*(?:parentUuid|isSidechain|jsonrpc|type.*progress|result.*content).*$/gm, '')
+    .replace(/[A-Za-z0-9+/]{100,}={0,2}/g, '[binary-data]')
+    .replace(/\[(?:-?\d+\.?\d*,?\s*){20,}\]/g, '[embedding-vector]')
+    .replace(/^(?:     \d+→).+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 // extractCandidates() regex removed in Phase 2 — server-side LLM extraction via memory_batch_extract
 
 /**
@@ -175,6 +188,9 @@ async function extractAndStore(rawInput) {
     console.error('[compaction-extract] Summary too short, skipping');
     return;
   }
+
+  // Phase 1 (v3): Strip noise before extraction
+  summary = stripTranscriptNoise(summary);
 
   // Phase 3: SHA-256 dedup — skip if same content already extracted this session
   const sessionId = process.env.CLAUDE_SESSION_ID || 'default';

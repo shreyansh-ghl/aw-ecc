@@ -77,6 +77,25 @@ function extractTextFromTranscript(transcriptPath) {
   }
 }
 
+/**
+ * Strip known noise patterns from transcript text before sending to extraction.
+ * Removes JSON objects, tool output, progress events, and binary noise.
+ * Phase 1 (v3): Client-side pre-filter to reduce noise reaching the LLM.
+ */
+function stripTranscriptNoise(text) {
+  return text
+    // Remove JSON object lines (tool results, progress events)
+    .replace(/^\s*\{["\s]*(?:parentUuid|isSidechain|jsonrpc|type.*progress|result.*content).*$/gm, '')
+    // Remove base64/binary data
+    .replace(/[A-Za-z0-9+/]{100,}={0,2}/g, '[binary-data]')
+    // Remove embedding arrays
+    .replace(/\[(?:-?\d+\.?\d*,?\s*){20,}\]/g, '[embedding-vector]')
+    // Remove raw code blocks that are just file contents (not discussions about code)
+    .replace(/^(?:     \d+→).+$/gm, '') // Line-numbered file output from Read tool
+    // Collapse multiple blank lines
+    .replace(/\n{3,}/g, '\n\n');
+}
+
 let stdinData = '';
 process.stdin.setEncoding('utf8');
 
@@ -352,10 +371,13 @@ async function main() {
     return;
   }
 
+  // Phase 1 (v3): Strip noise before extraction
+  const cleanedContent = stripTranscriptNoise(transcriptContent);
+
   // Truncate to 100K chars (tail — recent context is higher signal)
-  const extractContent = transcriptContent.length > 100000
-    ? transcriptContent.slice(-100000)
-    : transcriptContent;
+  const extractContent = cleanedContent.length > 100000
+    ? cleanedContent.slice(-100000)
+    : cleanedContent;
 
   // Phase 3: SHA-256 dedup — skip if content unchanged since last extraction
   const sessionId = process.env.CLAUDE_SESSION_ID || 'default';
