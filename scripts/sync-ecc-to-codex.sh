@@ -501,6 +501,57 @@ if [[ "$MODE" == "apply" ]]; then
   sort -u "$extension_manifest" -o "$extension_manifest"
 fi
 
+log "Ensuring [features] codex_hooks = true in $CONFIG_FILE"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] ensure [features] codex_hooks = true in %s\n' "$CONFIG_FILE"
+else
+  if grep -q '^\[features\]' "$CONFIG_FILE" 2>/dev/null; then
+    # [features] section exists — ensure codex_hooks = true
+    if ! grep -q 'codex_hooks' "$CONFIG_FILE" 2>/dev/null; then
+      sed -i.bak '/^\[features\]/a\
+codex_hooks = true' "$CONFIG_FILE"
+      rm -f "$CONFIG_FILE.bak"
+      log "Added codex_hooks = true to existing [features] section"
+    fi
+  else
+    # No [features] section — append it
+    printf '\n[features]\ncodex_hooks = true\n' >> "$CONFIG_FILE"
+    log "Added [features] section with codex_hooks = true"
+  fi
+fi
+
+log "Generating Codex hooks.json for memory extraction"
+CODEX_HOOKS_JSON="$CODEX_HOME/hooks.json"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] write %s\n' "$CODEX_HOOKS_JSON"
+else
+  cat > "$CODEX_HOOKS_JSON" <<'HOOKEOF'
+{
+  "hooks": {
+    "Stop": [
+      {
+        "command": "node \"$HOME/.codex/hooks/session-stop-marker.js\"",
+        "description": "Extract memories from transcript on every response"
+      }
+    ],
+    "SessionStart": [
+      {
+        "command": "node \"$HOME/.codex/hooks/aw-session-start.sh\"",
+        "description": "Load previous context and inject memory pack"
+      }
+    ]
+  }
+}
+HOOKEOF
+  log "Generated $CODEX_HOOKS_JSON"
+
+  # Copy hook scripts to Codex hooks dir
+  mkdir -p "$CODEX_HOOKS_DIR"
+  cp "$REPO_ROOT/scripts/hooks/session-stop-marker.js" "$CODEX_HOOKS_DIR/session-stop-marker.js"
+  cp "$REPO_ROOT/scripts/hooks/session-end-extract.js" "$CODEX_HOOKS_DIR/session-end-extract.js"
+  log "Copied extraction scripts to $CODEX_HOOKS_DIR"
+fi
+
 log "Merging ECC MCP servers into $CONFIG_FILE (add-only, preserving user config)"
 if [[ "$MODE" == "dry-run" ]]; then
   node "$MCP_MERGE_SCRIPT" "$CONFIG_FILE" --dry-run $UPDATE_MCP

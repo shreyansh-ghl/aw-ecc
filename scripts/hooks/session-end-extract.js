@@ -287,7 +287,7 @@ async function sendImplicitFeedback(servedData, transcriptContent, headers) {
 
 async function main() {
   // Try to get transcript content from multiple sources:
-  // 1. stdin JSON with transcript_path (from Stop hook — Claude Code provides this)
+  // 1. stdin JSON with transcript_path (from Stop hook or SessionEnd)
   // 2. SESSION_SUMMARY env var (manual/test invocation)
   let transcriptContent = '';
   let transcriptPath = '';

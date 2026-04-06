@@ -6,5 +6,11 @@ readStdin().then(raw => {
   if (hookEnabled('session:end:marker', ['minimal', 'standard', 'strict'])) {
     runExistingHook('session-end-marker.js', claudeInput);
   }
+  if (hookEnabled('session:end:memory-extract', ['standard', 'strict'])) {
+    runExistingHook('session-end-extract.js', claudeInput);
+  }
+  if (hookEnabled('session:end:memory-feedback', ['standard', 'strict'])) {
+    runExistingHook('session-end-feedback.js', claudeInput);
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));
