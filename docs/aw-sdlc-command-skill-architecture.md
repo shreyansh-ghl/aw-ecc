@@ -65,7 +65,7 @@ Keep examples and long checklists out of the core `SKILL.md` files unless they m
 
 The intended stack is:
 
-`intent -> process skill(s) -> primary stage skill -> public command contract -> references and helper skills -> deterministic outputs`
+`intent -> process skill(s) -> primary stage skill -> using-platform-skills when needed -> public command contract -> references and helper skills -> deterministic outputs`
 
 This supports both:
 
@@ -170,7 +170,7 @@ Typical supporting skills:
 - `aw-brainstorm`
 - `aw-spec`
 - `aw-tasks`
-- product/spec-writing skills
+- product context skills
 - design planning skills
 - architecture/design skills
 - platform docs and `.aw_rules`

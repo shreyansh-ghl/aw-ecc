@@ -48,11 +48,11 @@ Sources:
 - [aw-archetype-scenarios.json](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/fixtures/aw-archetype-scenarios.json)
 - [aw-product-scenarios.json](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/fixtures/aw-product-scenarios.json)
 - [aw-revex-history-benchmark.json](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/fixtures/aw-revex-history-benchmark.json)
-- [aw-addy-validation-matrix.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/aw-addy-validation-matrix.test.js)
-- [aw-archetype-scenarios.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/aw-archetype-scenarios.test.js)
-- [aw-product-scenarios.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/aw-product-scenarios.test.js)
-- [aw-revex-history-benchmark.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/aw-revex-history-benchmark.test.js)
-- [aw-sdlc-skill-trigger-coverage.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/aw-sdlc-skill-trigger-coverage.test.js)
+- [aw-addy-validation-matrix.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/capability/aw-addy-validation-matrix.test.js)
+- [aw-archetype-scenarios.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/scenarios/aw-archetype-scenarios.test.js)
+- [aw-product-scenarios.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/scenarios/aw-product-scenarios.test.js)
+- [aw-revex-history-benchmark.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/history/aw-revex-history-benchmark.test.js)
+- [aw-sdlc-skill-trigger-coverage.test.js](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/deterministic/capability/aw-sdlc-skill-trigger-coverage.test.js)
 
 ## Live Benchmark
 
@@ -99,12 +99,12 @@ Use the scorecard like this:
 
 ### Fast local benchmark
 
-- `node tests/evals/deterministic/aw-addy-validation-matrix.test.js`
-- `node tests/evals/deterministic/aw-archetype-scenarios.test.js`
-- `node tests/evals/deterministic/aw-product-scenarios.test.js`
-- `node tests/evals/deterministic/aw-revex-history-benchmark.test.js`
-- `node tests/evals/deterministic/aw-sdlc-skill-trigger-coverage.test.js`
-- `node tests/evals/deterministic/aw-eval-benchmark-scorecard.test.js`
+- `node tests/evals/deterministic/capability/aw-addy-validation-matrix.test.js`
+- `node tests/evals/deterministic/scenarios/aw-archetype-scenarios.test.js`
+- `node tests/evals/deterministic/scenarios/aw-product-scenarios.test.js`
+- `node tests/evals/deterministic/history/aw-revex-history-benchmark.test.js`
+- `node tests/evals/deterministic/capability/aw-sdlc-skill-trigger-coverage.test.js`
+- `node tests/evals/deterministic/capability/aw-eval-benchmark-scorecard.test.js`
 
 ### Focused live benchmark
 

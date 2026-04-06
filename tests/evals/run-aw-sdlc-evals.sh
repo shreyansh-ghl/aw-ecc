@@ -42,26 +42,48 @@ run_optional_test_group() {
   return 0
 }
 
+resolve_deterministic_test() {
+  local basename="$1"
+  local resolved
+
+  resolved="$(find "$DETERMINISTIC_DIR" -type f -name "$basename" | sort | head -n 1)"
+  if [[ -z "$resolved" ]]; then
+    echo "Missing deterministic test: $basename" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$resolved"
+}
+
+run_deterministic_test() {
+  local title="$1"
+  local basename="$2"
+  local resolved
+
+  resolved="$(resolve_deterministic_test "$basename")"
+  run "$title" node "$resolved"
+}
+
 run_deterministic() {
-  run "Addy validation matrix" node "$DETERMINISTIC_DIR/aw-addy-validation-matrix.test.js"
-  run "Archetype scenarios" node "$DETERMINISTIC_DIR/aw-archetype-scenarios.test.js"
-  run "Product scenarios" node "$DETERMINISTIC_DIR/aw-product-scenarios.test.js"
-  run "RevEx history benchmark" node "$DETERMINISTIC_DIR/aw-revex-history-benchmark.test.js"
-  run "RevEx history phase 2 contract" node "$DETERMINISTIC_DIR/aw-revex-history-phase2-contract.test.js"
-  run "Eval benchmark scorecard" node "$DETERMINISTIC_DIR/aw-eval-benchmark-scorecard.test.js"
-  run "Goal gates" node "$DETERMINISTIC_DIR/aw-sdlc-goal-gates.test.js"
-  run "Command contract completeness" node "$DETERMINISTIC_DIR/aw-sdlc-command-contract-completeness.test.js"
-  run "Command/skill mapping" node "$DETERMINISTIC_DIR/aw-sdlc-command-skill-mapping.test.js"
-  run "Command quality" node "$DETERMINISTIC_DIR/aw-sdlc-command-quality.test.js"
-  run "Command boundaries" node "$DETERMINISTIC_DIR/aw-sdlc-command-boundaries.test.js"
-  run "Ship command" node "$DETERMINISTIC_DIR/aw-sdlc-ship-command.test.js"
-  run "Customer coverage" node "$DETERMINISTIC_DIR/aw-sdlc-customer-coverage.test.js"
-  run "Default session coverage" node "$DETERMINISTIC_DIR/aw-sdlc-default-session-coverage.test.js"
-  run "Session hook precedence" node "$DETERMINISTIC_DIR/aw-sdlc-session-hook-precedence.test.js"
+  run_deterministic_test "Addy validation matrix" "aw-addy-validation-matrix.test.js"
+  run_deterministic_test "Archetype scenarios" "aw-archetype-scenarios.test.js"
+  run_deterministic_test "Product scenarios" "aw-product-scenarios.test.js"
+  run_deterministic_test "RevEx history benchmark" "aw-revex-history-benchmark.test.js"
+  run_deterministic_test "RevEx history phase 2 contract" "aw-revex-history-phase2-contract.test.js"
+  run_deterministic_test "Eval benchmark scorecard" "aw-eval-benchmark-scorecard.test.js"
+  run_deterministic_test "Goal gates" "aw-sdlc-goal-gates.test.js"
+  run_deterministic_test "Command contract completeness" "aw-sdlc-command-contract-completeness.test.js"
+  run_deterministic_test "Command/skill mapping" "aw-sdlc-command-skill-mapping.test.js"
+  run_deterministic_test "Command quality" "aw-sdlc-command-quality.test.js"
+  run_deterministic_test "Command boundaries" "aw-sdlc-command-boundaries.test.js"
+  run_deterministic_test "Ship command" "aw-sdlc-ship-command.test.js"
+  run_deterministic_test "Customer coverage" "aw-sdlc-customer-coverage.test.js"
+  run_deterministic_test "Default session coverage" "aw-sdlc-default-session-coverage.test.js"
+  run_deterministic_test "Session hook precedence" "aw-sdlc-session-hook-precedence.test.js"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-activation-*.test.js" "Activation"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-worktree-*.test.js" "Worktree"
-  run "GHL staging baselines" node "$DETERMINISTIC_DIR/aw-sdlc-ghl-staging-baselines.test.js"
-  run "Eval workspace isolation" node "$DETERMINISTIC_DIR/aw-sdlc-eval-workspace-isolation.test.js"
+  run_deterministic_test "GHL staging baselines" "aw-sdlc-ghl-staging-baselines.test.js"
+  run_deterministic_test "Eval workspace isolation" "aw-sdlc-eval-workspace-isolation.test.js"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-plan-*.test.js" "Plan"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-brainstorm-*.test.js" "Brainstorm"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-prepare-*.test.js" "Preparation"
@@ -70,10 +92,10 @@ run_deterministic() {
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-finish-*.test.js" "Finish"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-install*.test.js" "Installability"
   run "Outcomes coverage" node "$OUTCOMES_DIR/aw-sdlc-outcomes-coverage.test.js"
-  run "Skill trigger coverage" node "$DETERMINISTIC_DIR/aw-sdlc-skill-trigger-coverage.test.js"
+  run_deterministic_test "Skill trigger coverage" "aw-sdlc-skill-trigger-coverage.test.js"
   run "Outcome artifact contract" node "$OUTCOMES_DIR/aw-sdlc-outcome-artifact-contract.test.js"
   run "Outcome release generator" node "$OUTCOMES_DIR/aw-sdlc-outcome-release-generator.test.js"
-  run "BDD coverage" node "$DETERMINISTIC_DIR/aw-sdlc-bdd-coverage.test.js"
+  run_deterministic_test "BDD coverage" "aw-sdlc-bdd-coverage.test.js"
 }
 
 run_routing() {
@@ -119,6 +141,17 @@ run_routing_golden_path() {
   run "Routing PR + staging golden path" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-routing-golden-path.sh"
 }
 
+run_named_suite() {
+  local suite_id="$1"
+  local mode_filter="${2:-}"
+
+  if [[ -n "$mode_filter" ]]; then
+    run "Eval suite ${suite_id} (${mode_filter})" node "$EVALS_DIR/run-aw-suite.js" "$suite_id" "$mode_filter"
+  else
+    run "Eval suite ${suite_id}" node "$EVALS_DIR/run-aw-suite.js" "$suite_id"
+  fi
+}
+
 case "$MODE" in
   deterministic)
     run_deterministic
@@ -151,12 +184,22 @@ case "$MODE" in
   routing-golden-path|live-golden-path)
     run_routing_golden_path
     ;;
+  suite)
+    if [[ -z "${2:-}" ]]; then
+      echo "Usage: $0 suite <suite-id> [deterministic|routing|outcomes]" >&2
+      exit 1
+    fi
+    run_named_suite "$2" "${3:-}"
+    ;;
+  list-suites)
+    node "$EVALS_DIR/run-aw-suite.js" --list
+    ;;
   all)
     run_deterministic
     run_routing
     ;;
   *)
-    echo "Usage: $0 [deterministic|routing|routing-full|outcomes|revex-history|revex-history-smoke|outcomes-parallel|standalone-smoke|outcome-artifacts|routing-golden-path|all]" >&2
+    echo "Usage: $0 [deterministic|routing|routing-full|outcomes|revex-history|revex-history-smoke|outcomes-parallel|standalone-smoke|outcome-artifacts|routing-golden-path|suite <suite-id> [deterministic|routing|outcomes]|list-suites|all]" >&2
     exit 1
     ;;
 esac

@@ -2,10 +2,33 @@
 
 This document explains how `aw-ecc` testing is structured at a high level.
 
-The most important distinction is that we track two different dimensions:
+The most important distinction is that we track three different dimensions:
 
-1. scenario layers: what kind of workflow or business case we are testing
-2. execution modes: how we test it
+1. ownership: which commands, skills, and supporting assets a suite validates
+2. scenario layers: what kind of workflow or business case we are testing
+3. execution modes: how we test it
+
+## Ownership View
+
+Start with [tests/evals/suites.json](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/suites.json) when you want the shortest path from repo behavior to eval coverage.
+That root index points to suite manifests under [tests/evals/suites](/Users/prathameshai/Documents/Agentic%20Workspace/aw-ecc/tests/evals/suites), which is now the easiest way to understand one eval family at a time.
+
+That manifest answers:
+
+- which command or skill owns a suite
+- which test files belong to that suite
+- which fixtures feed it
+- which docs explain it
+
+This is the preferred navigation view when the repo grows.
+The physical buckets still matter for execution, but ownership should be the first reading path for humans.
+
+Owner-local eval definitions now live next to the behaviors they validate when that improves discoverability:
+
+- `skills/*/evals/` for skill-owned trigger cases and stage cases
+- `agents/evals/` for agent-owned scenarios
+
+Central runners, shared schemas, benchmark harnesses, and result ledgers stay under `tests/evals/` and `tests/results/`.
 
 ## Execution Modes
 
@@ -112,18 +135,28 @@ The remaining work is stabilization plus pack expansion: candidate generation st
 
 ## Storage Standard
 
-Use fixture-first storage.
+Use owner-local definitions where discovery matters, but keep execution centralized and machine-readable.
 
 Machine-readable source of truth:
 
 - `tests/evals/fixtures/*.json`
 - `tests/evals/schemas/*.json`
+- `tests/evals/suites.json`
+- `tests/evals/suites/*.json`
+- `skills/*/evals/*`
+- `agents/evals/*`
 
 Repo-executable checks:
 
 - `tests/evals/deterministic/`
 - `tests/evals/routing/`
 - `tests/evals/outcomes/`
+
+Within `tests/evals/deterministic/`, tests are now physically grouped by family:
+
+- `capability/`
+- `scenarios/`
+- `history/`
 
 Human-readable summaries:
 
@@ -173,3 +206,14 @@ The current capability layer is strong, but the next confidence jump comes from 
 2. routing and outcome suites for the product-specific golden scenarios
 3. stabilization and repeat-run confidence for the new RevEx history benchmark Phase 2 loop
 4. repeated routing benchmark runs so routing accuracy is tracked over time, not only as one-off samples
+
+## Recommended Structural Rule
+
+Keep executable evals centralized under `tests/evals`, but keep definitions close to owners when that improves comprehension:
+
+- commands should be discoverable through suite ownership
+- stage skills should keep trigger cases or local scenario definitions under `skills/*/evals/` when those cases explain the behavior
+- agents should keep scenario definitions under `agents/evals/` when they have distinct review or orchestration behavior
+- central deterministic, routing, and outcome runners should read those owner-local assets instead of duplicating them
+
+That gives us central execution without losing local discoverability.

@@ -85,14 +85,14 @@ We validate this with three execution buckets:
    - every referenced ECC skill exists on disk
    - the route -> primary skill mapping matches the AW public surface
 2. Trigger-matrix checks:
-   - the natural-language prompts in `skills/using-aw-skills/tests/skill-trigger-cases.tsv` cover the cross-cutting craft skills as well as the stage routes
-3. Live routing checks:
+   - the natural-language prompts in `skills/using-aw-skills/evals/skill-trigger-cases.tsv` cover the cross-cutting craft skills as well as the stage routes
+3. Routing checks:
    - Codex/Claude should be run against a representative subset of these prompts to verify the router actually mentions the expected route and supporting skills
-4. Real outcome checks:
+4. Outcome checks:
    - once routing is correct, the end-to-end suites should verify the expected artifacts and release outcomes for the same scenarios where applicable
 
 In plain language:
 
 - deterministic = contract correctness
-- live = routing correctness
-- real = outcome correctness
+- routing = routing correctness
+- outcomes = outcome correctness

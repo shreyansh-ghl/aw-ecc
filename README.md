@@ -9,17 +9,17 @@
 The current catalog exposed by this repo is:
 
 - 28 agents
-- 156 skills
+- 157 skills
 - 69 commands
 
 ## Quick Start Snapshot
 
-Installing `aw-ecc` gives your workspace access to 28 agents, 156 skills, and 69 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
+Installing `aw-ecc` gives your workspace access to 28 agents, 157 skills, and 69 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
 
 | Surface | Availability |
 | --- | --- |
 | Agents | ✅ 28 agents |
-| Skills | ✅ 156 skills |
+| Skills | ✅ 157 skills |
 | Commands | ✅ 69 commands |
 
 These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
@@ -93,6 +93,7 @@ Each stage skill should also activate the matching GHL platform skill family by 
 - review depth -> `platform-review:*`
 
 The namespace families let the model auto-discover GHL platform skills without hardcoding every individual name.
+After the primary AW stage is selected, `using-platform-skills` should choose the smallest supporting platform stack.
 
 ## Org Standards
 

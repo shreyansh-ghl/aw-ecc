@@ -8,7 +8,7 @@ module.exports = [
             '.cursor/**',
             'node_modules/**',
             'tests/results/**',
-            'skills/using-aw-skills/tests/results/**'
+            'skills/using-aw-skills/evals/results/**'
         ]
     },
     js.configs.recommended,

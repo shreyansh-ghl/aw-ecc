@@ -1,0 +1,32 @@
+{
+  "id": "owner-local-skill-and-agent-assets",
+  "layer": "capability",
+  "modes": ["deterministic"],
+  "owners": {
+    "commands": [],
+    "skills": [
+      "skills/using-aw-skills/SKILL.md",
+      "skills/using-platform-skills/SKILL.md",
+      "skills/aw-build/SKILL.md",
+      "skills/aw-deploy/SKILL.md"
+    ],
+    "agents": [
+      "agents/code-reviewer.md"
+    ]
+  },
+  "tests": [
+    "tests/evals/deterministic/capability/aw-owner-local-eval-assets.test.js"
+  ],
+  "fixtures": [
+    "skills/using-aw-skills/evals/skill-trigger-cases.tsv",
+    "skills/using-aw-skills/evals/test-skill-triggers.sh",
+    "skills/using-platform-skills/evals/platform-selection-cases.json",
+    "skills/aw-build/evals/build-stage-cases.json",
+    "skills/aw-deploy/evals/deploy-stage-cases.json",
+    "agents/evals/code-reviewer-scenarios.json"
+  ],
+  "docs": [
+    "docs/aw-testing-strategy.md",
+    "tests/evals/README.md"
+  ]
+}

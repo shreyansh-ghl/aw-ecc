@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "description": "Ownership-first index for AW eval suites. Keep executable suites in tests/evals, but group the catalog into per-suite manifests under tests/evals/suites/ so readers can understand one family at a time.",
+  "suiteFiles": [
+    "suites/capability/core-routing-surface.json",
+    "suites/capability/router-and-shared-references.json",
+    "suites/capability/stage-behavior-and-stage-contracts.json",
+    "suites/capability/owner-local-skill-and-agent-assets.json",
+    "suites/capability/addy-parity-and-benchmark-contracts.json",
+    "suites/scenarios/archetype-and-product-scenarios.json",
+    "suites/history/revex-history-benchmark.json"
+  ]
+}
