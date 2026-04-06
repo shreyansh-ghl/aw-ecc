@@ -107,7 +107,7 @@
       {
         "command": "node .cursor/hooks/stop.js",
         "event": "stop",
-        "description": "Console.log audit on all modified files"
+        "description": "Console.log audit, session markers, cost tracking on all modified files"
       }
     ]
   }
