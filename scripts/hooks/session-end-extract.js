@@ -310,6 +310,9 @@ async function main() {
     return;
   }
 
+  // Load served memory IDs once (loadServedMemoryIds deletes the temp file after reading)
+  const servedData = loadServedMemoryIds();
+
   // Estimate session duration from transcript file age or served memory timestamp
   let sessionDuration = parseInt(process.env.SESSION_DURATION_MINUTES || '0', 10);
   if (sessionDuration === 0 && transcriptPath) {
@@ -318,18 +321,8 @@ async function main() {
       sessionDuration = Math.floor((Date.now() - stat.birthtimeMs) / 60000);
     } catch { /* best effort */ }
   }
-  if (sessionDuration === 0) {
-    // Check served memory timestamp as a proxy for session start
-    const servedData = loadServedMemoryIds();
-    if (servedData && servedData.timestamp) {
-      sessionDuration = Math.floor((Date.now() - servedData.timestamp) / 60000);
-    }
-  }
-
-  // Only extract from sessions > 5 minutes (PRD resolved decision)
-  if (sessionDuration > 0 && sessionDuration < MIN_SESSION_MINUTES) {
-    console.log(`[memory-extract] Session too short (${sessionDuration}min < ${MIN_SESSION_MINUTES}min), skipping`);
-    return;
+  if (sessionDuration === 0 && servedData && servedData.timestamp) {
+    sessionDuration = Math.floor((Date.now() - servedData.timestamp) / 60000);
   }
 
   // Resolve config and build namespace-scoped headers for MCP calls
@@ -337,13 +330,20 @@ async function main() {
   const headers = buildMcpHeaders(cfg);
 
   // --- Phase 1: Send implicit feedback for served memories ---
-  const servedData = loadServedMemoryIds();
+  // Runs BEFORE the session duration check — short sessions still send feedback
+  // (short session → invalidate, normal session → validate)
   if (servedData) {
     try {
       await sendImplicitFeedback(servedData, transcriptContent, headers);
     } catch (err) {
       console.error(`[memory-extract] Feedback phase failed: ${err.message}`);
     }
+  }
+
+  // Only extract from sessions > 5 minutes (PRD resolved decision)
+  if (sessionDuration > 0 && sessionDuration < MIN_SESSION_MINUTES) {
+    console.log(`[memory-extract] Session too short (${sessionDuration}min < ${MIN_SESSION_MINUTES}min), skipping extraction`);
+    return;
   }
 
   // --- Phase 2+3: Extract via server-side LLM with dedup + offline fallback ---
