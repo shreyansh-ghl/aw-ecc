@@ -1,12 +1,12 @@
 ---
 name: aw-plan
 description: Create the minimum correct planning artifacts under `.aw_docs/features/<feature_slug>/` and stop cleanly before implementation.
-trigger: User requests planning, a missing planning artifact blocks execution, or `/aw:ship` needs to move work into a build-ready state.
+trigger: User requests planning, a missing planning artifact blocks build, or `aw-yolo` needs to move work into a build-ready state.
 ---
 
 # AW Plan
 
-## Purpose
+## Overview
 
 `aw-plan` owns planning only.
 It creates the minimum correct planning artifact set for the request and always writes deterministic outputs under:
@@ -17,27 +17,49 @@ When planning is required, the output should be execution-ready for a fresh work
 That means the plan should reduce guesswork around files, validation, order, and handoff risks instead of stopping at vague prose.
 For non-trivial work, `aw-plan` should behave like a small internal planning graph rather than a single flat prompt.
 
-## Required Behavior
+## When to Use
 
-Always:
+- the user needs a PRD, design, spec, or task breakdown
+- approved work is missing a planning artifact needed by build
+- a request is too large, too fuzzy, or too risky to execute directly
+- `aw-yolo` needs to move work into a build-ready state
 
-1. load repo context, relevant platform docs, and relevant `.aw_rules`
-2. infer or honor the feature slug
-3. detect which planning artifact(s) already exist
-4. decide whether the request is already clear enough for direct planning or needs discovery first
-5. create only the missing artifact(s) required by the request
-6. make every created artifact concrete enough for the next stage to proceed without re-planning
-7. update `.aw_docs/features/<feature_slug>/state.json`
-8. stop after planning and recommend the next stage
+**When NOT to use:** when the request is already build-ready, when the issue is really investigation rather than planning, or when the user is only asking for test, review, deploy, or ship work.
+
+## Workflow
+
+1. Enter plan mode.
+   Load repo context, relevant platform docs, and relevant `.aw_rules`.
+   Planning is read-only until the planning artifacts are written.
+2. Identify the feature and current artifact state.
+   Infer or honor the feature slug.
+   Detect which planning artifacts already exist and which are actually missing.
+3. Choose the smallest internal route.
+   Decide whether the request is already clear enough for direct planning or needs discovery first.
+   For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
+4. Plan in dependency order.
+   Use dependency graph thinking to decide whether product, design, technical, or tasks work must come first.
+   For public interface or contract changes, load `api-and-interface-design`.
+   For deprecation, replacement, or migration work, load `deprecation-and-migration`.
+   For major architectural or public-behavior decisions, load `documentation-and-adrs`.
+5. Slice vertically where possible.
+   Prefer end-to-end feature slices and concrete checkpoints over horizontal batch plans.
+6. Write only the missing artifacts.
+   Make every created artifact concrete enough for the next stage to proceed without re-planning file scope, validation, and task order.
+7. Review and update state.
+   Run a placeholder and consistency pass, then update `.aw_docs/features/<feature_slug>/state.json`.
+8. Stop after planning.
+   Recommend the next stage without drifting into build, test, or deploy.
 
 ## Internal Skill Graph
 
 Use the smallest correct internal route:
 
+- raw idea or under-shaped concept -> `idea-refine`, then `aw-brainstorm` when deeper repo-aware exploration is still needed
 - fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`
 - approved direction but missing technical contract -> `aw-spec`
 - approved spec but missing execution recipe -> `aw-tasks`
-- already execution-ready tasks -> stop and recommend `aw-execute`
+- already execution-ready tasks -> stop and recommend `aw-build`
 
 Do not collapse all of these responsibilities back into one vague planning pass.
 
@@ -65,7 +87,7 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 - do not create random filenames
 - do not write implementation code
 
-## Authoring Guidance
+## Plan Document Template
 
 ### `prd.md`
 
@@ -111,7 +133,7 @@ Start with a short header that captures:
 
 - feature goal
 - architecture summary
-- execution route: `/aw:execute`
+- execution route: `/aw:build`
 - expected execution mode when it is known safely
 
 Before task sections, map the file structure:
@@ -140,6 +162,19 @@ For code behavior, prefer task steps close to:
 - commit the focused slice
 
 Each step should usually be small enough to fit in about 2-5 minutes.
+Use `references/task-sizing-and-checkpoints.md` when sizing or checkpointing gets fuzzy.
+
+## Execution-Ready Tasks
+
+`tasks.md` is not complete until a fresh worker can execute it without rediscovering the plan.
+
+Execution-ready tasks should make it obvious:
+
+- which files change first
+- which validation command or evidence target proves each slice
+- which steps are safe to parallelize
+- which slice should produce the next save-point commit
+- which blocker should send execution back to planning instead of guessing
 
 ## Plan Richness
 
@@ -161,7 +196,9 @@ Prefer including:
 The goal is not maximum verbosity.
 The goal is minimum ambiguity.
 
-## Execution-Ready Tasks
+Use `references/task-sizing-and-checkpoints.md` when task sizing, checkpoint placement, or phase boundaries start getting fuzzy.
+
+## Task Sizing Guidelines
 
 `tasks.md` should avoid vague tasks such as:
 
@@ -192,6 +229,55 @@ Planning fails if it contains placeholders such as:
 
 If execution would need to guess what a step means, planning is not complete.
 
+Use these guardrails when sizing work:
+
+| Size | Scope signal | Default action |
+|---|---|---|
+| `XS` | single-file or single-boundary clarification | keep it as one focused task |
+| `S` | one slice with one primary validation target | ideal task size |
+| `M` | 3-5 files or one vertical feature slice | acceptable when checkpoints are explicit |
+| `L` | multiple subsystems or mixed rollout risk | break it down further |
+| `XL` | broad subsystem batch or multi-phase rollout | planning failure until decomposed |
+
+If a task title needs "and", it is usually more than one task.
+If a step would take longer than one focused implementation session, break it down further.
+
+## Parallelization Opportunities
+
+Parallel work is allowed only when the write scope is clearly disjoint.
+
+- safe to parallelize:
+  - docs versus code
+  - backend versus frontend after the contract is fixed
+  - implementation versus reference/checklist preparation
+- do not parallelize:
+  - tasks that change the same files
+  - rollout-sensitive migrations
+  - tasks that depend on a helper, interface, or schema not created yet
+
+When in doubt, sequence the work and leave `parallel_candidate` off.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I’ll figure it out while building." | That is how scope drift and rework start. |
+| "The tasks are obvious, so I don’t need to write them down." | Written plans expose hidden dependencies and missing checks. |
+| "A big batch plan is faster." | Thin vertical slices are easier to verify, review, and roll back. |
+| "Planning should stay abstract." | Abstract plans force the next stage to re-plan the work. |
+
+## Red Flags
+
+- planning begins with implementation advice instead of artifact selection
+- task steps are vague enough that build would need to rediscover the file scope
+- no checkpoints exist between meaningful phases
+- multiple independent subsystems are bundled into one undifferentiated task list
+- placeholders like `TODO`, `TBD`, or "handle edge cases" remain in the artifacts
+
+## Verification
+
+The verification pass for planning is the plan self-review.
+
 ## Plan Self-Review
 
 Before ending the planning stage:
@@ -199,13 +285,16 @@ Before ending the planning stage:
 1. confirm each spec requirement maps to a task or explicit reason it is out of scope
 2. scan for placeholders and vague steps
 3. check that file paths, type names, helper names, and commands stay consistent
-4. confirm the next stage can route directly to `/aw:execute` or explicitly state what approval is still missing
+4. confirm the next stage can route directly to `/aw:build` or explicitly state what approval is still missing
+
+Treat this as the planning verification pass.
+If the plan cannot survive this self-review, it is not ready for execution handoff.
 
 ## Execution Handoff
 
 When `tasks.md` is ready:
 
-- recommend `/aw:execute`
+- recommend `/aw:build`
 - name the selected execution mode when it is known safely
 - name any blocker that should send the work back to planning instead of guessing
 

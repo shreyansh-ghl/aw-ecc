@@ -25,41 +25,36 @@ function run() {
   let passed = 0;
   let failed = 0;
 
-  if (test('execute uses task-unit orchestration rather than one-shot implementation wording', () => {
-    assert.ok(executeSkill.includes('Task-Unit Orchestration'));
-    assert.ok(executeCommand.includes('## Internal Task Loop'));
-    assert.ok(executeSkill.includes('task units completed'));
-    assert.ok(executeCommand.includes('task_unit'));
-    assert.ok(executeSkill.includes('mark it as `in_progress`'));
-    assert.ok(executeCommand.includes('Mark the active task unit in progress'));
+  if (test('execute is now a compatibility shim to build', () => {
+    assert.ok(executeSkill.includes('compatibility layer'));
+    assert.ok(executeSkill.includes('aw-build'));
+    assert.ok(executeCommand.includes('canonical implementation stage is `/aw:build`'));
+    assert.ok(executeCommand.includes('Compatibility Route'));
   })) passed++; else failed++;
 
-  if (test('execute requires spec and quality review before handoff', () => {
+  if (test('execute preserves the canonical artifact and handoff contract', () => {
     for (const phrase of [
-      'spec_review',
-      'quality_review',
-      'spec-compliance review',
-      'code-quality review',
+      'execution.md',
+      'state.json',
+      'aw-test',
+      'aw-review',
     ]) {
       assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `Missing execute guidance for ${phrase}`);
     }
   })) passed++; else failed++;
 
-  if (test('execute reviews plans critically before coding and routes back on critical gaps', () => {
+  if (test('execute no longer owns a separate implementation workflow', () => {
     for (const phrase of [
-      'Plan Intake Review',
-      'route back to `aw-plan`',
-      'missing file scope for a non-trivial task',
-      'undefined helper, interface, type, or command',
-      'do not guess through a broken plan',
+      'Preserve legacy muscle memory',
+      'Do not introduce a second implementation workflow.',
+      'must not drift into a separate execute-only workflow',
     ]) {
       assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `Missing execute intake guidance for ${phrase}`);
     }
   })) passed++; else failed++;
 
-  if (test('execute keeps TDD policy inside the existing /aw:execute stage', () => {
-    assert.ok(executeSkill.includes('TDD Policy'));
-    assert.ok(executeCommand.includes('Test Discipline'));
+  if (test('execute points legacy TDD expectations into build instead of staying special', () => {
+    assert.ok(executeCommand.includes('old `/aw:tdd` expectations -> stay inside `/aw:build`'));
     assert.ok(!snapshot.fileExists('commands/task-unit.md'), 'task units should stay internal to execute');
   })) passed++; else failed++;
 

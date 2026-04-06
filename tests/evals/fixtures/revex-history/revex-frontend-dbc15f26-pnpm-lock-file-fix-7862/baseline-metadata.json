@@ -1,0 +1,53 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "revex",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "pnpm-lock.yaml",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `pnpm-lock.yaml` in RevEx frontend, inside the broader `revex` area. Deliver the smallest safe implementation in `pnpm-lock.yaml` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `pnpm-lock.yaml` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `pnpm-lock.yaml` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "dbc15f2667c3012275f20c8fc0483ebc9dd62798",
+    "parentSha": "8fc19eded4741ca94ea1b2fdc881f7bd7639bcd8",
+    "date": "2026-04-01T11:29:16+05:30",
+    "subject": "pnpm lock file fix (#7862)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 0,
+    "deletions": 25,
+    "totalLinesChanged": 25
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "pnpm-lock.yaml",
+      "insertions": 0,
+      "deletions": 25
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary dbc15f2667c3012275f20c8fc0483ebc9dd62798",
+    "showPatch": "git -C ../ghl-revex-frontend show dbc15f2667c3012275f20c8fc0483ebc9dd62798",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 8fc19eded4741ca94ea1b2fdc881f7bd7639bcd8"
+  },
+  "warnings": []
+}

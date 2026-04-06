@@ -29,6 +29,7 @@ AGENTS_FILE="$CODEX_HOME/AGENTS.md"
 AGENTS_ROOT_SRC="$REPO_ROOT/AGENTS.md"
 AGENTS_CODEX_SUPP_SRC="$REPO_ROOT/.codex/AGENTS.md"
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
+AW_SKILLS_SRC="$REPO_ROOT/skills"
 SKILLS_DEST="$CODEX_HOME/skills"
 PROMPTS_SRC="$REPO_ROOT/commands"
 PROMPTS_DEST="$CODEX_HOME/prompts"
@@ -37,6 +38,24 @@ SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
 HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex/hooks.json"
 HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
+AW_CODEX_SKILLS=(
+  "using-aw-skills"
+  "aw-plan"
+  "aw-build"
+  "aw-investigate"
+  "aw-test"
+  "aw-review"
+  "aw-yolo"
+  "aw-execute"
+  "aw-verify"
+  "aw-deploy"
+  "aw-ship"
+  "aw-brainstorm"
+  "aw-debug"
+  "aw-prepare"
+  "aw-spec"
+  "aw-tasks"
+)
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CODEX_HOME/backups/ecc-$STAMP"
@@ -134,6 +153,7 @@ MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
 require_path "$AGENTS_CODEX_SUPP_SRC" "ECC Codex AGENTS supplement"
 require_path "$SKILLS_SRC" "ECC skills directory"
+require_path "$AW_SKILLS_SRC" "ECC AW skills directory"
 require_path "$PROMPTS_SRC" "ECC commands directory"
 require_path "$HOOKS_INSTALLER" "ECC global git hooks installer"
 require_path "$SANITY_CHECKER" "ECC global sanity checker"
@@ -245,6 +265,16 @@ skills_count=0
 for skill_dir in "$SKILLS_SRC"/*; do
   [[ -d "$skill_dir" ]] || continue
   skill_name="$(basename "$skill_dir")"
+  dest="$SKILLS_DEST/$skill_name"
+  run_or_echo "rm -rf \"$dest\""
+  run_or_echo "cp -R \"$skill_dir\" \"$dest\""
+  skills_count=$((skills_count + 1))
+done
+
+log "Syncing AW stage and router skills for Codex"
+for skill_name in "${AW_CODEX_SKILLS[@]}"; do
+  skill_dir="$AW_SKILLS_SRC/$skill_name"
+  [[ -d "$skill_dir" ]] || continue
   dest="$SKILLS_DEST/$skill_name"
   run_or_echo "rm -rf \"$dest\""
   run_or_echo "cp -R \"$skill_dir\" \"$dest\""

@@ -17,9 +17,12 @@ const REQUIRED_SECTIONS = [
 
 const COMMANDS = [
   '/aw:plan',
-  '/aw:execute',
-  '/aw:verify',
+  '/aw:build',
+  '/aw:investigate',
+  '/aw:test',
+  '/aw:review',
   '/aw:deploy',
+  '/aw:ship',
 ];
 
 function test(name, fn) {

@@ -37,9 +37,24 @@ function run() {
       'fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`',
       'approved direction but missing technical contract -> `aw-spec`',
       'approved spec but missing execution recipe -> `aw-tasks`',
-      'already execution-ready tasks -> stop and recommend `aw-execute`',
+      'already execution-ready tasks -> stop and recommend `aw-build`',
     ]) {
       assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
+    }
+  })) passed++; else failed++;
+
+  if (test('planning skills follow the Addy-style anatomy', () => {
+    for (const phrase of [
+      '## Overview',
+      '## When to Use',
+      '## Workflow',
+      '## Common Rationalizations',
+      '## Red Flags',
+      '## Verification',
+    ]) {
+      assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
+      assert.ok(specAuthorSkill.includes(phrase), `aw-spec is missing ${phrase}`);
+      assert.ok(taskPlannerSkill.includes(phrase), `aw-tasks is missing ${phrase}`);
     }
   })) passed++; else failed++;
 

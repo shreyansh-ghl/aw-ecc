@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "aw.eval.archetype-scenarios.v1",
+  "layer": "archetype",
+  "cases": [
+    {
+      "id": "microservice-contract-plan",
+      "layer": "archetype",
+      "repoArchetype": "microservice",
+      "productArea": "communities",
+      "startingState": "Approved backend contract exists, but no implementation spec or task breakdown has been written yet.",
+      "userPrompt": "Create the implementation spec for the approved Communities moderation API contract and keep the interface stable for downstream consumers.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": [
+        "api-and-interface-design",
+        "platform-services:development"
+      ],
+      "expectedArtifacts": [
+        "spec.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "stable API contract",
+        "validation rules",
+        "verification targets"
+      ],
+      "expectedMustNot": [
+        "execution.md",
+        "release.md"
+      ],
+      "expectedOrgStandards": [
+        "api-and-interface-design",
+        "platform-services:development"
+      ],
+      "tags": [
+        "archetype",
+        "microservice",
+        "planning",
+        "contracts"
+      ]
+    },
+    {
+      "id": "microservice-approved-build",
+      "layer": "archetype",
+      "repoArchetype": "microservice",
+      "productArea": "contacts",
+      "startingState": "Spec and task artifacts are approved and the implementation needs to move in thin, reviewable slices.",
+      "userPrompt": "Implement the approved contact sync service change in thin reversible increments, keep save points reviewable, and follow the service quality gates.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": [
+        "incremental-implementation",
+        "git-workflow-and-versioning",
+        "platform-services:development"
+      ],
+      "expectedArtifacts": [
+        "execution.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "thin implementation slices",
+        "service-layer changes",
+        "save-point history"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "reopened planning artifacts"
+      ],
+      "expectedOrgStandards": [
+        "platform-services:development",
+        "platform-sdet:quality-gates",
+        "git-workflow-and-versioning"
+      ],
+      "tags": [
+        "archetype",
+        "microservice",
+        "build",
+        "incremental"
+      ]
+    },
+    {
+      "id": "worker-alert-investigate",
+      "layer": "archetype",
+      "repoArchetype": "worker",
+      "productArea": "workflows",
+      "startingState": "A retry spike alert fired and the fault surface is not yet confirmed.",
+      "userPrompt": "Investigate this workflow worker retry spike before patching anything and use logs plus worker-specific evidence to narrow the fault surface.",
+      "expectedPublicRoute": "/aw:investigate",
+      "expectedPrimarySkill": "aw-investigate",
+      "expectedSupportingSkills": [
+        "aw-debug",
+        "platform-infra:grafana",
+        "platform-services:worker-patterns"
+      ],
+      "expectedArtifacts": [
+        "investigation.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "expected versus actual behavior",
+        "fault surface",
+        "next confirming probe"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "broad speculative fix"
+      ],
+      "expectedOrgStandards": [
+        "platform-infra:grafana",
+        "platform-infra:log-analysis",
+        "platform-services:worker-patterns"
+      ],
+      "tags": [
+        "archetype",
+        "worker",
+        "investigate",
+        "observability"
+      ]
+    },
+    {
+      "id": "microfrontend-browser-proof",
+      "layer": "archetype",
+      "repoArchetype": "microfrontend",
+      "productArea": "communities",
+      "startingState": "A UI fix is implemented and now needs fresh browser proof across runtime behavior and accessibility checks.",
+      "userPrompt": "Prove this Communities feed MFA fix in the browser by checking DOM state, console noise, network requests, responsive behavior, and accessibility expectations.",
+      "expectedPublicRoute": "/aw:test",
+      "expectedPrimarySkill": "aw-test",
+      "expectedSupportingSkills": [
+        "browser-testing-with-devtools",
+        "frontend-ui-engineering",
+        "platform-design:review"
+      ],
+      "expectedArtifacts": [
+        "verification.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "browser runtime evidence",
+        "responsive proof",
+        "accessibility proof"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "stale verification evidence"
+      ],
+      "expectedOrgStandards": [
+        "platform-frontend:accessibility",
+        "platform-design:review",
+        "platform-sdet:playwright-pom"
+      ],
+      "tags": [
+        "archetype",
+        "microfrontend",
+        "test",
+        "browser"
+      ]
+    },
+    {
+      "id": "microservice-readiness-review",
+      "layer": "archetype",
+      "repoArchetype": "microservice",
+      "productArea": "payments",
+      "startingState": "Implementation and targeted QA already happened, and the next decision is staging readiness plus governance findings.",
+      "userPrompt": "Review this payments service change for correctness, security, performance, and staging readiness, and capture the supporting rationale engineers will need later.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": [
+        "documentation-and-adrs",
+        "platform-review:code-review-pr",
+        "platform-sdet:quality-gates"
+      ],
+      "expectedArtifacts": [
+        "verification.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "severity-tagged findings",
+        "readiness decision",
+        "documentation trail"
+      ],
+      "expectedMustNot": [
+        "release.md",
+        "unscoped implementation work"
+      ],
+      "expectedOrgStandards": [
+        "platform-review:code-review-pr",
+        "platform-sdet:quality-gates",
+        "documentation-and-adrs"
+      ],
+      "tags": [
+        "archetype",
+        "microservice",
+        "review",
+        "governance"
+      ]
+    },
+    {
+      "id": "microservice-staging-deploy",
+      "layer": "archetype",
+      "repoArchetype": "microservice",
+      "productArea": "contacts",
+      "startingState": "Verification passed and the user wants a single staging deployment action with explicit rollback posture.",
+      "userPrompt": "Deploy this verified contact sync service to staging, resolve the correct provider path, and capture rollback plus release evidence.",
+      "expectedPublicRoute": "/aw:deploy",
+      "expectedPrimarySkill": "aw-deploy",
+      "expectedSupportingSkills": [
+        "ci-cd-and-automation",
+        "platform-infra:staging-deploy",
+        "platform-infra:deployment-strategies"
+      ],
+      "expectedArtifacts": [
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "resolved staging provider",
+        "build and pipeline evidence",
+        "rollback path"
+      ],
+      "expectedMustNot": [
+        "spec.md",
+        "tasks.md"
+      ],
+      "expectedOrgStandards": [
+        "platform-infra:staging-deploy",
+        "platform-infra:deployment-strategies",
+        "platform-infra:production-readiness"
+      ],
+      "tags": [
+        "archetype",
+        "microservice",
+        "deploy",
+        "staging"
+      ]
+    },
+    {
+      "id": "worker-launch-closeout",
+      "layer": "archetype",
+      "repoArchetype": "worker",
+      "productArea": "automation",
+      "startingState": "A worker deploy action completed and launch-closeout evidence still needs to be captured before handoff.",
+      "userPrompt": "Prepare the worker release closeout with rollout notes, rollback readiness, and monitoring checkpoints before we call this launch complete.",
+      "expectedPublicRoute": "/aw:ship",
+      "expectedPrimarySkill": "aw-ship",
+      "expectedSupportingSkills": [
+        "documentation-and-adrs",
+        "platform-infra:production-readiness"
+      ],
+      "expectedArtifacts": [
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "launch checklist",
+        "rollback posture",
+        "monitoring plan"
+      ],
+      "expectedMustNot": [
+        "spec.md",
+        "unverified deployment claims"
+      ],
+      "expectedOrgStandards": [
+        "platform-infra:production-readiness",
+        "documentation-and-adrs"
+      ],
+      "tags": [
+        "archetype",
+        "worker",
+        "ship",
+        "launch"
+      ]
+    },
+    {
+      "id": "microfrontend-yolo-staging",
+      "layer": "archetype",
+      "repoArchetype": "microfrontend",
+      "productArea": "memberships",
+      "startingState": "Approved scope exists and the user explicitly wants an end-to-end bounded flow through staging for a versioned MFA app.",
+      "userPrompt": "Take this approved memberships MFA change from implementation-ready inputs to staging end to end, while keeping HighRise, accessibility, review, and release evidence intact.",
+      "expectedPublicRoute": "aw-yolo",
+      "expectedPrimarySkill": "aw-yolo",
+      "expectedSupportingSkills": [
+        "frontend-ui-engineering",
+        "browser-testing-with-devtools",
+        "ci-cd-and-automation"
+      ],
+      "expectedArtifacts": [
+        "execution.md",
+        "verification.md",
+        "release.md",
+        "state.json"
+      ],
+      "expectedOutputs": [
+        "end-to-end staged flow",
+        "frontend quality evidence",
+        "release evidence"
+      ],
+      "expectedMustNot": [
+        "skipped verification",
+        "missing release artifact"
+      ],
+      "expectedOrgStandards": [
+        "highrise-ui-governance",
+        "platform-design:system",
+        "platform-frontend:accessibility",
+        "deploy-versioned-mfa"
+      ],
+      "tags": [
+        "archetype",
+        "microfrontend",
+        "yolo",
+        "staging"
+      ]
+    }
+  ]
+}

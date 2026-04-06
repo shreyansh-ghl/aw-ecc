@@ -59,14 +59,14 @@ Current target matrix:
 
 1. `plan-technical-spec`
 2. `plan-tasks-from-spec`
-3. `execute-approved-spec`
-4. `execute-docs-only`
-5. `verify-pr-governance`
-6. `verify-failing-change-requires-repair-loop`
+3. `build-approved-spec`
+4. `build-docs-only`
+5. `review-pr-governance`
+6. `review-failing-change-requires-repair-loop`
 7. `deploy-microservice-staging`
 8. `deploy-microfrontend-staging`
 9. `deploy-worker-staging`
-10. `ship-unverified-to-staging`
+10. `yolo-unverified-to-staging`
 11. `ship-verified-to-staging`
 
 Exit bar:
@@ -90,7 +90,7 @@ Must prove:
 
 Primary checks:
 
-- checklist review against `aw-sdlc-real-eval-checklist.md`
+- checklist review against `aw-sdlc-outcomes-eval-checklist.md`
 - real artifact content assertions
 - human spot-check on representative cases
 
@@ -217,7 +217,7 @@ Required result:
 Run before merging SDLC command or skill changes:
 
 ```bash
-AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=tempdir AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-real-parallel.sh
+AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=tempdir AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-outcomes-parallel.sh
 bash tests/evals/run-aw-sdlc-evals.sh live
 ```
 
@@ -233,7 +233,7 @@ Run before declaring the workflow production-ready:
 
 ```bash
 bash tests/evals/run-aw-sdlc-evals.sh live-full
-AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=git-worktree AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-real-parallel.sh
+AW_SDLC_EVAL_REF=WORKTREE AW_SDLC_EVAL_WORKSPACE_MODE=git-worktree AW_SDLC_EVAL_PARALLELISM=2 bash tests/evals/run-aw-sdlc-outcomes-parallel.sh
 ```
 
 Plus:
@@ -290,7 +290,7 @@ For the repo-linked golden path harness, use:
 AW_SDLC_GOLDEN_REPO=GoHighLevel/ghl-revex-frontend \
 AW_SDLC_GOLDEN_PR_NUMBER=5120 \
 AW_SDLC_GOLDEN_APP=communities-builder \
-bash tests/evals/run-aw-sdlc-live-golden-path.sh
+bash tests/evals/run-aw-sdlc-routing-golden-path.sh
 ```
 
 That script resolves the live PR branch, attempts the production ghl-ai Jenkins

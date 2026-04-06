@@ -25,28 +25,24 @@ function run() {
   let passed = 0;
   let failed = 0;
 
-  if (test('execute defines bounded internal worker roles', () => {
+  if (test('legacy execute remains a thin wrapper rather than a second worker runtime', () => {
     for (const phrase of [
-      '## Internal Worker Roles',
-      '`implementer`',
-      '`spec_reviewer`',
-      '`quality_reviewer`',
-      '`parallel_worker`',
-      'They must not become new public commands',
+      'compatibility layer',
+      'aw-build',
+      'Do not introduce a second implementation workflow.',
     ]) {
-      assert.ok(executeSkill.includes(phrase), `aw-execute is missing ${phrase}`);
+      assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `aw-execute is missing ${phrase}`);
     }
   })) passed++; else failed++;
 
-  if (test('execute runtime discipline protects disjoint ownership and failure-first behavior', () => {
+  if (test('legacy worker assets still exist for compatibility tooling', () => {
     for (const phrase of [
-      '## Runtime Discipline',
-      'disjoint file ownership',
-      'do not run overlapping parallel workers on the same write scope',
-      'record a concrete failing signal',
-      '`Worker Roles`',
+      'skills/aw-execute/references/worker-implementer.md',
+      'skills/aw-execute/references/worker-spec-reviewer.md',
+      'skills/aw-execute/references/worker-quality-reviewer.md',
+      'skills/aw-execute/references/worker-parallel-worker.md',
     ]) {
-      assert.ok(executeSkill.includes(phrase) || executeCommand.includes(phrase), `missing execute runtime guidance for ${phrase}`);
+      assert.ok(snapshot.fileExists(phrase), `missing execute compatibility asset ${phrase}`);
     }
   })) passed++; else failed++;
 

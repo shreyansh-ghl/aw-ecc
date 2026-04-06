@@ -1,7 +1,7 @@
 ---
 name: aw-prepare
 description: Internal preparation layer that validates repo state, branch or worktree isolation, and execution readiness before risky AW stages begin.
-trigger: Internal only. Invoked by aw-execute or aw-ship before code-changing or release-oriented work.
+trigger: Internal only. Invoked by aw-build, aw-deploy, aw-ship, or aw-yolo before code-changing or release-oriented work.
 ---
 
 # AW Prepare

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "aw.eval.history-benchmark-packs.v1",
+  "defaultPackKey": "revex",
+  "packs": [
+    {
+      "packKey": "revex",
+      "packLabel": "RevEx Frontend + Backend",
+      "description": "Commit-reconstruction benchmark pack for RevEx frontend and backend repos using PR-output parity scoring.",
+      "comparisonMode": "pr_parity",
+      "smokeCaseIds": [
+        "revex-backend-dce466d4-implement-notification-processing-in-worker-9631",
+        "revex-frontend-557b250b-tax-info-text-fixes-in-payments-page-7863"
+      ],
+      "repos": [
+        {
+          "repoKey": "revex-frontend",
+          "domain": "frontend",
+          "repoRelativePath": "../ghl-revex-frontend"
+        },
+        {
+          "repoKey": "revex-backend",
+          "domain": "backend",
+          "repoRelativePath": "../ghl-revex-backend"
+        }
+      ]
+    }
+  ]
+}

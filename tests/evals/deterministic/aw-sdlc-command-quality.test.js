@@ -12,27 +12,56 @@ const COMMAND_QUALITY = [
   {
     command: 'plan',
     status: 'active',
+    stage: 'plan',
     sections: ['## Role', '## Modes', '## Required Inputs', '## Optional Inputs', '## Outputs', '## Hard Gates', '## Must Not Do', '## Internal Routing', '## Final Output Shape'],
   },
   {
-    command: 'execute',
+    command: 'build',
     status: 'active',
-    sections: ['## Role', '## Modes', '## Required Inputs', '## Optional Inputs', '## Outputs', '## Hard Gates', '## Must Not Do', '## Internal Routing', '## Final Output Shape'],
+    stage: 'build',
+    sections: ['## Role', '## Modes', '## Required Inputs', '## Outputs', '## Execution Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
   },
   {
-    command: 'verify',
+    command: 'investigate',
     status: 'active',
-    sections: ['## Role', '## Modes', '## Required Inputs', '## Optional Inputs', '## Outputs', '## Verify Layers', '## Hard Gates', '## Must Not Do', '## Internal Routing', '## Final Output Shape'],
+    stage: 'investigate',
+    sections: ['## Role', '## Modes', '## Outputs', '## Investigation Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
+  },
+  {
+    command: 'test',
+    status: 'active',
+    stage: 'test',
+    sections: ['## Role', '## Modes', '## Outputs', '## QA Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
+  },
+  {
+    command: 'review',
+    status: 'active',
+    stage: 'review',
+    sections: ['## Role', '## Modes', '## Outputs', '## Review Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
   },
   {
     command: 'deploy',
     status: 'active',
-    sections: ['## Role', '## Modes', '## Required Inputs', '## Optional Inputs', '## Outputs', '## Deploy Layers', '## Hard Gates', '## Must Not Do', '## Internal Routing', '## Final Output Shape'],
+    stage: 'deploy',
+    sections: ['## Role', '## Modes', '## Required Inputs', '## Outputs', '## Deploy Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
   },
   {
     command: 'ship',
     status: 'active',
-    sections: ['## Role', '## Modes', '## Required Inputs', '## Optional Inputs', '## Outputs', '## Phases', '## Hard Gates', '## Must Not Do', '## Internal Routing', '## Final Output Shape'],
+    stage: 'ship',
+    sections: ['## Role', '## Modes', '## Required Inputs', '## Outputs', '## Shipping Rules', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
+  },
+  {
+    command: 'execute',
+    status: 'active',
+    stage: 'compatibility',
+    sections: ['## Role', '## Routing Rule', '## Outputs', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
+  },
+  {
+    command: 'verify',
+    status: 'active',
+    stage: 'compatibility',
+    sections: ['## Role', '## Compatibility Mapping', '## Outputs', '## Must Not Do', '## Recommended Next Commands', '## Final Output Shape'],
   },
 ];
 
@@ -85,6 +114,7 @@ function run() {
       }
 
       assert.strictEqual(frontmatter.status, entry.status, `${entry.command} should be ${entry.status}`);
+      assert.strictEqual(frontmatter.stage, entry.stage, `${entry.command} should declare stage ${entry.stage}`);
 
       for (const section of entry.sections) {
         assert.ok(content.includes(section), `${entry.command} is missing section ${section}`);

@@ -1,0 +1,59 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "platform-billing",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "platform-billing:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `platform-billing:src/components` in RevEx frontend, inside the broader `platform-billing` area. Deliver the smallest safe implementation in `platform-billing:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `platform-billing:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `platform-billing:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "557b250b42039aa579c806e8a12b617ccb4ee419",
+    "parentSha": "ba06054b6f3333f117e9aed0048c2a4f9e4a5ab4",
+    "date": "2026-04-02T18:15:17+05:30",
+    "subject": "Tax info Text Fixes in Payments Page (#7863)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 2,
+    "insertions": 3,
+    "deletions": 1,
+    "totalLinesChanged": 4
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/platform-billing/src/components/agency-billing/invoice-payments/TaxInfoCard.vue",
+      "insertions": 2,
+      "deletions": 0
+    },
+    {
+      "path": "apps/platform-billing/src/locales/en.json",
+      "insertions": 1,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 557b250b42039aa579c806e8a12b617ccb4ee419",
+    "showPatch": "git -C ../ghl-revex-frontend show 557b250b42039aa579c806e8a12b617ccb4ee419",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout ba06054b6f3333f117e9aed0048c2a4f9e4a5ab4"
+  },
+  "warnings": []
+}

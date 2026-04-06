@@ -11,8 +11,8 @@ The canonical public release stage remains `/aw:deploy`, but this helper still o
 
 ## Hard Gate
 
-`aw-verify` must have passed before this skill runs.
-If verification failed, route back to `aw-execute` or `aw-verify` instead of finishing.
+`aw-test` and `aw-review` must have passed before this skill runs, or the compatibility umbrella must have recorded an equivalent verified outcome.
+If verification failed, route back to `aw-build`, `aw-test`, or `aw-review` instead of finishing.
 
 ## Purpose
 

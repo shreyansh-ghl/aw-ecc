@@ -21,33 +21,28 @@ function run() {
   console.log(`\n=== AW SDLC Execute Debugging (${REF}) ===\n`);
 
   const executeSkill = snapshot.readFile('skills/aw-execute/SKILL.md');
+  const buildSkill = snapshot.readFile('skills/aw-build/SKILL.md');
   const debugSkill = snapshot.readFile('skills/aw-debug/SKILL.md');
   let passed = 0;
   let failed = 0;
 
-  if (test('execute strengthens red-green-refactor and failure-first evidence', () => {
+  if (test('build keeps failure-first evidence expectations while execute routes to it', () => {
+    assert.ok(executeSkill.includes('Route to `aw-build`.'));
     for (const phrase of [
-      'RED-GREEN-REFACTOR',
-      'record the `RED` signal',
-      'failing-test signal',
-      'debugging trace',
-      'NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST',
-      'Verify RED',
-      'Verify GREEN',
+      'failing signal',
+      'RED-GREEN',
+      'references/testing-patterns.md',
     ]) {
-      assert.ok(executeSkill.includes(phrase), `execute skill is missing ${phrase}`);
+      assert.ok(buildSkill.includes(phrase) || debugSkill.includes(phrase), `build/debug skill is missing ${phrase}`);
     }
   })) passed++; else failed++;
 
-  if (test('execute can invoke systematic debugging for bug-oriented work', () => {
-    assert.ok(executeSkill.includes('aw-debug'));
+  if (test('debugging is now shared across investigate, build, test, and review', () => {
+    assert.ok(debugSkill.includes('Invoked by aw-investigate, aw-build, aw-test, or aw-review'));
     for (const phrase of [
-      'The Four Phases',
-      'Phase 1: Root Cause Investigation',
-      'Phase 2: Pattern Analysis',
-      'Phase 3: Hypothesis and Testing',
-      'Phase 4: Implementation',
-      'current hypothesis',
+      'Capture a reproduction or equivalent failure signal.',
+      'Define expected vs actual behavior.',
+      'Run the next confirming probe.',
       'confirming probe',
     ]) {
       assert.ok(debugSkill.includes(phrase), `debug skill is missing ${phrase}`);

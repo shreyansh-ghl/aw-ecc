@@ -83,7 +83,7 @@ function run() {
 
   if (test('router skill advertises the minimal public command surface', () => {
     const content = snapshot.readFile('skills/using-aw-skills/SKILL.md');
-    for (const token of ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy']) {
+    for (const token of ['/aw:plan', '/aw:build', '/aw:investigate', '/aw:test', '/aw:review', '/aw:deploy', '/aw:ship']) {
       assert.ok(content.includes(token), `Router skill is missing ${token}`);
     }
   })) passed++; else failed++;

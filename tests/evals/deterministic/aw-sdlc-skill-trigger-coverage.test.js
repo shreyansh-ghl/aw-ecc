@@ -7,15 +7,17 @@ const CASES_FILE = path.join(REPO_ROOT, 'skills/using-aw-skills/tests/skill-trig
 const HARNESS_FILE = path.join(REPO_ROOT, 'skills/using-aw-skills/tests/test-skill-triggers.sh');
 const ROUTER_SKILL = path.join(REPO_ROOT, 'skills/using-aw-skills/SKILL.md');
 const ARCH_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-command-skill-architecture.md');
-const COMMUNITIES_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-real-prompts-communities.md');
+const COMMUNITIES_DOC = path.join(REPO_ROOT, 'docs/aw-sdlc-outcomes-prompts-communities.md');
 const REGISTRY_ROOT = process.env.AW_REGISTRY_ROOT
   ? path.resolve(process.env.AW_REGISTRY_ROOT)
   : path.join(REPO_ROOT, '.aw_registry');
 
 const PRIMARY_SKILL_BY_ROUTE = {
   plan: 'aw-plan',
-  execute: 'aw-execute',
-  verify: 'aw-verify',
+  build: 'aw-build',
+  investigate: 'aw-investigate',
+  test: 'aw-test',
+  review: 'aw-review',
   deploy: 'aw-deploy',
   ship: 'aw-ship',
 };
@@ -26,13 +28,16 @@ function registrySkillPath(...segments) {
 
 const SKILL_PATHS = {
   'aw-plan': path.join(REPO_ROOT, 'skills/aw-plan/SKILL.md'),
-  'aw-execute': path.join(REPO_ROOT, 'skills/aw-execute/SKILL.md'),
-  'aw-verify': path.join(REPO_ROOT, 'skills/aw-verify/SKILL.md'),
+  'aw-build': path.join(REPO_ROOT, 'skills/aw-build/SKILL.md'),
+  'aw-investigate': path.join(REPO_ROOT, 'skills/aw-investigate/SKILL.md'),
+  'aw-test': path.join(REPO_ROOT, 'skills/aw-test/SKILL.md'),
+  'aw-review': path.join(REPO_ROOT, 'skills/aw-review/SKILL.md'),
   'aw-deploy': path.join(REPO_ROOT, 'skills/aw-deploy/SKILL.md'),
   'aw-ship': path.join(REPO_ROOT, 'skills/aw-ship/SKILL.md'),
   'platform-shared:spec-writing': registrySkillPath('platform', 'core', 'skills', 'spec-writing'),
   'platform-services:development': registrySkillPath('platform', 'services', 'skills', 'development'),
   'quality-gate-coder': registrySkillPath('platform', 'frontend', 'skills', 'quality-gate-coder'),
+  'platform-infra:grafana': registrySkillPath('platform', 'infra', 'skills', 'grafana'),
   'platform-design:system': registrySkillPath('platform', 'design', 'skills', 'system'),
   'platform-frontend:vue-development': registrySkillPath('platform', 'frontend', 'skills', 'vue-development'),
   'highrise-ui-governance': registrySkillPath('platform', 'frontend', 'skills', 'highrise-ui-governance'),
@@ -44,6 +49,16 @@ const SKILL_PATHS = {
   'platform-infra:staging-deploy': registrySkillPath('platform', 'infra', 'skills', 'staging-deploy'),
   'platform-infra:deployment-strategies': registrySkillPath('platform', 'infra', 'skills', 'deployment-strategies'),
   'platform-infra:production-readiness': registrySkillPath('platform', 'infra', 'skills', 'production-readiness'),
+  'idea-refine': path.join(REPO_ROOT, 'skills/idea-refine/SKILL.md'),
+  'api-and-interface-design': path.join(REPO_ROOT, 'skills/api-and-interface-design/SKILL.md'),
+  'browser-testing-with-devtools': path.join(REPO_ROOT, 'skills/browser-testing-with-devtools/SKILL.md'),
+  'code-simplification': path.join(REPO_ROOT, 'skills/code-simplification/SKILL.md'),
+  'security-and-hardening': path.join(REPO_ROOT, 'skills/security-and-hardening/SKILL.md'),
+  'performance-optimization': path.join(REPO_ROOT, 'skills/performance-optimization/SKILL.md'),
+  'git-workflow-and-versioning': path.join(REPO_ROOT, 'skills/git-workflow-and-versioning/SKILL.md'),
+  'ci-cd-and-automation': path.join(REPO_ROOT, 'skills/ci-cd-and-automation/SKILL.md'),
+  'deprecation-and-migration': path.join(REPO_ROOT, 'skills/deprecation-and-migration/SKILL.md'),
+  'documentation-and-adrs': path.join(REPO_ROOT, 'skills/documentation-and-adrs/SKILL.md'),
 };
 
 function parseCases() {
@@ -104,6 +119,23 @@ function run() {
         assert.ok(covered.has(route), `missing route coverage for ${route}`);
       }
     }],
+    ['expanded matrix covers the new Addy-parity craft skills', () => {
+      const coveredSupportingSkills = new Set(cases.flatMap(testCase => testCase.supportingSkills));
+      for (const skill of [
+        'idea-refine',
+        'api-and-interface-design',
+        'browser-testing-with-devtools',
+        'code-simplification',
+        'security-and-hardening',
+        'performance-optimization',
+        'git-workflow-and-versioning',
+        'ci-cd-and-automation',
+        'deprecation-and-migration',
+        'documentation-and-adrs',
+      ]) {
+        assert.ok(coveredSupportingSkills.has(skill), `missing trigger coverage for ${skill}`);
+      }
+    }],
     ['primary skill expectations match the public route contract', () => {
       for (const testCase of cases) {
         assert.equal(
@@ -132,7 +164,7 @@ function run() {
       assert.ok(routerSkill.includes('platform-infra:*'), 'router skill is missing infra skill-family guidance');
       assert.ok(routerSkill.includes('platform-sdet:*'), 'router skill is missing quality skill-family guidance');
       assert.ok(routerSkill.includes('platform-review:*'), 'router skill is missing review skill-family guidance');
-      assert.ok(architecture.includes('platform-review:code-review-pr'), 'architecture doc is missing verify support skill guidance');
+      assert.ok(architecture.includes('platform-review:code-review-pr'), 'architecture doc is missing review support skill guidance');
       assert.ok(architecture.includes('deploy-versioned-mfa'), 'architecture doc is missing deploy support skill guidance');
     }],
     ['Communities prompt pack is represented in the trigger matrix', () => {

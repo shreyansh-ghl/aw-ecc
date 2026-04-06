@@ -243,7 +243,8 @@ genhtml coverage.info --output-directory coverage_html
 
 - `/aw:cpp-build` - Fix build errors
 - `/aw:cpp-review` - Review code after implementation
-- `/aw:verify` - Run full verification loop
+- `/aw:test` - Run targeted QA and proof
+- `/aw:review` - Run readiness and findings review
 
 ## Related
 

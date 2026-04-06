@@ -1,0 +1,59 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "wordpress",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "wordpress:src/disk-usage-sync",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `wordpress:src/disk-usage-sync` in RevEx backend, inside the broader `wordpress` area. Deliver the smallest safe implementation in `wordpress:src/disk-usage-sync` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `wordpress:src/disk-usage-sync` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `wordpress:src/disk-usage-sync` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "b76e017b5f09e594d5222ef90c8e710038d332ea",
+    "parentSha": "b0bb7c3ee9d3fa81c29c5850ee4a933a913e7d86",
+    "date": "2026-03-27T12:46:37+05:30",
+    "subject": "Unit Test - WordPress [Disk-Usage-Sync] (#9827)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 2,
+    "insertions": 709,
+    "deletions": 77,
+    "totalLinesChanged": 786
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/wordpress/src/disk-usage-sync/__tests__/disk-usage-notification.service.spec.ts",
+      "insertions": 448,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/src/disk-usage-sync/__tests__/disk-usage-sync.service.spec.ts",
+      "insertions": 261,
+      "deletions": 77
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary b76e017b5f09e594d5222ef90c8e710038d332ea",
+    "showPatch": "git -C ../ghl-revex-backend show b76e017b5f09e594d5222ef90c8e710038d332ea",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout b0bb7c3ee9d3fa81c29c5850ee4a933a913e7d86"
+  },
+  "warnings": []
+}

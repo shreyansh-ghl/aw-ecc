@@ -21,39 +21,39 @@ Feature: AW SDLC workflows stay intent-first and outcome-driven
     And a tasks artifact should be created for "contact-sync-api"
     And execution artifacts should not be created yet
 
-  # case-id: execute-approved-spec
-  @execute @intent @backend
+  # case-id: build-approved-spec
+  @build @intent @backend
   Scenario: Implement an approved backend change
     Given the approved contact sync spec calls for batch normalization
     When a developer asks "Implement the approved contact sync batch normalization helper and wire it into the queue path."
-    Then the execution stage should be selected
+    Then the build stage should be selected
     And implementation files should be changed for "contact-sync-api"
     And release artifacts should not be created yet
 
-  # case-id: execute-docs-only
-  @execute @intent @docs
+  # case-id: build-docs-only
+  @build @intent @docs
   Scenario: Handle a docs-only implementation request safely
     Given the approved work only asks for runbook changes
     When a developer asks "Update docs/runbooks/contact-sync.md with the approved rollout steps for contact sync. Do not change src/contact-sync.js."
-    Then the execution stage should stay narrow
+    Then the build stage should stay narrow
     And documentation should be updated for "contact-sync-api"
     And source files should remain unchanged
 
-  # case-id: verify-pr-governance
-  @verify @intent @pr
-  Scenario: Verify a microservice PR for staging readiness
+  # case-id: review-pr-governance
+  @review @intent @pr
+  Scenario: Review a microservice PR for staging readiness
     Given a microservice repo has a completed implementation and PR description
     When a reviewer asks "Review this PR and tell me if it is ready for staging in a microservice repo."
-    Then the verify stage should be selected
+    Then the review stage should be selected
     And verification evidence should be written for "contact-sync-api"
     And PR governance should be checked
 
-  # case-id: verify-failing-change-requires-repair-loop
-  @verify @intent @repair
-  Scenario: Verify a failing implementation and require a repair loop
+  # case-id: review-failing-change-requires-repair-loop
+  @review @intent @repair
+  Scenario: Review a failing implementation and require a repair loop
     Given a contact sync implementation attempt still misses the normalization helper
     When a reviewer asks "Review this failing contact sync implementation and tell me what must be repaired before staging."
-    Then the verify stage should be selected
+    Then the review stage should be selected
     And verification evidence should be written for "contact-sync-api"
     And the verification outcome should require a repair loop instead of release
 
@@ -93,11 +93,11 @@ Feature: AW SDLC workflows stay intent-first and outcome-driven
     And a release artifact should be created for "contact-sync-api"
     And planning artifacts should not be recreated
 
-  # case-id: ship-unverified-to-staging
-  @ship @intent @end_to_end
-  Scenario: Take approved but unverified work through execution, verification, and staging
+  # case-id: yolo-unverified-to-staging
+  @yolo @intent @end_to_end
+  Scenario: Take approved but unverified work through build, test, review, deploy, and ship
     Given the contact sync API implementation plan is approved but not yet verified
-    When a developer asks "Take this approved contact sync implementation plan through execution, verification, and staging in a microservice repo."
+    When a developer asks "Run the full AW flow in one pass for this approved contact sync implementation plan through build, test, review, deploy, and ship to staging in a microservice repo."
     Then the full workflow should complete from planning through release
     And planning, execution, verification, and release artifacts should exist for "contact-sync-api"
     And the release artifact should mention staging deployment evidence

@@ -6,7 +6,7 @@ const { REPO_ROOT } = require('../lib/aw-sdlc-paths');
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
 const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
-const PUBLIC_COMMANDS = ['plan', 'execute', 'verify', 'deploy', 'ship'];
+const PUBLIC_COMMANDS = ['plan', 'build', 'investigate', 'test', 'review', 'deploy', 'ship'];
 const INTERNAL_HELPER_TOKENS = ['aw-review', 'aw-debug'];
 const LEGACY_HELPERS = [
   { command: 'brainstorm', canonical: '/aw:plan' },
@@ -25,6 +25,25 @@ function test(name, fn) {
   }
 }
 
+function parseFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n/);
+  const attributes = {};
+  if (!match) return attributes;
+
+  for (const line of match[1].split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separator = trimmed.indexOf(':');
+    if (separator === -1) continue;
+    const key = trimmed.slice(0, separator).trim();
+    let value = trimmed.slice(separator + 1).trim();
+    value = value.replace(/^['"]|['"]$/g, '');
+    attributes[key] = value;
+  }
+
+  return attributes;
+}
+
 function run() {
   console.log(`\n=== AW SDLC Command Boundaries (${REF}) ===\n`);
 
@@ -34,14 +53,19 @@ function run() {
   if (test('architecture doc defines thin command vs deep skill ownership', () => {
     const architecture = snapshot.readFile('docs/aw-sdlc-command-skill-architecture.md');
     assert.ok(architecture.includes('Commands should stay thin.'));
-    assert.ok(architecture.includes('Never define the full workflow twice.'));
-    assert.ok(architecture.includes('subskills are reusable capabilities used by the stage skills'));
+    assert.ok(architecture.includes('stage skills own execution behavior'));
+    assert.ok(architecture.includes('process skills own cross-stage orchestration'));
+    assert.ok(architecture.includes('references own reusable examples, checklists, and org-standard detail'));
   })) passed++; else failed++;
 
   if (test('public commands do not expose internal helper skills directly', () => {
     for (const command of PUBLIC_COMMANDS) {
       const content = snapshot.readFile(path.join('commands', `${command}.md`));
+      const frontmatter = parseFrontmatter(content);
       for (const token of INTERNAL_HELPER_TOKENS) {
+        if (frontmatter.internal_skill === token) {
+          continue;
+        }
         assert.ok(
           !content.includes(token),
           `${command}.md should keep ${token} behind the skill boundary`
@@ -62,10 +86,11 @@ function run() {
   if (test('specialized review and debugging behavior lives in internal skills', () => {
     const reviewLoop = snapshot.readFile('skills/aw-review/SKILL.md');
     const debugging = snapshot.readFile('skills/aw-debug/SKILL.md');
-    assert.ok(reviewLoop.includes('Requested Review'));
-    assert.ok(reviewLoop.includes('Re-review Status'));
-    assert.ok(debugging.includes('Reproduction'));
-    assert.ok(debugging.includes('Expected vs Actual'));
+    assert.ok(reviewLoop.includes('## Workflow'));
+    assert.ok(reviewLoop.includes('## Common Rationalizations'));
+    assert.ok(reviewLoop.includes('## Verification'));
+    assert.ok(debugging.includes('Capture a reproduction or equivalent failure signal.'));
+    assert.ok(debugging.includes('Define expected vs actual behavior.'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

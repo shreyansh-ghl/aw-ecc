@@ -8,8 +8,10 @@ const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
 const PUBLIC_COMMANDS = [
   { command: 'plan', skill: 'aw-plan', skillPath: 'skills/aw-plan/SKILL.md' },
-  { command: 'execute', skill: 'aw-execute', skillPath: 'skills/aw-execute/SKILL.md' },
-  { command: 'verify', skill: 'aw-verify', skillPath: 'skills/aw-verify/SKILL.md' },
+  { command: 'build', skill: 'aw-build', skillPath: 'skills/aw-build/SKILL.md' },
+  { command: 'investigate', skill: 'aw-investigate', skillPath: 'skills/aw-investigate/SKILL.md' },
+  { command: 'test', skill: 'aw-test', skillPath: 'skills/aw-test/SKILL.md' },
+  { command: 'review', skill: 'aw-review', skillPath: 'skills/aw-review/SKILL.md' },
   { command: 'deploy', skill: 'aw-deploy', skillPath: 'skills/aw-deploy/SKILL.md' },
   { command: 'ship', skill: 'aw-ship', skillPath: 'skills/aw-ship/SKILL.md' },
 ];
@@ -17,6 +19,8 @@ const PUBLIC_COMMANDS = [
 const NON_PUBLIC_COMMANDS = [
   { command: 'brainstorm', statuses: ['internal', 'deprecated', 'alias'] },
   { command: 'finish', statuses: ['internal', 'deprecated', 'alias'] },
+  { command: 'execute', statuses: ['active'] },
+  { command: 'verify', statuses: ['active'] },
   { command: 'code-review', statuses: ['alias'] },
   { command: 'tdd', statuses: ['alias'] },
 ];
@@ -91,19 +95,23 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('compatibility and helper commands are not active public stages', () => {
+  if (test('compatibility and helper commands stay off the canonical public-stage list', () => {
     for (const entry of NON_PUBLIC_COMMANDS) {
       const frontmatter = commandFrontmatter(entry.command);
       assert.ok(
         entry.statuses.includes(frontmatter.status),
         `${entry.command} should be one of [${entry.statuses.join(', ')}], received ${frontmatter.status || '(missing)'}`
       );
+      if (entry.command === 'execute' || entry.command === 'verify') {
+        assert.strictEqual(frontmatter.stage, 'compatibility', `${entry.command} should stay in compatibility stage`);
+      }
     }
   })) passed++; else failed++;
 
-  if (test('verify points to deploy as the next canonical stage', () => {
+  if (test('compatibility verify points to test and review instead of owning the whole stage', () => {
     const verifySkill = snapshot.readFile('skills/aw-verify/SKILL.md');
-    assert.ok(verifySkill.includes('aw-deploy'), 'aw-verify should hand off to aw-deploy');
+    assert.ok(verifySkill.includes('aw-test'), 'aw-verify should route to aw-test');
+    assert.ok(verifySkill.includes('aw-review'), 'aw-verify should route to aw-review');
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

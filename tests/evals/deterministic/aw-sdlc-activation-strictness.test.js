@@ -4,9 +4,10 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { createRepoSnapshot } = require('../lib/repo-snapshot');
+const { REPO_ROOT } = require('../lib/aw-sdlc-paths');
 
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
-const snapshot = createRepoSnapshot(process.cwd(), REF);
+const snapshot = createRepoSnapshot(REPO_ROOT, REF);
 
 function writeFile(root, relativePath, content) {
   const filePath = path.join(root, relativePath);

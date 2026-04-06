@@ -1,0 +1,105 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "desktop-customizer",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "bugfix",
+  "affectedSurface": "desktop-customizer",
+  "userPrompt": "You are working in RevEx frontend. A user-facing or runtime bug has been reported around `desktop-customizer` in RevEx frontend, and the current behavior is not reliable enough to leave as-is. Deliver the smallest safe bugfix in `desktop-customizer` using the expected AW route `/aw:investigate`. Success criteria: resolve the user-visible or runtime issue in `desktop-customizer` without widening scope; preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required; capture the failure mode or behavior gap clearly before proposing the patch. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show a focused regression check or narrow supporting note that addresses the original failure mode.",
+  "successCriteria": [
+    "resolve the user-visible or runtime issue in `desktop-customizer` without widening scope",
+    "preserve adjacent behavior and existing contracts unless a narrow compatibility adjustment is required",
+    "capture the failure mode or behavior gap clearly before proposing the patch"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show a focused regression check or narrow supporting note that addresses the original failure mode"
+  ],
+  "commit": {
+    "sha": "ba06054b6f3333f117e9aed0048c2a4f9e4a5ab4",
+    "parentSha": "6118374b9f0a8c36b141c34a3dfbccd6c6fbe30d",
+    "date": "2026-04-02T15:36:43+05:30",
+    "subject": "fix(desktop-customizer): handle BUILD_FAILED status in save handler (#7894)",
+    "type": "fix",
+    "scope": "desktop-customizer"
+  },
+  "diffSummary": {
+    "fileCount": 11,
+    "insertions": 35,
+    "deletions": 39,
+    "totalLinesChanged": 74
+  },
+  "routeExpectation": {
+    "route": "/aw:investigate",
+    "primarySkill": "aw-investigate",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools",
+      "documentation-and-adrs"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/desktop-customizer/src/components/AppIconPreview.vue",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/CropperModal.vue",
+      "insertions": 2,
+      "deletions": 2
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/DesktopCustomizerApp.vue",
+      "insertions": 7,
+      "deletions": 3
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/ImageUploader.vue",
+      "insertions": 2,
+      "deletions": 1
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/InputForm.vue",
+      "insertions": 7,
+      "deletions": 7
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/LivePreview.vue",
+      "insertions": 4,
+      "deletions": 4
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/PreviewHighlightZone.vue",
+      "insertions": 2,
+      "deletions": 1
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/PreviewPanel.vue",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/desktop-customizer/src/composables/useValidation.ts",
+      "insertions": 2,
+      "deletions": 2
+    },
+    {
+      "path": "apps/desktop-customizer/src/helper/BrandedApp.helper.ts",
+      "insertions": 3,
+      "deletions": 9
+    },
+    {
+      "path": "apps/desktop-customizer/src/models/BrandedApp.ts",
+      "insertions": 4,
+      "deletions": 8
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary ba06054b6f3333f117e9aed0048c2a4f9e4a5ab4",
+    "showPatch": "git -C ../ghl-revex-frontend show ba06054b6f3333f117e9aed0048c2a4f9e4a5ab4",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 6118374b9f0a8c36b141c34a3dfbccd6c6fbe30d"
+  },
+  "warnings": []
+}

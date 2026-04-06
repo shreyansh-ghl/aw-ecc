@@ -39,21 +39,18 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('execute skill and command point to the runtime assets', () => {
+  if (test('worker assets remain available even though execute is now compatibility-only', () => {
     const executeSkill = snapshot.readFile('skills/aw-execute/SKILL.md');
     const executeCommand = snapshot.readFile('commands/execute.md');
 
     for (const phrase of [
-      '## Worker Runtime Assets',
-      'worker-implementer.md',
-      'worker-spec-reviewer.md',
-      'worker-quality-reviewer.md',
-      'worker-parallel-worker.md',
-      'build-worker-bundle.js',
+      'compatibility layer',
+      'aw-build',
+      'Compatibility Route',
     ]) {
       assert.ok(
         executeSkill.includes(phrase) || executeCommand.includes(phrase),
-        `Missing worker runtime guidance for ${phrase}`
+        `Missing execute compatibility guidance for ${phrase}`
       );
     }
   })) passed++; else failed++;

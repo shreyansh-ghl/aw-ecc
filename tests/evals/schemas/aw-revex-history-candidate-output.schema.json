@@ -1,0 +1,61 @@
+{
+  "$id": "aw-revex-history-candidate-output.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "routeUsed",
+    "primarySkill",
+    "supportingSkills",
+    "candidatePrPath",
+    "stageArtifacts",
+    "validationSummary",
+    "notes"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["implemented", "blocked", "incomplete"]
+    },
+    "routeUsed": {
+      "type": "string",
+      "enum": ["/aw:build", "/aw:investigate", "/aw:test"]
+    },
+    "primarySkill": {
+      "type": "string",
+      "enum": ["aw-build", "aw-investigate", "aw-test"]
+    },
+    "supportingSkills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "candidatePrPath": {
+      "type": "string",
+      "minLength": 10
+    },
+    "stageArtifacts": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "validationSummary": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

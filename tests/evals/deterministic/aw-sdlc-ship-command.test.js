@@ -45,6 +45,7 @@ function run() {
   const commandContent = snapshot.readFile('commands/ship.md');
   const commandFrontmatter = parseFrontmatter(commandContent);
   const skillContent = snapshot.readFile('skills/aw-ship/SKILL.md');
+  const yoloSkill = snapshot.readFile('skills/aw-yolo/SKILL.md');
 
   if (test('ship command exists and is active', () => {
     assert.strictEqual(commandFrontmatter.name, 'aw:ship');
@@ -56,60 +57,77 @@ function run() {
     assert.ok(skillContent.includes('name: aw-ship'));
   })) passed++; else failed++;
 
-  if (test('ship command explicitly composes all four stage commands', () => {
-    for (const token of ['`aw-plan`', '`aw-execute`', '`aw-verify`', '`aw-deploy`']) {
-      assert.ok(commandContent.includes(token), `ship command is missing ${token}`);
-      assert.ok(skillContent.includes(token), `ship skill is missing ${token}`);
+  if (test('ship stays a launch-stage contract instead of the old composite workflow', () => {
+    for (const token of ['launch', 'rollout', 'rollback', 'closeout']) {
+      assert.ok(commandContent.toLowerCase().includes(token), `ship command is missing ${token}`);
+      assert.ok(skillContent.toLowerCase().includes(token), `ship skill is missing ${token}`);
     }
+    assert.ok(commandContent.includes('not as the old composite "do everything" shortcut'));
+    assert.ok(skillContent.includes('not the composite "do everything" workflow'));
   })) passed++; else failed++;
 
-  if (test('ship keeps aw-prepare internal while using it as a hidden setup gate', () => {
-    assert.ok(commandContent.includes('`aw-prepare`'), 'ship command should mention the internal aw-prepare layer');
-    assert.ok(skillContent.includes('`aw-prepare`'), 'ship skill should mention the internal aw-prepare layer');
-    assert.ok(commandContent.includes('must not become a public command'));
-    assert.ok(skillContent.includes('public route'));
-    assert.ok(commandContent.includes('source snapshot or eval workspace'));
-    assert.ok(skillContent.includes('degraded snapshot mode'));
+  if (test('aw-yolo now owns the explicit full-flow automation path', () => {
+    assert.ok(yoloSkill.includes('name: aw-yolo'));
+    for (const token of ['`aw-plan`', '`aw-build`', '`aw-test`', '`aw-review`', '`aw-deploy`', '`aw-ship`']) {
+      assert.ok(yoloSkill.includes(token), `aw-yolo is missing ${token}`);
+    }
+    assert.ok(yoloSkill.includes('explicit full-flow orchestration skill'));
+    assert.ok(yoloSkill.includes('Do not use by default.'));
   })) passed++; else failed++;
 
-  if (test('ship command stays explicit and not the default path for narrow work', () => {
-    assert.ok(commandContent.includes('smallest correct sequence'));
-    assert.ok(commandContent.includes('must not silently broaden a narrow request into full ship'));
-    assert.ok(commandContent.includes('do not stop after `plan`, `execute`, or `verify`'));
-    assert.ok(skillContent.includes('do not end `/aw:ship` after planning or verification'));
+  if (test('ship and yolo preserve clear boundary semantics', () => {
+    assert.ok(commandContent.includes('must not quietly rerun the whole SDLC under the name `ship`'));
+    assert.ok(skillContent.includes('Do not use for end-to-end orchestration.'));
+    assert.ok(yoloSkill.includes('the user explicitly asks to handle the full flow in one run'));
   })) passed++; else failed++;
 
-  if (test('ship can perform one bounded repair cycle inside the selected flow', () => {
-    assert.ok(commandContent.includes('one internal repair cycle'));
-    assert.ok(commandContent.includes('execute -> verify repair cycle'));
-    assert.ok(skillContent.includes('one bounded repair cycle'));
-    assert.ok(skillContent.includes('aw-execute -> aw-verify'));
+  if (test('aw-yolo preserves stage artifact obligations across the flow', () => {
+    assert.ok(yoloSkill.includes('execution.md'));
+    assert.ok(yoloSkill.includes('verification.md'));
+    assert.ok(yoloSkill.includes('release.md'));
+    assert.ok(yoloSkill.includes('state.json'));
   })) passed++; else failed++;
 
-  if (test('ship preserves per-stage artifact obligations during internal traversal', () => {
-    assert.ok(commandContent.includes('execution.md'));
-    assert.ok(commandContent.includes('verification.md'));
+  if (test('ship focuses on release evidence instead of build or review artifacts', () => {
     assert.ok(commandContent.includes('release.md'));
-    assert.ok(skillContent.includes('execution.md'));
-    assert.ok(skillContent.includes('verification.md'));
     assert.ok(skillContent.includes('release.md'));
-    assert.ok(skillContent.includes('required stage artifacts are written to disk'));
+    assert.ok(!commandContent.includes('execution.md'));
+    assert.ok(!commandContent.includes('verification.md'));
+    assert.ok(!skillContent.includes('execution.md'));
+    assert.ok(!skillContent.includes('verification.md'));
   })) passed++; else failed++;
 
-  if (test('ship fast path skips replanning when approved technical inputs are already concrete', () => {
-    assert.ok(commandContent.includes('should not reopen planning'));
-    assert.ok(commandContent.includes('prepare -> execute -> verify -> deploy'));
-    assert.ok(skillContent.includes('Fast Path: Approved Plan To Staging'));
-    assert.ok(skillContent.includes('skip replanning'));
-    assert.ok(skillContent.includes('Do not reopen `aw-plan`'));
+  if (test('ship uses the launch checklist and rollback readiness as hard expectations', () => {
+    assert.ok(skillContent.includes('references/ship-launch-checklist.md'));
+    assert.ok(commandContent.includes('rollback plan or blocker'));
+    assert.ok(skillContent.includes('rollback readiness is documented'));
   })) passed++; else failed++;
 
-  if (test('ship rejects diffs or summaries as substitutes for required stage artifacts', () => {
-    assert.ok(commandContent.includes('code diff'));
-    assert.ok(commandContent.includes('required stage artifact files'));
-    assert.ok(skillContent.includes('code diff'));
-    assert.ok(skillContent.includes('execution.md'));
-    assert.ok(skillContent.includes('verification.md'));
+  if (test('ship cleanly recommends review if launch blockers appear', () => {
+    assert.ok(commandContent.includes('/aw:review'));
+    assert.ok(skillContent.includes('blocker'));
+  })) passed++; else failed++;
+
+  if (test('ship and yolo both exist in the new model', () => {
+    assert.ok(snapshot.fileExists('commands/ship.md'));
+    assert.ok(snapshot.fileExists('skills/aw-ship/SKILL.md'));
+    assert.ok(snapshot.fileExists('skills/aw-yolo/SKILL.md'));
+  })) passed++; else failed++;
+
+  if (test('ship is no longer described as the fast path from approved plan to staging', () => {
+    assert.ok(!commandContent.includes('prepare -> execute -> verify -> deploy'));
+    assert.ok(!skillContent.includes('Fast Path: Approved Plan To Staging'));
+  })) passed++; else failed++;
+
+  if (test('aw-yolo stops cleanly on blockers instead of pretending the whole run succeeded', () => {
+    assert.ok(yoloSkill.includes('Stop cleanly on blockers.'));
+    assert.ok(yoloSkill.includes('Name the blocking stage and the smallest safe next action.'));
+  })) passed++; else failed++;
+
+  if (test('ship does not use code diffs as a substitute for release evidence', () => {
+    assert.ok(commandContent.includes('launch recommendation'));
+    assert.ok(skillContent.includes('launch checklist'));
+    assert.ok(!skillContent.includes('code diff'));
     assert.ok(skillContent.includes('release.md'));
   })) passed++; else failed++;
 

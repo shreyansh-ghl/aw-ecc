@@ -1,0 +1,64 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "location-billing",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "location-billing:webpack.config.js",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `location-billing:webpack.config.js` in RevEx frontend, inside the broader `location-billing` area. Deliver the smallest safe implementation in `location-billing:webpack.config.js` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `location-billing:webpack.config.js` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `location-billing:webpack.config.js` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "ae0d664321499098479fc0b431c70c073eb56d90",
+    "parentSha": "42794c016b3f893a75876ec3d3796cad6f0a76b2",
+    "date": "2026-04-01T15:32:12+05:30",
+    "subject": "added a minor fix for id param (#7876)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 3,
+    "insertions": 57,
+    "deletions": 27,
+    "totalLinesChanged": 84
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/location-billing/webpack.config.js",
+      "insertions": 1,
+      "deletions": 1
+    },
+    {
+      "path": "apps/locations/src/components/locations/manageClient/index.vue",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "apps/locations/src/components/locations/overview/LocationList.ts",
+      "insertions": 46,
+      "deletions": 26
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary ae0d664321499098479fc0b431c70c073eb56d90",
+    "showPatch": "git -C ../ghl-revex-frontend show ae0d664321499098479fc0b431c70c073eb56d90",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 42794c016b3f893a75876ec3d3796cad6f0a76b2"
+  },
+  "warnings": []
+}

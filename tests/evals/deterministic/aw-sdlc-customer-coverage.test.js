@@ -39,7 +39,7 @@ function run() {
     const coreRoutes = new Set(
       CUSTOMER_CASES.filter(testCase => testCase.suite === 'core').map(testCase => testCase.expectedRoute)
     );
-    for (const route of ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy']) {
+    for (const route of ['/aw:plan', '/aw:build', '/aw:investigate', '/aw:test', '/aw:review', '/aw:deploy', '/aw:ship']) {
       assert.ok(coreRoutes.has(route), `Core suite is missing ${route}`);
     }
   })) passed++; else failed++;
@@ -56,18 +56,24 @@ function run() {
     }, {});
 
     assert.ok((counts.plan || 0) >= 10, `Expected at least 10 plan cases, found ${counts.plan || 0}`);
-    assert.ok((counts.execute || 0) >= 8, `Expected at least 8 execute cases, found ${counts.execute || 0}`);
-    assert.ok((counts.verify || 0) >= 8, `Expected at least 8 verify cases, found ${counts.verify || 0}`);
+    assert.ok((counts.build || 0) >= 8, `Expected at least 8 build cases, found ${counts.build || 0}`);
+    assert.ok((counts.review || 0) >= 8, `Expected at least 8 review cases, found ${counts.review || 0}`);
+    assert.ok((counts.investigate || 0) >= 2, `Expected at least 2 investigate cases, found ${counts.investigate || 0}`);
+    assert.ok((counts.test || 0) >= 3, `Expected at least 3 test cases, found ${counts.test || 0}`);
     assert.ok((counts.deploy || 0) >= 5, `Expected at least 5 deploy cases, found ${counts.deploy || 0}`);
+    assert.ok((counts.ship || 0) >= 2, `Expected at least 2 ship cases, found ${counts.ship || 0}`);
     assert.ok((counts.scope || 0) >= 6, `Expected at least 6 scope cases, found ${counts.scope || 0}`);
   })) passed++; else failed++;
 
   if (test('every command mode is covered in the customer matrix', () => {
     const expectedModesByRoute = {
       '/aw:plan': ['product', 'design', 'technical', 'tasks', 'full'],
-      '/aw:execute': ['code', 'infra', 'docs', 'migration', 'config'],
-      '/aw:verify': ['quality', 'review', 'readiness'],
+      '/aw:build': ['code', 'infra', 'docs', 'migration', 'config'],
+      '/aw:investigate': ['bug', 'incident'],
+      '/aw:test': ['feature', 'bugfix', 'release'],
+      '/aw:review': ['quality', 'review', 'readiness'],
       '/aw:deploy': ['pr', 'branch', 'staging', 'production'],
+      '/aw:ship': ['launch-readiness', 'rollout'],
     };
 
     for (const [route, modes] of Object.entries(expectedModesByRoute)) {
@@ -81,9 +87,12 @@ function run() {
   if (test('layer coverage exists for every public command', () => {
     const expectedLayersByRoute = {
       '/aw:plan': ['context', 'intent', 'prerequisites', 'authoring', 'coverage-check', 'handoff'],
-      '/aw:execute': ['load', 'mode-select', 'task-run', 'spec-review', 'quality-review', 'handoff'],
-      '/aw:verify': ['code_review', 'local_validation', 'e2e_validation', 'external_validation', 'pr_governance', 'release_readiness'],
+      '/aw:build': ['load', 'mode-select', 'task-run', 'slice-verify', 'quality-review', 'handoff'],
+      '/aw:investigate': ['intake', 'repro', 'hypothesis', 'confirmation', 'decision'],
+      '/aw:test': ['scope', 'prepare', 'execute', 'evidence', 'handoff'],
+      '/aw:review': ['code_review', 'local_validation', 'e2e_validation', 'external_validation', 'pr_governance', 'release_readiness'],
       '/aw:deploy': ['preflight', 'release_path', 'pipeline_resolution', 'execution', 'post_deploy_evidence', 'learning'],
+      '/aw:ship': ['release-context', 'launch-checklist', 'rollback', 'monitoring', 'closeout'],
     };
 
     for (const [route, layers] of Object.entries(expectedLayersByRoute)) {
@@ -102,12 +111,24 @@ function run() {
       );
     }
 
-    for (const testCase of filterByRoute('/aw:execute')) {
+    for (const testCase of filterByRoute('/aw:build')) {
       assert.ok(testCase.expectedMustNot.includes('prd.md'), `${testCase.id} should forbid PRD drift`);
       assert.ok(testCase.expectedMustNot.includes('design.md'), `${testCase.id} should forbid design drift`);
     }
 
-    for (const testCase of filterByRoute('/aw:verify')) {
+    for (const testCase of filterByRoute('/aw:investigate')) {
+      assert.ok(testCase.expectedMustNot.includes('code-changes') || testCase.expectedMustNot.includes('implementation-code'), `${testCase.id} should forbid blind implementation`);
+    }
+
+    for (const testCase of filterByRoute('/aw:test')) {
+      assert.ok(testCase.expectedMustNot.includes('deploy-action'), `${testCase.id} should forbid deploy actions`);
+      assert.ok(
+        testCase.expectedMustNot.includes('implementation-code') || testCase.expectedMustNot.includes('code-changes'),
+        `${testCase.id} should forbid implementation work`
+      );
+    }
+
+    for (const testCase of filterByRoute('/aw:review')) {
       assert.ok(testCase.expectedMustNot.includes('deploy-action'), `${testCase.id} should forbid deploy actions`);
       assert.ok(
         testCase.expectedMustNot.includes('implementation-code') || testCase.expectedMustNot.includes('code-changes'),
@@ -116,6 +137,13 @@ function run() {
     }
 
     for (const testCase of filterByRoute('/aw:deploy')) {
+      assert.ok(
+        testCase.expectedMustNot.includes('implementation-code') || testCase.expectedMustNot.includes('code-changes'),
+        `${testCase.id} should forbid implementation work`
+      );
+    }
+
+    for (const testCase of filterByRoute('/aw:ship')) {
       assert.ok(
         testCase.expectedMustNot.includes('implementation-code') || testCase.expectedMustNot.includes('code-changes'),
         `${testCase.id} should forbid implementation work`

@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "id": "idea-refine-route",
+      "prompt": "Help me refine this partner referral idea before we write the spec.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkill": "idea-refine"
+    },
+    {
+      "id": "api-contract-route",
+      "prompt": "Design a stable API contract for this approved webhook retry interface change.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkill": "api-and-interface-design"
+    },
+    {
+      "id": "browser-proof-route",
+      "prompt": "Prove this UI fix in the browser by checking the DOM, console, and network requests.",
+      "expectedPublicRoute": "/aw:test",
+      "expectedPrimarySkill": "aw-test",
+      "expectedSupportingSkill": "browser-testing-with-devtools"
+    },
+    {
+      "id": "simplification-route",
+      "prompt": "Simplify this working code without changing behavior.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkill": "code-simplification"
+    },
+    {
+      "id": "security-hardening-route",
+      "prompt": "Harden this auth flow and validate the trust boundaries.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkill": "security-and-hardening"
+    },
+    {
+      "id": "performance-route",
+      "prompt": "Measure and optimize this slow render path.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkill": "performance-optimization"
+    },
+    {
+      "id": "git-discipline-route",
+      "prompt": "Keep this implementation in small save points and make the history reviewable.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkill": "git-workflow-and-versioning"
+    },
+    {
+      "id": "ci-cd-route",
+      "prompt": "Set up the CI gates, preview deploy, and rollback path for this release.",
+      "expectedPublicRoute": "/aw:deploy",
+      "expectedPrimarySkill": "aw-deploy",
+      "expectedSupportingSkill": "ci-cd-and-automation"
+    },
+    {
+      "id": "deprecation-route",
+      "prompt": "Plan the migration off the legacy endpoint and tell me how to retire it safely.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkill": "deprecation-and-migration"
+    },
+    {
+      "id": "docs-adr-route",
+      "prompt": "Record why we chose this architecture and update the docs trail.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkill": "documentation-and-adrs"
+    }
+  ]
+}

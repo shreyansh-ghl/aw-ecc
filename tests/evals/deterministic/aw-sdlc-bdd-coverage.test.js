@@ -1,7 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const { REAL_CASES } = require('../real/aw-sdlc-real-outcomes.test.js');
+const { OUTCOME_CASES } = require('../outcomes/aw-sdlc-outcomes.test.js');
 
 const FEATURE_DIR = path.join(__dirname, '..', '..', 'bdd', 'features');
 
@@ -86,9 +86,9 @@ function run() {
   console.log('\n=== AW SDLC BDD Coverage ===\n');
 
   const scenarios = readAllScenarios();
-  const realCaseIds = new Set(REAL_CASES.map(testCase => testCase.id));
+  const outcomeCaseIds = new Set(OUTCOME_CASES.map(testCase => testCase.id));
   const scenarioCaseIds = scenarios.map(scenario => scenario.caseId);
-  const requiredStageTags = ['@plan', '@execute', '@verify', '@deploy', '@ship'];
+  const requiredStageTags = ['@plan', '@build', '@review', '@deploy', '@ship', '@yolo'];
 
   let passed = 0;
   let failed = 0;
@@ -100,15 +100,15 @@ function run() {
     ['every scenario has a mapped case id', () => {
       for (const scenario of scenarios) {
         assert.ok(scenario.caseId, `scenario "${scenario.name}" is missing # case-id metadata`);
-        assert.ok(realCaseIds.has(scenario.caseId), `scenario "${scenario.name}" maps to unknown real case "${scenario.caseId}"`);
+        assert.ok(outcomeCaseIds.has(scenario.caseId), `scenario "${scenario.name}" maps to unknown outcome case "${scenario.caseId}"`);
       }
     }],
     ['case ids are unique and cover all real outcome cases', () => {
       assert.equal(new Set(scenarioCaseIds).size, scenarioCaseIds.length, 'BDD case ids should be unique');
       assert.deepEqual(
         [...new Set(scenarioCaseIds)].sort(),
-        [...realCaseIds].sort(),
-        'BDD scenarios should cover the same case ids as the real outcome suite'
+        [...outcomeCaseIds].sort(),
+        'BDD scenarios should cover the same case ids as the outcomes suite'
       );
     }],
     ['scenarios stay intent first', () => {

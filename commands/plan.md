@@ -10,8 +10,7 @@ internal_skill: aw-plan
 # Plan
 
 Use `/aw:plan` to decide what needs to be planned and to produce only the planning artifacts required for the request.
-
-This is the public planning command.
+This command owns planning only.
 It should stay narrow by default and should not write implementation code.
 
 ## Role
@@ -57,13 +56,14 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 ## Execution Rules
 
 1. Classify the request into one primary mode first.
-2. Default to single-scope planning.
-3. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
-4. Use existing artifacts as inputs when they are already sufficient.
-5. Route approved technical direction through `aw-spec` before task planning.
-6. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
-7. Do not require a PRD for a technical request that is already well defined.
-8. When writing technical or task artifacts, make them concrete enough for execution to proceed without re-planning file scope, validation, and task order.
+2. Operate in read-only planning mode until the artifacts are written.
+3. Default to single-scope planning.
+4. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+5. Use existing artifacts as inputs when they are already sufficient.
+6. Route approved technical direction through `aw-spec` before task planning.
+7. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
+8. Do not require a PRD for a technical request that is already well defined.
+9. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
 
 ## Planning Depth
 
@@ -71,11 +71,13 @@ When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 
 - exact file paths when they can be inferred safely
 - likely file scope when exact paths are not yet safe
+- dependency ordering and vertical slices instead of horizontal batches
 - concrete task goals
 - 2-5 minute checkbox steps for non-trivial work
 - exact commands with expected failure or pass signals
 - commit boundaries for meaningful slices
 - validation commands or evidence targets
+- checkpoints between major phases
 - dependency or ordering notes
 - bounded parallel candidates only when write scope is disjoint
 - no placeholders and a self-review pass before handoff
@@ -89,14 +91,14 @@ When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 
 ## Must Not Do
 
-- must not jump directly into `/aw:execute`
+- must not jump directly into `/aw:build`
 - must not create random artifact names
 - must not silently broaden scope
 
 ## Recommended Next Commands
 
-- `/aw:execute`
-- `/aw:verify` if the user wants the planning artifacts reviewed before implementation
+- `/aw:build`
+- `/aw:review` if the user wants the planning artifacts reviewed before implementation
 
 ## Internal Routing
 

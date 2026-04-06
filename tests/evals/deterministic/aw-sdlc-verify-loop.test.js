@@ -25,31 +25,29 @@ function run() {
   let passed = 0;
   let failed = 0;
 
-  if (test('verify defines an explicit findings and re-review loop', () => {
-    assert.ok(verifySkill.includes('Findings and Re-Review Loop'));
-    assert.ok(verifyCommand.includes('## Repair Loop'));
-    assert.ok(verifySkill.includes('repair-focused handoff back to `aw-execute`'));
-    assert.ok(verifyCommand.includes('recommend `/aw:execute` as the next stage'));
-    assert.ok(verifySkill.includes('verification is not complete until that failure is captured'));
-    assert.ok(verifyCommand.includes('failed verify artifact is the evidence'));
-    assert.ok(verifySkill.includes('Fresh Evidence Rule'));
-    assert.ok(verifyCommand.includes('stale evidence'));
+  if (test('verify is now a compatibility router to test and review', () => {
+    assert.ok(verifySkill.includes('compatibility layer'));
+    assert.ok(verifySkill.includes('aw-test'));
+    assert.ok(verifySkill.includes('aw-review'));
+    assert.ok(verifyCommand.includes('/aw:test'));
+    assert.ok(verifyCommand.includes('/aw:review'));
+    assert.ok(verifyCommand.includes('Compatibility Mapping'));
   })) passed++; else failed++;
 
-  if (test('verify strengthens debugging and TDD-as-policy expectations', () => {
+  if (test('verify preserves the verification artifact contract while narrowing intent', () => {
     for (const phrase of [
-      'TDD and Debugging Expectations',
-      'test-first or failure-first discipline',
-      'root-cause hypothesis',
-      'confirming evidence',
+      'verification.md',
+      'state.json',
+      'smallest correct modern verification flow',
+      'must not preserve the old overloaded verify semantics',
     ]) {
       assert.ok(verifySkill.includes(phrase) || verifyCommand.includes(phrase), `Missing verify guidance for ${phrase}`);
     }
   })) passed++; else failed++;
 
-  if (test('verify stays inside the existing public stage surface', () => {
+  if (test('verify stays a compatibility entrypoint instead of reclaiming the public stage surface', () => {
     assert.ok(verifyCommand.includes('/aw:deploy'));
-    assert.ok(verifyCommand.includes('/aw:execute'));
+    assert.ok(!verifyCommand.includes('recommend `/aw:execute` as the next stage'));
     assert.ok(!snapshot.fileExists('commands/re-review.md'), 're-review should stay inside verify, not become a public command');
     assert.ok(!snapshot.fileExists('commands/debug.md'), 'debug should stay internal, not become a public command');
   })) passed++; else failed++;

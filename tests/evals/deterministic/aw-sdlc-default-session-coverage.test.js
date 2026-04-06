@@ -41,7 +41,7 @@ function run() {
     for (const testCase of DEFAULT_SESSION_CASES) {
       assert.deepStrictEqual(
         testCase.expectedPublicSurface,
-        ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy'],
+        ['/aw:plan', '/aw:build', '/aw:investigate', '/aw:test', '/aw:review', '/aw:deploy', '/aw:ship'],
         `${testCase.id} does not use the minimal public surface`
       );
     }
@@ -49,7 +49,7 @@ function run() {
 
   if (test('session cases cover all public routes plus surface-only help', () => {
     const routes = new Set(DEFAULT_SESSION_CASES.map(testCase => testCase.expectedRoute));
-    for (const route of ['unknown', '/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy']) {
+    for (const route of ['unknown', '/aw:plan', '/aw:build', '/aw:investigate', '/aw:test', '/aw:review', '/aw:deploy', '/aw:ship']) {
       assert.ok(routes.has(route), `Missing default session route ${route}`);
     }
   })) passed++; else failed++;
@@ -66,8 +66,10 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('verify defaults cover PR governance and local validation expectations', () => {
-    const layeredCases = DEFAULT_SESSION_CASES.filter(testCase => testCase.expectedRoute === '/aw:verify');
+  if (test('test and review defaults cover local validation and PR governance expectations', () => {
+    const layeredCases = DEFAULT_SESSION_CASES.filter(testCase => (
+      testCase.expectedRoute === '/aw:test' || testCase.expectedRoute === '/aw:review'
+    ));
     assert.ok(layeredCases.some(testCase => testCase.expectedVerifyLayers.includes('pr_governance')));
     assert.ok(layeredCases.some(testCase => testCase.expectedVerifyLayers.includes('local_validation')));
   })) passed++; else failed++;
@@ -100,9 +102,12 @@ function run() {
   if (test('configuration docs describe the default session behavior the cases expect', () => {
     for (const phrase of [
       '/aw:plan',
-      '/aw:execute',
-      '/aw:verify',
+      '/aw:build',
+      '/aw:investigate',
+      '/aw:test',
+      '/aw:review',
       '/aw:deploy',
+      '/aw:ship',
       'PR description checklist',
       'ghl-ai',
       'versioned MFA staging',
@@ -148,7 +153,7 @@ function run() {
   })) passed++; else failed++;
 
   if (test('router skill now advertises the minimal AW SDLC surface instead of legacy revex commands', () => {
-    for (const token of ['/aw:plan', '/aw:execute', '/aw:verify', '/aw:deploy', '/aw:ship']) {
+    for (const token of ['/aw:plan', '/aw:build', '/aw:investigate', '/aw:test', '/aw:review', '/aw:deploy', '/aw:ship']) {
       assert.ok(routerSkill.includes(token), `Router skill is missing ${token}`);
     }
     assert.ok(!routerSkill.includes('/aw:revex-'), 'Router skill should no longer advertise legacy revex commands');

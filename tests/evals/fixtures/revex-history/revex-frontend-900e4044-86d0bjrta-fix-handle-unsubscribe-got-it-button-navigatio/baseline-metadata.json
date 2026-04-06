@@ -1,0 +1,59 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "yext",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "yext:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `yext:src/components` in RevEx frontend, inside the broader `yext` area. Deliver the smallest safe implementation in `yext:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `yext:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `yext:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "900e4044d4229ad0dd1e754e277f8f99f2ac8711",
+    "parentSha": "0d18e6056edc8082e3ccaf12180ef5e94a78ff2e",
+    "date": "2026-04-01T10:56:16+05:30",
+    "subject": "[86d0bjrta] fix: handle unsubscribe 'Got It' button navigation in LoginDetails (#7763)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 2,
+    "insertions": 204,
+    "deletions": 195,
+    "totalLinesChanged": 399
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/yext/src/components/ListingPageComponents/EditListingComponents/LoginDetails.vue",
+      "insertions": 8,
+      "deletions": 1
+    },
+    {
+      "path": "apps/yext/src/pages/ListingPage.vue",
+      "insertions": 196,
+      "deletions": 194
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 900e4044d4229ad0dd1e754e277f8f99f2ac8711",
+    "showPatch": "git -C ../ghl-revex-frontend show 900e4044d4229ad0dd1e754e277f8f99f2ac8711",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 0d18e6056edc8082e3ccaf12180ef5e94a78ff2e"
+  },
+  "warnings": []
+}

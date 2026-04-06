@@ -1,0 +1,119 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "power-dialer",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "power-dialer:src/components",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `power-dialer:src/components` in RevEx frontend, inside the broader `power-dialer` area. Deliver the smallest safe implementation in `power-dialer:src/components` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `power-dialer:src/components` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `power-dialer:src/components` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "fdaaf3d17212a36fbd43afa66a6160b4413d8d1a",
+    "parentSha": "772dd526418d468d10fa8e0e1d2a777758b84090",
+    "date": "2026-04-01T11:47:53+05:30",
+    "subject": "Feat/cu ghlen 7472 call event v3 (#5918)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 14,
+    "insertions": 350,
+    "deletions": 20,
+    "totalLinesChanged": 370
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/power-dialer/src/components/Dialer/Contacts/ContactList.vue",
+      "insertions": 15,
+      "deletions": 1
+    },
+    {
+      "path": "apps/power-dialer/src/components/Dialer/Keypad/DialPad.vue",
+      "insertions": 31,
+      "deletions": 5
+    },
+    {
+      "path": "apps/power-dialer/src/components/Dialer/NavigationBar/index.vue",
+      "insertions": 33,
+      "deletions": 10
+    },
+    {
+      "path": "apps/power-dialer/src/components/Dialer/PhoneNumbers/PhoneNumbersList.vue",
+      "insertions": 15,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/components/Dialer/Recents/RecentDetailMenuCard.vue",
+      "insertions": 11,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/components/Dialer/Voicemail/VoiceMailCard.vue",
+      "insertions": 13,
+      "deletions": 1
+    },
+    {
+      "path": "apps/power-dialer/src/components/EndCall/SelectDisposition.vue",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/hooks/index.ts",
+      "insertions": 2,
+      "deletions": 1
+    },
+    {
+      "path": "apps/power-dialer/src/hooks/use-pendo-events.ts",
+      "insertions": 82,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/pages/Dialer.vue",
+      "insertions": 57,
+      "deletions": 1
+    },
+    {
+      "path": "apps/power-dialer/src/services/PendoService.ts",
+      "insertions": 23,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/types/Dialer.ts",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "apps/power-dialer/src/types/Pendo.ts",
+      "insertions": 56,
+      "deletions": 0
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "insertions": 1,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary fdaaf3d17212a36fbd43afa66a6160b4413d8d1a",
+    "showPatch": "git -C ../ghl-revex-frontend show fdaaf3d17212a36fbd43afa66a6160b4413d8d1a",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 772dd526418d468d10fa8e0e1d2a777758b84090"
+  },
+  "warnings": []
+}

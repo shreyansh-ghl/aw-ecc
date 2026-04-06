@@ -1,0 +1,27 @@
+{
+  "benchmarkName": "aw-ecc-addy-parity-benchmark",
+  "deterministicTargets": {
+    "lifecycleSkillCoveragePercent": 100,
+    "topUseCaseCountMin": 10,
+    "archetypeScenarioCaseCountMin": 8,
+    "productScenarioCaseCountMin": 8,
+    "revexHistoryCaseCountMin": 8,
+    "autoIntentCaseCountMin": 14,
+    "validationFixtureSyncPercent": 100,
+    "triggerMatrixCoveragePercent": 100
+  },
+  "liveTargets": {
+    "craftSkillCaseCountMin": 10,
+    "routeAccuracyPercentMin": 90,
+    "primarySkillAccuracyPercentMin": 90,
+    "supportingSkillAccuracyPercentMin": 85,
+    "recommendedRunsPerCase": 3
+  },
+  "sourceFixtures": {
+    "validationMatrix": "tests/evals/fixtures/aw-addy-validation-cases.json",
+    "archetypeScenarios": "tests/evals/fixtures/aw-archetype-scenarios.json",
+    "productScenarios": "tests/evals/fixtures/aw-product-scenarios.json",
+    "revexHistoryBenchmark": "tests/evals/fixtures/aw-revex-history-benchmark.json",
+    "liveCraftSkillCases": "tests/evals/fixtures/aw-live-craft-skill-cases.json"
+  }
+}

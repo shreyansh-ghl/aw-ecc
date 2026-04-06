@@ -1,0 +1,117 @@
+{
+  "$id": "aw-scenario-case.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "layer",
+    "repoArchetype",
+    "productArea",
+    "startingState",
+    "userPrompt",
+    "expectedPublicRoute",
+    "expectedPrimarySkill",
+    "expectedSupportingSkills",
+    "expectedArtifacts",
+    "expectedOutputs",
+    "expectedMustNot",
+    "expectedOrgStandards",
+    "tags"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "minLength": 3
+    },
+    "layer": {
+      "type": "string",
+      "enum": ["capability", "archetype", "product", "live"]
+    },
+    "repoArchetype": {
+      "type": "string",
+      "enum": ["microservice", "worker", "microfrontend", "generic"]
+    },
+    "productArea": {
+      "type": "string",
+      "minLength": 2
+    },
+    "startingState": {
+      "type": "string",
+      "minLength": 10
+    },
+    "userPrompt": {
+      "type": "string",
+      "minLength": 10
+    },
+    "expectedPublicRoute": {
+      "type": "string",
+      "enum": [
+        "/aw:plan",
+        "/aw:build",
+        "/aw:investigate",
+        "/aw:test",
+        "/aw:review",
+        "/aw:deploy",
+        "/aw:ship",
+        "aw-yolo"
+      ]
+    },
+    "expectedPrimarySkill": {
+      "type": "string",
+      "minLength": 3
+    },
+    "expectedSupportingSkills": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "expectedArtifacts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "expectedOutputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "expectedMustNot": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "expectedOrgStandards": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
+    }
+  }
+}

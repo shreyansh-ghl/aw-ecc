@@ -4,8 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 EVALS_DIR="$ROOT_DIR/tests/evals"
 DETERMINISTIC_DIR="$EVALS_DIR/deterministic"
-LIVE_DIR="$EVALS_DIR/live"
-REAL_DIR="$EVALS_DIR/real"
+ROUTING_DIR="$EVALS_DIR/routing"
+OUTCOMES_DIR="$EVALS_DIR/outcomes"
 
 MODE="${1:-all}"
 : "${AW_SDLC_EVAL_REF:=WORKTREE}"
@@ -13,7 +13,7 @@ export AW_SDLC_EVAL_REF
 
 ensure_real_workspace_base() {
   if [[ -z "${AW_SDLC_EVAL_WORKSPACE_BASE_DIR:-}" ]]; then
-    AW_SDLC_EVAL_WORKSPACE_BASE_DIR="$ROOT_DIR/tests/results/real-workspaces-$(date +%Y%m%d-%H%M%S)"
+    AW_SDLC_EVAL_WORKSPACE_BASE_DIR="$ROOT_DIR/tests/results/outcomes-workspaces-$(date +%Y%m%d-%H%M%S)"
   fi
 
   mkdir -p "$AW_SDLC_EVAL_WORKSPACE_BASE_DIR"
@@ -43,6 +43,12 @@ run_optional_test_group() {
 }
 
 run_deterministic() {
+  run "Addy validation matrix" node "$DETERMINISTIC_DIR/aw-addy-validation-matrix.test.js"
+  run "Archetype scenarios" node "$DETERMINISTIC_DIR/aw-archetype-scenarios.test.js"
+  run "Product scenarios" node "$DETERMINISTIC_DIR/aw-product-scenarios.test.js"
+  run "RevEx history benchmark" node "$DETERMINISTIC_DIR/aw-revex-history-benchmark.test.js"
+  run "RevEx history phase 2 contract" node "$DETERMINISTIC_DIR/aw-revex-history-phase2-contract.test.js"
+  run "Eval benchmark scorecard" node "$DETERMINISTIC_DIR/aw-eval-benchmark-scorecard.test.js"
   run "Goal gates" node "$DETERMINISTIC_DIR/aw-sdlc-goal-gates.test.js"
   run "Command contract completeness" node "$DETERMINISTIC_DIR/aw-sdlc-command-contract-completeness.test.js"
   run "Command/skill mapping" node "$DETERMINISTIC_DIR/aw-sdlc-command-skill-mapping.test.js"
@@ -63,77 +69,94 @@ run_deterministic() {
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-verify-*.test.js" "Verification"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-finish-*.test.js" "Finish"
   run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-install*.test.js" "Installability"
-  run "Real coverage" node "$REAL_DIR/aw-sdlc-real-coverage.test.js"
+  run "Outcomes coverage" node "$OUTCOMES_DIR/aw-sdlc-outcomes-coverage.test.js"
   run "Skill trigger coverage" node "$DETERMINISTIC_DIR/aw-sdlc-skill-trigger-coverage.test.js"
-  run "Live artifact contract" node "$REAL_DIR/aw-sdlc-live-artifact-contract.test.js"
-  run "Live release generator" node "$REAL_DIR/aw-sdlc-live-release-generator.test.js"
+  run "Outcome artifact contract" node "$OUTCOMES_DIR/aw-sdlc-outcome-artifact-contract.test.js"
+  run "Outcome release generator" node "$OUTCOMES_DIR/aw-sdlc-outcome-release-generator.test.js"
   run "BDD coverage" node "$DETERMINISTIC_DIR/aw-sdlc-bdd-coverage.test.js"
 }
 
-run_live() {
-  run "Public routing (Codex)" node "$LIVE_DIR/aw-sdlc-codex-routing.test.js"
-  run "Stage resolution (Codex)" node "$LIVE_DIR/aw-sdlc-stage-resolution.test.js"
-  run "Customer behavior core (Codex)" node "$LIVE_DIR/aw-sdlc-customer-behavior.test.js"
+run_routing() {
+  run "Public routing (Codex)" node "$ROUTING_DIR/aw-sdlc-codex-routing.test.js"
+  run "Stage resolution (Codex)" node "$ROUTING_DIR/aw-sdlc-stage-resolution.test.js"
+  run "Archetype routing (Codex)" node "$ROUTING_DIR/aw-archetype-routing.test.js"
+  run "Customer behavior core (Codex)" node "$ROUTING_DIR/aw-sdlc-customer-behavior.test.js"
 }
 
-run_live_full() {
-  AW_SDLC_EVAL_SUITE=full run "Customer behavior full (Codex)" node "$LIVE_DIR/aw-sdlc-customer-behavior.test.js"
+run_routing_full() {
+  AW_SDLC_EVAL_SUITE=full run "Customer behavior full (Codex)" node "$ROUTING_DIR/aw-sdlc-customer-behavior.test.js"
 }
 
-run_real() {
+run_outcomes() {
   ensure_real_workspace_base
-  run "Real outcomes (Codex)" node "$REAL_DIR/aw-sdlc-real-outcomes.test.js"
+  run "Outcomes suite (Codex)" node "$OUTCOMES_DIR/aw-sdlc-outcomes.test.js"
 }
 
-run_real_parallel() {
+run_revex_history() {
   ensure_real_workspace_base
-  run "Real outcomes parallel (Codex)" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-real-parallel.sh"
+  run "RevEx history phase 2 (Codex)" node "$OUTCOMES_DIR/aw-revex-history-phase2.test.js"
+}
+
+run_revex_history_smoke() {
+  ensure_real_workspace_base
+  run "RevEx history phase 2 smoke preset (Codex)" env AW_REVEX_HISTORY_PRESET=smoke node "$OUTCOMES_DIR/aw-revex-history-phase2.test.js"
+}
+
+run_outcomes_parallel() {
+  ensure_real_workspace_base
+  run "Outcomes suite parallel (Codex)" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-outcomes-parallel.sh"
 }
 
 run_standalone_smoke() {
   run "Standalone Codex + ghl-ai smoke" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-ghl-ai-standalone-smoke.sh"
 }
 
-run_live_artifacts() {
-  run "Live release artifact validation" node "$REAL_DIR/aw-sdlc-live-artifacts.test.js"
+run_outcome_artifacts() {
+  run "Outcome artifact validation" node "$OUTCOMES_DIR/aw-sdlc-outcome-artifacts.test.js"
 }
 
-run_live_golden_path() {
-  run "Live PR + staging golden path" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-live-golden-path.sh"
+run_routing_golden_path() {
+  run "Routing PR + staging golden path" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-routing-golden-path.sh"
 }
 
 case "$MODE" in
   deterministic)
     run_deterministic
     ;;
-  live)
-    run_live
+  routing|live)
+    run_routing
     ;;
-  live-full)
-    run_live
-    run_live_full
+  routing-full|live-full)
+    run_routing
+    run_routing_full
     ;;
-  real)
-    run_real
+  outcomes|real)
+    run_outcomes
     ;;
-  real-parallel)
-    run_real_parallel
+  revex-history|history-benchmark)
+    run_revex_history
+    ;;
+  revex-history-smoke|history-benchmark-smoke)
+    run_revex_history_smoke
+    ;;
+  outcomes-parallel|real-parallel)
+    run_outcomes_parallel
     ;;
   standalone-smoke)
     run_standalone_smoke
     ;;
-  live-artifacts)
-    run_live_artifacts
+  outcome-artifacts|live-artifacts)
+    run_outcome_artifacts
     ;;
-  live-golden-path)
-    run_live_golden_path
+  routing-golden-path|live-golden-path)
+    run_routing_golden_path
     ;;
   all)
     run_deterministic
-    run_live
+    run_routing
     ;;
   *)
-    echo "Usage: $0 [deterministic|live|live-full|real|real-parallel|standalone-smoke|live-artifacts|live-golden-path|all]" >&2
+    echo "Usage: $0 [deterministic|routing|routing-full|outcomes|revex-history|revex-history-smoke|outcomes-parallel|standalone-smoke|outcome-artifacts|routing-golden-path|all]" >&2
     exit 1
     ;;
 esac

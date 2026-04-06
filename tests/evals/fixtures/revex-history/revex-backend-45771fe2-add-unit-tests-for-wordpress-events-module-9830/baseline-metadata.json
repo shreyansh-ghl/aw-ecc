@@ -1,0 +1,59 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "wordpress",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "wordpress:src/wordpress-events",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `wordpress:src/wordpress-events` in RevEx backend, inside the broader `wordpress` area. Deliver the smallest safe implementation in `wordpress:src/wordpress-events` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `wordpress:src/wordpress-events` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `wordpress:src/wordpress-events` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "45771fe2ae626930b49d4c6713244f98ae4e39bd",
+    "parentSha": "aebf469b8e1a4d2909cce2e8cbab2a6387ba6422",
+    "date": "2026-03-27T12:42:41+05:30",
+    "subject": "add unit tests for WordPress-Events module (#9830)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 2,
+    "insertions": 338,
+    "deletions": 62,
+    "totalLinesChanged": 400
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/wordpress/src/wordpress-events/__tests__/wordpress-events.controller.spec.ts",
+      "insertions": 118,
+      "deletions": 0
+    },
+    {
+      "path": "apps/wordpress/src/wordpress-events/__tests__/wordpress-events.service.spec.ts",
+      "insertions": 220,
+      "deletions": 62
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 45771fe2ae626930b49d4c6713244f98ae4e39bd",
+    "showPatch": "git -C ../ghl-revex-backend show 45771fe2ae626930b49d4c6713244f98ae4e39bd",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout aebf469b8e1a4d2909cce2e8cbab2a6387ba6422"
+  },
+  "warnings": []
+}
