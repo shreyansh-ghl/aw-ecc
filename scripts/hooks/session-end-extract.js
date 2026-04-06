@@ -267,18 +267,17 @@ async function sendImplicitFeedback(servedData, transcriptContent, headers) {
 
   for (const memoryId of servedIds) {
     try {
-      const signal = wasShortSession ? 'irrelevant' : 'useful';
-      const confidence = wasShortSession ? 0.3 : 0.5; // Low confidence — implicit signal only
+      const feedbackType = wasShortSession ? 'invalidate' : 'validate';
 
       await callMcpTool('memory_feedback', {
         memory_id: memoryId,
-        signal,
-        confidence,
-        source: 'implicit-session',
-        context: `Session duration: ${sessionMinutes}min. Implicit feedback from session lifecycle.`,
+        feedback_type: feedbackType,
+        actor_type: 'agent',
+        actor_id: 'session-end-extract',
+        reason: `Session duration: ${sessionMinutes}min. Implicit feedback from session lifecycle.`,
       }, headers);
 
-      console.log(`[memory-extract] Feedback sent for ${memoryId}: ${signal} (confidence=${confidence})`);
+      console.log(`[memory-extract] Feedback sent for ${memoryId}: ${feedbackType}`);
     } catch (err) {
       console.error(`[memory-extract] Failed to send feedback for ${memoryId}: ${err.message}`);
     }
