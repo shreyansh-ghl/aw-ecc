@@ -5,6 +5,7 @@ const {
   runExistingHook,
   hookEnabled,
 } = require('./adapter');
+const { getCursorAwPhaseSteps } = require('./aw-phase-definitions');
 
 function shouldRunStep(step, deps) {
   if (!step.hookId) {
@@ -55,6 +56,15 @@ async function runCursorAwPhase({ raw, steps, deps = {} }) {
   return raw;
 }
 
+function runNamedCursorAwPhase({ phaseName, raw, deps = {} }) {
+  return runCursorAwPhase({
+    raw,
+    steps: getCursorAwPhaseSteps(phaseName),
+    deps,
+  });
+}
+
 module.exports = {
   runCursorAwPhase,
+  runNamedCursorAwPhase,
 };

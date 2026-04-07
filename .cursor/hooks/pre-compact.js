@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 const { readStdin } = require('./adapter');
-const { runCursorAwPhase } = require('./aw-phase-adapter');
+const { runNamedCursorAwPhase } = require('./aw-phase-adapter');
 
 readStdin().then(raw => {
-  return runCursorAwPhase({
+  return runNamedCursorAwPhase({
+    phaseName: 'pre-compact',
     raw,
-    steps: [
-      {
-        scriptName: 'pre-compact.js',
-      },
-    ],
   }).then(output => process.stdout.write(output));
 }).catch(() => process.exit(0));
