@@ -47,7 +47,9 @@ async function runTests() {
         {
           hookId: 'session:start',
           allowedProfiles: ['minimal', 'standard', 'strict'],
-          scriptName: 'session-start.js',
+          runner: 'shell',
+          relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
+          payloadMode: 'raw',
         },
       ],
       deps: {
@@ -59,8 +61,11 @@ async function runTests() {
           calls.push({ type: 'enabled', hookId, allowedProfiles });
           return true;
         },
-        runExistingHook(scriptName, payload) {
-          calls.push({ type: 'run', scriptName, payload });
+        runManagedNodeHook(relativeScriptPath, payload) {
+          calls.push({ type: 'node', relativeScriptPath, payload });
+        },
+        runManagedShellHook(relativeScriptPath, payload) {
+          calls.push({ type: 'shell', relativeScriptPath, payload });
         },
       },
     });
@@ -68,21 +73,14 @@ async function runTests() {
     assert.strictEqual(result, raw);
     assert.deepStrictEqual(calls, [
       {
-        type: 'transform',
-        input: { prompt: 'hello', transcript_path: '/tmp/demo.jsonl' },
-      },
-      {
         type: 'enabled',
         hookId: 'session:start',
         allowedProfiles: ['minimal', 'standard', 'strict'],
       },
       {
-        type: 'run',
-        scriptName: 'session-start.js',
-        payload: {
-          transformed: true,
-          input: { prompt: 'hello', transcript_path: '/tmp/demo.jsonl' },
-        },
+        type: 'shell',
+        relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
+        payload: raw,
       },
     ]);
   })) passed++; else failed++;
@@ -96,7 +94,9 @@ async function runTests() {
         {
           hookId: 'stop:session-end',
           allowedProfiles: ['minimal', 'standard', 'strict'],
-          scriptName: 'session-end.js',
+          runner: 'node',
+          relativeScriptPath: 'scripts/hooks/session-end.js',
+          payloadMode: 'claude',
         },
       ],
       deps: {
@@ -108,8 +108,11 @@ async function runTests() {
           calls.push({ type: 'enabled', hookId, allowedProfiles });
           return false;
         },
-        runExistingHook() {
-          calls.push({ type: 'run' });
+        runManagedNodeHook() {
+          calls.push({ type: 'node' });
+        },
+        runManagedShellHook() {
+          calls.push({ type: 'shell' });
         },
       },
     });
@@ -137,12 +140,16 @@ async function runTests() {
         {
           hookId: 'stop:check-console-log',
           allowedProfiles: ['standard', 'strict'],
-          scriptName: 'check-console-log.js',
+          runner: 'node',
+          relativeScriptPath: 'scripts/hooks/check-console-log.js',
+          payloadMode: 'claude',
         },
         {
           hookId: 'stop:cost-tracker',
           allowedProfiles: ['minimal', 'standard', 'strict'],
-          scriptName: 'cost-tracker.js',
+          runner: 'node',
+          relativeScriptPath: 'scripts/hooks/cost-tracker.js',
+          payloadMode: 'claude',
         },
       ],
       deps: {
@@ -154,8 +161,11 @@ async function runTests() {
           calls.push({ type: 'enabled', hookId });
           return true;
         },
-        runExistingHook(scriptName, payload) {
-          calls.push({ type: 'run', scriptName, payload });
+        runManagedNodeHook(relativeScriptPath, payload) {
+          calls.push({ type: 'node', relativeScriptPath, payload });
+        },
+        runManagedShellHook(relativeScriptPath, payload) {
+          calls.push({ type: 'shell', relativeScriptPath, payload });
         },
       },
     });
@@ -164,9 +174,9 @@ async function runTests() {
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { prompt: 'hello' } },
       { type: 'enabled', hookId: 'stop:check-console-log' },
-      { type: 'run', scriptName: 'check-console-log.js', payload: { transformed: 'once' } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/check-console-log.js', payload: { transformed: 'once' } },
       { type: 'enabled', hookId: 'stop:cost-tracker' },
-      { type: 'run', scriptName: 'cost-tracker.js', payload: { transformed: 'once' } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/cost-tracker.js', payload: { transformed: 'once' } },
     ]);
   })) passed++; else failed++;
 
@@ -206,8 +216,11 @@ async function runTests() {
           calls.push({ type: 'enabled', hookId });
           return true;
         },
-        runExistingHook(scriptName, payload) {
-          calls.push({ type: 'run', scriptName, payload });
+        runManagedNodeHook(relativeScriptPath, payload) {
+          calls.push({ type: 'node', relativeScriptPath, payload });
+        },
+        runManagedShellHook(relativeScriptPath, payload) {
+          calls.push({ type: 'shell', relativeScriptPath, payload });
         },
       },
     });
@@ -216,13 +229,13 @@ async function runTests() {
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { prompt: 'hello' } },
       { type: 'enabled', hookId: 'stop:check-console-log' },
-      { type: 'run', scriptName: 'check-console-log.js', payload: { transformed: true } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/check-console-log.js', payload: { transformed: true } },
       { type: 'enabled', hookId: 'stop:session-end' },
-      { type: 'run', scriptName: 'session-end.js', payload: { transformed: true } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/session-end.js', payload: { transformed: true } },
       { type: 'enabled', hookId: 'stop:evaluate-session' },
-      { type: 'run', scriptName: 'evaluate-session.js', payload: { transformed: true } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/evaluate-session.js', payload: { transformed: true } },
       { type: 'enabled', hookId: 'stop:cost-tracker' },
-      { type: 'run', scriptName: 'cost-tracker.js', payload: { transformed: true } },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/cost-tracker.js', payload: { transformed: true } },
     ]);
   })) passed++; else failed++;
 
@@ -235,7 +248,7 @@ async function runTests() {
     }
 
     assert.ok(error, 'Expected unknown phase to throw');
-    assert.ok(error.message.includes('Unknown Cursor AW phase'));
+    assert.ok(error.message.includes('Unknown shared AW phase'));
   })) passed++; else failed++;
 
   console.log('\nResults:');

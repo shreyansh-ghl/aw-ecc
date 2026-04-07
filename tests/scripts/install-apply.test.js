@@ -132,6 +132,7 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks.json')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks', 'session-start.js')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks', 'shared', 'session-start.sh')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'skills', 'tdd-workflow', 'SKILL.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'skills', 'coding-standards', 'SKILL.md')));
 

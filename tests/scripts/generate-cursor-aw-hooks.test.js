@@ -11,6 +11,8 @@ const REPO_ROOT = path.join(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-cursor-aw-hooks.js');
 const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'session-start.js');
 const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'cursor-aw-hooks', 'session-start.js');
+const TARGET_SHARED_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'shared', 'session-start.sh');
+const SOURCE_SHARED_FILE = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'session-start.sh');
 const TARGET_CONFIG_FILE = path.join(REPO_ROOT, '.cursor', 'hooks.json');
 const SOURCE_CONFIG_FILE = path.join(REPO_ROOT, 'scripts', 'cursor-aw-home', 'hooks.json');
 
@@ -34,10 +36,12 @@ function runTests() {
 
   if (test('regenerates AW-owned Cursor hook outputs from the neutral source files', () => {
     const sourceHookContent = fs.readFileSync(SOURCE_HOOK_FILE, 'utf8');
+    const sourceSharedContent = fs.readFileSync(SOURCE_SHARED_FILE, 'utf8');
     const sourceConfigContent = fs.readFileSync(SOURCE_CONFIG_FILE, 'utf8');
 
     try {
       fs.writeFileSync(TARGET_HOOK_FILE, '// drifted output\n');
+      fs.writeFileSync(TARGET_SHARED_FILE, '# drifted output\n');
       fs.writeFileSync(TARGET_CONFIG_FILE, '{\"drifted\":true}\n');
       execFileSync('node', [SCRIPT], {
         cwd: REPO_ROOT,
@@ -45,11 +49,14 @@ function runTests() {
       });
 
       const regeneratedHook = fs.readFileSync(TARGET_HOOK_FILE, 'utf8');
+      const regeneratedShared = fs.readFileSync(TARGET_SHARED_FILE, 'utf8');
       const regeneratedConfig = fs.readFileSync(TARGET_CONFIG_FILE, 'utf8');
       assert.strictEqual(regeneratedHook, sourceHookContent);
+      assert.strictEqual(regeneratedShared, sourceSharedContent);
       assert.strictEqual(regeneratedConfig, sourceConfigContent);
     } finally {
       fs.writeFileSync(TARGET_HOOK_FILE, sourceHookContent);
+      fs.writeFileSync(TARGET_SHARED_FILE, sourceSharedContent);
       fs.writeFileSync(TARGET_CONFIG_FILE, sourceConfigContent);
       execFileSync('node', [SCRIPT], {
         cwd: REPO_ROOT,

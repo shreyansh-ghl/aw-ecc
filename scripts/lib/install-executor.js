@@ -12,8 +12,10 @@ const {
 const { getInstallTargetAdapter } = require('./install-targets/registry');
 const {
   buildGeneratedCursorAwHookSourceSuffixes,
+  buildGeneratedCursorAwSharedHookSourceSuffixes,
   getCursorAwHookConfigSourceRelativePath,
   getCursorAwHookSourceRelativeDir,
+  getCursorAwSharedHookSourceRelativeDir,
 } = require('./cursor-aw-hook-files');
 
 const LANGUAGE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
@@ -22,6 +24,7 @@ const EXCLUDED_GENERATED_SOURCE_SUFFIXES = [
   '/ecc/install-state.json',
   '/.cursor/hooks.json',
   ...buildGeneratedCursorAwHookSourceSuffixes(),
+  ...buildGeneratedCursorAwSharedHookSourceSuffixes(),
 ];
 
 const GENERATED_CURSOR_AW_HOOK_FILES = buildGeneratedCursorAwHookSourceSuffixes()
@@ -358,6 +361,13 @@ function planCursorLegacyInstall(context) {
     sourceRoot: context.sourceRoot,
     sourceRelativeDir: getCursorAwHookSourceRelativeDir(),
     destinationDir: path.join(targetRoot, 'hooks'),
+    strategy: 'sync-root-children',
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-cursor-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: getCursorAwSharedHookSourceRelativeDir(),
+    destinationDir: path.join(targetRoot, 'hooks', 'shared'),
     strategy: 'sync-root-children',
   });
 

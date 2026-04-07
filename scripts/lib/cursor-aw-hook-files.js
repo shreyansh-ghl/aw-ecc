@@ -10,14 +10,31 @@ const CURSOR_AW_HOOK_FILES = Object.freeze([
   'stop.js',
 ]);
 
+const CURSOR_AW_SHARED_HOOK_FILES = Object.freeze([
+  'aw-phase-definitions.js',
+  'aw-phase-runner.js',
+  'session-start.sh',
+  'user-prompt-submit.sh',
+]);
+
 function buildGeneratedCursorAwHookSourceSuffixes() {
   return CURSOR_AW_HOOK_FILES.map(fileName => (
     `/.cursor/hooks/${String(fileName).replace(/\\/g, '/')}`
   ));
 }
 
+function buildGeneratedCursorAwSharedHookSourceSuffixes() {
+  return CURSOR_AW_SHARED_HOOK_FILES.map(fileName => (
+    `/.cursor/hooks/shared/${String(fileName).replace(/\\/g, '/')}`
+  ));
+}
+
 function getCursorAwHookSourceRelativeDir() {
   return path.join('scripts', 'cursor-aw-hooks');
+}
+
+function getCursorAwSharedHookSourceRelativeDir() {
+  return path.join('scripts', 'hooks', 'shared');
 }
 
 function getCursorAwHomeSourceRelativeDir() {
@@ -30,8 +47,11 @@ function getCursorAwHookConfigSourceRelativePath() {
 
 module.exports = {
   CURSOR_AW_HOOK_FILES,
+  CURSOR_AW_SHARED_HOOK_FILES,
   buildGeneratedCursorAwHookSourceSuffixes,
+  buildGeneratedCursorAwSharedHookSourceSuffixes,
   getCursorAwHomeSourceRelativeDir,
   getCursorAwHookConfigSourceRelativePath,
   getCursorAwHookSourceRelativeDir,
+  getCursorAwSharedHookSourceRelativeDir,
 };
