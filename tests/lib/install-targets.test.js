@@ -166,6 +166,13 @@ function runTests() {
       )),
       'Should overlay neutral Cursor AW hook sources into .cursor/hooks'
     );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-home/hooks.json'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks.json')
+      )),
+      'Should overlay neutral Cursor hooks.json into the project .cursor root'
+    );
   })) passed++; else failed++;
 
   if (test('plans antigravity remaps for workflows, skills, and flat rules', () => {

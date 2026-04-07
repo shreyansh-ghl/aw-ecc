@@ -20,8 +20,18 @@ function getCursorAwHookSourceRelativeDir() {
   return path.join('scripts', 'cursor-aw-hooks');
 }
 
+function getCursorAwHomeSourceRelativeDir() {
+  return path.join('scripts', 'cursor-aw-home');
+}
+
+function getCursorAwHookConfigSourceRelativePath() {
+  return path.join(getCursorAwHomeSourceRelativeDir(), 'hooks.json');
+}
+
 module.exports = {
   CURSOR_AW_HOOK_FILES,
   buildGeneratedCursorAwHookSourceSuffixes,
+  getCursorAwHomeSourceRelativeDir,
+  getCursorAwHookConfigSourceRelativePath,
   getCursorAwHookSourceRelativeDir,
 };
