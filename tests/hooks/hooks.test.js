@@ -1999,19 +1999,28 @@ async function runTests() {
       const runHookPath = path.join(__dirname, '..', '..', 'hooks', 'run-hook.cmd');
       const sessionStartPath = path.join(__dirname, '..', '..', 'hooks', 'session-start');
       const promptReminderPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'session-start-rules-context.sh');
+      const sharedSessionStartPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'shared', 'session-start.sh');
+      const sharedPromptReminderPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
 
       assert.ok(fs.existsSync(runHookPath), 'run-hook.cmd should exist');
       assert.ok(fs.existsSync(sessionStartPath), 'hooks/session-start should exist');
       assert.ok(fs.existsSync(promptReminderPath), 'scripts/hooks/session-start-rules-context.sh should exist');
+      assert.ok(fs.existsSync(sharedSessionStartPath), 'shared session-start wrapper should exist');
+      assert.ok(fs.existsSync(sharedPromptReminderPath), 'shared user-prompt-submit wrapper should exist');
 
       const sessionStart = fs.readFileSync(sessionStartPath, 'utf8');
+      const sharedSessionStart = fs.readFileSync(sharedSessionStartPath, 'utf8');
       assert.ok(
-        sessionStart.includes('skills/using-aw-skills/hooks/session-start.sh'),
-        'hooks/session-start should delegate to the AW session-start hook'
+        sessionStart.includes('scripts/hooks/shared/session-start.sh'),
+        'hooks/session-start should delegate to the shared session-start wrapper'
       );
       assert.ok(
-        sessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
-        'hooks/session-start should fall back to ~/.aw_registry when installed under ~/.claude'
+        sharedSessionStart.includes('skills/using-aw-skills/hooks/session-start.sh'),
+        'shared session-start wrapper should delegate to the AW session-start hook'
+      );
+      assert.ok(
+        sharedSessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
+        'shared session-start wrapper should fall back to ~/.aw_registry when installed under ~/.claude'
       );
     })
   )

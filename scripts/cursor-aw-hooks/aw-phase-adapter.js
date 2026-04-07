@@ -3,57 +3,30 @@
 const {
   transformToClaude,
   runExistingHook,
+  runManagedShellHook,
   hookEnabled,
 } = require('./adapter');
 const { getCursorAwPhaseSteps } = require('./aw-phase-definitions');
+const { runSharedAwPhase } = require('./shared/aw-phase-runner');
 
-function shouldRunStep(step, deps) {
-  if (!step.hookId) {
-    return true;
-  }
-
-  return deps.hookEnabled(step.hookId, step.allowedProfiles || ['standard', 'strict']);
-}
-
-function resolveStepPayload(step, raw, parsedInput, claudeInput) {
-  switch (step.payloadMode) {
-    case 'raw':
-      return raw;
-    case 'parsed':
-      return parsedInput;
-    case 'claude':
-    default:
-      return claudeInput;
-  }
+function runManagedNodeHook(relativeScriptPath, payload) {
+  const scriptName = String(relativeScriptPath || '')
+    .replace(/^scripts\/hooks\//, '')
+    .replace(/^\.cursor\/hooks\//, '');
+  return runExistingHook(scriptName, payload);
 }
 
 async function runCursorAwPhase({ raw, steps, deps = {} }) {
-  const runtime = {
-    transformToClaude: deps.transformToClaude || transformToClaude,
-    runExistingHook: deps.runExistingHook || runExistingHook,
-    hookEnabled: deps.hookEnabled || hookEnabled,
-  };
-
-  let parsedInput = {};
-  try {
-    parsedInput = JSON.parse(raw || '{}');
-  } catch {
-    return raw;
-  }
-
-  const needsClaudeInput = steps.some(step => (step.payloadMode || 'claude') === 'claude');
-  const claudeInput = needsClaudeInput ? runtime.transformToClaude(parsedInput) : null;
-
-  for (const step of steps) {
-    if (!shouldRunStep(step, runtime)) {
-      continue;
-    }
-
-    const payload = resolveStepPayload(step, raw, parsedInput, claudeInput);
-    await runtime.runExistingHook(step.scriptName, payload);
-  }
-
-  return raw;
+  return runSharedAwPhase({
+    raw,
+    steps,
+    deps: {
+      transformToClaude: deps.transformToClaude || transformToClaude,
+      runManagedNodeHook: deps.runManagedNodeHook || runManagedNodeHook,
+      runManagedShellHook: deps.runManagedShellHook || runManagedShellHook,
+      hookEnabled: deps.hookEnabled || hookEnabled,
+    },
+  });
 }
 
 function runNamedCursorAwPhase({ phaseName, raw, deps = {} }) {

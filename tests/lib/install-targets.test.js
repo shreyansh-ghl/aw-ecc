@@ -168,6 +168,13 @@ function runTests() {
     );
     assert.ok(
       plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/hooks/shared'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks', 'shared')
+      )),
+      'Should overlay shared AW hook sources into .cursor/hooks/shared'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
         normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-home/hooks.json'
         && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks.json')
       )),

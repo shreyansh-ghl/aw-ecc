@@ -2,7 +2,7 @@
 const { readStdin, runManagedShellHook } = require('./adapter');
 
 function emitAwPromptReminder(raw) {
-  const result = runManagedShellHook('scripts/hooks/session-start-rules-context.sh', raw);
+  const result = runManagedShellHook('.cursor/hooks/shared/user-prompt-submit.sh', raw);
   if (result.stderr) {
     process.stderr.write(result.stderr);
   }
