@@ -908,6 +908,8 @@ const OUTCOME_CASES = [
       assert.ok(!exists(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md'), 'execution.md should not be created during task planning');
       const tasks = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/tasks.md');
       assert.ok(/normalizeBatchId|batch/i.test(tasks), 'tasks.md should reflect the approved spec');
+      assert.ok(/spec brief|feature goal|architecture summary/i.test(tasks), 'tasks.md should summarize the approved spec near the top');
+      assert.ok(/(^|\n)## Phase 1\b|(^|\n)### Phase 1\b/i.test(tasks), 'tasks.md should organize work into explicit phases');
       assert.ok(/build|implementation/i.test(tasks), 'tasks.md should prepare the next build stage');
       assert.ok(/save[- ]point|save_point|commit/i.test(tasks), 'tasks.md should define save-point expectations for meaningful slices');
     },

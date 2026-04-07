@@ -36,7 +36,7 @@ This legacy heading maps to the detailed planning process below.
    Prefer end-to-end slices and checkpointed phases over horizontal batches.
    Use `../../references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
 4. Write tasks as fresh-worker instructions.
-   Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, and any bounded parallel execution metadata.
+   Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, phase ordering, and any bounded parallel execution metadata.
 5. Review the task list before handoff.
    Remove placeholders, fix dependency drift, and confirm the steps are build-ready.
 6. Update state and hand off.
@@ -56,8 +56,10 @@ Each implementation step should usually be one action that takes about 2-5 minut
 
 `tasks.md` should include:
 
-- a short header with the feature goal, architecture summary, and execution route
+- an explicit `## Spec Brief` section near the top with the feature goal, approved scope, and architecture summary
 - a file structure map before the tasks
+- explicit phase sections such as `## Phase 1`, `## Phase 2`, and so on
+- a short phase outcome or exit check for each phase
 - task sections with exact file paths
 - checkbox steps for tracking
 - validation commands with expected outcomes
@@ -70,6 +72,7 @@ Each implementation step should usually be one action that takes about 2-5 minut
 
 If a slice cannot end in a clean save-point commit, it should usually be merged into the next dependent slice before handoff to build.
 If no safe disjoint work exists, say so explicitly instead of forcing fake parallelism.
+Even a small plan should still start with `## Spec Brief` and label the execution order with at least `## Phase 1` so the next worker can see the sequence immediately.
 
 ## Code and Command Detail
 
@@ -117,7 +120,8 @@ Before handoff:
 1. confirm every spec requirement maps to at least one task
 2. confirm file paths and interface names stay consistent across tasks
 3. confirm no task relies on an undefined helper, type, or command
-4. confirm execution can route straight to `/aw:build`
+4. confirm `## Spec Brief` and the phase order are obvious from the top of `tasks.md`
+5. confirm execution can route straight to `/aw:build`
 
 ## Final Output Shape
 
@@ -125,7 +129,9 @@ Always end with:
 
 - `Feature Slug`
 - `Tasks Path`
+- `Spec Brief`
 - `File Map`
+- `Phases`
 - `Execution Route`
 - `Parallel Candidates`
 - `Review Result`

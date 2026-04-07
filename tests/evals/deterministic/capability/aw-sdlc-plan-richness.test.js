@@ -30,6 +30,8 @@ function run() {
       'execution-ready',
       'Plan Richness',
       'Execution-Ready Tasks',
+      '## Spec Brief',
+      'spec brief',
       'validation command or evidence target',
       'parallel_candidate',
       'Internal Skill Graph',
@@ -42,6 +44,8 @@ function run() {
 
   if (test('plan requires recipe-level task depth instead of vague implementation bullets', () => {
     for (const phrase of [
+      '## Phase 1',
+      'phase a short outcome statement',
       '2-5 minutes',
       'exact file paths',
       'exact commands and expected outcomes',
@@ -61,7 +65,9 @@ function run() {
 
   if (test('public plan command stays thin while requiring concrete planning depth', () => {
     assert.ok(planCommand.includes('## Planning Depth'));
+    assert.ok(planCommand.includes('explicit `## Spec Brief` section at the top of `tasks.md`'));
     assert.ok(planCommand.includes('exact file paths'));
+    assert.ok(planCommand.includes('phased task breakdown with explicit phase headings'));
     assert.ok(planCommand.includes('2-5 minute checkbox steps'));
     assert.ok(planCommand.includes('exact commands with expected failure or pass signals'));
     assert.ok(planCommand.includes('save-point commit expectation for meaningful slices'));
@@ -69,6 +75,8 @@ function run() {
     assert.ok(planCommand.includes('parallel_write_scope'));
     assert.ok(planCommand.includes('max_parallel_subagents: 3'));
     assert.ok(planCommand.includes('validation commands or evidence targets'));
+    assert.ok(planCommand.includes('Spec Brief'));
+    assert.ok(planCommand.includes('Phases'));
     assert.ok(planCommand.includes('Execution Readiness'));
     assert.ok(planCommand.includes('aw-brainstorm'));
     assert.ok(planCommand.includes('aw-spec'));

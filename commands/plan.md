@@ -64,14 +64,17 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 7. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
 8. Do not require a PRD for a technical request that is already well defined.
 9. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
+10. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
 
 ## Planning Depth
 
 When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 
+- an explicit `## Spec Brief` section at the top of `tasks.md`
 - exact file paths when they can be inferred safely
 - likely file scope when exact paths are not yet safe
 - dependency ordering and vertical slices instead of horizontal batches
+- phased task breakdown with explicit phase headings
 - concrete task goals
 - 2-5 minute checkbox steps for non-trivial work
 - exact commands with expected failure or pass signals
@@ -119,6 +122,8 @@ Always end with:
 - `Route`
 - `Mode`
 - `Created`
+- `Spec Brief`
+- `Phases`
 - `Summary`
 - `Execution Readiness`
 - `Missing`

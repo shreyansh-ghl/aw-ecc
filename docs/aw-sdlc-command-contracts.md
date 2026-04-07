@@ -182,6 +182,11 @@ Turn an idea, requirement, approved design, or technical request into the minimu
   - `spec.md`
   - `tasks.md`
 
+When `tasks.md` is produced, it should:
+
+- start with an explicit `## Spec Brief` section that summarizes the approved implementation goal
+- organize the execution recipe into explicit phases so build can see the order immediately
+
 When `tasks.md` prepares parallel execution, it should also define:
 
 - `parallel_group`

@@ -133,9 +133,10 @@ Capture:
 
 Canonical internal owner: `aw-tasks`
 
-Start with a short header that captures:
+Start with a short header and an explicit `## Spec Brief` section that captures:
 
 - feature goal
+- spec brief
 - architecture summary
 - execution route: `/aw:build`
 - expected execution mode when it is known safely
@@ -146,6 +147,12 @@ Before task sections, map the file structure:
 - exact files to modify
 - exact tests to add or update
 - the responsibility of each file when that can be stated clearly
+
+Organize the work into explicit phases before listing slices:
+
+- always label the execution order with headings such as `## Phase 1`, `## Phase 2`, and so on
+- give each phase a short outcome statement so the next worker knows what should be true when that phase ends
+- use phases to show dependency order, not to create abstract ceremony
 
 Break implementation into small, executable chunks with:
 
@@ -179,6 +186,8 @@ Use `../../references/task-sizing-and-checkpoints.md` when sizing or checkpointi
 
 Execution-ready tasks should make it obvious:
 
+- what `## Spec Brief` says at the top of the plan
+- which phases exist and what each phase is meant to deliver
 - which files change first
 - which validation command or evidence target proves each slice
 - which steps are safe to parallelize
@@ -193,8 +202,10 @@ When the request is in `technical`, `tasks`, or `full` mode, planning should be 
 
 Prefer including:
 
+- an explicit `## Spec Brief` section at the top of `tasks.md`
 - exact or likely changed files and what each one is responsible for
 - exact file paths when they can be inferred safely
+- explicit phase headings for the task plan
 - concrete task goals
 - checkbox execution steps for non-trivial work
 - exact commands and expected outcomes for failure and pass checks
@@ -303,9 +314,11 @@ The verification pass for planning is the plan self-review.
 Before ending the planning stage:
 
 1. confirm each spec requirement maps to a task or explicit reason it is out of scope
-2. scan for placeholders and vague steps
-3. check that file paths, type names, helper names, and commands stay consistent
-4. confirm the next stage can route directly to `/aw:build` or explicitly state what approval is still missing
+2. confirm `## Spec Brief` at the top of `tasks.md` matches the approved spec
+3. confirm the phase order is obvious and every phase has a clear outcome
+4. scan for placeholders and vague steps
+5. check that file paths, type names, helper names, and commands stay consistent
+6. confirm the next stage can route directly to `/aw:build` or explicitly state what approval is still missing
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
@@ -348,6 +361,8 @@ Always end with:
 - `Route`
 - `Mode`
 - `Created`
+- `Spec Brief`
+- `Phases`
 - `Execution Readiness`
 - `Missing`
 - `Next`
