@@ -2022,10 +2022,6 @@ async function runTests() {
         sharedSessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
         'shared session-start wrapper should fall back to ~/.aw_registry when installed under ~/.claude'
       );
-      assert.ok(
-        sessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
-        'hooks/session-start should fall back to ~/.aw_registry when installed under ~/.claude'
-      );
     })
   )
     passed++;

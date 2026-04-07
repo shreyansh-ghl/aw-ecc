@@ -139,7 +139,7 @@
             "command": "bash -lc 'exec bash \"${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start\"'"
           }
         ],
-        "description": "Load previous context and detect package manager on new session"
+        "description": "Load AW routing context at session start"
       }
     ],
     "UserPromptSubmit": [

@@ -150,6 +150,50 @@ generate_prompt_file() {
   } > "$out"
 }
 
+resolve_prompt_name() {
+  local src="$1"
+  local fallback_name="$2"
+  local declared_name=""
+  local first_heading=""
+
+  declared_name="$(awk '
+    BEGIN { in_fm = 0 }
+    /^---$/ { in_fm = !in_fm; next }
+    in_fm && /^name:[[:space:]]*/ {
+      value = $0
+      sub(/^name:[[:space:]]*/, "", value)
+      print value
+      exit
+    }
+  ' "$src" 2>/dev/null || true)"
+
+  if [[ "$declared_name" == aw:* ]]; then
+    printf '%s' "${declared_name//:/-}"
+    return 0
+  fi
+
+  first_heading="$(awk '
+    BEGIN { in_fm = 0 }
+    /^---$/ { in_fm = !in_fm; next }
+    in_fm { next }
+    /^# \// {
+      heading = $0
+      sub(/^# /, "", heading)
+      print heading
+      exit
+    }
+  ' "$src" 2>/dev/null || true)"
+
+  if [[ "$first_heading" == /aw:* ]]; then
+    local prompt_name="${first_heading#/}"
+    prompt_name="${prompt_name//:/-}"
+    printf '%s' "$prompt_name"
+    return 0
+  fi
+
+  printf 'ecc-%s' "$fallback_name"
+}
+
 MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
 
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
@@ -299,12 +343,13 @@ fi
 prompt_count=0
 while IFS= read -r -d '' command_file; do
   name="$(basename "$command_file" .md)"
-  out="$PROMPTS_DEST/ecc-$name.md"
+  prompt_name="$(resolve_prompt_name "$command_file" "$name")"
+  out="$PROMPTS_DEST/$prompt_name.md"
   if [[ "$MODE" == "dry-run" ]]; then
     printf '[dry-run] generate %s from %s\n' "$out" "$command_file"
   else
     generate_prompt_file "$command_file" "$out" "$name"
-    printf 'ecc-%s.md\n' "$name" >> "$manifest"
+    printf '%s.md\n' "$prompt_name" >> "$manifest"
   fi
   prompt_count=$((prompt_count + 1))
 done < <(find "$PROMPTS_SRC" -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
