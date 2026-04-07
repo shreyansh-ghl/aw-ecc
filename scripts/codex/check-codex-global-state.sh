@@ -73,7 +73,7 @@ require_file "$CONFIG_FILE" "Global config.toml"
 require_file "$AGENTS_FILE" "Global AGENTS.md"
 
 if [[ -f "$AGENTS_FILE" ]]; then
-  if rg -n '^# Everything Claude Code \(ECC\) — Agent Instructions' "$AGENTS_FILE" >/dev/null 2>&1; then
+  if rg -n '^(# Everything Claude Code \(ECC\) — Agent Instructions|# AW SDLC Repo Instructions|<!-- BEGIN ECC -->)' "$AGENTS_FILE" >/dev/null 2>&1; then
     ok "AGENTS contains ECC root instructions"
   else
     fail "AGENTS missing ECC root instructions"
@@ -130,6 +130,7 @@ declare -a required_skills=(
   strategic-compact
   tdd-workflow
   verification-loop
+  aw-debug
 )
 
 if [[ -d "$SKILLS_DIR" ]]; then
@@ -144,7 +145,7 @@ if [[ -d "$SKILLS_DIR" ]]; then
   done
 
   if [[ "$missing_skills" -eq 0 ]]; then
-    ok "All 16 ECC Codex skills are present"
+    ok "All 17 ECC Codex skills are present"
   else
     fail "$missing_skills required skills are missing"
   fi
@@ -164,11 +165,18 @@ else
   fail "Extension prompts manifest missing"
 fi
 
-command_prompts_count="$(find "$PROMPTS_DIR" -maxdepth 1 -type f -name 'ecc-*.md' 2>/dev/null | wc -l | tr -d ' ')"
+command_prompts_count="$(awk '
+  NF > 0 {
+    count += 1
+  }
+  END {
+    print count + 0
+  }
+' "$PROMPTS_DIR/ecc-prompts-manifest.txt" 2>/dev/null | tr -d ' ')"
 if [[ "$command_prompts_count" -ge 43 ]]; then
-  ok "ECC prompts count is $command_prompts_count (expected >= 43)"
+  ok "ECC command prompts count is $command_prompts_count (expected >= 43)"
 else
-  fail "ECC prompts count is $command_prompts_count (expected >= 43)"
+  fail "ECC command prompts count is $command_prompts_count (expected >= 43)"
 fi
 
 hooks_path="$(git config --global --get core.hooksPath || true)"

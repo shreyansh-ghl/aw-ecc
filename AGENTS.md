@@ -1,160 +1,124 @@
-# Everything Claude Code (ECC) — Agent Instructions
+# AW SDLC Repo Instructions
 
-This is a **production-ready AI coding plugin** providing 28 specialized agents, 125 skills, 60 commands, and automated hook workflows for software development.
+Use the repo-local AW SDLC files as the source of truth for routing and stage behavior.
 
-**Version:** 1.9.0
+## Catalog Snapshot
 
-## Core Principles
+Catalog snapshot: providing 28 specialized agents, 157 skills, 69 commands for repo-local AW SDLC routing.
 
-1. **Agent-First** — Delegate to specialized agents for domain tasks
-2. **Test-Driven** — Write tests before implementation, 80%+ coverage required
-3. **Security-First** — Never compromise on security; validate all inputs
-4. **Immutability** — Always create new objects, never mutate existing ones
-5. **Plan Before Execute** — Plan complex features before writing code
+agents/ - 28 specialized subagents
+skills/ - 157 workflow skills and domain knowledge
+commands/ - 69 slash commands
 
-## Available Agents
+## Public Surface
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| planner | Implementation planning | Complex features, refactoring |
-| architect | System design and scalability | Architectural decisions |
-| tdd-guide | Test-driven development | New features, bug fixes |
-| code-reviewer | Code quality and maintainability | After writing/modifying code |
-| security-reviewer | Vulnerability detection | Before commits, sensitive code |
-| build-error-resolver | Fix build/type errors | When build fails |
-| e2e-runner | End-to-end Playwright testing | Critical user flows |
-| refactor-cleaner | Dead code cleanup | Code maintenance |
-| doc-updater | Documentation and codemaps | Updating docs |
-| docs-lookup | Documentation and API reference research | Library/API documentation questions |
-| cpp-reviewer | C++ code review | C++ projects |
-| cpp-build-resolver | C++ build errors | C++ build failures |
-| go-reviewer | Go code review | Go projects |
-| go-build-resolver | Go build errors | Go build failures |
-| kotlin-reviewer | Kotlin code review | Kotlin/Android/KMP projects |
-| kotlin-build-resolver | Kotlin/Gradle build errors | Kotlin build failures |
-| database-reviewer | PostgreSQL/Supabase specialist | Schema design, query optimization |
-| python-reviewer | Python code review | Python projects |
-| java-reviewer | Java and Spring Boot code review | Java/Spring Boot projects |
-| java-build-resolver | Java/Maven/Gradle build errors | Java build failures |
-| chief-of-staff | Communication triage and drafts | Multi-channel email, Slack, LINE, Messenger |
-| loop-operator | Autonomous loop execution | Run loops safely, monitor stalls, intervene |
-| harness-optimizer | Harness config tuning | Reliability, cost, throughput |
-| rust-reviewer | Rust code review | Rust projects |
-| rust-build-resolver | Rust build errors | Rust build failures |
-| pytorch-build-resolver | PyTorch runtime/CUDA/training errors | PyTorch build/training failures |
-| typescript-reviewer | TypeScript/JavaScript code review | TypeScript/JavaScript projects |
+Keep the public interface intentionally small, but make each stage legible:
 
-## Agent Orchestration
+- `/aw:plan`
+- `/aw:build`
+- `/aw:investigate`
+- `/aw:test`
+- `/aw:review`
+- `/aw:deploy`
+- `/aw:ship`
 
-Use agents proactively without user prompt:
-- Complex feature requests → **planner**
-- Code just written/modified → **code-reviewer**
-- Bug fix or new feature → **tdd-guide**
-- Architectural decision → **architect**
-- Security-sensitive code → **security-reviewer**
-- Multi-channel communication triage → **chief-of-staff**
-- Autonomous loops / loop monitoring → **loop-operator**
-- Harness config reliability and cost → **harness-optimizer**
+The default delivery flow is:
 
-Use parallel execution for independent operations — launch multiple agents simultaneously.
+- `/aw:plan` -> `/aw:build` -> `/aw:test` -> `/aw:review` -> `/aw:deploy` -> `/aw:ship`
 
-## Security Guidelines
+`/aw:investigate` is a conditional bug, alert, and unclear-root-cause route.
+It is available as a first-class command, but it is not part of the default happy-path sequence.
 
-**Before ANY commit:**
-- No hardcoded secrets (API keys, passwords, tokens)
-- All user inputs validated
-- SQL injection prevention (parameterized queries)
-- XSS prevention (sanitized HTML)
-- CSRF protection enabled
-- Authentication/authorization verified
-- Rate limiting on all endpoints
-- Error messages don't leak sensitive data
+Compatibility entrypoints may remain during migration:
 
-**Secret management:** NEVER hardcode secrets. Use environment variables or a secret manager. Validate required secrets at startup. Rotate any exposed secrets immediately.
+- `/aw:execute` -> compatibility alias to `/aw:build`
+- `/aw:verify` -> compatibility entry that routes to `/aw:test`, `/aw:review`, or the smallest correct combined verification flow
 
-**If security issue found:** STOP → use security-reviewer agent → fix CRITICAL issues → rotate exposed secrets → review codebase for similar issues.
+Do not introduce public commands for preparation, hidden review-loop helpers, debugging internals, or finish compatibility behavior.
+Those stay internal behind the AW stage boundary.
 
-## Coding Style
+`aw-yolo` is an explicit internal orchestration skill for end-to-end automation.
+It starts from the first unsatisfied stage and runs only the smallest correct remaining sequence.
+It is opt-in, not the default public mental model.
 
-**Immutability (CRITICAL):** Always create new objects, never mutate. Return new copies with changes applied.
+## Migration Note
 
-**File organization:** Many small files over few large ones. 200-400 lines typical, 800 max. Organize by feature/domain, not by type. High cohesion, low coupling.
+This repo intentionally replaced the older monolithic ECC-style `AGENTS.md` checklist with a repo-local AW SDLC routing contract.
+If you were relying on the removed baseline guidance, use these files instead:
 
-**Error handling:** Handle errors at every level. Provide user-friendly messages in UI code. Log detailed context server-side. Never silently swallow errors.
+- `defaults/aw-sdlc/baseline-profiles.yml` for GHL review, QA, governance, and deploy policy defaults
+- `docs/aw-sdlc-command-skill-architecture.md` for command/skill ownership and compatibility rules
+- `commands/*.md` for public command contracts and final output shapes
+- `skills/aw-*/SKILL.md` for stage behavior, review loops, launch discipline, and internal helpers
+- `references/*.md` for reusable checklists, examples, and org-standard guardrails loaded on demand
 
-**Input validation:** Validate all user input at system boundaries. Use schema-based validation. Fail fast with clear messages. Never trust external data.
+Treat this as a repo-local behavior change.
+Prefer the AW SDLC files above over inherited global ECC workflow guidance when they conflict.
 
-**Code quality checklist:**
-- Functions small (<50 lines), files focused (<800 lines)
-- No deep nesting (>4 levels)
-- Proper error handling, no hardcoded values
-- Readable, well-named identifiers
+## Routing
 
-## Testing Requirements
+- Prefer `skills/using-aw-skills/SKILL.md` for repo-local routing.
+- Route by intent when the request is clear.
+- Use `/aw:ship` for launch, rollout, rollback readiness, and release closeout work.
+- Use `aw-yolo` only when the user explicitly asks for one-run end-to-end automation.
+- When selected, do not restart from planning by habit; begin at the first unsatisfied stage.
+- Keep the public route at `/aw:plan` even when planning internally uses `aw-brainstorm`, `aw-spec`, and `aw-tasks`.
 
-**Minimum coverage: 80%**
+## Activation Rule
 
-Test types (all required):
-1. **Unit tests** — Individual functions, utilities, components
-2. **Integration tests** — API endpoints, database operations
-3. **E2E tests** — Critical user flows
+Before any substantive response:
 
-**TDD workflow (mandatory):**
-1. Write test first (RED) — test should FAIL
-2. Write minimal implementation (GREEN) — test should PASS
-3. Refactor (IMPROVE) — verify coverage 80%+
+1. select the smallest correct AW skill stack first
+2. prefer the explicit public command and its mapped stage skill when the user names it
+3. otherwise choose the needed process skill, primary stage skill, and matching public route by intent
+4. only after the skill stack is selected, load deeper domain behavior or ask clarifying questions
 
-Troubleshoot failures: check test isolation → verify mocks → fix implementation (not tests, unless tests are wrong).
+Do not begin with generic workflow commentary, implementation advice, or release guidance before the AW skill stack is selected.
+Do not bypass repo-local AW routing just because a global or parent workspace instruction layer also exists.
 
-## Development Workflow
+## Fast Path
 
-1. **Plan** — Use planner agent, identify dependencies and risks, break into phases
-2. **TDD** — Use tdd-guide agent, write tests first, implement, refactor
-3. **Review** — Use code-reviewer agent immediately, address CRITICAL/HIGH issues
-4. **Capture knowledge in the right place**
-   - Personal debugging notes, preferences, and temporary context → auto memory
-   - Team/project knowledge (architecture decisions, API changes, runbooks) → the project's existing docs structure
-   - If the current task already produces the relevant docs or code comments, do not duplicate the same information elsewhere
-   - If there is no obvious project doc location, ask before creating a new top-level file
-5. **Commit** — Conventional commits format, comprehensive PR summaries
+When `.aw_docs/features/<feature_slug>/spec.md` and concrete approved execution inputs already exist:
 
-## Git Workflow
+- do not reopen planning only because richer artifacts are absent
+- prefer the smallest correct execution sequence
+- for approved implementation work, use `prepare -> build`
+- for bugs or alerts with unclear cause, insert `investigate` before `build`
+- for proving quality, use `test -> review`
+- for verified release work, use `deploy -> ship` only when rollout or closeout is actually requested
+- use `aw-yolo` only when the user explicitly wants the whole flow automated in one pass
+- use it to orchestrate stages, not to collapse stage evidence or boundaries
 
-**Commit format:** `<type>: <description>` — Types: feat, fix, refactor, docs, test, chore, perf, ci
+## Artifact Contract
 
-**PR workflow:** Analyze full commit history → draft comprehensive summary → include test plan → push with `-u` flag.
+Write deterministic outputs under:
 
-## Architecture Patterns
+- `.aw_docs/features/<feature_slug>/`
 
-**API response format:** Consistent envelope with success indicator, data payload, error message, and pagination metadata.
+Stage artifact expectations:
 
-**Repository pattern:** Encapsulate data access behind standard interface (findAll, findById, create, update, delete). Business logic depends on abstract interface, not storage mechanism.
+- build -> `execution.md`, `state.json`
+- investigate -> `investigation.md`, `state.json`
+- test -> `verification.md`, `state.json`
+- review -> `verification.md`, `state.json`
+- deploy -> `release.md`, `state.json`
+- ship -> `release.md`, `state.json`
 
-**Skeleton projects:** Search for battle-tested templates, evaluate with parallel agents (security, extensibility, relevance), clone best match, iterate within proven structure.
+Do not treat an internal stage as complete until its required artifacts are written to disk.
+A code diff, console summary, or verbal handoff is not a valid substitute for the required stage artifact files.
 
-## Performance
+## Org Standards
 
-**Context management:** Avoid last 20% of context window for large refactoring and multi-file features. Lower-sensitivity tasks (single edits, docs, simple fixes) tolerate higher utilization.
+Relevant GHL baseline profiles, platform playbooks, and `.aw_rules` remain active across every stage.
+That means:
 
-**Build troubleshooting:** Use build-error-resolver agent → analyze errors → fix incrementally → verify after each fix.
+- frontend work should inherit HighRise, design review, accessibility review, and responsive verification expectations
+- review should inherit platform review playbooks and PR governance
+- test should inherit repo-local validation, E2E, sandbox, and quality-gate expectations from the resolved baseline
+- deploy and ship should inherit staging evidence, rollback, and release-safety expectations from the resolved baseline
 
-## Project Structure
+## Guardrails
 
-```
-agents/          — 28 specialized subagents
-skills/          — 117 workflow skills and domain knowledge
-commands/        — 60 slash commands
-hooks/           — Trigger-based automations
-rules/           — Always-follow guidelines (common + per-language)
-scripts/         — Cross-platform Node.js utilities
-mcp-configs/     — 14 MCP server configurations
-tests/           — Test suite
-```
-
-## Success Metrics
-
-- All tests pass with 80%+ coverage
-- No security vulnerabilities
-- Code is readable and maintainable
-- Performance is acceptable
-- User requirements are met
+- never skip test and review before deploy when the selected baseline requires them
+- fail closed for unknown deploy configuration
+- prefer repo-local commands, skills, defaults, references, and docs over global fallback behavior

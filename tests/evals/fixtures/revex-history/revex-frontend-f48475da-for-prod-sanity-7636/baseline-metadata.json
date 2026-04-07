@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "email-isv",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "email-isv:src/helper",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `email-isv:src/helper` in RevEx frontend, inside the broader `email-isv` area. Deliver the smallest safe implementation in `email-isv:src/helper` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `email-isv:src/helper` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested implementation in `email-isv:src/helper` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "f48475da65d0fc4c590d503671ccad7d6a4ee58e",
+    "parentSha": "99ce5c9cb172dfaf34f91f6c4d5c729d5c6215c8",
+    "date": "2026-04-01T14:27:41+05:30",
+    "subject": "for prod sanity (#7636)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 1,
+    "deletions": 1,
+    "totalLinesChanged": 2
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/email-isv/src/helper/support-portal.types.ts",
+      "insertions": 1,
+      "deletions": 1
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary f48475da65d0fc4c590d503671ccad7d6a4ee58e",
+    "showPatch": "git -C ../ghl-revex-frontend show f48475da65d0fc4c590d503671ccad7d6a4ee58e",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout 99ce5c9cb172dfaf34f91f6c4d5c729d5c6215c8"
+  },
+  "warnings": []
+}

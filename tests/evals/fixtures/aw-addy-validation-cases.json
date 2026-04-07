@@ -1,0 +1,448 @@
+{
+  "topUseCases": [
+    {
+      "id": "idea-to-build-ready-plan",
+      "goal": "Turn a raw feature idea into deterministic planning artifacts.",
+      "input": "Help me refine this idea for automated renewal reminders and turn it into an approved implementation plan.",
+      "expectedRouteSequence": ["/aw:plan"],
+      "expectedSkillStack": ["idea-refine", "aw-plan", "aw-spec", "aw-tasks"],
+      "expectedOutputs": [
+        "clear problem statement",
+        "recommended direction",
+        "explicit assumptions and MVP scope",
+        "spec.md",
+        "tasks.md",
+        "state.json"
+      ]
+    },
+    {
+      "id": "backend-api-contract-change",
+      "goal": "Design and ship a stable backend contract change with evidence.",
+      "input": "Design the API contract, implement the approved retry endpoint change, test it, and tell me if it is ready for staging.",
+      "expectedRouteSequence": ["/aw:plan", "/aw:build", "/aw:test", "/aw:review"],
+      "expectedSkillStack": ["api-and-interface-design", "aw-plan", "aw-build", "aw-test", "aw-review"],
+      "expectedOutputs": [
+        "documented contract-first interface design",
+        "execution.md",
+        "verification.md",
+        "state.json",
+        "readiness decision"
+      ]
+    },
+    {
+      "id": "frontend-ui-runtime-proof",
+      "goal": "Build a frontend change and prove it works in real browser conditions.",
+      "input": "Implement the approved dashboard widget redesign, verify responsive and accessibility behavior, and review it for staging readiness.",
+      "expectedRouteSequence": ["/aw:build", "/aw:test", "/aw:review"],
+      "expectedSkillStack": ["frontend-ui-engineering", "browser-testing-with-devtools", "aw-build", "aw-test", "aw-review"],
+      "expectedOutputs": [
+        "thin implementation slices",
+        "responsive verification evidence",
+        "accessibility evidence",
+        "browser runtime proof",
+        "verification.md"
+      ]
+    },
+    {
+      "id": "unclear-bug-to-regression-proof",
+      "goal": "Investigate an unclear bug, repair it, and prove the fix.",
+      "input": "Investigate this worker retry alert, fix the confirmed issue, and prove the regression guard holds.",
+      "expectedRouteSequence": ["/aw:investigate", "/aw:build", "/aw:test", "/aw:review"],
+      "expectedSkillStack": ["aw-investigate", "aw-build", "aw-test", "aw-review"],
+      "expectedOutputs": [
+        "captured failure signal",
+        "concrete fault surface",
+        "execution.md",
+        "verification.md",
+        "fix-or-blocker decision"
+      ]
+    },
+    {
+      "id": "safe-simplification-pass",
+      "goal": "Reduce complexity without changing behavior.",
+      "input": "Simplify this already-working notification handler without changing behavior and make the history easy to review.",
+      "expectedRouteSequence": ["/aw:build", "/aw:review"],
+      "expectedSkillStack": ["code-simplification", "git-workflow-and-versioning", "aw-build", "aw-review"],
+      "expectedOutputs": [
+        "behavior-preserving simplification",
+        "clear save points",
+        "reviewable change summary",
+        "verification.md"
+      ]
+    },
+    {
+      "id": "security-hardening-flow",
+      "goal": "Apply trust-boundary hardening with explicit proof and review.",
+      "input": "Harden this auth callback boundary, validate the trust edges, test it, and tell me if it is ready to release.",
+      "expectedRouteSequence": ["/aw:build", "/aw:test", "/aw:review"],
+      "expectedSkillStack": ["security-and-hardening", "aw-build", "aw-test", "aw-review"],
+      "expectedOutputs": [
+        "boundary validation changes",
+        "security checklist evidence",
+        "verification.md",
+        "readiness recommendation"
+      ]
+    },
+    {
+      "id": "performance-optimization-flow",
+      "goal": "Measure first, optimize second, then prove the result.",
+      "input": "Measure why this task list render is slow, optimize it, and prove the improvement before review.",
+      "expectedRouteSequence": ["/aw:build", "/aw:test", "/aw:review"],
+      "expectedSkillStack": ["performance-optimization", "aw-build", "aw-test", "aw-review"],
+      "expectedOutputs": [
+        "baseline measurement",
+        "targeted optimization change",
+        "after-measurement proof",
+        "verification.md"
+      ]
+    },
+    {
+      "id": "legacy-migration-release",
+      "goal": "Plan and execute a legacy migration with safe release discipline.",
+      "input": "Plan the migration off the legacy webhook endpoint, implement the next slice, review it, deploy it, and prepare launch readiness notes.",
+      "expectedRouteSequence": ["/aw:plan", "/aw:build", "/aw:review", "/aw:deploy", "/aw:ship"],
+      "expectedSkillStack": ["deprecation-and-migration", "documentation-and-adrs", "aw-plan", "aw-build", "aw-review", "aw-deploy", "aw-ship"],
+      "expectedOutputs": [
+        "migration plan",
+        "deprecation notes",
+        "execution.md",
+        "verification.md",
+        "release.md"
+      ]
+    },
+    {
+      "id": "release-automation-and-closeout",
+      "goal": "Use CI/CD and launch discipline for a safe release.",
+      "input": "Create the PR, deploy this reviewed service to staging, and capture rollback and monitoring notes for launch.",
+      "expectedRouteSequence": ["/aw:deploy", "/aw:ship"],
+      "expectedSkillStack": ["ci-cd-and-automation", "documentation-and-adrs", "aw-deploy", "aw-ship"],
+      "expectedOutputs": [
+        "release action evidence",
+        "rollback posture",
+        "monitoring notes",
+        "release.md",
+        "state.json"
+      ]
+    },
+    {
+      "id": "end-to-end-yolo-from-approved-scope",
+      "goal": "Run the full approved flow in one go without skipping stage evidence.",
+      "input": "Take this approved contact sync change from implementation-ready plan to staging end to end.",
+      "expectedRouteSequence": ["aw-yolo", "/aw:build", "/aw:test", "/aw:review", "/aw:deploy", "/aw:ship"],
+      "expectedSkillStack": ["aw-yolo", "aw-build", "aw-test", "aw-review", "aw-deploy", "aw-ship"],
+      "expectedOutputs": [
+        "execution.md",
+        "verification.md",
+        "release.md",
+        "state.json",
+        "clear stage-by-stage evidence"
+      ]
+    }
+  ],
+  "skillCases": [
+    {
+      "id": "skill-idea-refine",
+      "addySkill": "idea-refine",
+      "eccSkills": ["idea-refine", "aw-plan"],
+      "input": "Help me refine this idea for a partner referral dashboard before we write the spec.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["idea-refine"],
+      "expectedOutputs": ["problem statement", "recommended direction", "key assumptions", "MVP scope", "not doing list"]
+    },
+    {
+      "id": "skill-spec-driven-development",
+      "addySkill": "spec-driven-development",
+      "eccSkills": ["aw-plan", "aw-spec"],
+      "input": "Create the implementation spec for this approved retry-policy change. Do not make me write a PRD first.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["aw-spec"],
+      "expectedOutputs": ["spec.md", "interfaces or contracts", "verification targets", "state.json"]
+    },
+    {
+      "id": "skill-planning-and-task-breakdown",
+      "addySkill": "planning-and-task-breakdown",
+      "eccSkills": ["aw-plan", "aw-tasks"],
+      "input": "Break this approved spec into small executable implementation tasks with checkpoints.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["aw-tasks"],
+      "expectedOutputs": ["tasks.md", "small executable steps", "validation commands", "checkpoint boundaries"]
+    },
+    {
+      "id": "skill-incremental-implementation",
+      "addySkill": "incremental-implementation",
+      "eccSkills": ["incremental-implementation", "aw-build"],
+      "input": "Implement the approved fix in thin reversible increments and keep rollback risk low.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["incremental-implementation"],
+      "expectedOutputs": ["thin slices", "failing signal or RED-GREEN loop", "save-point commits", "execution.md"]
+    },
+    {
+      "id": "skill-context-engineering",
+      "addySkill": "context-engineering",
+      "eccSkills": ["context-engineering", "aw-build"],
+      "input": "Before you continue this implementation, repack the context because the session is drifting and too much irrelevant detail is loaded.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["context-engineering"],
+      "expectedOutputs": ["explicit context hierarchy", "source-of-truth inputs", "stage-relevant context pack", "reduced drift risk"]
+    },
+    {
+      "id": "skill-frontend-ui-engineering",
+      "addySkill": "frontend-ui-engineering",
+      "eccSkills": ["frontend-ui-engineering", "aw-build"],
+      "input": "Implement this approved dashboard form with responsive states, accessibility, and design-system compliance.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["frontend-ui-engineering"],
+      "expectedOutputs": ["implemented happy/loading/empty/error states", "responsive behavior", "accessibility proof", "execution.md"]
+    },
+    {
+      "id": "skill-api-and-interface-design",
+      "addySkill": "api-and-interface-design",
+      "eccSkills": ["api-and-interface-design", "aw-plan"],
+      "input": "Design the stable contract for this webhook retry API before anyone starts building it.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["api-and-interface-design"],
+      "expectedOutputs": ["contract-first interface design", "boundary validation rules", "error semantics", "spec.md"]
+    },
+    {
+      "id": "skill-test-driven-development",
+      "addySkill": "test-driven-development",
+      "eccSkills": ["tdd-workflow", "aw-build"],
+      "input": "Implement this approved bugfix with a failing test first and keep the regression proof tight.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["tdd-workflow"],
+      "expectedOutputs": ["failing test or failing signal", "minimal change", "passing regression proof", "execution.md"]
+    },
+    {
+      "id": "skill-browser-testing-with-devtools",
+      "addySkill": "browser-testing-with-devtools",
+      "eccSkills": ["browser-testing-with-devtools", "aw-test"],
+      "input": "Test this UI fix in the browser and inspect the DOM, console, and network calls before we clear it.",
+      "expectedPublicRoute": "/aw:test",
+      "expectedPrimarySkill": "aw-test",
+      "expectedSupportingSkills": ["browser-testing-with-devtools"],
+      "expectedOutputs": ["runtime screenshot or browser evidence", "console findings", "network findings", "verification.md"]
+    },
+    {
+      "id": "skill-debugging-and-error-recovery",
+      "addySkill": "debugging-and-error-recovery",
+      "eccSkills": ["aw-investigate", "aw-debug"],
+      "input": "Investigate this worker retry failure and tell me the likely fault surface before patching anything.",
+      "expectedPublicRoute": "/aw:investigate",
+      "expectedPrimarySkill": "aw-investigate",
+      "expectedSupportingSkills": ["aw-debug"],
+      "expectedOutputs": ["captured failure signal", "expected vs actual behavior", "fault surface", "investigation.md"]
+    },
+    {
+      "id": "skill-code-review-and-quality",
+      "addySkill": "code-review-and-quality",
+      "eccSkills": ["aw-review"],
+      "input": "Review this change for correctness, security, performance, and staging readiness.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": [],
+      "expectedOutputs": ["severity-tagged findings", "readiness decision", "governance notes", "verification.md"]
+    },
+    {
+      "id": "skill-code-simplification",
+      "addySkill": "code-simplification",
+      "eccSkills": ["code-simplification", "aw-build"],
+      "input": "Simplify this already-working handler without changing behavior and keep the diff easy to review.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["code-simplification"],
+      "expectedOutputs": ["behavior-preserving cleanup", "reduced complexity", "small reviewable diff", "execution.md"]
+    },
+    {
+      "id": "skill-security-and-hardening",
+      "addySkill": "security-and-hardening",
+      "eccSkills": ["security-and-hardening", "aw-build"],
+      "input": "Harden this callback boundary and close the obvious trust and validation gaps.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["security-and-hardening"],
+      "expectedOutputs": ["boundary hardening changes", "validation and trust-boundary rules", "security checklist evidence", "execution.md"]
+    },
+    {
+      "id": "skill-performance-optimization",
+      "addySkill": "performance-optimization",
+      "eccSkills": ["performance-optimization", "aw-build"],
+      "input": "Measure why this page is slow, optimize the hot path, and keep the change bounded.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["performance-optimization"],
+      "expectedOutputs": ["baseline measurement", "targeted optimization", "after measurement", "execution.md"]
+    },
+    {
+      "id": "skill-git-workflow-and-versioning",
+      "addySkill": "git-workflow-and-versioning",
+      "eccSkills": ["git-workflow-and-versioning", "aw-build"],
+      "input": "Make this implementation in clean save points, keep the branch history reviewable, and note what you intentionally did not touch.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["git-workflow-and-versioning"],
+      "expectedOutputs": ["save-point discipline", "clean commit boundaries", "what changed / did not change summary", "execution.md"]
+    },
+    {
+      "id": "skill-ci-cd-and-automation",
+      "addySkill": "ci-cd-and-automation",
+      "eccSkills": ["ci-cd-and-automation", "aw-deploy"],
+      "input": "Set up the release automation, preview gates, and rollback path for this service deployment.",
+      "expectedPublicRoute": "/aw:deploy",
+      "expectedPrimarySkill": "aw-deploy",
+      "expectedSupportingSkills": ["ci-cd-and-automation"],
+      "expectedOutputs": ["gate order", "pipeline expectations", "rollback path", "release.md"]
+    },
+    {
+      "id": "skill-deprecation-and-migration",
+      "addySkill": "deprecation-and-migration",
+      "eccSkills": ["deprecation-and-migration", "aw-plan"],
+      "input": "Plan the migration off the legacy webhook endpoint and show the deprecation path before we remove anything.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["deprecation-and-migration"],
+      "expectedOutputs": ["migration scope", "replacement path", "consumer plan", "spec.md or tasks.md"]
+    },
+    {
+      "id": "skill-documentation-and-adrs",
+      "addySkill": "documentation-and-adrs",
+      "eccSkills": ["documentation-and-adrs", "aw-review"],
+      "input": "Record why we chose this queueing model and update the docs the next engineer will need.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": ["documentation-and-adrs"],
+      "expectedOutputs": ["ADR or durable rationale", "updated docs or README trail", "verification.md"]
+    },
+    {
+      "id": "skill-shipping-and-launch",
+      "addySkill": "shipping-and-launch",
+      "eccSkills": ["aw-ship"],
+      "input": "Prepare the rollout, rollback posture, and monitoring notes for this reviewed release.",
+      "expectedPublicRoute": "/aw:ship",
+      "expectedPrimarySkill": "aw-ship",
+      "expectedSupportingSkills": [],
+      "expectedOutputs": ["launch checklist", "rollback readiness", "monitoring notes", "release.md"]
+    }
+  ],
+  "autoIntentCases": [
+    {
+      "id": "auto-idea-refine-to-plan",
+      "input": "Help me refine this product idea before we write the spec.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["idea-refine"],
+      "expectedOutputs": ["recommended direction", "problem statement"]
+    },
+    {
+      "id": "auto-contract-planning",
+      "input": "Design a stable API contract for this approved retry interface change.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["api-and-interface-design"],
+      "expectedOutputs": ["contract-first design", "spec.md"]
+    },
+    {
+      "id": "auto-frontend-build",
+      "input": "Implement this approved frontend widget with responsive states and a11y.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["frontend-ui-engineering", "incremental-implementation"],
+      "expectedOutputs": ["execution.md", "responsive and accessibility coverage"]
+    },
+    {
+      "id": "auto-browser-proof",
+      "input": "Prove this UI fix in the browser by checking the DOM, console, and network requests.",
+      "expectedPublicRoute": "/aw:test",
+      "expectedPrimarySkill": "aw-test",
+      "expectedSupportingSkills": ["browser-testing-with-devtools"],
+      "expectedOutputs": ["browser runtime evidence", "verification.md"]
+    },
+    {
+      "id": "auto-investigate-regression",
+      "input": "Investigate this retry regression before you patch anything.",
+      "expectedPublicRoute": "/aw:investigate",
+      "expectedPrimarySkill": "aw-investigate",
+      "expectedSupportingSkills": ["aw-debug"],
+      "expectedOutputs": ["fault surface", "investigation.md"]
+    },
+    {
+      "id": "auto-simplify-working-code",
+      "input": "Simplify this working code without changing behavior.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["code-simplification"],
+      "expectedOutputs": ["behavior-preserving simplification", "execution.md"]
+    },
+    {
+      "id": "auto-security-hardening",
+      "input": "Harden this auth flow and validate the trust boundaries.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["security-and-hardening"],
+      "expectedOutputs": ["hardening changes", "security evidence"]
+    },
+    {
+      "id": "auto-performance-optimization",
+      "input": "Measure and optimize this slow render path.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["performance-optimization"],
+      "expectedOutputs": ["baseline and after measurement", "execution.md"]
+    },
+    {
+      "id": "auto-git-discipline",
+      "input": "Keep this implementation in small save points and make the history reviewable.",
+      "expectedPublicRoute": "/aw:build",
+      "expectedPrimarySkill": "aw-build",
+      "expectedSupportingSkills": ["git-workflow-and-versioning"],
+      "expectedOutputs": ["save-point history", "change summary"]
+    },
+    {
+      "id": "auto-ci-cd-release",
+      "input": "Set up the CI gates, preview deploy, and rollback path for this release.",
+      "expectedPublicRoute": "/aw:deploy",
+      "expectedPrimarySkill": "aw-deploy",
+      "expectedSupportingSkills": ["ci-cd-and-automation"],
+      "expectedOutputs": ["pipeline gates", "release.md"]
+    },
+    {
+      "id": "auto-deprecation-plan",
+      "input": "Plan the migration off the legacy endpoint and tell me how to retire it safely.",
+      "expectedPublicRoute": "/aw:plan",
+      "expectedPrimarySkill": "aw-plan",
+      "expectedSupportingSkills": ["deprecation-and-migration"],
+      "expectedOutputs": ["migration path", "deprecation plan"]
+    },
+    {
+      "id": "auto-document-why",
+      "input": "Record why we chose this architecture and update the docs trail.",
+      "expectedPublicRoute": "/aw:review",
+      "expectedPrimarySkill": "aw-review",
+      "expectedSupportingSkills": ["documentation-and-adrs"],
+      "expectedOutputs": ["ADR or rationale note", "updated docs"]
+    },
+    {
+      "id": "auto-launch-closeout",
+      "input": "Prepare the launch checklist, rollback notes, and monitoring plan for this release.",
+      "expectedPublicRoute": "/aw:ship",
+      "expectedPrimarySkill": "aw-ship",
+      "expectedSupportingSkills": ["ci-cd-and-automation", "documentation-and-adrs"],
+      "expectedOutputs": ["launch checklist", "rollback posture", "release notes"]
+    },
+    {
+      "id": "auto-full-flow-yolo",
+      "input": "Take this approved change end to end from plan to staging for me.",
+      "expectedPublicRoute": "aw-yolo",
+      "expectedPrimarySkill": "aw-yolo",
+      "expectedSupportingSkills": ["aw-plan", "aw-build", "aw-test", "aw-review", "aw-deploy", "aw-ship"],
+      "expectedOutputs": ["execution.md", "verification.md", "release.md", "state.json"]
+    }
+  ]
+}

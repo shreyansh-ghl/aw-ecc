@@ -1,0 +1,55 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "reputation",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "reputation:deployments/production",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `reputation:deployments/production` in RevEx backend, inside the broader `reputation` area. Deliver the smallest safe implementation in `reputation:deployments/production` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `reputation:deployments/production` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces; include delivery or rollout evidence for any release-path changes.",
+  "successCriteria": [
+    "deliver the requested implementation in `reputation:deployments/production` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces",
+    "include delivery or rollout evidence for any release-path changes"
+  ],
+  "commit": {
+    "sha": "aff7d3ba5a6cb1e84f51321bcfc79bc4aa522fbe",
+    "parentSha": "18ebdc370f23e47ece6878135d4824d12f0790a7",
+    "date": "2026-03-27T16:19:37+05:30",
+    "subject": "adds sidecars for revex-reputation-review-request-operations-worker (#10022)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 16,
+    "deletions": 0,
+    "totalLinesChanged": 16
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/reputation/deployments/production/values.revex-reputation-review-request-operations-worker.yaml",
+      "insertions": 16,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary aff7d3ba5a6cb1e84f51321bcfc79bc4aa522fbe",
+    "showPatch": "git -C ../ghl-revex-backend show aff7d3ba5a6cb1e84f51321bcfc79bc4aa522fbe",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout 18ebdc370f23e47ece6878135d4824d12f0790a7"
+  },
+  "warnings": []
+}

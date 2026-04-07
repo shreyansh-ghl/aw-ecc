@@ -1,0 +1,23 @@
+{
+  "agent": "code-reviewer",
+  "scenarios": [
+    {
+      "id": "security-secret-leak",
+      "description": "Code diff contains a hardcoded API key.",
+      "expectedVerdict": "block",
+      "expectedFindingThemes": ["hardcoded credentials", "security"]
+    },
+    {
+      "id": "missing-test-on-new-path",
+      "description": "New behavior is added with no regression or unit test coverage.",
+      "expectedVerdict": "warning",
+      "expectedFindingThemes": ["missing tests", "code quality"]
+    },
+    {
+      "id": "clean-small-diff",
+      "description": "Small reviewed diff with no obvious correctness or security issues.",
+      "expectedVerdict": "approve",
+      "expectedFindingThemes": []
+    }
+  ]
+}

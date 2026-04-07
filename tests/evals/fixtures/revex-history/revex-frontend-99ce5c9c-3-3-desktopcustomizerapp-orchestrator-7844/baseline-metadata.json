@@ -1,0 +1,75 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "desktop-customizer",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "desktop-customizer",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `desktop-customizer` in RevEx frontend, inside the broader `desktop-customizer` area. Deliver the smallest safe feature in `desktop-customizer` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `desktop-customizer` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces; include delivery or rollout evidence for any release-path changes.",
+  "successCriteria": [
+    "deliver the requested feature in `desktop-customizer` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces",
+    "include delivery or rollout evidence for any release-path changes"
+  ],
+  "commit": {
+    "sha": "99ce5c9cb172dfaf34f91f6c4d5c729d5c6215c8",
+    "parentSha": "fdaaf3d17212a36fbd43afa66a6160b4413d8d1a",
+    "date": "2026-04-01T12:56:44+05:30",
+    "subject": "feat(desktop-customizer): [3/3] DesktopCustomizerApp orchestrator (#7844)",
+    "type": "feat",
+    "scope": "desktop-customizer"
+  },
+  "diffSummary": {
+    "fileCount": 5,
+    "insertions": 518,
+    "deletions": 126,
+    "totalLinesChanged": 644
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/desktop-customizer/src/components/DesktopCustomizerApp.vue",
+      "insertions": 412,
+      "deletions": 1
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/__tests__/DesktopCustomizerApp.test.ts",
+      "insertions": 32,
+      "deletions": 0
+    },
+    {
+      "path": "deployments/beta/Jenkinsfile",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "deployments/production/Jenkinsfile",
+      "insertions": 1,
+      "deletions": 0
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "insertions": 72,
+      "deletions": 125
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 99ce5c9cb172dfaf34f91f6c4d5c729d5c6215c8",
+    "showPatch": "git -C ../ghl-revex-frontend show 99ce5c9cb172dfaf34f91f6c4d5c729d5c6215c8",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout fdaaf3d17212a36fbd43afa66a6160b4413d8d1a"
+  },
+  "warnings": []
+}

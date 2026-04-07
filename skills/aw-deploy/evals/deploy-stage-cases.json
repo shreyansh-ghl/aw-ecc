@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "id": "pr-creation",
+      "request": "Create a PR for this reviewed work.",
+      "releasePath": "pr",
+      "expectedArtifacts": ["release.md", "state.json"],
+      "expectedSupportingSkills": ["ci-cd-and-automation"]
+    },
+    {
+      "id": "service-staging",
+      "request": "Deploy this verified Communities moderation API service to staging.",
+      "releasePath": "staging",
+      "expectedArtifacts": ["release.md", "state.json"],
+      "expectedSupportingSkills": ["platform-infra:staging-deploy", "platform-infra:deployment-strategies", "platform-infra:production-readiness"]
+    },
+    {
+      "id": "mfa-staging",
+      "request": "Deploy this verified Communities feed MFA to staging.",
+      "releasePath": "staging",
+      "expectedArtifacts": ["release.md", "state.json"],
+      "expectedSupportingSkills": ["deploy-versioned-mfa", "platform-infra:staging-deploy", "platform-infra:production-readiness"]
+    },
+    {
+      "id": "release-automation",
+      "request": "Set up the release automation, preview gates, and rollback path for this service deployment.",
+      "releasePath": "deployment-automation",
+      "expectedArtifacts": ["release.md", "state.json"],
+      "expectedSupportingSkills": ["ci-cd-and-automation"]
+    }
+  ]
+}

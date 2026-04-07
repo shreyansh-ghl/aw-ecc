@@ -1,0 +1,99 @@
+{
+  "repoKey": "revex-frontend",
+  "repoRelativePath": "../ghl-revex-frontend",
+  "domain": "frontend",
+  "productArea": "desktop-customizer",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "desktop-customizer",
+  "userPrompt": "You are working in RevEx frontend. A product or engineering improvement is needed around `desktop-customizer` in RevEx frontend, inside the broader `desktop-customizer` area. Deliver the smallest safe feature in `desktop-customizer` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `desktop-customizer` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested feature in `desktop-customizer` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "0d18e6056edc8082e3ccaf12180ef5e94a78ff2e",
+    "parentSha": "a508605510b1eb26d455cebb4d675eb30c40c675",
+    "date": "2026-03-31T21:47:36+05:30",
+    "subject": "feat(desktop-customizer): [2/3] skeleton loaders, PreviewPanel, StatusPanel (#7843)",
+    "type": "feat",
+    "scope": "desktop-customizer"
+  },
+  "diffSummary": {
+    "fileCount": 10,
+    "insertions": 455,
+    "deletions": 42,
+    "totalLinesChanged": 497
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "frontend-ui-engineering",
+      "browser-testing-with-devtools"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/desktop-customizer/src/components/PreviewPanel.vue",
+      "insertions": 140,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/StatusPanel.vue",
+      "insertions": 156,
+      "deletions": 37
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/__tests__/PreviewPanel.test.ts",
+      "insertions": 13,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/__tests__/StatusPanel.test.ts",
+      "insertions": 6,
+      "deletions": 5
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/FormSkeleton.vue",
+      "insertions": 54,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/HeaderSkeleton.vue",
+      "insertions": 32,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/PreviewSkeleton.vue",
+      "insertions": 24,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/__tests__/FormSkeleton.test.ts",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/__tests__/HeaderSkeleton.test.ts",
+      "insertions": 10,
+      "deletions": 0
+    },
+    {
+      "path": "apps/desktop-customizer/src/components/skeletons/__tests__/PreviewSkeleton.test.ts",
+      "insertions": 10,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-frontend show --stat --summary 0d18e6056edc8082e3ccaf12180ef5e94a78ff2e",
+    "showPatch": "git -C ../ghl-revex-frontend show 0d18e6056edc8082e3ccaf12180ef5e94a78ff2e",
+    "checkoutParent": "git -C ../ghl-revex-frontend checkout a508605510b1eb26d455cebb4d675eb30c40c675"
+  },
+  "warnings": []
+}

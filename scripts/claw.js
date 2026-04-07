@@ -106,7 +106,12 @@ function askClaude(systemPrompt, history, userMessage, model) {
     return `[Error: claude exited with code ${result.status}: ${result.stderr.trim()}]`;
   }
 
-  return (result.stdout || '').trim();
+  const output = (result.stdout || '').trim();
+  if (output) {
+    return output;
+  }
+
+  return '[No response from claude]';
 }
 
 function parseTurns(history) {

@@ -1,0 +1,54 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "lc-phone",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `lc-phone` in RevEx backend, inside the broader `lc-phone` area. Deliver the smallest safe feature in `lc-phone` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `lc-phone` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested feature in `lc-phone` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "643335f249ca65c3aa0170e127ae5f95d5005ff3",
+    "parentSha": "b7350279086f6cd5045704b25b7880c5f64578a5",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "feat(lc-phone): publish voice_call gatekeeper config via pubsub",
+    "type": "feat",
+    "scope": "lc-phone"
+  },
+  "diffSummary": {
+    "fileCount": 1,
+    "insertions": 38,
+    "deletions": 0,
+    "totalLinesChanged": 38
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/workers/helpers/voice-intelligence.helper.ts",
+      "insertions": 38,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 643335f249ca65c3aa0170e127ae5f95d5005ff3",
+    "showPatch": "git -C ../ghl-revex-backend show 643335f249ca65c3aa0170e127ae5f95d5005ff3",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout b7350279086f6cd5045704b25b7880c5f64578a5"
+  },
+  "warnings": []
+}

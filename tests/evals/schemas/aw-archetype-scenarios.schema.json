@@ -1,0 +1,23 @@
+{
+  "$id": "aw-archetype-scenarios.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "layer", "cases"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "aw.eval.archetype-scenarios.v1"
+    },
+    "layer": {
+      "type": "string",
+      "const": "archetype"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "aw-scenario-case.schema.json"
+      }
+    }
+  }
+}

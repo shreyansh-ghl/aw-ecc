@@ -1,73 +1,55 @@
-# Verification Command
-
-Run comprehensive verification on current codebase state.
-
-## Instructions
-
-Execute verification in this exact order:
-
-1. **Build Check**
-   - Run the build command for this project
-   - If it fails, report errors and STOP
-
-2. **Type Check**
-   - Run TypeScript/type checker
-   - Report all errors with file:line
-
-3. **Lint Check**
-   - Run linter
-   - Report warnings and errors
-
-4. **Test Suite**
-   - Run all tests
-   - Report pass/fail count
-   - Report coverage percentage
-
-5. **Console.log Audit**
-   - Search for console.log in source files
-   - Report locations
-
-6. **Git Status**
-   - Show uncommitted changes
-   - Show files modified since last commit
-
-## Output
-
-Produce a concise verification report:
-
-```
-VERIFICATION: [PASS/FAIL]
-
-Build:    [OK/FAIL]
-Types:    [OK/X errors]
-Lint:     [OK/X issues]
-Tests:    [X/Y passed, Z% coverage]
-Secrets:  [OK/X found]
-Logs:     [OK/X console.logs]
-
-Ready for PR: [YES/NO]
-```
-
-If any critical issues, list them with fix suggestions.
-
-## Arguments
-
-$ARGUMENTS can be:
-- `quick` - Only build + types
-- `full` - All checks (default)
-- `pre-commit` - Checks relevant for commits
-- `pre-pr` - Full checks plus security scan
-
+---
+name: aw:verify
+description: Compatibility entrypoint for the older verification stage. Route to aw:test, aw:review, or the smallest correct combined verification flow.
+argument-hint: "<branch, PR, diff, artifact, or readiness request>"
+status: active
+stage: compatibility
+internal_skill: aw-verify
 ---
 
-## GHL Platform Integration
+# Verify
 
-Also activate the matching platform agent by task domain:
+Use `/aw:verify` only as a compatibility entrypoint.
+The canonical public model is now:
 
-- Backend/services → `platform-services-*`
-- Frontend/UI → `platform-frontend-*`
-- Data layer → `platform-data-*`
-- Infra/deploy → `platform-infra-*`
-- Testing/QA → `platform-sdet-*`
+- `/aw:test` for QA and fresh evidence
+- `/aw:review` for findings, governance, and readiness
 
-For ALL activated agents: read frontmatter → load each skill from `skills:` array.
+## Role
+
+Preserve legacy muscle memory while routing to the smallest correct modern verification flow.
+This entrypoint inherits the same rule that the selected test or review scope should be completed or blocked explicitly before handoff.
+
+## Compatibility Mapping
+
+| Legacy intent | Canonical route |
+|---|---|
+| feature QA, regression proof, runtime validation | `/aw:test` |
+| findings-oriented review, governance, readiness | `/aw:review` |
+| broad "verify this" requests | `/aw:test -> /aw:review` when both are needed |
+
+## Outputs
+
+- `.aw_docs/features/<feature_slug>/verification.md`
+- updated `.aw_docs/features/<feature_slug>/state.json`
+
+## Must Not Do
+
+- must not preserve the old overloaded verify semantics when a narrower stage is clear
+- must not bypass fresh evidence requirements
+
+## Recommended Next Commands
+
+- `/aw:test`
+- `/aw:review`
+- `/aw:deploy`
+
+## Final Output Shape
+
+Always end with:
+
+- `Compatibility Route`
+- `Canonical Flow`
+- `Evidence`
+- `Outcome`
+- `Next`

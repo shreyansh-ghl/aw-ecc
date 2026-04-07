@@ -1,0 +1,34 @@
+{
+  "id": "router-and-shared-references",
+  "layer": "capability",
+  "modes": ["deterministic"],
+  "owners": {
+    "commands": [],
+    "skills": [
+      "skills/using-aw-skills/SKILL.md",
+      "skills/using-platform-skills/SKILL.md",
+      "skills/aw-plan/SKILL.md",
+      "skills/aw-build/SKILL.md",
+      "skills/aw-investigate/SKILL.md",
+      "skills/aw-test/SKILL.md",
+      "skills/aw-review/SKILL.md",
+      "skills/aw-ship/SKILL.md"
+    ],
+    "agents": []
+  },
+  "tests": [
+    "tests/evals/deterministic/capability/aw-shared-references.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-activation-strictness.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-skill-trigger-coverage.test.js"
+  ],
+  "fixtures": [
+    "references/context-loading-and-intake.md",
+    "references/route-selection-patterns.md",
+    "references/domain-skill-loading.md",
+    "skills/using-platform-skills/evals/platform-selection-cases.json"
+  ],
+  "docs": [
+    "docs/aw-testing-strategy.md",
+    "tests/evals/README.md"
+  ]
+}

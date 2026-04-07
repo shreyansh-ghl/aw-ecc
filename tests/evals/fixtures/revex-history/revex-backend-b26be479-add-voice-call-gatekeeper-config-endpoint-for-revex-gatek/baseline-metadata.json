@@ -1,0 +1,69 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "lc-phone",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "feature",
+  "affectedSurface": "lc-phone",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `lc-phone` in RevEx backend, inside the broader `lc-phone` area. Deliver the smallest safe feature in `lc-phone` using the expected AW route `/aw:build`. Success criteria: deliver the requested feature in `lc-phone` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces.",
+  "successCriteria": [
+    "deliver the requested feature in `lc-phone` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces"
+  ],
+  "commit": {
+    "sha": "b26be4799195db2bad7b949508307b13cd9db6c0",
+    "parentSha": "aff7d3ba5a6cb1e84f51321bcfc79bc4aa522fbe",
+    "date": "2026-03-27T16:20:17+05:30",
+    "subject": "feat(lc-phone): add voice-call gatekeeper-config endpoint for Revex Gatekeeper",
+    "type": "feat",
+    "scope": "lc-phone"
+  },
+  "diffSummary": {
+    "fileCount": 4,
+    "insertions": 94,
+    "deletions": 0,
+    "totalLinesChanged": 94
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/lc-phone/src/voice-call/dto/gatekeeper-config-query.dto.ts",
+      "insertions": 9,
+      "deletions": 0
+    },
+    {
+      "path": "apps/lc-phone/src/voice-call/helpers/gatekeeper.helper.ts",
+      "insertions": 38,
+      "deletions": 0
+    },
+    {
+      "path": "apps/lc-phone/src/voice-call/voice-call.controller.ts",
+      "insertions": 12,
+      "deletions": 0
+    },
+    {
+      "path": "apps/lc-phone/src/voice-call/voice-call.service.ts",
+      "insertions": 35,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary b26be4799195db2bad7b949508307b13cd9db6c0",
+    "showPatch": "git -C ../ghl-revex-backend show b26be4799195db2bad7b949508307b13cd9db6c0",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout aff7d3ba5a6cb1e84f51321bcfc79bc4aa522fbe"
+  },
+  "warnings": []
+}

@@ -10,12 +10,36 @@ const {
   resolveInstallPlan,
 } = require('./install-manifests');
 const { getInstallTargetAdapter } = require('./install-targets/registry');
+const {
+  buildGeneratedClaudeAwHookSourceSuffixes,
+  getClaudeAwHookConfigSourceRelativePath,
+} = require('./claude-aw-hook-files');
+const {
+  buildGeneratedCodexAwHookSourceSuffixes,
+  getCodexAwHookConfigSourceRelativePath,
+  getCodexAwHookSourceRelativeDir,
+} = require('./codex-aw-hook-files');
+const {
+  buildGeneratedCursorAwHookSourceSuffixes,
+  buildGeneratedCursorAwSharedHookSourceSuffixes,
+  getCursorAwHookConfigSourceRelativePath,
+  getCursorAwHookSourceRelativeDir,
+  getCursorAwSharedHookSourceRelativeDir,
+} = require('./cursor-aw-hook-files');
 
 const LANGUAGE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const EXCLUDED_GENERATED_SOURCE_SUFFIXES = [
   '/ecc-install-state.json',
   '/ecc/install-state.json',
+  ...buildGeneratedClaudeAwHookSourceSuffixes(),
+  ...buildGeneratedCodexAwHookSourceSuffixes(),
+  '/.cursor/hooks.json',
+  ...buildGeneratedCursorAwHookSourceSuffixes(),
+  ...buildGeneratedCursorAwSharedHookSourceSuffixes(),
 ];
+
+const GENERATED_CURSOR_AW_HOOK_FILES = buildGeneratedCursorAwHookSourceSuffixes()
+  .map(suffix => suffix.replace(/^\/\.cursor\/hooks\//, ''));
 
 function getSourceRoot() {
   return path.join(__dirname, '../..');
@@ -148,9 +172,17 @@ function addRecursiveCopyOperations(operations, options) {
     return 0;
   }
 
+  const excludedRelativeFiles = new Set(
+    (Array.isArray(options.excludeRelativeFiles) ? options.excludeRelativeFiles : [])
+      .map(value => String(value || '').replace(/\\/g, '/'))
+  );
   const relativeFiles = listFilesRecursive(sourceDir);
 
   for (const relativeFile of relativeFiles) {
+    if (excludedRelativeFiles.has(String(relativeFile).replace(/\\/g, '/'))) {
+      continue;
+    }
+
     const sourceRelativePath = path.join(options.sourceRelativeDir, relativeFile);
     const sourcePath = path.join(options.sourceRoot, sourceRelativePath);
     const destinationPath = path.join(options.destinationDir, relativeFile);
@@ -274,6 +306,65 @@ function planClaudeLegacyInstall(context) {
   };
 }
 
+function planCodexLegacyInstall(context) {
+  const adapter = getInstallTargetAdapter('codex');
+  const targetRoot = adapter.resolveRoot({ homeDir: context.homeDir });
+  const installStatePath = adapter.getInstallStatePath({ homeDir: context.homeDir });
+  const operations = [];
+  const warnings = [];
+
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: path.join('.codex', 'agents'),
+    destinationDir: path.join(targetRoot, 'agents'),
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: getCodexAwHookSourceRelativeDir(),
+    destinationDir: path.join(targetRoot, 'hooks'),
+    strategy: 'sync-root-children',
+  });
+
+  addFileCopyOperation(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativePath: path.join('.codex', 'AGENTS.md'),
+    destinationPath: path.join(targetRoot, 'AGENTS.md'),
+  });
+  addFileCopyOperation(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativePath: path.join('.codex', 'config.toml'),
+    destinationPath: path.join(targetRoot, 'config.toml'),
+  });
+  addFileCopyOperation(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativePath: path.join('.codex', 'INSTALL.md'),
+    destinationPath: path.join(targetRoot, 'INSTALL.md'),
+  });
+  addFileCopyOperation(operations, {
+    moduleId: 'legacy-codex-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativePath: getCodexAwHookConfigSourceRelativePath(),
+    destinationPath: path.join(targetRoot, 'hooks.json'),
+  });
+
+  return {
+    mode: 'legacy',
+    adapter,
+    target: 'codex',
+    targetRoot,
+    installRoot: targetRoot,
+    installStatePath,
+    operations,
+    warnings,
+    selectedModules: ['legacy-codex-install'],
+  };
+}
+
 function planCursorLegacyInstall(context) {
   const adapter = getInstallTargetAdapter('cursor');
   const targetRoot = adapter.resolveRoot({ repoRoot: context.projectRoot });
@@ -333,12 +424,27 @@ function planCursorLegacyInstall(context) {
     sourceRoot: context.sourceRoot,
     sourceRelativeDir: path.join('.cursor', 'hooks'),
     destinationDir: path.join(targetRoot, 'hooks'),
+    excludeRelativeFiles: GENERATED_CURSOR_AW_HOOK_FILES,
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-cursor-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: getCursorAwHookSourceRelativeDir(),
+    destinationDir: path.join(targetRoot, 'hooks'),
+    strategy: 'sync-root-children',
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-cursor-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: getCursorAwSharedHookSourceRelativeDir(),
+    destinationDir: path.join(targetRoot, 'hooks', 'shared'),
+    strategy: 'sync-root-children',
   });
 
   addFileCopyOperation(operations, {
     moduleId: 'legacy-cursor-install',
     sourceRoot: context.sourceRoot,
-    sourceRelativePath: path.join('.cursor', 'hooks.json'),
+    sourceRelativePath: getCursorAwHookConfigSourceRelativePath(),
     destinationPath: path.join(targetRoot, 'hooks.json'),
   });
   addFileCopyOperation(operations, {
@@ -458,6 +564,8 @@ function createLegacyInstallPlan(options = {}) {
   let plan;
   if (target === 'claude') {
     plan = planClaudeLegacyInstall(context);
+  } else if (target === 'codex') {
+    plan = planCodexLegacyInstall(context);
   } else if (target === 'cursor') {
     plan = planCursorLegacyInstall(context);
   } else {

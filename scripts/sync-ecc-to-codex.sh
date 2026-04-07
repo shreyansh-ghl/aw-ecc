@@ -29,12 +29,35 @@ AGENTS_FILE="$CODEX_HOME/AGENTS.md"
 AGENTS_ROOT_SRC="$REPO_ROOT/AGENTS.md"
 AGENTS_CODEX_SUPP_SRC="$REPO_ROOT/.codex/AGENTS.md"
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
+AW_SKILLS_SRC="$REPO_ROOT/skills"
 SKILLS_DEST="$CODEX_HOME/skills"
 PROMPTS_SRC="$REPO_ROOT/commands"
 PROMPTS_DEST="$CODEX_HOME/prompts"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
+HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks.json"
+HOOKS_DIR_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks"
+HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
+HOOKS_DIR_DEST="$CODEX_HOME/hooks"
+AW_CODEX_SKILLS=(
+  "using-aw-skills"
+  "aw-plan"
+  "aw-build"
+  "aw-investigate"
+  "aw-test"
+  "aw-review"
+  "aw-yolo"
+  "aw-execute"
+  "aw-verify"
+  "aw-deploy"
+  "aw-ship"
+  "aw-brainstorm"
+  "aw-debug"
+  "aw-prepare"
+  "aw-spec"
+  "aw-tasks"
+)
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$CODEX_HOME/backups/ecc-$STAMP"
@@ -127,17 +150,64 @@ generate_prompt_file() {
   } > "$out"
 }
 
+resolve_prompt_name() {
+  local src="$1"
+  local fallback_name="$2"
+  local declared_name=""
+  local first_heading=""
+
+  declared_name="$(awk '
+    BEGIN { in_fm = 0 }
+    /^---$/ { in_fm = !in_fm; next }
+    in_fm && /^name:[[:space:]]*/ {
+      value = $0
+      sub(/^name:[[:space:]]*/, "", value)
+      print value
+      exit
+    }
+  ' "$src" 2>/dev/null || true)"
+
+  if [[ "$declared_name" == aw:* ]]; then
+    printf '%s' "${declared_name//:/-}"
+    return 0
+  fi
+
+  first_heading="$(awk '
+    BEGIN { in_fm = 0 }
+    /^---$/ { in_fm = !in_fm; next }
+    in_fm { next }
+    /^# \// {
+      heading = $0
+      sub(/^# /, "", heading)
+      print heading
+      exit
+    }
+  ' "$src" 2>/dev/null || true)"
+
+  if [[ "$first_heading" == /aw:* ]]; then
+    local prompt_name="${first_heading#/}"
+    prompt_name="${prompt_name//:/-}"
+    printf '%s' "$prompt_name"
+    return 0
+  fi
+
+  printf 'ecc-%s' "$fallback_name"
+}
+
 MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
 
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
 require_path "$AGENTS_CODEX_SUPP_SRC" "ECC Codex AGENTS supplement"
 require_path "$SKILLS_SRC" "ECC skills directory"
+require_path "$AW_SKILLS_SRC" "ECC AW skills directory"
 require_path "$PROMPTS_SRC" "ECC commands directory"
 require_path "$HOOKS_INSTALLER" "ECC global git hooks installer"
 require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
+require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
+require_path "$HOOKS_DIR_SRC" "ECC Codex hooks directory"
 
 if ! command -v node >/dev/null 2>&1; then
   log "ERROR: node is required for MCP config merging but was not found"
@@ -153,6 +223,12 @@ run_or_echo "mkdir -p \"$BACKUP_DIR\""
 run_or_echo "cp \"$CONFIG_FILE\" \"$BACKUP_DIR/config.toml\""
 if [[ -f "$AGENTS_FILE" ]]; then
   run_or_echo "cp \"$AGENTS_FILE\" \"$BACKUP_DIR/AGENTS.md\""
+fi
+if [[ -f "$HOOKS_JSON_DEST" ]]; then
+  run_or_echo "cp \"$HOOKS_JSON_DEST\" \"$BACKUP_DIR/hooks.json\""
+fi
+if [[ -d "$HOOKS_DIR_DEST" ]]; then
+  run_or_echo "cp -R \"$HOOKS_DIR_DEST\" \"$BACKUP_DIR/hooks\""
 fi
 
 ECC_BEGIN_MARKER="<!-- BEGIN ECC -->"
@@ -245,6 +321,16 @@ for skill_dir in "$SKILLS_SRC"/*; do
   skills_count=$((skills_count + 1))
 done
 
+log "Syncing AW stage and router skills for Codex"
+for skill_name in "${AW_CODEX_SKILLS[@]}"; do
+  skill_dir="$AW_SKILLS_SRC/$skill_name"
+  [[ -d "$skill_dir" ]] || continue
+  dest="$SKILLS_DEST/$skill_name"
+  run_or_echo "rm -rf \"$dest\""
+  run_or_echo "cp -R \"$skill_dir\" \"$dest\""
+  skills_count=$((skills_count + 1))
+done
+
 log "Generating prompt files from ECC commands"
 run_or_echo "mkdir -p \"$PROMPTS_DEST\""
 manifest="$PROMPTS_DEST/ecc-prompts-manifest.txt"
@@ -257,12 +343,13 @@ fi
 prompt_count=0
 while IFS= read -r -d '' command_file; do
   name="$(basename "$command_file" .md)"
-  out="$PROMPTS_DEST/ecc-$name.md"
+  prompt_name="$(resolve_prompt_name "$command_file" "$name")"
+  out="$PROMPTS_DEST/$prompt_name.md"
   if [[ "$MODE" == "dry-run" ]]; then
     printf '[dry-run] generate %s from %s\n' "$out" "$command_file"
   else
     generate_prompt_file "$command_file" "$out" "$name"
-    printf 'ecc-%s.md\n' "$name" >> "$manifest"
+    printf '%s.md\n' "$prompt_name" >> "$manifest"
   fi
   prompt_count=$((prompt_count + 1))
 done < <(find "$PROMPTS_SRC" -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
@@ -473,6 +560,24 @@ if [[ "$MODE" == "dry-run" ]]; then
   "$HOOKS_INSTALLER" --dry-run
 else
   "$HOOKS_INSTALLER"
+fi
+
+log "Installing Codex hooks.json"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] cp "%s" "%s"\n' "$HOOKS_JSON_SRC" "$HOOKS_JSON_DEST"
+else
+  run_or_echo "cp \"$HOOKS_JSON_SRC\" \"$HOOKS_JSON_DEST\""
+fi
+
+log "Installing managed Codex hook scripts"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] mkdir -p "%s"\n' "$HOOKS_DIR_DEST"
+  printf '[dry-run] cp -R "%s"/. "%s"/\n' "$HOOKS_DIR_SRC" "$HOOKS_DIR_DEST"
+  printf '[dry-run] chmod +x "%s"/*.sh\n' "$HOOKS_DIR_DEST"
+else
+  run_or_echo "mkdir -p \"$HOOKS_DIR_DEST\""
+  run_or_echo "cp -R \"$HOOKS_DIR_SRC\"/. \"$HOOKS_DIR_DEST\"/"
+  run_or_echo "chmod +x \"$HOOKS_DIR_DEST\"/*.sh"
 fi
 
 log "Running global regression sanity check"

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+
 const MAX_STDIN = 1024 * 1024;
 let raw = '';
 

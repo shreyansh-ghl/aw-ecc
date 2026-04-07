@@ -1,0 +1,65 @@
+{
+  "repoKey": "revex-backend",
+  "repoRelativePath": "../ghl-revex-backend",
+  "domain": "backend",
+  "productArea": "reputation",
+  "promptLevel": "sparse_ticket",
+  "changeKind": "implementation",
+  "affectedSurface": "reputation:deployments/production",
+  "userPrompt": "You are working in RevEx backend. A product or engineering improvement is needed around `reputation:deployments/production` in RevEx backend, inside the broader `reputation` area. Deliver the smallest safe implementation in `reputation:deployments/production` using the expected AW route `/aw:build`. Success criteria: deliver the requested implementation in `reputation:deployments/production` using the smallest reviewable slice; stay within the touched product area and avoid unnecessary interface churn; include implementation evidence that ties directly to the touched files or flow. Verification expectations: record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow; show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces; include delivery or rollout evidence for any release-path changes.",
+  "successCriteria": [
+    "deliver the requested implementation in `reputation:deployments/production` using the smallest reviewable slice",
+    "stay within the touched product area and avoid unnecessary interface churn",
+    "include implementation evidence that ties directly to the touched files or flow"
+  ],
+  "verificationExpectations": [
+    "record narrow evidence that makes the candidate PR reviewable against the changed files or affected flow",
+    "show the smallest reviewable validation or diff-based proof without reopening unrelated surfaces",
+    "include delivery or rollout evidence for any release-path changes"
+  ],
+  "commit": {
+    "sha": "041696f1f19839048176a04d59691ee6f5d10849",
+    "parentSha": "d4848fe24994ed37dbf8990b3fa15d60da2bf8ea",
+    "date": "2026-03-27T12:35:47+05:30",
+    "subject": "migration (#10001)",
+    "type": "unknown",
+    "scope": null
+  },
+  "diffSummary": {
+    "fileCount": 3,
+    "insertions": 623,
+    "deletions": 0,
+    "totalLinesChanged": 623
+  },
+  "routeExpectation": {
+    "route": "/aw:build",
+    "primarySkill": "aw-build",
+    "supportingSkills": [
+      "api-and-interface-design",
+      "incremental-implementation"
+    ]
+  },
+  "changedFiles": [
+    {
+      "path": "apps/reputation/deployments/production/jobs/values.triggerplatformdetectiononboarding.yaml",
+      "insertions": 38,
+      "deletions": 0
+    },
+    {
+      "path": "apps/reputation/deployments/staging/jobs/values.triggerplatformdetectiononboarding.yaml",
+      "insertions": 38,
+      "deletions": 0
+    },
+    {
+      "path": "scripts/reputation/triggerplatformdetectiononboarding.ts",
+      "insertions": 547,
+      "deletions": 0
+    }
+  ],
+  "reconstructionCommands": {
+    "showStat": "git -C ../ghl-revex-backend show --stat --summary 041696f1f19839048176a04d59691ee6f5d10849",
+    "showPatch": "git -C ../ghl-revex-backend show 041696f1f19839048176a04d59691ee6f5d10849",
+    "checkoutParent": "git -C ../ghl-revex-backend checkout d4848fe24994ed37dbf8990b3fa15d60da2bf8ea"
+  },
+  "warnings": []
+}
