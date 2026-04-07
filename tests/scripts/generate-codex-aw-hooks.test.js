@@ -1,5 +1,5 @@
 /**
- * Tests for scripts/generate-codex-aw-hooks.js
+ * Tests for the Codex harness output of scripts/generate-aw-hooks.js
  */
 
 const assert = require('assert');
@@ -8,7 +8,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
-const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-codex-aw-hooks.js');
+const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-aw-hooks.js');
 const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.codex', 'hooks', 'aw-session-start.sh');
 const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks', 'aw-session-start.sh');
 const TARGET_CONFIG_FILE = path.join(REPO_ROOT, '.codex', 'hooks.json');
@@ -27,7 +27,7 @@ function test(name, fn) {
 }
 
 function runTests() {
-  console.log('\n=== Testing generate-codex-aw-hooks.js ===\n');
+  console.log('\n=== Testing generate-aw-hooks.js (codex) ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -39,7 +39,7 @@ function runTests() {
     try {
       fs.writeFileSync(TARGET_HOOK_FILE, '# drifted output\n');
       fs.writeFileSync(TARGET_CONFIG_FILE, '{"drifted":true}\n');
-      execFileSync('node', [SCRIPT], {
+      execFileSync('node', [SCRIPT, 'codex'], {
         cwd: REPO_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -51,7 +51,7 @@ function runTests() {
     } finally {
       fs.writeFileSync(TARGET_HOOK_FILE, sourceHookContent);
       fs.writeFileSync(TARGET_CONFIG_FILE, sourceConfigContent);
-      execFileSync('node', [SCRIPT], {
+      execFileSync('node', [SCRIPT, 'codex'], {
         cwd: REPO_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],
       });

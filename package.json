@@ -81,7 +81,7 @@
     "scripts/orchestrate-codex-worker.sh",
     "scripts/orchestrate-worktrees.js",
     "scripts/setup-package-manager.js",
-    "scripts/generate-cursor-aw-hooks.js",
+    "scripts/generate-aw-hooks.js",
     "scripts/skill-create-output.js",
     "scripts/codex/merge-mcp-config.js",
     "scripts/repair.js",
@@ -101,7 +101,7 @@
     "ecc-install": "scripts/install-apply.js"
   },
   "scripts": {
-    "generate-hooks": "node scripts/generate-claude-aw-hooks.js && node scripts/generate-codex-aw-hooks.js && node scripts/generate-cursor-aw-hooks.js",
+    "generate-hooks": "node scripts/generate-aw-hooks.js",
     "prepare": "npm run generate-hooks",
     "postinstall": "echo '\\n  ecc-universal installed!\\n  Run: npx ecc typescript\\n  Compat: npx ecc-install typescript\\n  Docs: https://github.com/affaan-m/everything-claude-code\\n'",
     "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules --ignore tests/results --ignore skills/using-aw-skills/evals/results --ignore docs/pt-BR --ignore docs/tr --ignore docs/zh-CN",

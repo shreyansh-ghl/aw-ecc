@@ -1,5 +1,5 @@
 /**
- * Tests for scripts/generate-cursor-aw-hooks.js
+ * Tests for the Cursor harness output of scripts/generate-aw-hooks.js
  */
 
 const assert = require('assert');
@@ -8,7 +8,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
-const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-cursor-aw-hooks.js');
+const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-aw-hooks.js');
 const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'session-start.js');
 const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'cursor-aw-hooks', 'session-start.js');
 const TARGET_SHARED_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'shared', 'session-start.sh');
@@ -29,7 +29,7 @@ function test(name, fn) {
 }
 
 function runTests() {
-  console.log('\n=== Testing generate-cursor-aw-hooks.js ===\n');
+  console.log('\n=== Testing generate-aw-hooks.js (cursor) ===\n');
 
   let passed = 0;
   let failed = 0;
@@ -43,7 +43,7 @@ function runTests() {
       fs.writeFileSync(TARGET_HOOK_FILE, '// drifted output\n');
       fs.writeFileSync(TARGET_SHARED_FILE, '# drifted output\n');
       fs.writeFileSync(TARGET_CONFIG_FILE, '{\"drifted\":true}\n');
-      execFileSync('node', [SCRIPT], {
+      execFileSync('node', [SCRIPT, 'cursor'], {
         cwd: REPO_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -58,7 +58,7 @@ function runTests() {
       fs.writeFileSync(TARGET_HOOK_FILE, sourceHookContent);
       fs.writeFileSync(TARGET_SHARED_FILE, sourceSharedContent);
       fs.writeFileSync(TARGET_CONFIG_FILE, sourceConfigContent);
-      execFileSync('node', [SCRIPT], {
+      execFileSync('node', [SCRIPT, 'cursor'], {
         cwd: REPO_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
