@@ -1,10 +1,16 @@
 #!/usr/bin/env node
-const { readStdin, runExistingHook, transformToClaude, hookEnabled } = require('./adapter');
+const { readStdin } = require('./adapter');
+const { runCursorAwPhase } = require('./aw-phase-adapter');
+
 readStdin().then(raw => {
-  const input = JSON.parse(raw || '{}');
-  const claudeInput = transformToClaude(input);
-  if (hookEnabled('session:end:marker', ['minimal', 'standard', 'strict'])) {
-    runExistingHook('session-end-marker.js', claudeInput);
-  }
-  process.stdout.write(raw);
+  return runCursorAwPhase({
+    raw,
+    steps: [
+      {
+        hookId: 'session:end:marker',
+        allowedProfiles: ['minimal', 'standard', 'strict'],
+        scriptName: 'session-end-marker.js',
+      },
+    ],
+  }).then(output => process.stdout.write(output));
 }).catch(() => process.exit(0));

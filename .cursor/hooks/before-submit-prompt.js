@@ -1,5 +1,16 @@
 #!/usr/bin/env node
-const { readStdin } = require('./adapter');
+const { readStdin, runManagedShellHook } = require('./adapter');
+
+function emitAwPromptReminder(raw) {
+  const result = runManagedShellHook('scripts/hooks/session-start-rules-context.sh', raw);
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+  if (result.stdout) {
+    process.stderr.write(result.stdout.endsWith('\n') ? result.stdout : `${result.stdout}\n`);
+  }
+}
+
 readStdin().then(raw => {
   try {
     const input = JSON.parse(raw);
@@ -18,6 +29,9 @@ readStdin().then(raw => {
         break;
       }
     }
+  } catch {}
+  try {
+    emitAwPromptReminder(raw);
   } catch {}
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

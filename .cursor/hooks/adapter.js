@@ -46,18 +46,38 @@ function transformToClaude(cursorInput, overrides = {}) {
   };
 }
 
-function runExistingHook(scriptName, stdinData) {
-  const scriptPath = path.join(getPluginRoot(), 'scripts', 'hooks', scriptName);
+function runManagedCommand(command, args, stdinData) {
   try {
-    execFileSync('node', [scriptPath], {
+    const stdout = execFileSync(command, args, {
       input: typeof stdinData === 'string' ? stdinData : JSON.stringify(stdinData),
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 15000,
       cwd: process.cwd(),
+      encoding: 'utf8',
     });
+
+    return {
+      stdout: stdout || '',
+      stderr: '',
+    };
   } catch (e) {
     if (e.status === 2) process.exit(2); // Forward blocking exit code
+
+    return {
+      stdout: typeof e.stdout === 'string' ? e.stdout : String(e.stdout || ''),
+      stderr: typeof e.stderr === 'string' ? e.stderr : String(e.stderr || ''),
+    };
   }
+}
+
+function runExistingHook(scriptName, stdinData) {
+  const scriptPath = path.join(getPluginRoot(), 'scripts', 'hooks', scriptName);
+  return runManagedCommand('node', [scriptPath], stdinData);
+}
+
+function runManagedShellHook(relativeScriptPath, stdinData) {
+  const scriptPath = path.join(getPluginRoot(), relativeScriptPath);
+  return runManagedCommand('bash', [scriptPath], stdinData);
 }
 
 function hookEnabled(hookId, allowedProfiles = ['standard', 'strict']) {
@@ -78,4 +98,11 @@ function hookEnabled(hookId, allowedProfiles = ['standard', 'strict']) {
   return allowedProfiles.includes(profile);
 }
 
-module.exports = { readStdin, getPluginRoot, transformToClaude, runExistingHook, hookEnabled };
+module.exports = {
+  readStdin,
+  getPluginRoot,
+  transformToClaude,
+  runExistingHook,
+  runManagedShellHook,
+  hookEnabled,
+};
