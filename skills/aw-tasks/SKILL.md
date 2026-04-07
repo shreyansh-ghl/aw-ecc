@@ -36,7 +36,7 @@ This legacy heading maps to the detailed planning process below.
    Prefer end-to-end slices and checkpointed phases over horizontal batches.
    Use `../../references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
 4. Write tasks as fresh-worker instructions.
-   Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, phase ordering, and any bounded parallel execution metadata.
+   Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, phase ordering, expected review mode when it is known safely, and any bounded parallel execution metadata.
 5. Review the task list before handoff.
    Remove placeholders, fix dependency drift, and confirm the steps are build-ready.
 6. Update state and hand off.
@@ -57,6 +57,7 @@ Each implementation step should usually be one action that takes about 2-5 minut
 `tasks.md` should include:
 
 - an explicit `## Spec Brief` section near the top with the feature goal, approved scope, and architecture summary
+- assumptions or constraints that materially affect execution
 - a file structure map before the tasks
 - explicit phase sections such as `## Phase 1`, `## Phase 2`, and so on
 - a short phase outcome or exit check for each phase
@@ -121,7 +122,8 @@ Before handoff:
 2. confirm file paths and interface names stay consistent across tasks
 3. confirm no task relies on an undefined helper, type, or command
 4. confirm `## Spec Brief` and the phase order are obvious from the top of `tasks.md`
-5. confirm execution can route straight to `/aw:build`
+5. confirm the execution mode and review mode are clear when they can be known safely
+6. confirm execution can route straight to `/aw:build`
 
 ## Final Output Shape
 
@@ -133,6 +135,7 @@ Always end with:
 - `File Map`
 - `Phases`
 - `Execution Route`
+- `Review Mode`
 - `Parallel Candidates`
 - `Review Result`
 - `Recommended Next`

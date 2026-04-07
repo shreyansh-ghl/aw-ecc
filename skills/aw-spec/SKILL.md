@@ -30,16 +30,18 @@ This legacy heading maps to the gated workflow below.
 
 1. Enter technical planning mode.
    Read the approved direction, relevant code paths, and the smallest set of architecture context needed.
+   Perform an explicit architecture review before freezing the technical path.
    Do not write code while authoring the spec.
 2. Check the scope shape.
    If the request spans multiple independent subsystems, decompose it before writing one giant spec.
 3. Define the stable contract.
-   Name interfaces, boundaries, file responsibilities, rollout constraints, and failure modes.
+   Name interfaces, boundaries, file responsibilities, assumptions, constraints, rollout constraints, and failure modes.
+   Record non-goals, compatibility rules, and operator-facing observability or debugging constraints when they matter.
    Use `../../references/interface-stability.md` when an API or contract is changing.
 4. Write `spec.md` for a fresh planner or builder.
-   Make it specific enough that `aw-tasks` can proceed without rediscovering the architecture.
+   Make it specific enough that `aw-tasks` can proceed without rediscovering the architecture or inventing missing contracts.
 5. Run a fast review pass.
-   Fix placeholders, contradictions, scope drift, and ambiguous names before handoff.
+   Fix placeholders, contradictions, scope drift, ambiguous names, and missing assumption or rollout detail before handoff.
 6. Update state and hand off.
    Update `.aw_docs/features/<feature_slug>/state.json` and hand the approved spec to `aw-tasks`.
 
@@ -49,10 +51,15 @@ Capture at least:
 
 - implementation goal
 - scope and non-goals
+- assumptions and constraints
 - architecture or technical approach
+- architecture rationale for non-obvious decisions
 - interfaces, contracts, or integration points
+- invariants and backward-compatibility rules when relevant
 - expected file or module map when it can be inferred safely
 - failure modes and rollback constraints
+- observability, debugging, or operator-facing constraints when relevant
+- risks and mitigations when they materially affect implementation order
 - acceptance criteria
 - verification targets
 - rollout, migration, or environment constraints when relevant
@@ -76,10 +83,12 @@ Capture at least:
 
 Before handoff, run this inline review:
 
-1. placeholder scan
-2. internal consistency check
-3. scope check
-4. ambiguity check
+1. spec coverage check against the approved direction
+2. placeholder scan
+3. internal consistency and naming check
+4. scope and decomposition check
+5. assumptions, constraints, and rollout completeness check
+6. ambiguity check
 
 Fix issues inline instead of carrying them into task planning.
 
@@ -99,6 +108,7 @@ Always end with:
 - `Spec Path`
 - `Scope Decision`
 - `Architecture`
+- `Assumptions & Constraints`
 - `Acceptance Criteria`
 - `Open Approval Needs`
 - `Recommended Next`
