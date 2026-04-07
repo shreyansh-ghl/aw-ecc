@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { execFileSync, spawn, spawnSync } = require('child_process');
+const { getClaudePhaseNames } = require('../../scripts/lib/aw-hook-contract');
 
 const SKIP_BASH = process.platform === 'win32';
 
@@ -1834,12 +1835,9 @@ async function runTests() {
       const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
       const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
-      assert.ok(hooks.hooks.PreToolUse, 'Should have PreToolUse hooks');
-      assert.ok(hooks.hooks.PostToolUse, 'Should have PostToolUse hooks');
-      assert.ok(hooks.hooks.SessionStart, 'Should have SessionStart hooks');
-      assert.ok(hooks.hooks.SessionEnd, 'Should have SessionEnd hooks');
-      assert.ok(hooks.hooks.Stop, 'Should have Stop hooks');
-      assert.ok(hooks.hooks.PreCompact, 'Should have PreCompact hooks');
+      for (const phaseName of getClaudePhaseNames()) {
+        assert.ok(hooks.hooks[phaseName], `Should have ${phaseName} hooks`);
+      }
     })
   )
     passed++;
