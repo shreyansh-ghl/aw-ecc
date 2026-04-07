@@ -33,10 +33,14 @@ Each public command maps to one primary stage skill.
 That stage skill owns:
 
 - workflow steps
+- intra-stage continuation rules
 - loading the right platform docs and `.aw_rules`
 - composing smaller helper skills
 - loading shared references on demand
 - writing stage evidence and artifacts
+
+Stage skills should not only say when to stop.
+They should also say when to keep going inside the stage so the model does not stall after one successful substep.
 
 ### Process skills own multi-stage behavior
 
@@ -71,6 +75,12 @@ This supports both:
 
 - skill-first routing for default UX
 - explicit command use for deterministic workflows
+
+The stage handoff contract is the same in both paths:
+
+- finish the current stage scope or record the blocker explicitly
+- write the required stage artifact(s)
+- summarize what was done, what remains, and the exact next command
 
 ## Naming Layers
 

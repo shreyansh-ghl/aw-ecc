@@ -13,6 +13,8 @@ Use alongside `aw-plan`.
 
 - discovery checkpoint: enough context to stop guessing
 - implementation checkpoint: slice is thin and build-ready
+- parallelization checkpoint: disjoint write scope, clear ownership, and a bounded worker cap are explicit before fan-out
+- save-point checkpoint: the slice ends in a commit; if it cannot, it should usually be merged into the next dependent slice before build starts
 - verification checkpoint: evidence and findings are explicit
 - release checkpoint: provider, rollback, and risks are clear
 

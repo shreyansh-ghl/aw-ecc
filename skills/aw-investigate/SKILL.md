@@ -34,10 +34,25 @@ Do not use once the cause is already clear and implementation is ready.
 4. Narrow the fault surface.
    Identify the smallest plausible layer, file set, or dependency boundary.
 5. Decide the next stage.
-   If the cause is concrete enough, hand off to `aw-build`.
-   If the work still needs proof, stay in investigation and name the next probe.
+   If the cause is concrete enough, hand off to `aw-build` and name the exact starting slice or repair surface.
+   If the work still needs proof, stay in investigation and name the next probe explicitly instead of pausing with a vague "needs more digging" note.
 6. Persist the evidence.
-   Write `investigation.md` and update `state.json`.
+   Write `investigation.md` and update `state.json` with completed probes, open questions, and the recommended next command.
+
+## Completion Contract
+
+Investigation is complete only when one of these is true:
+
+- the likely fault surface is concrete enough for `aw-build`
+- the next probe is explicit enough for another investigation pass to continue without rediscovery
+- the work is blocked and the blocker is named clearly
+
+Every investigation handoff must make these things obvious:
+
+- what was reproduced
+- which probes were completed
+- what remains uncertain
+- which exact next command or next probe should run next
 
 ## Common Rationalizations
 
@@ -54,6 +69,22 @@ Do not use once the cause is already clear and implementation is ready.
 - the blast radius is guessed instead of scoped
 - the next action is "try another patch" instead of "run the next probe"
 
+## State File
+
+`state.json` should record at least:
+
+- `feature_slug`
+- `stage: "investigate"`
+- `mode`
+- `status`
+- written artifacts
+- completed probes
+- commands run
+- likely fault surface
+- open questions
+- blockers
+- recommended next commands
+
 ## Verification
 
 Before leaving investigate, confirm:
@@ -63,3 +94,16 @@ Before leaving investigate, confirm:
 - [ ] the likely fault surface is concrete enough to guide build
 - [ ] the next stage is clear: build, more investigation, or blocked
 - [ ] `investigation.md` and `state.json` are updated
+
+## Final Output Shape
+
+Always end with:
+
+- `Mode`
+- `Reproduction`
+- `Expected vs Actual`
+- `Evidence`
+- `Completed Probes`
+- `Likely Fault Surface`
+- `Open Questions`
+- `Next`

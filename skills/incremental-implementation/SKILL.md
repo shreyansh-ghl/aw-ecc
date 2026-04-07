@@ -9,7 +9,7 @@ origin: ECC
 ## Overview
 
 Build in thin vertical slices.
-Each slice should leave the system in a working, testable, reviewable state before the next one begins.
+Each slice should leave the system in a working, testable, reviewable state before the next one begins, but a passing slice is only a checkpoint until the approved build scope is complete.
 
 ## When to Use
 
@@ -43,8 +43,9 @@ Each slice should leave the system in a working, testable, reviewable state befo
    Use `../../references/git-save-points.md` when the work benefits from explicit commit discipline.
    A good save point is small, passing, and easy to explain.
 6. Decide whether to continue or hand off.
-   If the slice is complete and the request now needs QA, review, or release work, stop and hand off.
-   Do not keep building just because more work is possible.
+   If more approved build slices remain, continue with the next slice.
+   If the approved build scope is complete and the next unsatisfied need is QA, review, or release work, stop and hand off.
+   Do not keep building just because speculative cleanup or unrelated improvements are possible.
 
 ## Common Rationalizations
 
@@ -58,6 +59,7 @@ Each slice should leave the system in a working, testable, reviewable state befo
 ## Red Flags
 
 - one slice changes multiple unrelated behaviors
+- one passing slice is treated as the end of build even though approved build slices remain
 - rollback is unclear after the latest patch
 - tests are deferred instead of attached to the slice
 - commit/save-point boundaries no longer match meaningful progress
@@ -69,5 +71,5 @@ After each increment, confirm:
 - [ ] the slice has one clear purpose
 - [ ] the slice has current proof, not assumed proof
 - [ ] the diff is still reversible and reviewable
-- [ ] the next slice is optional, not entangled
+- [ ] the next slice is either the next approved build step or an explicit handoff boundary
 - [ ] save points reflect meaningful progress

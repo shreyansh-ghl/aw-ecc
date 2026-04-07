@@ -27,7 +27,9 @@ The canonical public verification model is now:
    If both are clearly needed, use `aw-test -> aw-review`.
 2. Preserve the compatibility artifact contract.
    Keep writing `verification.md` and `state.json`.
-3. Do not preserve old ambiguity.
+3. Preserve stage continuation as well as stage boundaries.
+   Do not stop after partial evidence if the selected test or review scope still remains.
+4. Do not preserve old ambiguity.
    Prefer the narrowest modern stage once the intent is clear.
 
 ## Common Rationalizations
@@ -44,5 +46,6 @@ The canonical public verification model is now:
 ## Verification
 
 - [ ] the request resolved to `aw-test`, `aw-review`, or both
+- [ ] the selected test or review scope was completed or blocked explicitly
 - [ ] compatibility did not create a second verification workflow
 - [ ] `verification.md` and `state.json` stayed consistent with the resolved canonical flow

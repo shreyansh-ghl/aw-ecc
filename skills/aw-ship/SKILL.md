@@ -40,13 +40,30 @@ Do not guess through missing release inputs when `aw-prepare` should be used fir
 2. Apply the launch checklist.
    Use `../../references/ship-launch-checklist.md`.
    Load `ci-cd-and-automation` when release automation, staged rollout, or rollback machinery is part of the ship decision.
-3. Confirm rollback posture.
+3. Continue until the selected shipping scope is covered.
+   Do not stop after one checklist item, one smoke result, or one monitoring note if the requested launch-readiness, rollout, or closeout scope still has open gaps.
+4. Confirm rollback posture.
    If rollback is unclear, do not claim launch readiness.
-4. Capture monitoring and follow-through.
+5. Capture monitoring and follow-through.
    Name health checks, monitoring links, smoke results, and ownership.
    For release notes, runbooks, or durable decision capture, load `documentation-and-adrs`.
-5. Close out the release.
+6. Close out the release.
    Update `release.md` and `state.json` with launch or blocker notes.
+
+## Completion Contract
+
+Shipping is complete only when one of these is true:
+
+- launch readiness, rollout, or closeout scope is covered clearly enough for operations
+- a launch blocker prevents safe shipping and that blocker is named clearly
+
+Every shipping handoff must make these things obvious:
+
+- the current launch readiness decision
+- the rollout or monitoring plan
+- the rollback path or rollback blocker
+- the operational evidence captured
+- which exact next command should run next, if any
 
 ## Common Rationalizations
 
@@ -62,9 +79,37 @@ Do not guess through missing release inputs when `aw-prepare` should be used fir
 - no monitoring or smoke evidence exists for a risky release
 - ship is used as a synonym for end-to-end automation
 
+## State File
+
+`state.json` should record at least:
+
+- `feature_slug`
+- `stage: "ship"`
+- `mode`
+- `status`
+- written artifacts
+- launch readiness
+- rollout plan
+- rollback path
+- evidence captured
+- blockers
+- recommended next commands
+
 ## Verification
 
 - [ ] launch checklist or blocker is explicit
 - [ ] rollback readiness is documented
 - [ ] monitoring and smoke expectations are named
 - [ ] `release.md` and `state.json` are updated with closeout evidence
+
+## Final Output Shape
+
+Always end with:
+
+- `Mode`
+- `Launch Readiness`
+- `Rollout Plan`
+- `Rollback Path`
+- `Evidence`
+- `Outcome`
+- `Next`

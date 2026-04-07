@@ -40,10 +40,11 @@ Confirm the release is ready to launch, roll it out safely, document rollback re
 
 1. Treat rollout safety as its own stage.
 2. Run the internal `aw-prepare` gate when release context, workspace state, or artifact readiness is unclear before continuing with shipping work.
-3. Confirm rollback readiness before claiming launch readiness.
-4. Capture post-deploy evidence, monitoring links, and known risks.
-5. For frontend releases, include versioned entry, smoke, and accessibility or design-signoff notes when relevant.
-6. Do not use `ship` as a synonym for composite orchestration.
+3. Continue until the selected shipping scope is covered or explicitly blocked.
+4. Confirm rollback readiness before claiming launch readiness.
+5. Capture post-deploy evidence, monitoring links, and known risks.
+6. For frontend releases, include versioned entry, smoke, and accessibility or design-signoff notes when relevant.
+7. Do not use `ship` as a synonym for composite orchestration.
 
 ## Internal Phase Routing
 

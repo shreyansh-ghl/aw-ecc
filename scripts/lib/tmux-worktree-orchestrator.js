@@ -72,6 +72,43 @@ function ensureUniqueWorkerSlugs(workerPlans) {
   }
 }
 
+function normalizeMaxParallelWorkers(options, workerCount) {
+  const rawValue = options.maxParallelWorkers ?? options.max_parallel_workers;
+  if (rawValue == null) {
+    return workerCount;
+  }
+
+  const parsedValue = Number(rawValue);
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+    throw new Error('maxParallelWorkers must be a positive integer');
+  }
+
+  return parsedValue;
+}
+
+function chunkWorkerPlans(workerPlans, maxParallelWorkers) {
+  const waves = [];
+
+  for (let index = 0; index < workerPlans.length; index += maxParallelWorkers) {
+    waves.push(workerPlans.slice(index, index + maxParallelWorkers));
+  }
+
+  return waves;
+}
+
+function buildWaveLaunchCommand({ command, waitForSignals, completionSignal }) {
+  const shellSteps = [];
+
+  for (const signal of waitForSignals) {
+    shellSteps.push(`tmux wait-for ${shellQuote(signal)}`);
+  }
+
+  shellSteps.push(command);
+  shellSteps.push(`tmux wait-for -S ${shellQuote(completionSignal)}`);
+
+  return `sh -lc ${shellQuote(shellSteps.join(' ; '))}`;
+}
+
 function buildWorkerTemplateVariables(workerPlan) {
   return {
     worker_name: workerPlan.workerName,
@@ -102,6 +139,7 @@ function buildOrchestrationPlan(options) {
   const coordinationRoot = path.resolve(options.coordinationRoot || path.join(repoRoot, '.orchestration'));
   const coordinationDir = path.join(coordinationRoot, sessionName);
   const workers = Array.isArray(options.workers) ? options.workers : [];
+  const maxParallelWorkers = normalizeMaxParallelWorkers(options, workers.length);
 
   if (!sessionName) {
     throw new Error('sessionName is required');
@@ -139,6 +177,7 @@ function buildOrchestrationPlan(options) {
     const workerPlan = {
       workerName: worker.name,
       workerSlug,
+      completionSignal: `${sessionName}-${workerSlug}-done`,
       repoRoot,
       baseRef,
       coordinationDir,
@@ -153,7 +192,7 @@ function buildOrchestrationPlan(options) {
       gitArgs: ['worktree', 'add', '-b', branchName, worktreePath, baseRef],
     };
 
-    workerPlan.launchCommand = renderTemplate(
+    workerPlan.rawLaunchCommand = renderTemplate(
       options.launcherCommand,
       buildWorkerTemplateVariables(workerPlan)
     );
@@ -162,6 +201,23 @@ function buildOrchestrationPlan(options) {
   });
 
   ensureUniqueWorkerSlugs(workerPlans);
+
+  const workerWaves = chunkWorkerPlans(workerPlans, maxParallelWorkers);
+  workerWaves.forEach((wave, waveIndex) => {
+    const waitForSignals = waveIndex === 0
+      ? []
+      : workerWaves[waveIndex - 1].map((workerPlan) => workerPlan.completionSignal);
+
+    wave.forEach((workerPlan) => {
+      workerPlan.waveIndex = waveIndex;
+      workerPlan.waitForSignals = waitForSignals;
+      workerPlan.launchCommand = buildWaveLaunchCommand({
+        command: workerPlan.rawLaunchCommand,
+        waitForSignals,
+        completionSignal: workerPlan.completionSignal,
+      });
+    });
+  });
 
   const bannerCommand = `printf '%s\\n' ${shellQuote(`Session: ${sessionName}`)} ${shellQuote(`Coordination: ${coordinationDir}`)}`;
   const tmuxCommands = [
@@ -201,10 +257,12 @@ function buildOrchestrationPlan(options) {
     sessionName,
     coordinationRoot,
     coordinationDir,
+    maxParallelWorkers,
     launcherCommand: options.launcherCommand,
     replaceExisting: Boolean(options.replaceExisting),
     workers,
     workerPlans,
+    workerWaves,
     tmuxCommands,
   };
 }
@@ -271,10 +329,13 @@ function materializePlan(plan) {
         sessionName: plan.sessionName,
         repoRoot: plan.repoRoot,
         coordinationDir: plan.coordinationDir,
+        maxParallelWorkers: plan.maxParallelWorkers,
+        workerWaves: plan.workerWaves.map((wave) => wave.map((workerPlan) => workerPlan.workerSlug)),
         workers: plan.workerPlans.map((workerPlan) => ({
           workerSlug: workerPlan.workerSlug,
           branchName: workerPlan.branchName,
           worktreePath: workerPlan.worktreePath,
+          waveIndex: workerPlan.waveIndex,
         })),
       },
       null,

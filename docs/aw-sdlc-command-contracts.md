@@ -110,6 +110,33 @@ That means:
 - `deploy` is fully responsible for release execution and not responsible for redefining requirements
 - `ship` is fully responsible for rollout safety and closeout and not responsible for acting as the whole SDLC
 
+## Stage Continuation And Handoff Rule
+
+Each stage must finish its own requested scope before it hands off.
+
+That means:
+
+- `build` should continue through approved build slices until build scope is complete or explicitly blocked
+- `investigate` should continue through confirming probes until the next probe or repair surface is explicit
+- `test` should continue until the requested QA scope is covered or explicitly blocked
+- `review` should continue until findings, governance, and readiness scope is covered or explicitly blocked
+- `deploy` should finish the selected release action or record the blocker explicitly
+- `ship` should finish the requested launch-readiness, rollout, or closeout scope or record the blocker explicitly
+
+A passing slice, one successful test, one note, or one partial deploy action is not an automatic terminal state.
+
+Every stage handoff should make these things obvious:
+
+- what was completed
+- what remains, if anything
+- what blockers or concerns exist
+- which exact next command is recommended
+
+`state.json` should always include `recommended_next_commands` so continuation is machine-readable as well as human-readable.
+For build-stage save-point discipline, `state.json` should record the created save-point commits for meaningful completed slices.
+When build executes a phased plan, `execution.md` should record completed phases and the next phase transition, and `state.json` should record `completed_phases` plus `current_phase`.
+When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candidate` slices, explicit write scopes, and a `max_parallel_subagents` cap that defaults to `3` unless another value is justified.
+
 ## 1. `/aw:plan`
 
 ### Role
@@ -156,6 +183,18 @@ Turn an idea, requirement, approved design, or technical request into the minimu
   - `spec.md`
   - `tasks.md`
 
+When `tasks.md` is produced, it should:
+
+- start with an explicit `## Spec Brief` section that summarizes the approved implementation goal
+- organize the execution recipe into explicit phases so build can see the order immediately
+
+When `tasks.md` prepares parallel execution, it should also define:
+
+- `parallel_group`
+- `parallel_ready_when`
+- `parallel_write_scope`
+- `max_parallel_subagents` with a default of `3` unless another cap is explicitly justified
+
 ### Layers
 
 | Layer | Responsibility |
@@ -164,6 +203,7 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 | `intent` | classify planning mode and scope |
 | `prerequisites` | identify which artifacts already exist and which are missing |
 | `authoring` | create the required planning artifact(s) |
+| `execution-topology` | decide whether execution should stay sequential or use bounded parallel fan-out |
 | `coverage-check` | confirm the planning output covers the request |
 | `handoff` | recommend the next valid command |
 
@@ -189,7 +229,7 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 
 ### Role
 
-Implement approved work using the correct build mode and stop cleanly on blockers instead of guessing.
+Implement approved work using the correct build mode, continue until the approved build scope is complete or blocked, and stop cleanly on blockers instead of guessing.
 
 ### Stage
 
@@ -231,21 +271,25 @@ Implement approved work using the correct build mode and stop cleanly on blocker
 |---|---|
 | `load` | load `spec.md`, `tasks.md`, or other approved input |
 | `mode-select` | choose the correct build mode |
-| `task-run` | implement work in dependency order |
+| `topology-select` | choose sequential execution or bounded parallel waves from the approved plan |
+| `task-run` | implement work in dependency order until build scope is complete or blocked |
 | `slice-verify` | validate each thin slice before expanding scope |
 | `quality-review` | confirm platform-rule and quality compliance |
-| `handoff` | transition cleanly to test or review |
+| `handoff` | transition cleanly to test or review with exact next commands |
 
 ### Hard Gates
 
 - build requires approved planning input unless the technical request is already explicitly approved
 - no guessing after repeated failures
 - blockers must be surfaced explicitly
+- multi-slice build work in git-capable workspaces must produce save-point commits for meaningful completed slices
+- parallel build fan-out must stay within the approved `max_parallel_subagents` cap, which defaults to `3` unless the plan justifies another value
 
 ### Must Not Do
 
 - must not re-enter planning unless a true prerequisite is missing
 - must not silently skip tests for code changes
+- must not stop after a successful slice if approved build work still remains
 - must not deploy as part of build
 
 ### Next Commands

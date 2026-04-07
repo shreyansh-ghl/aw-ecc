@@ -3,6 +3,7 @@
 ## Objective
 
 Execute one task unit that has already been marked `parallel_candidate` with a disjoint write scope.
+The orchestrator should keep active parallel workers within the configured cap, which defaults to `3`.
 
 ## Inputs
 

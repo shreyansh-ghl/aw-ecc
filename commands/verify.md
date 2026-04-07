@@ -18,6 +18,7 @@ The canonical public model is now:
 ## Role
 
 Preserve legacy muscle memory while routing to the smallest correct modern verification flow.
+This entrypoint inherits the same rule that the selected test or review scope should be completed or blocked explicitly before handoff.
 
 ## Compatibility Mapping
 

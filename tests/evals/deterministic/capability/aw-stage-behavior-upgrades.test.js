@@ -69,6 +69,7 @@ function run() {
   const reviewCommand = snapshot.readFile('commands/review.md');
   const deployCommand = snapshot.readFile('commands/deploy.md');
   const shipCommand = snapshot.readFile('commands/ship.md');
+  const commandContracts = snapshot.readFile('docs/aw-sdlc-command-contracts.md');
 
   const buildSkill = snapshot.readFile('skills/aw-build/SKILL.md');
   const investigateSkill = snapshot.readFile('skills/aw-investigate/SKILL.md');
@@ -93,6 +94,20 @@ function run() {
   if (test('build stays thin-slice oriented and hands off instead of self-certifying', () => {
     assert.ok(buildCommand.includes('thin, reversible slices'));
     assert.ok(buildSkill.includes('thin, reversible increments'));
+    assert.ok(buildSkill.includes('Continue through the approved build scope.'));
+    assert.ok(buildSkill.includes('Do not stop after the first passing slice if more approved build slices remain.'));
+    assert.ok(buildSkill.includes('`save_point_commits`'));
+    assert.ok(buildSkill.includes('`completed_phases`'));
+    assert.ok(buildSkill.includes('`current_phase`'));
+    assert.ok(buildSkill.includes('Meaningful completed build slices must create save-point commits'));
+    assert.ok(buildSkill.includes('record phase transitions explicitly'));
+    assert.ok(buildSkill.includes('max_parallel_subagents: 3'));
+    assert.ok(buildSkill.includes('Parallel build fan-out must stay within the planned `max_parallel_subagents` cap'));
+    assert.ok(buildCommand.includes('must not stop after a successful slice if approved build work still remains'));
+    assert.ok(buildCommand.includes('record each completed phase and name the next phase'));
+    assert.ok(buildCommand.includes('Phase Progress'));
+    assert.ok(buildCommand.includes('max_parallel_subagents'));
+    assert.ok(buildCommand.includes('defaulting to `3`'));
     assert.ok(buildCommand.includes('/aw:test'));
     assert.ok(buildCommand.includes('/aw:review'));
     assert.ok(buildCommand.includes('must not deploy as part of build'));
@@ -108,9 +123,11 @@ function run() {
   if (test('test and review stay distinct but connected phases', () => {
     assert.ok(testCommand.includes('fresh QA evidence'));
     assert.ok(testCommand.includes('must not implement code while testing'));
+    assert.ok(testSkill.includes('Continue through the requested QA scope.'));
     assert.ok(testSkill.includes('Route to `aw-review`'));
     assert.ok(reviewCommand.includes('correctness, simplicity, architecture, security, performance'));
     assert.ok(reviewSkill.includes('Correctness, readability and simplicity, architecture, security, and performance.'));
+    assert.ok(reviewSkill.includes('Continue until the requested review scope is covered.'));
     assert.ok(reviewSkill.includes('route back to `aw-test`'));
   })) passed++; else failed++;
 
@@ -128,6 +145,15 @@ function run() {
       assert.ok(yoloSkill.includes(artifact), `aw-yolo should preserve ${artifact}`);
     }
     assert.ok(yoloSkill.includes('Stop cleanly on blockers.'));
+  })) passed++; else failed++;
+
+  if (test('the command contract requires stage continuation and explicit next-step handoff', () => {
+    assert.ok(commandContracts.includes('## Stage Continuation And Handoff Rule'));
+    assert.ok(commandContracts.includes('Each stage must finish its own requested scope before it hands off.'));
+    assert.ok(commandContracts.includes('recommended_next_commands'));
+    assert.ok(commandContracts.includes('save-point commits'));
+    assert.ok(commandContracts.includes('completed_phases'));
+    assert.ok(commandContracts.includes('current_phase'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);
