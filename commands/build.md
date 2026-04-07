@@ -56,9 +56,10 @@ Implement approved work in thin, reversible slices, continue until the approved 
 9. For bug work, require a failing signal or reproduction before broad fixes.
 10. For frontend work, inherit HighRise, accessibility, responsive, and runtime-verification expectations.
 11. Record what changed, what remains, whether execution stayed sequential or ran in bounded parallel waves, and what was intentionally not touched.
-12. Create save-point commits for meaningful completed slices.
-13. If a proposed slice cannot support a clean save-point commit, treat that as a slicing problem instead of normalizing a no-commit checkpoint.
-14. Hand off to `/aw:test` or `/aw:review` with the exact next command instead of claiming readiness without evidence.
+12. If the approved tasks are phased, record each completed phase and name the next phase before handoff.
+13. Create save-point commits for meaningful completed slices.
+14. If a proposed slice cannot support a clean save-point commit, treat that as a slicing problem instead of normalizing a no-commit checkpoint.
+15. Hand off to `/aw:test` or `/aw:review` with the exact next command instead of claiming readiness without evidence.
 
 ## Must Not Do
 
@@ -79,6 +80,7 @@ Always end with:
 - `Mode`
 - `Approved Inputs`
 - `Parallelization`
+- `Phase Progress`
 - `Increment Plan`
 - `Completed Slices`
 - `Remaining Build Scope`

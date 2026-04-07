@@ -134,6 +134,7 @@ Every stage handoff should make these things obvious:
 
 `state.json` should always include `recommended_next_commands` so continuation is machine-readable as well as human-readable.
 For build-stage save-point discipline, `state.json` should record the created save-point commits for meaningful completed slices.
+When build executes a phased plan, `execution.md` should record completed phases and the next phase transition, and `state.json` should record `completed_phases` plus `current_phase`.
 When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candidate` slices, explicit write scopes, and a `max_parallel_subagents` cap that defaults to `3` unless another value is justified.
 
 ## 1. `/aw:plan`

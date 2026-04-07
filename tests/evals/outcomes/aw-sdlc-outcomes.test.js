@@ -501,6 +501,8 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
     validationCommands = ['git diff --name-only'],
     blockerNote = '- The nested Codex build run completed implementation work but left the stage artifacts missing, so this eval backfilled them from the current workspace state.',
     extraKeyNotes = [],
+    completedPhases = ['Phase 1 complete.', 'Phase 2 complete.'],
+    currentPhase = 'Complete. Hand off to `/aw:test`.',
     completedSlices = ['Completed the approved build slice captured by the current workspace diff.'],
     remainingSlices = [],
     savePointCommits = [],
@@ -569,6 +571,10 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
       '## Approved Inputs Used',
       `- \`.aw_docs/features/${featureSlug}/spec.md\``,
       '',
+      '## Phase Progress',
+      ...completedPhases.map(phase => `- ${phase}`),
+      `- Next phase: ${currentPhase}`,
+      '',
       '## Completed Slices',
       ...completedSlices.map(slice => `- ${slice}`),
       '',
@@ -615,6 +621,8 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
         written_artifacts: [executionPath, statePath],
         inputs_used: [`.aw_docs/features/${featureSlug}/spec.md`],
         files_changed: diffFiles,
+        completed_phases: completedPhases,
+        current_phase: currentPhase,
         completed_slices: completedSlices,
         remaining_slices: remainingSlices,
         validation_commands: validationCommands,
@@ -699,6 +707,11 @@ function backfillExecuteApprovedSpec(workspaceDir, featureSlug) {
   const backfillResult = backfillExecuteArtifacts(workspaceDir, featureSlug, {
     validationCommands,
     extraKeyNotes,
+    completedPhases: [
+      'Phase 1 complete: landed the batch normalization helper.',
+      'Phase 2 complete: wired the queue path to the helper.',
+    ],
+    currentPhase: 'Complete. Next recommended stage: `/aw:test`.',
     completedSlices: [
       'Added the batch normalization helper for contact sync.',
       'Wired the queue path to use the normalization helper before returning the queued payload.',
@@ -1224,15 +1237,24 @@ const OUTCOME_CASES = [
         [
           '# Contact Sync Tasks',
           '',
+          '## Spec Brief',
+          '- Normalize contact sync batch IDs before queueing and keep the change limited to the contact sync module.',
+          '',
           '- execution route: `/aw:build`',
           '- expected execution mode: `code`',
           '',
-          '## Slice 1',
+          '## Phase 1',
+          '- outcome: helper exists and normalizes batch IDs in isolation.',
+          '',
+          '### Slice 1',
           '- files: `src/contact-sync/normalize-batch-id.js`',
           "- validation: `node -e \"const { normalizeBatchId } = require('./src/contact-sync/normalize-batch-id'); process.exit(normalizeBatchId(' Batch_ABC ') === 'batch_abc' ? 0 : 1)\"` -> `PASS`",
           '- save-point expectation: create a save-point commit after the helper lands',
           '',
-          '## Slice 2',
+          '## Phase 2',
+          '- outcome: queue payload uses the helper and focused tests pass.',
+          '',
+          '### Slice 2',
           '- files: `src/contact-sync.js`',
           '- validation: `npm test` -> `PASS`',
           '- save-point expectation: create a save-point commit after wiring the queue path',
@@ -1251,8 +1273,13 @@ const OUTCOME_CASES = [
       assert.ok(/normalizeBatchId/.test(source), 'src/contact-sync.js should call normalizeBatchId');
       assert.ok(/trim\(\)/.test(helper) && /toLowerCase\(\)/.test(helper), 'normalize-batch-id.js should normalize the batch id');
       assert.ok(/batch normalization|normalize/i.test(execution), 'execution.md should describe the normalization work');
+      assert.ok(/Phase Progress/i.test(execution), 'execution.md should include a Phase Progress section');
+      assert.ok(/Phase 1|Phase 2/i.test(execution), 'execution.md should record phase completion');
+      assert.ok(/Next phase:/i.test(execution), 'execution.md should record the next phase transition');
       assert.ok(/task|unit|step/i.test(execution), 'execution.md should record task-unit progress');
       assert.ok(/spec review|spec_review|quality review|quality_review/i.test(execution), 'execution.md should record spec and quality review notes');
+      assert.ok(Array.isArray(state.completed_phases), 'state.json should record completed_phases');
+      assert.ok(typeof state.current_phase === 'string', 'state.json should record current_phase');
       assert.ok(Array.isArray(state.completed_slices), 'state.json should record completed_slices');
       assert.ok(Array.isArray(state.remaining_slices), 'state.json should record remaining_slices');
       assert.ok(Array.isArray(state.save_point_commits), 'state.json should record save_point_commits');

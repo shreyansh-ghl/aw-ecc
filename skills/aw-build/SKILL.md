@@ -49,6 +49,7 @@ Do not use for vague ideation, unclear bugs, or release-only work.
    For deprecation, removal, or migration slices, load `deprecation-and-migration`.
 8. Record evidence and boundaries.
    Note what changed, what did not change, which slices or parallel waves are complete, which build slices still remain, and which checks were run.
+   When the approved tasks are grouped into phases, record phase transitions explicitly: which phase completed, which phase is now active, and what remains in later phases.
    Use `../../references/git-save-points.md` when the work needs explicit save-point discipline.
    For meaningful completed slices, create focused save-point commits.
    For non-trivial commit boundaries, branch hygiene, or worktree isolation, load `git-workflow-and-versioning`.
@@ -68,6 +69,8 @@ A successful slice is a checkpoint, not an automatic terminal state.
 Every build handoff must make these things obvious:
 
 - what approved inputs were used
+- which phases were completed, if the approved plan used phases
+- which phase is current or next, if phased execution is still in flight
 - which slices were completed
 - whether work ran sequentially or in bounded parallel waves
 - which build slices remain, if any
@@ -108,6 +111,8 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 - written artifacts
 - inputs used
 - files changed
+- `completed_phases` when the approved plan used phases
+- `current_phase` for the active or next build phase when phase sequencing exists
 - completed slices
 - remaining slices
 - parallel execution mode and cap when parallel build fan-out was used
@@ -126,6 +131,7 @@ Before leaving build, confirm:
 - [ ] the approved build scope is either complete or blocked explicitly
 - [ ] relevant org standards, platform playbooks, and `.aw_rules` were applied
 - [ ] parallel execution, if used, stayed within the planned worker cap and disjoint write scopes
+- [ ] phased plans, if used, recorded phase completion plus the next phase transition
 - [ ] meaningful completed slices produced recorded save-point commits
 - [ ] `execution.md` and `state.json` are updated
 
@@ -136,6 +142,7 @@ Always end with:
 - `Mode`
 - `Approved Inputs`
 - `Parallelization`
+- `Phase Progress`
 - `Completed Slices`
 - `Remaining Build Scope`
 - `Changes`

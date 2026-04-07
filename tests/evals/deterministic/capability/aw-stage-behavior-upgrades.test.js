@@ -97,10 +97,15 @@ function run() {
     assert.ok(buildSkill.includes('Continue through the approved build scope.'));
     assert.ok(buildSkill.includes('Do not stop after the first passing slice if more approved build slices remain.'));
     assert.ok(buildSkill.includes('`save_point_commits`'));
+    assert.ok(buildSkill.includes('`completed_phases`'));
+    assert.ok(buildSkill.includes('`current_phase`'));
     assert.ok(buildSkill.includes('Meaningful completed build slices must create save-point commits'));
+    assert.ok(buildSkill.includes('record phase transitions explicitly'));
     assert.ok(buildSkill.includes('max_parallel_subagents: 3'));
     assert.ok(buildSkill.includes('Parallel build fan-out must stay within the planned `max_parallel_subagents` cap'));
     assert.ok(buildCommand.includes('must not stop after a successful slice if approved build work still remains'));
+    assert.ok(buildCommand.includes('record each completed phase and name the next phase'));
+    assert.ok(buildCommand.includes('Phase Progress'));
     assert.ok(buildCommand.includes('max_parallel_subagents'));
     assert.ok(buildCommand.includes('defaulting to `3`'));
     assert.ok(buildCommand.includes('/aw:test'));
@@ -147,6 +152,8 @@ function run() {
     assert.ok(commandContracts.includes('Each stage must finish its own requested scope before it hands off.'));
     assert.ok(commandContracts.includes('recommended_next_commands'));
     assert.ok(commandContracts.includes('save-point commits'));
+    assert.ok(commandContracts.includes('completed_phases'));
+    assert.ok(commandContracts.includes('current_phase'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);
