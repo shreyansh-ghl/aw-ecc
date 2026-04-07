@@ -315,6 +315,7 @@ function runTests() {
       const hooksPath = path.join(targetRoot, 'hooks.json');
       fs.mkdirSync(targetRoot, { recursive: true });
       fs.writeFileSync(hooksPath, JSON.stringify({
+        version: 1,
         hooks: {
           sessionStart: [{ command: 'node .cursor/hooks/session-start.js' }],
           sessionEnd: [{ command: 'node .cursor/hooks/session-end.js' }],
@@ -372,6 +373,80 @@ function runTests() {
       const issue = report.results[0].issues.find((entry) => entry.code === 'hook-contract-mismatch');
       assert.ok(issue, 'Expected hook-contract-mismatch issue');
       assert.ok(issue.missingKeys.includes('beforeSubmitPrompt'), 'Expected missing beforeSubmitPrompt to be reported');
+    } finally {
+      cleanup(homeDir);
+      cleanup(projectRoot);
+    }
+  })) passed++; else failed++;
+
+  if (test('doctor reports installed Cursor hook configs with a missing version field', () => {
+    const homeDir = createTempDir('install-lifecycle-home-');
+    const projectRoot = createTempDir('install-lifecycle-project-');
+
+    try {
+      const targetRoot = path.join(projectRoot, '.cursor');
+      const statePath = path.join(targetRoot, 'ecc-install-state.json');
+      const hooksPath = path.join(targetRoot, 'hooks.json');
+      fs.mkdirSync(targetRoot, { recursive: true });
+      fs.writeFileSync(hooksPath, JSON.stringify({
+        hooks: {
+          sessionStart: [{ command: 'node .cursor/hooks/session-start.js' }],
+          sessionEnd: [{ command: 'node .cursor/hooks/session-end.js' }],
+          beforeShellExecution: [{ command: 'node .cursor/hooks/before-shell-execution.js' }],
+          afterShellExecution: [{ command: 'node .cursor/hooks/after-shell-execution.js' }],
+          afterFileEdit: [{ command: 'node .cursor/hooks/after-file-edit.js' }],
+          beforeMCPExecution: [{ command: 'node .cursor/hooks/before-mcp-execution.js' }],
+          afterMCPExecution: [{ command: 'node .cursor/hooks/after-mcp-execution.js' }],
+          beforeSubmitPrompt: [{ command: 'node .cursor/hooks/before-submit-prompt.js' }],
+          preCompact: [{ command: 'node .cursor/hooks/pre-compact.js' }],
+          stop: [{ command: 'node .cursor/hooks/stop.js' }],
+        },
+      }, null, 2));
+
+      writeState(statePath, {
+        adapter: { id: 'cursor-project', target: 'cursor', kind: 'project' },
+        targetRoot,
+        installStatePath: statePath,
+        request: {
+          profile: null,
+          modules: ['platform-configs'],
+          legacyLanguages: [],
+          legacyMode: false,
+        },
+        resolution: {
+          selectedModules: ['platform-configs'],
+          skippedModules: [],
+        },
+        operations: [
+          {
+            kind: 'copy-file',
+            moduleId: 'platform-configs',
+            sourceRelativePath: '.cursor/hooks.json',
+            destinationPath: hooksPath,
+            strategy: 'sync-root-children',
+            ownership: 'managed',
+            scaffoldOnly: false,
+          },
+        ],
+        source: {
+          repoVersion: CURRENT_PACKAGE_VERSION,
+          repoCommit: 'abc123',
+          manifestVersion: CURRENT_MANIFEST_VERSION,
+        },
+      });
+
+      const report = buildDoctorReport({
+        repoRoot: REPO_ROOT,
+        homeDir,
+        projectRoot,
+        targets: ['cursor'],
+      });
+
+      assert.strictEqual(report.results.length, 1);
+      assert.strictEqual(report.results[0].status, 'error');
+      const issue = report.results[0].issues.find((entry) => entry.code === 'hook-config-version-mismatch');
+      assert.ok(issue, 'Expected hook-config-version-mismatch issue');
+      assert.strictEqual(issue.expectedVersion, 1);
     } finally {
       cleanup(homeDir);
       cleanup(projectRoot);

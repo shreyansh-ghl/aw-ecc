@@ -37,6 +37,15 @@ const SHARED_FILE_NAMES = [
   'user-prompt-submit.sh',
 ];
 
+function resolveCommandPath(command) {
+  const match = String(command || '').match(/^node\s+(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  return path.join(__dirname, '..', '..', match[1].trim());
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -103,6 +112,25 @@ function runTests() {
       fs.readFileSync(HOME_SOURCE_FILE, 'utf8'),
       'Generated .cursor/hooks.json drifted from neutral home source'
     );
+  })) passed++; else failed++;
+
+  if (test('generated Cursor hook config includes version and resolvable local command paths', () => {
+    const parsed = JSON.parse(fs.readFileSync(HOME_OUTPUT_FILE, 'utf8'));
+    assert.strictEqual(parsed.version, 1, 'Expected Cursor hooks.json to include version: 1');
+    assert.ok(parsed.hooks && typeof parsed.hooks === 'object', 'Expected hooks.json to contain a hooks object');
+
+    for (const entries of Object.values(parsed.hooks)) {
+      assert.ok(Array.isArray(entries), 'Expected each Cursor hook event to map to an array');
+      for (const entry of entries) {
+        const resolvedPath = resolveCommandPath(entry.command);
+        if (resolvedPath) {
+          assert.ok(
+            fs.existsSync(resolvedPath),
+            `Expected Cursor hook command path to exist: ${entry.command} -> ${resolvedPath}`
+          );
+        }
+      }
+    }
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

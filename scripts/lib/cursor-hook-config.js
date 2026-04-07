@@ -131,6 +131,7 @@ function buildCursorHookEntries() {
 
 function buildCursorHookConfig() {
   return {
+    version: 1,
     hooks: buildCursorHookEntries(),
   };
 }

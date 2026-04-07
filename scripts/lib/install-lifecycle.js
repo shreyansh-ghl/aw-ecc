@@ -745,6 +745,7 @@ function getInstalledHookContractSpec(record) {
     return {
       configPath: path.join(record.targetRoot, 'hooks.json'),
       keys: getCursorMappedEventNames(),
+      version: 1,
     };
   }
 
@@ -767,6 +768,18 @@ function analyzeInstalledHookContract(record) {
   try {
     const parsed = JSON.parse(fs.readFileSync(spec.configPath, 'utf8'));
     const hooks = parsed && typeof parsed === 'object' ? parsed.hooks : null;
+    if (Object.prototype.hasOwnProperty.call(spec, 'version') && parsed.version !== spec.version) {
+      return buildIssue(
+        'error',
+        'hook-config-version-mismatch',
+        `Installed hook config is missing required version ${spec.version}`,
+        {
+          configPath: spec.configPath,
+          expectedVersion: spec.version,
+          actualVersion: parsed.version,
+        }
+      );
+    }
     const missingKeys = spec.keys.filter(
       key => !Array.isArray(hooks && hooks[key]) || hooks[key].length === 0
     );
