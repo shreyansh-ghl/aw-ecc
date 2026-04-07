@@ -24,9 +24,9 @@ let TOML;
 try {
   TOML = require('@iarna/toml');
 } catch {
-  console.error('[ecc-mcp] Missing dependency: @iarna/toml');
-  console.error('[ecc-mcp] Run: npm install   (from the ECC repo root)');
-  process.exit(1);
+  TOML = {
+    parse: parseMinimalToml,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +119,59 @@ function log(msg) {
 
 function warn(msg) {
   console.warn(`[ecc-mcp] WARNING: ${msg}`);
+}
+
+function parseTomlScalar(rawValue) {
+  const value = rawValue.trim();
+  if (value.startsWith('"') && value.endsWith('"')) {
+    return JSON.parse(value);
+  }
+  if (value.startsWith('[') && value.endsWith(']')) {
+    return JSON.parse(value);
+  }
+  if (/^-?\d+(\.\d+)?$/.test(value)) {
+    return Number(value);
+  }
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  return value;
+}
+
+function parseMinimalToml(raw) {
+  const parsed = {};
+  let current = parsed;
+
+  for (const originalLine of raw.split('\n')) {
+    const line = originalLine.replace(/\r$/, '').trim();
+    if (!line || line.startsWith('#')) {
+      continue;
+    }
+
+    const sectionMatch = line.match(/^\[([^\]]+)\]$/);
+    if (sectionMatch) {
+      current = parsed;
+      for (const part of sectionMatch[1].split('.')) {
+        if (!current[part] || typeof current[part] !== 'object' || Array.isArray(current[part])) {
+          current[part] = {};
+        }
+        current = current[part];
+      }
+      continue;
+    }
+
+    const keyValueMatch = line.match(/^([A-Za-z0-9_-]+)\s*=\s*(.+)$/);
+    if (!keyValueMatch) {
+      continue;
+    }
+
+    current[keyValueMatch[1]] = parseTomlScalar(keyValueMatch[2]);
+  }
+
+  return parsed;
 }
 
 /** Shallow-compare two objects (one level deep, arrays by JSON). */

@@ -18,6 +18,7 @@
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 web_search = "live"
+persistent_instructions = true
 
 # External notifications receive a JSON payload on stdin.
 notify = [
@@ -39,7 +40,7 @@ notify = [
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-github"]
 
-[mcp_servers.context7]
+[mcp_servers.context7-mcp]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@latest"]
 

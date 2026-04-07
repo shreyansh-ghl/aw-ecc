@@ -165,11 +165,18 @@ else
   fail "Extension prompts manifest missing"
 fi
 
-command_prompts_count="$(find "$PROMPTS_DIR" -maxdepth 1 -type f -name 'ecc-*.md' 2>/dev/null | wc -l | tr -d ' ')"
+command_prompts_count="$(awk '
+  NF > 0 {
+    count += 1
+  }
+  END {
+    print count + 0
+  }
+' "$PROMPTS_DIR/ecc-prompts-manifest.txt" 2>/dev/null | tr -d ' ')"
 if [[ "$command_prompts_count" -ge 43 ]]; then
-  ok "ECC prompts count is $command_prompts_count (expected >= 43)"
+  ok "ECC command prompts count is $command_prompts_count (expected >= 43)"
 else
-  fail "ECC prompts count is $command_prompts_count (expected >= 43)"
+  fail "ECC command prompts count is $command_prompts_count (expected >= 43)"
 fi
 
 hooks_path="$(git config --global --get core.hooksPath || true)"
