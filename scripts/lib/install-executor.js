@@ -10,12 +10,20 @@ const {
   resolveInstallPlan,
 } = require('./install-manifests');
 const { getInstallTargetAdapter } = require('./install-targets/registry');
+const {
+  buildGeneratedCursorAwHookSourceSuffixes,
+  getCursorAwHookSourceRelativeDir,
+} = require('./cursor-aw-hook-files');
 
 const LANGUAGE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const EXCLUDED_GENERATED_SOURCE_SUFFIXES = [
   '/ecc-install-state.json',
   '/ecc/install-state.json',
+  ...buildGeneratedCursorAwHookSourceSuffixes(),
 ];
+
+const GENERATED_CURSOR_AW_HOOK_FILES = buildGeneratedCursorAwHookSourceSuffixes()
+  .map(suffix => suffix.replace(/^\/\.cursor\/hooks\//, ''));
 
 function getSourceRoot() {
   return path.join(__dirname, '../..');
@@ -148,9 +156,17 @@ function addRecursiveCopyOperations(operations, options) {
     return 0;
   }
 
+  const excludedRelativeFiles = new Set(
+    (Array.isArray(options.excludeRelativeFiles) ? options.excludeRelativeFiles : [])
+      .map(value => String(value || '').replace(/\\/g, '/'))
+  );
   const relativeFiles = listFilesRecursive(sourceDir);
 
   for (const relativeFile of relativeFiles) {
+    if (excludedRelativeFiles.has(String(relativeFile).replace(/\\/g, '/'))) {
+      continue;
+    }
+
     const sourceRelativePath = path.join(options.sourceRelativeDir, relativeFile);
     const sourcePath = path.join(options.sourceRoot, sourceRelativePath);
     const destinationPath = path.join(options.destinationDir, relativeFile);
@@ -333,6 +349,14 @@ function planCursorLegacyInstall(context) {
     sourceRoot: context.sourceRoot,
     sourceRelativeDir: path.join('.cursor', 'hooks'),
     destinationDir: path.join(targetRoot, 'hooks'),
+    excludeRelativeFiles: GENERATED_CURSOR_AW_HOOK_FILES,
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-cursor-install',
+    sourceRoot: context.sourceRoot,
+    sourceRelativeDir: getCursorAwHookSourceRelativeDir(),
+    destinationDir: path.join(targetRoot, 'hooks'),
+    strategy: 'sync-root-children',
   });
 
   addFileCopyOperation(operations, {
