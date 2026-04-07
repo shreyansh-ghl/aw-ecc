@@ -6,7 +6,7 @@
 
 const assert = require('assert');
 
-const { runCursorAwPhase } = require('../../.cursor/hooks/aw-phase-adapter');
+const { runCursorAwPhase, runNamedCursorAwPhase } = require('../../.cursor/hooks/aw-phase-adapter');
 
 function test(name, fn) {
   try {
@@ -189,6 +189,53 @@ async function runTests() {
     });
 
     assert.strictEqual(result, raw);
+  })) passed++; else failed++;
+
+  if (await asyncTest('runs named Cursor AW phases through shared step definitions', async () => {
+    const calls = [];
+    const raw = JSON.stringify({ prompt: 'hello' });
+    const result = await runNamedCursorAwPhase({
+      phaseName: 'stop',
+      raw,
+      deps: {
+        transformToClaude(input) {
+          calls.push({ type: 'transform', input });
+          return { transformed: true };
+        },
+        hookEnabled(hookId) {
+          calls.push({ type: 'enabled', hookId });
+          return true;
+        },
+        runExistingHook(scriptName, payload) {
+          calls.push({ type: 'run', scriptName, payload });
+        },
+      },
+    });
+
+    assert.strictEqual(result, raw);
+    assert.deepStrictEqual(calls, [
+      { type: 'transform', input: { prompt: 'hello' } },
+      { type: 'enabled', hookId: 'stop:check-console-log' },
+      { type: 'run', scriptName: 'check-console-log.js', payload: { transformed: true } },
+      { type: 'enabled', hookId: 'stop:session-end' },
+      { type: 'run', scriptName: 'session-end.js', payload: { transformed: true } },
+      { type: 'enabled', hookId: 'stop:evaluate-session' },
+      { type: 'run', scriptName: 'evaluate-session.js', payload: { transformed: true } },
+      { type: 'enabled', hookId: 'stop:cost-tracker' },
+      { type: 'run', scriptName: 'cost-tracker.js', payload: { transformed: true } },
+    ]);
+  })) passed++; else failed++;
+
+  if (await asyncTest('throws for unknown named Cursor AW phases', async () => {
+    let error = null;
+    try {
+      await runNamedCursorAwPhase({ phaseName: 'bogus', raw: '{}' });
+    } catch (err) {
+      error = err;
+    }
+
+    assert.ok(error, 'Expected unknown phase to throw');
+    assert.ok(error.message.includes('Unknown Cursor AW phase'));
   })) passed++; else failed++;
 
   console.log('\nResults:');
