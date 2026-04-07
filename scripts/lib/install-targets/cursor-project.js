@@ -2,8 +2,12 @@ const path = require('path');
 
 const {
   createFlatRuleOperations,
+  createRemappedOperation,
   createInstallTargetAdapter,
 } = require('./helpers');
+const {
+  getCursorAwHookSourceRelativeDir,
+} = require('../cursor-aw-hook-files');
 
 module.exports = createInstallTargetAdapter({
   id: 'cursor-project',
@@ -38,6 +42,19 @@ module.exports = createInstallTargetAdapter({
             sourceRelativePath,
             destinationDir: path.join(targetRoot, 'rules'),
           });
+        }
+
+        if (sourceRelativePath === '.cursor') {
+          return [
+            adapter.createScaffoldOperation(module.id, sourceRelativePath, planningInput),
+            createRemappedOperation(
+              adapter,
+              module.id,
+              getCursorAwHookSourceRelativeDir(),
+              path.join(targetRoot, 'hooks'),
+              { strategy: 'sync-root-children' }
+            ),
+          ];
         }
 
         return [adapter.createScaffoldOperation(module.id, sourceRelativePath, planningInput)];

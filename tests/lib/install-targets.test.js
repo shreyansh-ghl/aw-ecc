@@ -143,6 +143,31 @@ function runTests() {
     );
   })) passed++; else failed++;
 
+  if (test('cursor scaffold overlays AW-owned hook wrappers from a neutral source path', () => {
+    const repoRoot = path.join(__dirname, '..', '..');
+    const projectRoot = '/workspace/app';
+
+    const plan = planInstallTargetScaffold({
+      target: 'cursor',
+      repoRoot,
+      projectRoot,
+      modules: [
+        {
+          id: 'platform-configs',
+          paths: ['.cursor'],
+        },
+      ],
+    });
+
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-hooks'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks')
+      )),
+      'Should overlay neutral Cursor AW hook sources into .cursor/hooks'
+    );
+  })) passed++; else failed++;
+
   if (test('plans antigravity remaps for workflows, skills, and flat rules', () => {
     const repoRoot = path.join(__dirname, '..', '..');
     const projectRoot = '/workspace/app';
