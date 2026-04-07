@@ -3,20 +3,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const {
-  getClaudeAwHomeSourceRelativeDir,
-} = require('./lib/claude-aw-hook-files');
-const { serializeClaudeHookConfig } = require('./lib/claude-hook-config');
+const { getHarnessConfig } = require('./lib/aw-harness-registry');
 
 const repoRoot = path.join(__dirname, '..');
-const homeSourceDir = path.join(repoRoot, getClaudeAwHomeSourceRelativeDir());
+const harness = getHarnessConfig('claude');
+
+const homeSourceDir = path.join(repoRoot, harness.getHomeSourceDir());
 const homeSourceHooksJsonPath = path.join(homeSourceDir, 'hooks.json');
 const outputHooksJsonPath = path.join(repoRoot, 'hooks', 'hooks.json');
 
 function main() {
   fs.mkdirSync(homeSourceDir, { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'hooks'), { recursive: true });
 
-  const hooksJson = serializeClaudeHookConfig({ repoRoot });
+  const hooksJson = harness.serialize(repoRoot);
   fs.writeFileSync(homeSourceHooksJsonPath, hooksJson);
   fs.writeFileSync(outputHooksJsonPath, hooksJson);
 }
