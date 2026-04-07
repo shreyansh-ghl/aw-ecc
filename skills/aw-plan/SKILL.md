@@ -126,18 +126,24 @@ Canonical internal owner: `aw-spec`
 Capture:
 
 - implementation goal
+- current state and relevant existing patterns
 - scope
 - non-goals
 - assumptions and constraints
+- non-functional requirements when relevant
 - interfaces or contracts
 - technical approach
 - architecture rationale for non-obvious decisions
+- decision and alternatives considered for major technical choices
 - failure modes
 - invariants or compatibility rules that must stay true
+- testing strategy
 - acceptance criteria
 - verification targets
 - expected changed files or modules when those can be inferred safely
 - observability, debugging, or operator-facing constraints when relevant
+- operations and rollback verification when relevant
+- ADR-needed decision when the change has durable architectural impact
 - rollback, migration, or backward-compatibility constraints when relevant
 - key commands, migrations, or rollout constraints that execution must honor
 
@@ -184,11 +190,15 @@ Break implementation into small, executable chunks with:
 
 For code behavior, prefer task steps close to:
 
-- write the failing test or capture the failing signal
-- run it to verify the failure is real
+- write the RED test or capture the exact failing proof first
+- run the exact command to verify the RED failure is real
 - write the minimal change
-- rerun the relevant verification to confirm the pass
+- rerun the exact command to confirm GREEN
+- simplify or refactor while keeping the same proof green
 - commit the focused slice
+
+For behavior-changing slices, planning should default to explicit `RED -> GREEN -> REFACTOR` language rather than vague "add tests" instructions.
+If test-first is not meaningful, say why and name the best pre-change proof plus post-change validation instead of silently weakening the contract.
 
 Each step should usually be small enough to fit in about 2-5 minutes.
 Use `../../references/task-sizing-and-checkpoints.md` when sizing or checkpointing gets fuzzy.
@@ -223,7 +233,8 @@ Prefer including:
 - explicit assumptions, constraints, and risks when they materially affect execution order
 - concrete task goals
 - checkbox execution steps for non-trivial work
-- exact commands and expected outcomes for failure and pass checks
+- exact RED and GREEN commands with expected outcomes for behavior-changing work
+- explicit refactor or simplification follow-up after GREEN when behavior-changing work is non-trivial
 - the minimal validation commands or evidence expected after implementation
 - commit boundaries for meaningful slices
 - save-point commit expectations for meaningful slices
@@ -334,7 +345,8 @@ Before ending the planning stage:
 4. confirm assumptions, constraints, and risks are written down where they materially affect execution
 5. scan for placeholders and vague steps
 6. check that file paths, type names, helper names, and commands stay consistent
-7. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
+7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
+8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.

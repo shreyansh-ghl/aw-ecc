@@ -37,6 +37,7 @@ This legacy heading maps to the detailed planning process below.
    Use `../../references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
 4. Write tasks as fresh-worker instructions.
    Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, phase ordering, expected review mode when it is known safely, and any bounded parallel execution metadata.
+   For behavior-changing slices, default to explicit `RED -> GREEN -> REFACTOR` steps instead of generic "write tests" guidance.
 5. Review the task list before handoff.
    Remove placeholders, fix dependency drift, and confirm the steps are build-ready.
 6. Update state and hand off.
@@ -46,10 +47,11 @@ This legacy heading maps to the detailed planning process below.
 
 Each implementation step should usually be one action that takes about 2-5 minutes, for example:
 
-- write the failing test
+- write the RED test
 - run it to verify it fails for the expected reason
 - write the minimal implementation
-- rerun the test to verify it passes
+- rerun the exact command to verify GREEN
+- refactor or simplify while keeping the same proof green
 - commit the focused change
 
 ## Required `tasks.md` Structure
@@ -64,6 +66,7 @@ Each implementation step should usually be one action that takes about 2-5 minut
 - task sections with exact file paths
 - checkbox steps for tracking
 - validation commands with expected outcomes
+- explicit RED and GREEN commands with expected outcomes for behavior-changing slices
 - commit steps for meaningful slices
 - save-point commit expectation for each meaningful slice
 - dependency or ordering notes
@@ -85,6 +88,15 @@ Every validation step should include:
 - why that command is being run
 - expected signal such as `FAIL`, `PASS`, or the named artifact/evidence result
 
+For behavior-changing work, tasks should not say only "add tests" or "verify it works."
+They should spell out:
+
+- RED command and expected failure
+- GREEN command and expected pass
+- refactor or simplification expectation after GREEN
+
+If test-first is not meaningful for a slice, say why and provide the best pre-change proof plus focused post-change validation instead.
+
 ## Common Rationalizations
 
 | Rationalization | Reality |
@@ -98,6 +110,7 @@ Every validation step should include:
 - a task title includes multiple independent changes joined by "and"
 - file scope is missing or generic
 - verification steps do not name exact commands or evidence targets
+- behavior-changing work lacks explicit RED and GREEN proof
 - parallel work is marked without disjoint write boundaries
 - parallel fan-out is proposed without a cap or without naming the owned write scope
 
@@ -122,8 +135,9 @@ Before handoff:
 2. confirm file paths and interface names stay consistent across tasks
 3. confirm no task relies on an undefined helper, type, or command
 4. confirm `## Spec Brief` and the phase order are obvious from the top of `tasks.md`
-5. confirm the execution mode and review mode are clear when they can be known safely
-6. confirm execution can route straight to `/aw:build`
+5. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
+6. confirm the execution mode and review mode are clear when they can be known safely
+7. confirm execution can route straight to `/aw:build`
 
 ## Final Output Shape
 
