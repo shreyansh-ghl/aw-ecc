@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+const { runSuite } = require('../lib/harness-test-helpers');
+
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-aw-hooks.js');
 const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.codex', 'hooks', 'aw-session-start.sh');
@@ -14,25 +16,8 @@ const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks
 const TARGET_CONFIG_FILE = path.join(REPO_ROOT, '.codex', 'hooks.json');
 const SOURCE_CONFIG_FILE = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks.json');
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  \u2713 ${name}`);
-    return true;
-  } catch (error) {
-    console.log(`  \u2717 ${name}`);
-    console.log(`    Error: ${error.message}`);
-    return false;
-  }
-}
-
-function runTests() {
-  console.log('\n=== Testing generate-aw-hooks.js (codex) ===\n');
-
-  let passed = 0;
-  let failed = 0;
-
-  if (test('regenerates AW-owned Codex hook outputs from the neutral source files', () => {
+runSuite('Testing generate-aw-hooks.js (codex)', [
+  ['regenerates AW-owned Codex hook outputs from the neutral source files', () => {
     const sourceHookContent = fs.readFileSync(SOURCE_HOOK_FILE, 'utf8');
     const sourceConfigContent = fs.readFileSync(SOURCE_CONFIG_FILE, 'utf8');
 
@@ -56,10 +41,5 @@ function runTests() {
         stdio: ['ignore', 'pipe', 'pipe'],
       });
     }
-  })) passed++; else failed++;
-
-  console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
-  process.exit(failed > 0 ? 1 : 0);
-}
-
-runTests();
+  }],
+]);
