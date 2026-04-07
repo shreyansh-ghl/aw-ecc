@@ -157,6 +157,24 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
   ],
 });
 
+/**
+ * Canonical string constants for all AW hook phase names.
+ * Use these instead of raw string literals to get typo-safety and IDE
+ * auto-complete in files that call runNamedCursorAwPhase() or equivalent.
+ */
+const PHASE_NAMES = Object.freeze({
+  SESSION_START: 'session-start',
+  USER_PROMPT_SUBMIT: 'user-prompt-submit',
+  PRE_TOOL_USE_SHELL: 'pre-tool-use-shell',
+  PRE_TOOL_USE_MCP: 'pre-tool-use-mcp',
+  POST_TOOL_USE_SHELL: 'post-tool-use-shell',
+  POST_TOOL_USE_FILE_EDIT: 'post-tool-use-file-edit',
+  POST_TOOL_USE_MCP: 'post-tool-use-mcp',
+  PRE_COMPACT: 'pre-compact',
+  SESSION_END: 'session-end',
+  STOP: 'stop',
+});
+
 function getSharedAwPhaseSteps(phaseName) {
   const steps = SHARED_AW_PHASE_STEPS[phaseName];
   if (!steps) {
@@ -166,6 +184,7 @@ function getSharedAwPhaseSteps(phaseName) {
 }
 
 module.exports = {
+  PHASE_NAMES,
   SHARED_AW_PHASE_STEPS,
   getSharedAwPhaseSteps,
 };
