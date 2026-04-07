@@ -1,21 +1,31 @@
 #!/usr/bin/env node
-const { readStdin, runExistingHook, transformToClaude, hookEnabled } = require('./adapter');
+const { readStdin } = require('./adapter');
+const { runCursorAwPhase } = require('./aw-phase-adapter');
+
 readStdin().then(raw => {
-  const input = JSON.parse(raw || '{}');
-  const claudeInput = transformToClaude(input);
-
-  if (hookEnabled('stop:check-console-log', ['standard', 'strict'])) {
-    runExistingHook('check-console-log.js', claudeInput);
-  }
-  if (hookEnabled('stop:session-end', ['minimal', 'standard', 'strict'])) {
-    runExistingHook('session-end.js', claudeInput);
-  }
-  if (hookEnabled('stop:evaluate-session', ['minimal', 'standard', 'strict'])) {
-    runExistingHook('evaluate-session.js', claudeInput);
-  }
-  if (hookEnabled('stop:cost-tracker', ['minimal', 'standard', 'strict'])) {
-    runExistingHook('cost-tracker.js', claudeInput);
-  }
-
-  process.stdout.write(raw);
+  return runCursorAwPhase({
+    raw,
+    steps: [
+      {
+        hookId: 'stop:check-console-log',
+        allowedProfiles: ['standard', 'strict'],
+        scriptName: 'check-console-log.js',
+      },
+      {
+        hookId: 'stop:session-end',
+        allowedProfiles: ['minimal', 'standard', 'strict'],
+        scriptName: 'session-end.js',
+      },
+      {
+        hookId: 'stop:evaluate-session',
+        allowedProfiles: ['minimal', 'standard', 'strict'],
+        scriptName: 'evaluate-session.js',
+      },
+      {
+        hookId: 'stop:cost-tracker',
+        allowedProfiles: ['minimal', 'standard', 'strict'],
+        scriptName: 'cost-tracker.js',
+      },
+    ],
+  }).then(output => process.stdout.write(output));
 }).catch(() => process.exit(0));
