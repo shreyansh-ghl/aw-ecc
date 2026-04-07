@@ -21,7 +21,6 @@ const FILE_NAMES = [
   'after-mcp-execution.js',
   'after-shell-execution.js',
   'aw-phase-adapter.js',
-  'aw-phase-definitions.js',
   'before-mcp-execution.js',
   'before-shell-execution.js',
   'before-submit-prompt.js',
