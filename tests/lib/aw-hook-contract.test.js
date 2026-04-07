@@ -11,6 +11,7 @@ const path = require('path');
 const {
   AW_HOOK_PHASES,
   getClaudePhaseNames,
+  getCodexPhaseNames,
   getCursorMappedEventNames,
 } = require('../../scripts/lib/aw-hook-contract');
 
@@ -76,6 +77,17 @@ function runTests() {
       beforeSubmit.some((entry) => entry.command === 'node .cursor/hooks/before-submit-prompt.js'),
       'Expected beforeSubmitPrompt to invoke the managed Cursor prompt-submit wrapper'
     );
+  })) passed++; else failed++;
+
+  if (test('Codex hooks.json exposes every supported phase in the contract', () => {
+    const hooksPath = path.join(__dirname, '..', '..', '.codex', 'hooks.json');
+    const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+    const phaseNames = getCodexPhaseNames();
+
+    for (const phaseName of phaseNames) {
+      assert.ok(Array.isArray(hooks.hooks[phaseName]), `Expected .codex/hooks.json to define ${phaseName}`);
+      assert.ok(hooks.hooks[phaseName].length > 0, `Expected ${phaseName} to have at least one hook entry`);
+    }
   })) passed++; else failed++;
 
   console.log('\nResults:');

@@ -156,6 +156,41 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('installs Codex configs and writes install-state', () => {
+    const homeDir = createTempDir('install-apply-home-');
+    const projectDir = createTempDir('install-apply-project-');
+
+    try {
+      const result = run(['--target', 'codex', '--profile', 'core'], { cwd: projectDir, homeDir });
+      assert.strictEqual(result.code, 0, result.stderr);
+
+      const codexRoot = path.join(homeDir, '.codex');
+      assert.ok(fs.existsSync(path.join(codexRoot, 'AGENTS.md')));
+      assert.ok(fs.existsSync(path.join(codexRoot, 'config.toml')));
+      assert.ok(fs.existsSync(path.join(codexRoot, 'hooks.json')));
+      assert.ok(fs.existsSync(path.join(codexRoot, 'hooks', 'aw-session-start.sh')));
+      assert.ok(fs.existsSync(path.join(codexRoot, 'hooks', 'aw-user-prompt-submit.sh')));
+      assert.ok(fs.existsSync(path.join(codexRoot, 'skills', 'tdd-workflow', 'SKILL.md')));
+
+      const statePath = path.join(codexRoot, 'ecc-install-state.json');
+      const state = readJson(statePath);
+      assert.strictEqual(state.target.id, 'codex-home');
+      assert.strictEqual(state.request.profile, 'core');
+      assert.strictEqual(state.request.legacyMode, false);
+      assert.ok(state.resolution.selectedModules.includes('platform-configs'));
+      assert.ok(
+        state.operations.some(operation => (
+          operation.sourceRelativePath === path.join('scripts', 'codex-aw-home', 'hooks.json')
+          && operation.destinationPath === path.join(codexRoot, 'hooks.json')
+        )),
+        'Should record manifest-driven neutral Codex hooks.json overlay'
+      );
+    } finally {
+      cleanup(homeDir);
+      cleanup(projectDir);
+    }
+  })) passed++; else failed++;
+
   if (test('installs Antigravity configs and writes install-state', () => {
     const homeDir = createTempDir('install-apply-home-');
     const projectDir = createTempDir('install-apply-project-');
@@ -254,6 +289,13 @@ function runTests() {
           operation.destinationPath === path.join(claudeRoot, 'commands', 'plan.md')
         )),
         'Should record manifest-driven command file copy'
+      );
+      assert.ok(
+        state.operations.some(operation => (
+          operation.sourceRelativePath === path.join('scripts', 'claude-aw-home', 'hooks.json')
+          && operation.destinationPath === path.join(claudeRoot, 'hooks', 'hooks.json')
+        )),
+        'Should record manifest-driven neutral Claude hooks.json overlay'
       );
     } finally {
       cleanup(homeDir);

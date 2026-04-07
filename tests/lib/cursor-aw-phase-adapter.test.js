@@ -251,6 +251,74 @@ async function runTests() {
     assert.ok(error.message.includes('Unknown shared AW phase'));
   })) passed++; else failed++;
 
+  if (await asyncTest('routes pre-tool-use shell phases through the shared shell step definitions', async () => {
+    const calls = [];
+    const raw = JSON.stringify({ command: 'npm run dev' });
+    const result = await runNamedCursorAwPhase({
+      phaseName: 'pre-tool-use-shell',
+      raw,
+      deps: {
+        transformToClaude(input) {
+          calls.push({ type: 'transform', input });
+          return { transformed: 'shell' };
+        },
+        hookEnabled(hookId) {
+          calls.push({ type: 'enabled', hookId });
+          return true;
+        },
+        runManagedNodeHook(relativeScriptPath, payload) {
+          calls.push({ type: 'node', relativeScriptPath, payload });
+        },
+      },
+    });
+
+    assert.strictEqual(result, raw);
+    assert.deepStrictEqual(calls, [
+      { type: 'transform', input: { command: 'npm run dev' } },
+      { type: 'enabled', hookId: 'pre:bash:dev-server-block' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/pre-bash-dev-server-block.js', payload: { transformed: 'shell' } },
+      { type: 'enabled', hookId: 'pre:bash:tmux-reminder' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/pre-bash-tmux-reminder.js', payload: { transformed: 'shell' } },
+      { type: 'enabled', hookId: 'pre:bash:git-push-reminder' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/pre-bash-git-push-reminder.js', payload: { transformed: 'shell' } },
+    ]);
+  })) passed++; else failed++;
+
+  if (await asyncTest('routes post-tool-use file edit phases through quality gate and edit follow-ups', async () => {
+    const calls = [];
+    const raw = JSON.stringify({ path: 'src/demo.ts' });
+    const result = await runNamedCursorAwPhase({
+      phaseName: 'post-tool-use-file-edit',
+      raw,
+      deps: {
+        transformToClaude(input) {
+          calls.push({ type: 'transform', input });
+          return { transformed: 'edit' };
+        },
+        hookEnabled(hookId) {
+          calls.push({ type: 'enabled', hookId });
+          return true;
+        },
+        runManagedNodeHook(relativeScriptPath, payload) {
+          calls.push({ type: 'node', relativeScriptPath, payload });
+        },
+      },
+    });
+
+    assert.strictEqual(result, raw);
+    assert.deepStrictEqual(calls, [
+      { type: 'transform', input: { path: 'src/demo.ts' } },
+      { type: 'enabled', hookId: 'post:quality-gate' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/quality-gate.js', payload: { transformed: 'edit' } },
+      { type: 'enabled', hookId: 'post:edit:format' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/post-edit-format.js', payload: { transformed: 'edit' } },
+      { type: 'enabled', hookId: 'post:edit:typecheck' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/post-edit-typecheck.js', payload: { transformed: 'edit' } },
+      { type: 'enabled', hookId: 'post:edit:console-warn' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/post-edit-console-warn.js', payload: { transformed: 'edit' } },
+    ]);
+  })) passed++; else failed++;
+
   console.log('\nResults:');
   console.log(`  Passed: ${passed}`);
   console.log(`  Failed: ${failed}`);

@@ -3,7 +3,11 @@ const path = require('path');
 
 const { resolveInstallPlan, loadInstallManifests } = require('./install-manifests');
 const { readInstallState, writeInstallState } = require('./install-state');
-const { getClaudePhaseNames, getCursorMappedEventNames } = require('./aw-hook-contract');
+const {
+  getClaudePhaseNames,
+  getCodexPhaseNames,
+  getCursorMappedEventNames,
+} = require('./aw-hook-contract');
 const {
   createManifestInstallPlan,
 } = require('./install-executor');
@@ -741,6 +745,13 @@ function getInstalledHookContractSpec(record) {
     return {
       configPath: path.join(record.targetRoot, 'hooks.json'),
       keys: getCursorMappedEventNames(),
+    };
+  }
+
+  if (record.adapter.target === 'codex') {
+    return {
+      configPath: path.join(record.targetRoot, 'hooks.json'),
+      keys: getCodexPhaseNames(),
     };
   }
 

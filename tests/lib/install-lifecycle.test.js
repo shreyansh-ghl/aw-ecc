@@ -425,6 +425,72 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('doctor reports Codex hook contract drift when required phases are missing', () => {
+    const homeDir = createTempDir('install-lifecycle-home-');
+    const projectRoot = createTempDir('install-lifecycle-project-');
+
+    try {
+      const targetRoot = path.join(homeDir, '.codex');
+      const statePath = path.join(targetRoot, 'ecc-install-state.json');
+      const hooksPath = path.join(targetRoot, 'hooks.json');
+      fs.mkdirSync(targetRoot, { recursive: true });
+      fs.writeFileSync(hooksPath, JSON.stringify({
+        hooks: {
+          SessionStart: [{ hooks: [{ type: 'command', command: 'bash session' }] }],
+        },
+      }, null, 2));
+
+      writeState(statePath, {
+        adapter: { id: 'codex-home', target: 'codex', kind: 'home' },
+        targetRoot,
+        installStatePath: statePath,
+        request: {
+          profile: 'core',
+          modules: [],
+          legacyLanguages: [],
+          legacyMode: false,
+        },
+        resolution: {
+          selectedModules: ['platform-configs'],
+          skippedModules: [],
+        },
+        operations: [
+          {
+            kind: 'copy-file',
+            moduleId: 'platform-configs',
+            sourceRelativePath: 'scripts/codex-aw-home/hooks.json',
+            destinationPath: hooksPath,
+            strategy: 'flatten-copy',
+            ownership: 'managed',
+            scaffoldOnly: false,
+          },
+        ],
+        source: {
+          repoVersion: CURRENT_PACKAGE_VERSION,
+          repoCommit: 'abc123',
+          manifestVersion: CURRENT_MANIFEST_VERSION,
+        },
+      });
+
+      const report = buildDoctorReport({
+        repoRoot: REPO_ROOT,
+        homeDir,
+        projectRoot,
+        targets: ['codex'],
+      });
+
+      assert.strictEqual(report.results.length, 1);
+      assert.strictEqual(report.results[0].status, 'error');
+      const issue = report.results[0].issues.find((entry) => entry.code === 'hook-contract-mismatch');
+      assert.ok(issue, 'Expected hook-contract-mismatch issue');
+      assert.ok(issue.missingKeys.includes('UserPromptSubmit'), 'Expected missing UserPromptSubmit to be reported');
+      assert.ok(issue.missingKeys.includes('PreToolUse'), 'Expected missing PreToolUse to be reported');
+    } finally {
+      cleanup(homeDir);
+      cleanup(projectRoot);
+    }
+  })) passed++; else failed++;
+
   if (test('repair restores render-template outputs from recorded rendered content', () => {
     const homeDir = createTempDir('install-lifecycle-home-');
     const projectRoot = createTempDir('install-lifecycle-project-');
