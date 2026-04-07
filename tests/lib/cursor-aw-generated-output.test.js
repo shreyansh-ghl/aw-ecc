@@ -16,8 +16,14 @@ const SHARED_OUTPUT_DIR = path.join(OUTPUT_DIR, 'shared');
 const HOME_OUTPUT_FILE = path.join(__dirname, '..', '..', '.cursor', 'hooks.json');
 const HOME_SOURCE_FILE = path.join(HOME_SOURCE_DIR, 'hooks.json');
 const FILE_NAMES = [
+  'adapter.js',
+  'after-file-edit.js',
+  'after-mcp-execution.js',
+  'after-shell-execution.js',
   'aw-phase-adapter.js',
   'aw-phase-definitions.js',
+  'before-mcp-execution.js',
+  'before-shell-execution.js',
   'before-submit-prompt.js',
   'pre-compact.js',
   'session-end.js',

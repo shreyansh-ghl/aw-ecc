@@ -77,6 +77,27 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('installs managed Codex hook phases and scripts from the neutral source', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      runSync(homeDir);
+
+      const codexHome = path.join(homeDir, '.codex');
+      const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8'));
+      for (const phaseName of ['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop']) {
+        assert.ok(Array.isArray(hooksJson.hooks[phaseName]), `Expected hooks.json to define ${phaseName}`);
+        assert.ok(hooksJson.hooks[phaseName].length > 0, `Expected ${phaseName} to have at least one entry`);
+      }
+
+      for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
+        assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
+      }
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
   if (test('global Codex sanity check counts command prompts via the manifest', () => {
     const script = fs.readFileSync(path.join(REPO_ROOT, 'scripts', 'codex', 'check-codex-global-state.sh'), 'utf8');
 

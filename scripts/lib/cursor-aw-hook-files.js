@@ -1,8 +1,14 @@
 const path = require('path');
 
 const CURSOR_AW_HOOK_FILES = Object.freeze([
+  'adapter.js',
+  'after-file-edit.js',
+  'after-mcp-execution.js',
+  'after-shell-execution.js',
   'aw-phase-adapter.js',
   'aw-phase-definitions.js',
+  'before-mcp-execution.js',
+  'before-shell-execution.js',
   'before-submit-prompt.js',
   'pre-compact.js',
   'session-end.js',
