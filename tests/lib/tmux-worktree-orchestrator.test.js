@@ -104,6 +104,41 @@ test('buildOrchestrationPlan creates worktrees, branches, and tmux commands', ()
   );
 });
 
+test('buildOrchestrationPlan enforces max parallel workers in launch sequencing', () => {
+  const repoRoot = path.join('/tmp', 'ecc');
+  const plan = buildOrchestrationPlan({
+    repoRoot,
+    sessionName: 'Parallel Cap',
+    launcherCommand: 'codex exec --cwd {worktree_path} --task-file {task_file}',
+    max_parallel_workers: 2,
+    workers: [
+      { name: 'Docs A', task: 'Fix docs A' },
+      { name: 'Docs B', task: 'Fix docs B' },
+      { name: 'Docs C', task: 'Fix docs C' },
+      { name: 'Docs D', task: 'Fix docs D' }
+    ]
+  });
+
+  assert.strictEqual(plan.maxParallelWorkers, 2);
+  assert.deepStrictEqual(
+    plan.workerWaves.map((wave) => wave.map((workerPlan) => workerPlan.workerSlug)),
+    [
+      ['docs-a', 'docs-b'],
+      ['docs-c', 'docs-d']
+    ]
+  );
+  assert.strictEqual(plan.workerPlans[0].waveIndex, 0);
+  assert.strictEqual(plan.workerPlans[2].waveIndex, 1);
+  assert.ok(
+    plan.workerPlans[2].launchCommand.includes('tmux wait-for'),
+    'Later waves should wait for earlier wave completion signals before launching'
+  );
+  assert.ok(
+    plan.workerPlans[2].launchCommand.includes('parallel-cap-docs-a-done'),
+    'Later waves should depend on earlier worker completion signals'
+  );
+});
+
 test('buildOrchestrationPlan requires at least one worker', () => {
   assert.throws(
     () => buildOrchestrationPlan({
@@ -163,18 +198,23 @@ test('buildOrchestrationPlan exposes shell-safe launcher aliases alongside raw d
   });
   const quote = value => `'${String(value).replace(/'/g, `'\\''`)}'`;
   const resolvedRepoRoot = plan.workerPlans[0].repoRoot;
+  const rawLaunchCommand = plan.workerPlans[0].rawLaunchCommand;
 
   assert.ok(
-    plan.workerPlans[0].launchCommand.includes(`bash ${quote(resolvedRepoRoot)}/scripts/orchestrate-codex-worker.sh`),
+    rawLaunchCommand.includes(`bash ${quote(resolvedRepoRoot)}/scripts/orchestrate-codex-worker.sh`),
     'repo_root_sh should provide a shell-safe path'
   );
   assert.ok(
-    plan.workerPlans[0].launchCommand.includes(quote(plan.workerPlans[0].taskFilePath)),
+    rawLaunchCommand.includes(quote(plan.workerPlans[0].taskFilePath)),
     'task_file_sh should provide a shell-safe path'
   );
   assert.ok(
-    plan.workerPlans[0].launchCommand.includes(`${quote(plan.workerPlans[0].workerName)} ${plan.workerPlans[0].workerName}`),
+    rawLaunchCommand.includes(`${quote(plan.workerPlans[0].workerName)} ${plan.workerPlans[0].workerName}`),
     'raw defaults should remain available alongside shell-safe aliases'
+  );
+  assert.ok(
+    plan.workerPlans[0].launchCommand.includes(plan.workerPlans[0].completionSignal),
+    'launchCommand should wrap the raw launcher with a completion signal'
   );
 });
 

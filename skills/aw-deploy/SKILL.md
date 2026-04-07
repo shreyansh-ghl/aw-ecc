@@ -30,9 +30,25 @@ Do not use for launch discipline or end-to-end orchestration.
    Load `ci-cd-and-automation` for gate ordering, preview/deploy automation, and rollback-aware pipeline expectations.
    For releases that retire or migrate legacy paths, load `deprecation-and-migration`.
 4. Execute or record the blocker.
+   Complete the selected release action end-to-end for the chosen mode.
    External failure should still yield deterministic `release.md` evidence.
 5. Hand off to `aw-ship` when requested.
    Use `aw-ship` for rollout safety, rollback readiness, and closeout.
+
+## Completion Contract
+
+Deploy is complete only when one of these is true:
+
+- the selected release action finished and was recorded clearly
+- the release action is blocked and the blocker is recorded clearly
+
+Every deploy handoff must make these things obvious:
+
+- which release mode was selected
+- which provider and mechanism were resolved
+- what evidence or links were produced
+- what rollback path is currently known
+- which exact next command should run next
 
 ## Common Rationalizations
 
@@ -47,9 +63,39 @@ Do not use for launch discipline or end-to-end orchestration.
 - provider or mechanism is guessed
 - deploy silently turns into release orchestration
 
+## State File
+
+`state.json` should record at least:
+
+- `feature_slug`
+- `stage: "deploy"`
+- `mode`
+- `status`
+- written artifacts
+- provider
+- resolved mechanism
+- build or release links
+- execution evidence
+- rollback path
+- blockers
+- recommended next commands
+
 ## Verification
 
 - [ ] one release action was selected explicitly
 - [ ] provider and mechanism came from repo archetype and baseline resolution
 - [ ] `release.md` and `state.json` are updated
 - [ ] handoff to `aw-ship` is clear when launch discipline is still needed
+
+## Final Output Shape
+
+Always end with:
+
+- `Selected Mode`
+- `Provider`
+- `Resolved Mechanism`
+- `Build Links`
+- `Execution Evidence`
+- `Rollback Path`
+- `Outcome`
+- `Next`

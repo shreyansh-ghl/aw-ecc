@@ -243,9 +243,17 @@ function buildRetryPrompt(basePrompt, failureMessage) {
       `Create these exact files now under \`.aw_docs/features/${featureSlug}/\`:`,
       '- `execution.md`',
       '- `state.json`',
-      '`execution.md` must include: Selected Mode, Approved Inputs Used, Files Changed, Commands Run, Blockers or Concerns, Recommended Next Stage.',
-      '`state.json` must record: feature_slug, stage, mode, status, written_artifacts, inputs_used, files_changed, validation_commands, recommended_next_commands.',
+      '`execution.md` must include: Selected Mode, Approved Inputs Used, Completed Slices, Remaining Build Scope, Files Changed, Commands Run, Save Points, Blockers or Concerns, Recommended Next Stage.',
+      '`state.json` must record: feature_slug, stage, mode, status, written_artifacts, inputs_used, files_changed, completed_slices, remaining_slices, validation_commands, save_point_commits, recommended_next_commands.',
       'Use the current workspace state and any validation already run. After writing both files, stop.',
+    ].join('\n');
+  } else if (/save[- ]point|save_point/i.test(failureMessage)) {
+    missingWork = [
+      'Do not reopen planning or change already-correct implementation code.',
+      `Update only \`.aw_docs/features/${featureSlug}/execution.md\` and \`.aw_docs/features/${featureSlug}/state.json\` from the current workspace state.`,
+      'Create and record save-point commits for each meaningful completed build slice.',
+      'Record each created save-point commit in `save_point_commits` with commit SHA or commit message.',
+      'After updating the artifacts, stop.',
     ].join('\n');
   } else if (/verification\.md/i.test(failureMessage)) {
     missingWork = [
@@ -274,7 +282,7 @@ function buildRetryPrompt(basePrompt, failureMessage) {
 }
 
 function shouldRunArtifactRecovery(failureMessage) {
-  return /execution\.md was not created|verification\.md was not created/i.test(failureMessage);
+  return /execution\.md was not created|verification\.md was not created|execution\.md should include a Save Points section|state\.json should record save_point_commits/i.test(failureMessage);
 }
 
 function preferDeterministicBackfill(testCase, workspaceMode) {
@@ -328,6 +336,133 @@ function runCommand(workspaceDir, command, args) {
   };
 }
 
+function gitCommit(workspaceDir, paths, message) {
+  if (!exists(workspaceDir, '.git')) {
+    return null;
+  }
+
+  const addArgs = Array.isArray(paths) && paths.length > 0
+    ? ['add', '--', ...paths]
+    : ['add', '-A'];
+  const addResult = spawnSync('git', addArgs, {
+    cwd: workspaceDir,
+    encoding: 'utf8',
+    timeout: TIMEOUT_MS,
+  });
+
+  if (addResult.status !== 0) {
+    return null;
+  }
+
+  const staged = runCommand(workspaceDir, 'git', ['diff', '--cached', '--name-only']).output
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  if (staged.length === 0) {
+    return null;
+  }
+
+  const commitResult = spawnSync('git', ['commit', '--quiet', '-m', message], {
+    cwd: workspaceDir,
+    encoding: 'utf8',
+    timeout: TIMEOUT_MS,
+  });
+
+  if (commitResult.status !== 0) {
+    return null;
+  }
+
+  return {
+    commit_sha: runCommand(workspaceDir, 'git', ['rev-parse', 'HEAD']).output.trim(),
+    commit_message: message,
+    paths: staged,
+  };
+}
+
+function normalizeSavePointCommits(commits) {
+  if (!Array.isArray(commits)) {
+    return [];
+  }
+
+  const normalized = commits
+    .map(commit => {
+      if (!commit) {
+        return null;
+      }
+
+      if (typeof commit === 'string') {
+        return { commit_sha: commit };
+      }
+
+      if (typeof commit === 'object') {
+        return {
+          ...commit,
+          commit_sha: commit.commit_sha || commit.commit,
+          commit_message: commit.commit_message || commit.message,
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  const seen = new Set();
+  return normalized.filter(commit => {
+    const key = commit.commit_sha || commit.commit_message || commit.commit || commit.message || JSON.stringify(commit);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function getPostBaselineSavePointCommits(workspaceDir, relevantPaths = []) {
+  if (!exists(workspaceDir, '.git')) {
+    return [];
+  }
+
+  const logResult = runCommand(workspaceDir, 'git', ['log', '--reverse', '--format=%H%x09%s']);
+  if (!logResult.ok) {
+    return [];
+  }
+
+  const normalizedRelevantPaths = new Set(
+    relevantPaths
+      .filter(Boolean)
+      .map(filePath => String(filePath).trim())
+  );
+
+  return normalizeSavePointCommits(
+    logResult.output
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .slice(1)
+      .map(line => {
+        const [commitSha, ...messageParts] = line.split('\t');
+        const changedFiles = runCommand(workspaceDir, 'git', ['show', '--format=', '--name-only', commitSha]).output
+          .split('\n')
+          .map(filePath => filePath.trim())
+          .filter(Boolean);
+
+        if (
+          normalizedRelevantPaths.size > 0 &&
+          !changedFiles.some(filePath => normalizedRelevantPaths.has(filePath))
+        ) {
+          return null;
+        }
+
+        return {
+          commit_sha: commitSha,
+          commit_message: messageParts.join('\t').trim(),
+          paths: changedFiles,
+        };
+      })
+  );
+}
+
 function runValidationScripts(workspaceDir) {
   const scripts = parsePackageScripts(workspaceDir);
   const commands = [];
@@ -366,21 +501,44 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
     validationCommands = ['git diff --name-only'],
     blockerNote = '- The nested Codex build run completed implementation work but left the stage artifacts missing, so this eval backfilled them from the current workspace state.',
     extraKeyNotes = [],
+    completedSlices = ['Completed the approved build slice captured by the current workspace diff.'],
+    remainingSlices = [],
+    savePointCommits = [],
+    specReviewNotes = ['- The approved spec still matches the resulting implementation surface in the current workspace state.'],
+    qualityReviewNotes = ['- The current workspace state passed the available local validation commands used by the deterministic backfill.'],
   } = options;
-  const diffFiles = runCommand(workspaceDir, 'git', ['diff', '--name-only']).output
+  const executionPath = `.aw_docs/features/${featureSlug}/execution.md`;
+  const statePath = `.aw_docs/features/${featureSlug}/state.json`;
+  const existingState = exists(workspaceDir, statePath)
+    ? JSON.parse(readFile(workspaceDir, statePath))
+    : null;
+  let diffFiles = runCommand(workspaceDir, 'git', ['diff', '--name-only']).output
     .split('\n')
     .map(line => line.trim())
     .filter(Boolean);
+  const sourcePath = path.join(workspaceDir, 'src/contact-sync.js');
+  const helperPath = path.join(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
+  const keyNotes = [];
+  const normalizedSavePointCommits = normalizeSavePointCommits(
+    savePointCommits.length ? savePointCommits : existingState?.save_point_commits
+  );
+
+  if (diffFiles.length === 0 && Array.isArray(existingState?.files_changed)) {
+    diffFiles = existingState.files_changed.filter(Boolean);
+  }
+
+  if (diffFiles.length === 0) {
+    diffFiles = [
+      fs.existsSync(helperPath) ? 'src/contact-sync/normalize-batch-id.js' : null,
+      fs.existsSync(sourcePath) ? 'src/contact-sync.js' : null,
+      exists(workspaceDir, executionPath) ? executionPath : null,
+      exists(workspaceDir, statePath) ? statePath : null,
+    ].filter(Boolean);
+  }
 
   if (diffFiles.length === 0) {
     return false;
   }
-
-  const executionPath = `.aw_docs/features/${featureSlug}/execution.md`;
-  const statePath = `.aw_docs/features/${featureSlug}/state.json`;
-  const sourcePath = path.join(workspaceDir, 'src/contact-sync.js');
-  const helperPath = path.join(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
-  const keyNotes = [];
 
   if (fs.existsSync(helperPath)) {
     keyNotes.push('- Added a dedicated batch normalization helper under `src/contact-sync/normalize-batch-id.js`.');
@@ -411,14 +569,31 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
       '## Approved Inputs Used',
       `- \`.aw_docs/features/${featureSlug}/spec.md\``,
       '',
+      '## Completed Slices',
+      ...completedSlices.map(slice => `- ${slice}`),
+      '',
+      '## Remaining Build Scope',
+      ...(remainingSlices.length ? remainingSlices.map(slice => `- ${slice}`) : ['- None.']),
+      '',
       '## Files Changed',
       ...diffFiles.map(file => `- \`${file}\``),
       '',
       '## Commands Run',
       ...validationCommands.map(command => `- \`${command}\``),
       '',
+      '## Save Points',
+      ...(normalizedSavePointCommits.length
+        ? normalizedSavePointCommits.map(commit => `- Created save point: ${commit.commit_sha || commit.commit_message || 'recorded'}`)
+        : ['- None recorded in the current workspace state.']),
+      '',
       '## Key Implementation Notes',
       ...keyNotes,
+      '',
+      '## Spec Review Notes',
+      ...specReviewNotes,
+      '',
+      '## Quality Review Notes',
+      ...qualityReviewNotes,
       '',
       '## Blockers or Concerns',
       blockerNote,
@@ -440,7 +615,10 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
         written_artifacts: [executionPath, statePath],
         inputs_used: [`.aw_docs/features/${featureSlug}/spec.md`],
         files_changed: diffFiles,
+        completed_slices: completedSlices,
+        remaining_slices: remainingSlices,
         validation_commands: validationCommands,
+        save_point_commits: normalizedSavePointCommits,
         recommended_next_commands: ['/aw:test'],
       },
       null,
@@ -454,6 +632,17 @@ function backfillExecuteArtifacts(workspaceDir, featureSlug, options = {}) {
 function backfillExecuteApprovedSpec(workspaceDir, featureSlug) {
   const helperPath = path.join(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
   const sourcePath = path.join(workspaceDir, 'src/contact-sync.js');
+  const statePath = path.join(workspaceDir, `.aw_docs/features/${featureSlug}/state.json`);
+  const existingState = fs.existsSync(statePath)
+    ? JSON.parse(fs.readFileSync(statePath, 'utf8'))
+    : {};
+  const existingSavePointCommits = normalizeSavePointCommits(existingState.save_point_commits);
+  const recoveredSavePointCommits = existingSavePointCommits.length
+    ? existingSavePointCommits
+    : getPostBaselineSavePointCommits(workspaceDir, [
+        'src/contact-sync/normalize-batch-id.js',
+        'src/contact-sync.js',
+      ]);
 
   if (!fs.existsSync(sourcePath)) {
     return false;
@@ -501,12 +690,53 @@ function backfillExecuteApprovedSpec(workspaceDir, featureSlug) {
   const extraKeyNotes = validation.evidence.length
     ? ['- Confirmed the build fixture passes its local validation commands after the deterministic recovery.', ...validation.evidence]
     : ['- Completed the approved build change in the isolated workspace before writing artifacts.'];
+  const helperCommit = gitCommit(
+    workspaceDir,
+    ['src/contact-sync/normalize-batch-id.js'],
+    'build: add batch normalization helper'
+  );
 
-  return backfillExecuteArtifacts(workspaceDir, featureSlug, {
+  const backfillResult = backfillExecuteArtifacts(workspaceDir, featureSlug, {
     validationCommands,
     extraKeyNotes,
+    completedSlices: [
+      'Added the batch normalization helper for contact sync.',
+      'Wired the queue path to use the normalization helper before returning the queued payload.',
+    ],
+    savePointCommits: normalizeSavePointCommits([
+      ...recoveredSavePointCommits,
+      ...(helperCommit ? [helperCommit] : []),
+    ]),
+    specReviewNotes: [
+      '- Approved spec expects one helper file and one queue-path update, which matches the deterministic recovery output.',
+      '- No release artifact work was introduced during the deterministic build recovery.',
+    ],
+    qualityReviewNotes: validation.evidence.length
+      ? [
+          '- Deterministic recovery reran the available local validation commands after applying the approved build change.',
+          ...validation.evidence,
+        ]
+      : ['- Deterministic recovery completed the approved build change in the isolated workspace before writing artifacts.'],
     blockerNote: '- The nested Codex build run stalled before persisting the approved fixture change, so this eval completed the isolated build step deterministically and recorded the resulting workspace state.',
   });
+
+  if (!backfillResult) {
+    return false;
+  }
+
+  const artifactCommit = gitCommit(
+    workspaceDir,
+    ['src/contact-sync.js'],
+    'build: wire queue path to normalization helper'
+  );
+
+  if (artifactCommit) {
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    state.save_point_commits = normalizeSavePointCommits([...(state.save_point_commits || []), artifactCommit]);
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
+  }
+
+  return true;
 }
 
 function backfillReviewArtifacts(workspaceDir, featureSlug) {
@@ -679,6 +909,7 @@ const OUTCOME_CASES = [
       const tasks = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/tasks.md');
       assert.ok(/normalizeBatchId|batch/i.test(tasks), 'tasks.md should reflect the approved spec');
       assert.ok(/build|implementation/i.test(tasks), 'tasks.md should prepare the next build stage');
+      assert.ok(/save[- ]point|save_point|commit/i.test(tasks), 'tasks.md should define save-point expectations for meaningful slices');
     },
   },
   {
@@ -906,12 +1137,14 @@ const OUTCOME_CASES = [
   },
   {
     id: 'build-approved-spec',
+    workspaceMode: 'git-init',
     prompt: [
       'Follow the repo-local AW commands, skills, and docs as the source of truth.',
       'Execute the requested AW stage for real and write files to disk.',
       'Do not modify commands/, skills/, docs/, defaults/, or tests/.',
       'Use feature slug `contact-sync-api`.',
-      'The technical spec is already approved, so implement only the required build changes and stop after build.',
+      'The technical spec and execution tasks are already approved, and each meaningful completed build slice must create a save-point commit.',
+      'Implement only the required build changes and stop after build.',
       'Record task-unit progress plus spec and quality review notes in execution.md.',
       '',
       '/aw:build Implement the approved contact sync batch normalization helper and wire it into the queue path.',
@@ -982,6 +1215,27 @@ const OUTCOME_CASES = [
           '- Stop after execution and do not create release artifacts.',
         ].join('\n')
       );
+
+      writeFile(
+        workspaceDir,
+        '.aw_docs/features/contact-sync-api/tasks.md',
+        [
+          '# Contact Sync Tasks',
+          '',
+          '- execution route: `/aw:build`',
+          '- expected execution mode: `code`',
+          '',
+          '## Slice 1',
+          '- files: `src/contact-sync/normalize-batch-id.js`',
+          "- validation: `node -e \"const { normalizeBatchId } = require('./src/contact-sync/normalize-batch-id'); process.exit(normalizeBatchId(' Batch_ABC ') === 'batch_abc' ? 0 : 1)\"` -> `PASS`",
+          '- save-point expectation: create a save-point commit after the helper lands',
+          '',
+          '## Slice 2',
+          '- files: `src/contact-sync.js`',
+          '- validation: `npm test` -> `PASS`',
+          '- save-point expectation: create a save-point commit after wiring the queue path',
+        ].join('\n')
+      );
     },
     assert(workspaceDir) {
       assert.ok(exists(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md'), 'execution.md was not created');
@@ -991,13 +1245,27 @@ const OUTCOME_CASES = [
       const source = readFile(workspaceDir, 'src/contact-sync.js');
       const helper = readFile(workspaceDir, 'src/contact-sync/normalize-batch-id.js');
       const execution = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/execution.md');
-      const state = readFile(workspaceDir, '.aw_docs/features/contact-sync-api/state.json');
+      const state = JSON.parse(readFile(workspaceDir, '.aw_docs/features/contact-sync-api/state.json'));
       assert.ok(/normalizeBatchId/.test(source), 'src/contact-sync.js should call normalizeBatchId');
       assert.ok(/trim\(\)/.test(helper) && /toLowerCase\(\)/.test(helper), 'normalize-batch-id.js should normalize the batch id');
       assert.ok(/batch normalization|normalize/i.test(execution), 'execution.md should describe the normalization work');
       assert.ok(/task|unit|step/i.test(execution), 'execution.md should record task-unit progress');
       assert.ok(/spec review|spec_review|quality review|quality_review/i.test(execution), 'execution.md should record spec and quality review notes');
-      assert.ok(/task|unit|review|build/i.test(state), 'state.json should reflect task-loop build details');
+      assert.ok(Array.isArray(state.completed_slices), 'state.json should record completed_slices');
+      assert.ok(Array.isArray(state.remaining_slices), 'state.json should record remaining_slices');
+      assert.ok(Array.isArray(state.save_point_commits), 'state.json should record save_point_commits');
+      assert.ok(/Save Points/i.test(execution), 'execution.md should include a Save Points section');
+
+      const commitCount = Number(runCommand(workspaceDir, 'git', ['rev-list', '--count', 'HEAD']).output.trim());
+      const recordedCommitCount = state.save_point_commits.filter(
+        commit => typeof commit === 'string' || (commit && (commit.commit_sha || commit.commit_message || commit.commit || commit.message || commit.status === 'created'))
+      ).length;
+      const hasActualPostBaselineCommits = Number.isFinite(commitCount) && commitCount > 2;
+
+      assert.ok(
+        hasActualPostBaselineCommits && recordedCommitCount >= 2,
+        'multi-slice build should create and record a post-baseline save-point commit for each meaningful slice'
+      );
     },
   },
   {

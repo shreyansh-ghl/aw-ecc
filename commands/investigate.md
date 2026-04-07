@@ -37,7 +37,8 @@ Turn vague breakage into a concrete reproduction, localized fault surface, and n
 3. Use the smallest confirming probe before patching.
 4. Load org-standard observability and platform playbooks when the baseline requires them.
 5. For frontend issues, include runtime and responsive evidence when relevant.
-6. Do not broaden into implementation until the fault surface is concrete enough.
+6. Name the exact next probe or next command before stopping.
+7. Do not broaden into implementation until the fault surface is concrete enough.
 
 ## Must Not Do
 

@@ -96,7 +96,29 @@ function run() {
       assert.ok(bundle.task_units[0].roles.quality_reviewer.reference_path.includes('worker-quality-reviewer.md'));
       assert.ok(bundle.task_units[0].roles.parallel_worker.reference_path.includes('worker-parallel-worker.md'));
       assert.strictEqual(bundle.orchestration_plan.sessionName, 'aw-execute-contact-sync-api');
+      assert.strictEqual(bundle.orchestration_plan.max_parallel_workers, 3);
       assert.strictEqual(bundle.orchestration_plan.workers.length, 2);
+
+      const constrainedStdout = execFileSync(
+        'node',
+        [
+          path.join(REPO_ROOT, 'skills/aw-execute/scripts/build-worker-bundle.js'),
+          '--feature',
+          'contact-sync-api',
+          '--tasks-file',
+          tasksFilePath,
+          '--allow-parallel',
+          '--max-parallel-workers',
+          '2',
+        ],
+        {
+          cwd: REPO_ROOT,
+          encoding: 'utf8',
+        }
+      );
+
+      const constrainedBundle = JSON.parse(constrainedStdout);
+      assert.strictEqual(constrainedBundle.orchestration_plan.max_parallel_workers, 2);
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }

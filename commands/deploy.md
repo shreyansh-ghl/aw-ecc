@@ -47,8 +47,9 @@ Perform one explicit release action with the correct GHL provider and mechanism 
 
 1. Do one release action at a time.
 2. Resolve the provider and mechanism from repo archetype and baseline profile.
-3. Record deterministic evidence even when external execution is blocked.
-4. Hand off to `/aw:ship` when launch, rollout, rollback readiness, or release closeout is requested after deploy.
+3. Finish the selected release action for the chosen mode or record the blocker explicitly.
+4. Record deterministic evidence even when external execution is blocked.
+5. Hand off to `/aw:ship` when launch, rollout, rollback readiness, or release closeout is requested after deploy.
 
 ## Must Not Do
 

@@ -76,6 +76,9 @@ When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 - 2-5 minute checkbox steps for non-trivial work
 - exact commands with expected failure or pass signals
 - commit boundaries for meaningful slices
+- save-point commit expectation for meaningful slices
+- explicit `parallel_group`, `parallel_ready_when`, and `parallel_write_scope` details when work can fan out safely
+- `max_parallel_subagents: 3` by default for planned fan-out, unless another cap is explicitly justified
 - validation commands or evidence targets
 - checkpoints between major phases
 - dependency or ordering notes

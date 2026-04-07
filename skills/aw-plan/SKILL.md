@@ -154,8 +154,13 @@ Break implementation into small, executable chunks with:
 - acceptance
 - task type: `code`, `infra`, `docs`, `migration`, or `config`
 - validation command or evidence target
+- save-point commit expected for the slice
 - dependency or ordering note when sequencing matters
 - `parallel_candidate` only when the write scope is safely disjoint
+- `parallel_group` when multiple slices can fan out after the same prerequisite
+- `parallel_ready_when` when parallel work must wait for a contract, helper, or schema to land first
+- `parallel_write_scope` so execution can keep ownership boundaries explicit
+- `max_parallel_subagents: 3` by default when parallel fan-out is planned, unless another cap is explicitly justified
 
 For code behavior, prefer task steps close to:
 
@@ -177,6 +182,8 @@ Execution-ready tasks should make it obvious:
 - which files change first
 - which validation command or evidence target proves each slice
 - which steps are safe to parallelize
+- which `parallel_group` and `parallel_write_scope` belong to those steps
+- what `max_parallel_subagents` cap build should honor for that plan
 - which slice should produce the next save-point commit
 - which blocker should send execution back to planning instead of guessing
 
@@ -193,9 +200,14 @@ Prefer including:
 - exact commands and expected outcomes for failure and pass checks
 - the minimal validation commands or evidence expected after implementation
 - commit boundaries for meaningful slices
+- save-point commit expectations for meaningful slices
 - sequencing notes for dependent tasks
 - bounded parallel candidates for disjoint work
+- explicit `parallel_group`, `parallel_ready_when`, and `parallel_write_scope` notes when work may fan out
+- a `max_parallel_subagents` cap that defaults to `3` unless a different cap is explicitly justified
 - key risks, blockers, or rollback constraints
+
+If a proposed slice cannot support a clean save-point commit, planning should merge it into the next dependent slice instead of normalizing a no-commit checkpoint.
 
 The goal is not maximum verbosity.
 The goal is minimum ambiguity.
@@ -249,6 +261,7 @@ If a step would take longer than one focused implementation session, break it do
 ## Parallelization Opportunities
 
 Parallel work is allowed only when the write scope is clearly disjoint.
+Plan parallel work in bounded waves rather than unbounded fan-out.
 
 - safe to parallelize:
   - docs versus code
@@ -258,6 +271,9 @@ Parallel work is allowed only when the write scope is clearly disjoint.
   - tasks that change the same files
   - rollout-sensitive migrations
   - tasks that depend on a helper, interface, or schema not created yet
+
+Default to `max_parallel_subagents: 3` when parallel build fan-out is useful.
+Only change that cap when the plan names a concrete reason such as runtime limits, repo size, or a proven need for tighter sequencing.
 
 When in doubt, sequence the work and leave `parallel_candidate` off.
 
@@ -321,6 +337,8 @@ When `tasks.md` is ready:
 - written artifacts
 - key inputs
 - internal skills used
+- planned save-point commit policy
+- parallel build policy and cap when parallel execution is planned
 - recommended next commands
 
 ## Final Output Shape

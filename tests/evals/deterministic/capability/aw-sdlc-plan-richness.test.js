@@ -46,6 +46,11 @@ function run() {
       'exact file paths',
       'exact commands and expected outcomes',
       'commit boundaries',
+      'save-point commit expected',
+      'parallel_group',
+      'parallel_ready_when',
+      'parallel_write_scope',
+      'max_parallel_subagents',
       'No Placeholders',
       'Plan Self-Review',
       'Execution Handoff',
@@ -59,6 +64,10 @@ function run() {
     assert.ok(planCommand.includes('exact file paths'));
     assert.ok(planCommand.includes('2-5 minute checkbox steps'));
     assert.ok(planCommand.includes('exact commands with expected failure or pass signals'));
+    assert.ok(planCommand.includes('save-point commit expectation for meaningful slices'));
+    assert.ok(planCommand.includes('parallel_group'));
+    assert.ok(planCommand.includes('parallel_write_scope'));
+    assert.ok(planCommand.includes('max_parallel_subagents: 3'));
     assert.ok(planCommand.includes('validation commands or evidence targets'));
     assert.ok(planCommand.includes('Execution Readiness'));
     assert.ok(planCommand.includes('aw-brainstorm'));

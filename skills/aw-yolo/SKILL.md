@@ -48,6 +48,8 @@ If the user asked for one stage, stay in that stage.
    - `aw-review`
    - `aw-deploy`
    - `aw-ship`
+   Do not leave a stage early just because one slice, one check, or one note succeeded.
+   A stage only hands off when its own completion contract is met or it is blocked explicitly.
 4. Preserve stage artifacts.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
@@ -70,6 +72,16 @@ If the user asked for one stage, stay in that stage.
    The run is complete only when:
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
+
+## Final Output Shape
+
+Always end with:
+
+- `Current Stage`
+- `Completed Stages`
+- `Artifacts Written`
+- `Blockers`
+- `Recommended Next`
 
 ## Common Rationalizations
 
