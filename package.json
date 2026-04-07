@@ -68,6 +68,7 @@
     "scripts/ecc.js",
     "scripts/hooks/",
     "scripts/cursor-aw-hooks/",
+    "scripts/cursor-aw-home/",
     "scripts/lib/",
     "scripts/claw.js",
     "scripts/doctor.js",

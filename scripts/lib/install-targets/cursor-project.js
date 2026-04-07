@@ -7,6 +7,7 @@ const {
 } = require('./helpers');
 const {
   getCursorAwHookSourceRelativeDir,
+  getCursorAwHookConfigSourceRelativePath,
 } = require('../cursor-aw-hook-files');
 
 module.exports = createInstallTargetAdapter({
@@ -53,6 +54,13 @@ module.exports = createInstallTargetAdapter({
               getCursorAwHookSourceRelativeDir(),
               path.join(targetRoot, 'hooks'),
               { strategy: 'sync-root-children' }
+            ),
+            createRemappedOperation(
+              adapter,
+              module.id,
+              getCursorAwHookConfigSourceRelativePath(),
+              path.join(targetRoot, 'hooks.json'),
+              { strategy: 'flatten-copy' }
             ),
           ];
         }
