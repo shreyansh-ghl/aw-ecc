@@ -35,25 +35,36 @@ Do not use for vague ideation, unclear bugs, or release-only work.
    For multi-file or high-risk work, load `incremental-implementation`.
 5. Build one slice or one bounded parallel wave at a time.
    For behavior changes, require RED-GREEN or a concrete failing signal.
+   During implementation, prefer the simplest change that fits existing patterns.
+   Avoid speculative abstractions, unnecessary branching, and adjacent cleanup outside the approved slice.
+   When the working code feels heavier than necessary, load `code-simplification` before save-pointing the slice.
    Use `../../references/testing-patterns.md` when test structure needs support.
-6. Continue through the approved build scope.
+6. Review and simplify the completed slice before advancing.
+   Once a slice is green, run a focused chunk review using the `aw-review` axes: correctness, readability and simplicity, architecture, security, and performance.
+   Keep this review scoped to the current slice rather than treating it as a full stage handoff.
+   Use `../../references/review-findings-severity.md` for chunk findings language.
+   For readability and maintainability concerns, load `code-simplification`.
+   Fix material findings inside the same slice before moving on.
+   Before declaring the slice complete, check whether code can be deleted, branches reduced, names clarified, or existing patterns reused without broadening scope.
+7. Continue through the approved build scope.
    Keep moving slice-to-slice until the approved implementation scope for this stage is complete or the next unsatisfied need is no longer build.
    Do not stop after the first passing slice if more approved build slices remain.
    Only pause early for an explicit blocker, a requested checkpoint, or a real approval boundary already present in the artifacts.
-7. Apply org standards during the slice.
+8. Apply org standards during the slice.
    Respect `.aw_rules`, relevant platform playbooks, and the resolved GHL baseline.
    When context quality or scope focus is degrading, load `context-engineering`.
    For frontend work, load `../../references/frontend-quality-checklist.md`.
    For non-trivial UI work, load `frontend-ui-engineering`.
    For interface changes, load `../../references/interface-stability.md` and `api-and-interface-design`.
    For deprecation, removal, or migration slices, load `deprecation-and-migration`.
-8. Record evidence and boundaries.
+9. Record evidence and boundaries.
    Note what changed, what did not change, which slices or parallel waves are complete, which build slices still remain, and which checks were run.
+   For each completed slice, note that focused review ran and what simplification was applied or intentionally deferred.
    When the approved tasks are grouped into phases, record phase transitions explicitly: which phase completed, which phase is now active, and what remains in later phases.
    Use `../../references/git-save-points.md` when the work needs explicit save-point discipline.
    For meaningful completed slices, create focused save-point commits.
    For non-trivial commit boundaries, branch hygiene, or worktree isolation, load `git-workflow-and-versioning`.
-9. Hand off cleanly.
+10. Hand off cleanly.
    If build scope is complete, route to `aw-test` for QA proof or `aw-review` when the work needs findings, governance, or readiness decisions.
    If the work is blocked mid-build, name the blocker, the last completed slice, and the smallest safe next action instead of stopping with a vague pause.
 
@@ -75,6 +86,8 @@ Every build handoff must make these things obvious:
 - whether work ran sequentially or in bounded parallel waves
 - which build slices remain, if any
 - which validation was run
+- whether focused chunk review ran before advancing
+- what simplification was applied per completed slice
 - which save-point commits were created
 - which exact next command should run next
 
@@ -88,6 +101,8 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 |---|---|
 | "This is small enough to do in one big patch." | Small tasks still benefit from thin slices and explicit validation. |
 | "I'll add tests after the code is working." | If the behavior is testable, failure-first proof should lead the change. |
+| "I'll simplify after all chunks are done." | Complexity compounds across slices; simplify while the current chunk is still local and reviewable. |
+| "I'll review the whole thing at the end." | Focused chunk review catches correctness and complexity issues before they spread into later slices. |
 | "Frontend changes don't need special handling." | Responsive behavior, accessibility, and design-system compliance are part of the work. |
 | "I can just clean up adjacent code too." | Scope creep makes rollback and review harder. |
 
@@ -96,6 +111,8 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 - a slice touches unrelated files
 - a passing slice is treated as stage completion even though planned build work remains
 - tests are hand-waved instead of run or explicitly declared unavailable
+- a slice advances without a focused review after reaching green
+- complexity is knowingly deferred into later chunks without an explicit reason
 - the diff is large enough that rollback is unclear
 - interface changes are made without boundary validation
 - bugfix code appears before the failing signal is concrete
@@ -117,6 +134,8 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 - remaining slices
 - parallel execution mode and cap when parallel build fan-out was used
 - validation commands
+- slice review notes
+- simplification notes
 - `save_point_commits`
 - blockers or concerns
 - recommended next commands
@@ -128,6 +147,9 @@ Before leaving build, confirm:
 - [ ] the change came from approved inputs or a clearly approved direct technical request
 - [ ] the work was split into thin, reversible increments when non-trivial
 - [ ] behavior changes have failing-signal evidence or a clear explanation of why not
+- [ ] each meaningful completed slice reached green before the next slice started
+- [ ] each meaningful completed slice had a focused review before the next slice started
+- [ ] simplification was applied inside the touched scope before save-pointing the slice
 - [ ] the approved build scope is either complete or blocked explicitly
 - [ ] relevant org standards, platform playbooks, and `.aw_rules` were applied
 - [ ] parallel execution, if used, stayed within the planned worker cap and disjoint write scopes
@@ -147,6 +169,8 @@ Always end with:
 - `Remaining Build Scope`
 - `Changes`
 - `Validation`
+- `Chunk Reviews`
+- `Simplification`
 - `Save Points`
 - `Blockers`
 - `Next`
