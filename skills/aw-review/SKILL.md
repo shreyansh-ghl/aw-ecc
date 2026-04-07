@@ -37,13 +37,31 @@ Do not use as a hidden helper that replaces explicit review intent.
 4. Classify findings explicitly.
    Separate blocking findings from advisory notes.
    Name evidence, scope, and required fix.
-5. Check governance and readiness.
+5. Continue until the requested review scope is covered.
+   Do not stop after the first finding or the first review axis if correctness, governance, architecture, security, performance, or readiness checks still remain.
+6. Check governance and readiness.
    Confirm PR checklist, approvals, status checks, rollback notes, and release recommendation.
    For architecture or public-behavior changes that need durable rationale, load `documentation-and-adrs`.
-6. Request fresh testing when needed.
+7. Request fresh testing when needed.
    If evidence is stale, missing, or too broad, route back to `aw-test` for the smallest targeted rerun.
-7. Persist the result.
+8. Persist the result.
    Write `verification.md` and update `state.json`.
+
+## Completion Contract
+
+Review is complete only when one of these is true:
+
+- the requested findings, governance, and readiness scope is covered with current evidence
+- the work fails review and the repair path is explicit
+- a blocker prevents a trustworthy decision and that blocker is named
+
+Every review handoff must make these things obvious:
+
+- which evidence was reviewed
+- which findings are blocking versus advisory
+- which governance checks were completed
+- what the readiness outcome is
+- which exact next command should run next
 
 ## Common Rationalizations
 
@@ -60,6 +78,23 @@ Do not use as a hidden helper that replaces explicit review intent.
 - platform review or design playbooks are skipped for applicable work
 - stale test evidence is reused after repairs
 
+## State File
+
+`state.json` should record at least:
+
+- `feature_slug`
+- `stage: "review"`
+- `mode`
+- `status`
+- written artifacts
+- evidence reviewed
+- blocking findings
+- advisory notes
+- governance status
+- readiness outcome
+- blockers
+- recommended next commands
+
 ## Verification
 
 Before leaving review, confirm:
@@ -69,3 +104,15 @@ Before leaving review, confirm:
 - [ ] governance and readiness checks match the resolved baseline
 - [ ] repairs point back to build or test with clear scope
 - [ ] `verification.md` and `state.json` are updated
+
+## Final Output Shape
+
+Always end with:
+
+- `Mode`
+- `Evidence`
+- `Findings`
+- `Governance`
+- `Readiness`
+- `Outcome`
+- `Next`

@@ -21,6 +21,9 @@ Use alongside `aw-build`.
 - save points should match real progress
 - do not mix unrelated cleanup into the same slice
 - record what was intentionally not touched when adjacent code is risky or noisy
+- for meaningful completed slices, create a save point before moving on
+- if a slice cannot support a clean save point, merge it into the next dependent slice instead of normalizing a no-commit checkpoint
+- parallel waves are allowed only for disjoint write scopes and should default to at most `3` active subagents unless the plan justifies another cap
 
 ## Red Flags
 

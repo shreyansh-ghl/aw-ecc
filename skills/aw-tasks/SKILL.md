@@ -36,7 +36,7 @@ This legacy heading maps to the detailed planning process below.
    Prefer end-to-end slices and checkpointed phases over horizontal batches.
    Use `../../references/task-sizing-and-checkpoints.md` when sizing gets fuzzy.
 4. Write tasks as fresh-worker instructions.
-   Include explicit file paths, commands, expected outcomes, and commit boundaries.
+   Include explicit file paths, commands, expected outcomes, commit boundaries, save-point commit expectations, and any bounded parallel execution metadata.
 5. Review the task list before handoff.
    Remove placeholders, fix dependency drift, and confirm the steps are build-ready.
 6. Update state and hand off.
@@ -62,8 +62,14 @@ Each implementation step should usually be one action that takes about 2-5 minut
 - checkbox steps for tracking
 - validation commands with expected outcomes
 - commit steps for meaningful slices
+- save-point commit expectation for each meaningful slice
 - dependency or ordering notes
 - bounded `parallel_candidate` markers only for disjoint write scopes
+- `parallel_group`, `parallel_ready_when`, and `parallel_write_scope` details for any parallel slice
+- `max_parallel_subagents: 3` by default when parallel fan-out is planned, unless another cap is explicitly justified
+
+If a slice cannot end in a clean save-point commit, it should usually be merged into the next dependent slice before handoff to build.
+If no safe disjoint work exists, say so explicitly instead of forcing fake parallelism.
 
 ## Code and Command Detail
 
@@ -89,6 +95,7 @@ Every validation step should include:
 - file scope is missing or generic
 - verification steps do not name exact commands or evidence targets
 - parallel work is marked without disjoint write boundaries
+- parallel fan-out is proposed without a cap or without naming the owned write scope
 
 ## No Placeholders
 

@@ -36,8 +36,9 @@ Run the smallest correct QA scope for the requested feature, fix, or release and
 2. Inherit the resolved GHL baseline profile for local validation, E2E, sandbox, and quality-gate expectations.
 3. For bugfixes, prove the failing signal and the regression guard.
 4. For frontend work, include responsive, accessibility-aware, and runtime evidence when relevant.
-5. Mark unavailable checks as unavailable instead of inventing a pass.
-6. Hand off to `/aw:review` when findings, governance, or readiness still need a decision.
+5. Continue until the requested QA scope is covered or explicitly blocked.
+6. Mark unavailable checks as unavailable instead of inventing a pass.
+7. Hand off to `/aw:review` when findings, governance, or readiness still need a decision.
 
 ## Must Not Do
 
@@ -59,4 +60,5 @@ Always end with:
 - `Checks Run`
 - `Evidence`
 - `Failures`
+- `Unavailable`
 - `Next`

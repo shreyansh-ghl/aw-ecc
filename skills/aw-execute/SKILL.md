@@ -24,7 +24,8 @@ Do not create a separate execute-specific workflow.
 2. Preserve the same artifact discipline:
    - `execution.md`
    - `state.json`
-3. Preserve the same downstream handoff:
+3. Preserve the same continuation and downstream handoff:
+   - complete the current build scope or block it explicitly
    - `aw-test`
    - `aw-review`
 
@@ -42,4 +43,5 @@ Do not create a separate execute-specific workflow.
 ## Verification
 
 - [ ] the request was routed to `aw-build`
+- [ ] the current build scope was completed or blocked explicitly
 - [ ] artifact and handoff behavior stayed consistent with the canonical build stage

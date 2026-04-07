@@ -16,6 +16,7 @@ The canonical implementation stage is `/aw:build`.
 
 Preserve legacy muscle memory while routing to the modern build contract.
 Do not introduce a second implementation workflow.
+This entrypoint inherits the same rule that build should finish the approved build scope or block explicitly before handing off.
 
 ## Routing Rule
 

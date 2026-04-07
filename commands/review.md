@@ -36,8 +36,9 @@ This stage may request or rerun targeted tests when existing evidence is stale, 
 2. Classify findings with explicit severity and evidence.
 3. Load platform review, design, accessibility, and quality-gate playbooks when the baseline requires them.
 4. Keep blocking findings separate from advisory notes.
-5. Route back to `/aw:build` when repair is needed.
-6. Do not clear findings on stale evidence.
+5. Continue until the requested findings, governance, and readiness scope is covered or explicitly blocked.
+6. Route back to `/aw:build` when repair is needed.
+7. Do not clear findings on stale evidence.
 
 ## Must Not Do
 

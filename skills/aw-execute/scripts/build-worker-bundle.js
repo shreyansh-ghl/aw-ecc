@@ -6,13 +6,14 @@ const path = require('path');
 
 function usage() {
   console.error(
-    'Usage: node skills/aw-execute/scripts/build-worker-bundle.js --feature <slug> --tasks-file <path> [--output <path>] [--allow-parallel]'
+    'Usage: node skills/aw-execute/scripts/build-worker-bundle.js --feature <slug> --tasks-file <path> [--output <path>] [--allow-parallel] [--max-parallel-workers <n>]'
   );
 }
 
 function parseArgs(argv) {
   const args = {
     allowParallel: false,
+    maxParallelWorkers: 3,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -37,6 +38,12 @@ function parseArgs(argv) {
       args.tasksFile = next;
     } else if (current === '--output') {
       args.output = next;
+    } else if (current === '--max-parallel-workers') {
+      const parsedValue = Number(next);
+      if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+        throw new Error('--max-parallel-workers must be a positive integer');
+      }
+      args.maxParallelWorkers = parsedValue;
     } else {
       throw new Error(`Unknown argument: ${current}`);
     }
@@ -91,7 +98,7 @@ function buildRolePrompt({ roleGuide, featureSlug, taskUnitTitle, tasksFilePath,
   ].join('\n');
 }
 
-function buildBundle({ featureSlug, tasksFilePath, allowParallel, repoRoot }) {
+function buildBundle({ featureSlug, tasksFilePath, allowParallel, maxParallelWorkers, repoRoot }) {
   const taskUnits = parseTaskUnits(fs.readFileSync(tasksFilePath, 'utf8'));
   const referencePaths = {
     implementer: 'skills/aw-execute/references/worker-implementer.md',
@@ -169,6 +176,7 @@ function buildBundle({ featureSlug, tasksFilePath, allowParallel, repoRoot }) {
           sessionName: `aw-execute-${featureSlug}`,
           repoRoot,
           baseRef: 'HEAD',
+          max_parallel_workers: maxParallelWorkers,
           seedPaths: [
             'skills/aw-execute/scripts/build-worker-bundle.js',
             ...Object.values(referencePaths),
@@ -201,6 +209,7 @@ function main() {
       featureSlug: args.featureSlug,
       tasksFilePath,
       allowParallel: args.allowParallel,
+      maxParallelWorkers: args.maxParallelWorkers,
       repoRoot,
     });
 
