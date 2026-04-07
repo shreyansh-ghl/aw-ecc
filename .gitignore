@@ -97,3 +97,23 @@ skills/using-aw-skills/tests/results/
 .opencode/package-lock.json
 .opencode/node_modules/
 assets/images/security/badrudi-exploit.mp4
+
+# Generated hook output files (produced at install time by generate-aw-hooks)
+# Cursor shared hooks are copies of scripts/hooks/shared/
+.cursor/hooks/shared/aw-phase-definitions.js
+.cursor/hooks/shared/aw-phase-runner.js
+.cursor/hooks/shared/session-start.sh
+.cursor/hooks/shared/user-prompt-submit.sh
+# Codex hooks are generated from scripts/codex-aw-home/hooks/ sources
+.codex/hooks/aw-post-tool-use.sh
+.codex/hooks/aw-pre-tool-use.sh
+.codex/hooks/aw-session-start.sh
+.codex/hooks/aw-stop.sh
+.codex/hooks/aw-user-prompt-submit.sh
+.codex/hooks.json
+# Per-harness hooks.json files (generated; sources are *.base.json and hook configs)
+scripts/claude-aw-home/hooks.json
+scripts/cursor-aw-home/hooks.json
+scripts/codex-aw-home/hooks.json
+# Claude runtime output (copy of scripts/claude-aw-home/hooks.json)
+hooks/hooks.json

@@ -6,7 +6,7 @@ const {
   runManagedShellHook,
   hookEnabled,
 } = require('./adapter');
-const { getCursorAwPhaseSteps } = require('./aw-phase-definitions');
+const { getSharedAwPhaseSteps: getCursorAwPhaseSteps } = require('./shared/aw-phase-definitions');
 const { runSharedAwPhase } = require('./shared/aw-phase-runner');
 
 function runManagedNodeHook(relativeScriptPath, payload) {
