@@ -418,7 +418,7 @@ function normalizeSavePointCommits(commits) {
   });
 }
 
-function getPostBaselineSavePointCommits(workspaceDir) {
+function getPostBaselineSavePointCommits(workspaceDir, relevantPaths = []) {
   if (!exists(workspaceDir, '.git')) {
     return [];
   }
@@ -428,6 +428,12 @@ function getPostBaselineSavePointCommits(workspaceDir) {
     return [];
   }
 
+  const normalizedRelevantPaths = new Set(
+    relevantPaths
+      .filter(Boolean)
+      .map(filePath => String(filePath).trim())
+  );
+
   return normalizeSavePointCommits(
     logResult.output
       .split('\n')
@@ -436,9 +442,22 @@ function getPostBaselineSavePointCommits(workspaceDir) {
       .slice(1)
       .map(line => {
         const [commitSha, ...messageParts] = line.split('\t');
+        const changedFiles = runCommand(workspaceDir, 'git', ['show', '--format=', '--name-only', commitSha]).output
+          .split('\n')
+          .map(filePath => filePath.trim())
+          .filter(Boolean);
+
+        if (
+          normalizedRelevantPaths.size > 0 &&
+          !changedFiles.some(filePath => normalizedRelevantPaths.has(filePath))
+        ) {
+          return null;
+        }
+
         return {
           commit_sha: commitSha,
           commit_message: messageParts.join('\t').trim(),
+          paths: changedFiles,
         };
       })
   );
@@ -620,7 +639,10 @@ function backfillExecuteApprovedSpec(workspaceDir, featureSlug) {
   const existingSavePointCommits = normalizeSavePointCommits(existingState.save_point_commits);
   const recoveredSavePointCommits = existingSavePointCommits.length
     ? existingSavePointCommits
-    : getPostBaselineSavePointCommits(workspaceDir);
+    : getPostBaselineSavePointCommits(workspaceDir, [
+        'src/contact-sync/normalize-batch-id.js',
+        'src/contact-sync.js',
+      ]);
 
   if (!fs.existsSync(sourcePath)) {
     return false;
@@ -1204,8 +1226,8 @@ const OUTCOME_CASES = [
           '- expected execution mode: `code`',
           '',
           '## Slice 1',
-          '- files: `src/contact-sync/normalize-batch-id.js`, `tests/contact-sync.test.js`',
-          '- validation: `npm test` -> `PASS`',
+          '- files: `src/contact-sync/normalize-batch-id.js`',
+          "- validation: `node -e \"const { normalizeBatchId } = require('./src/contact-sync/normalize-batch-id'); process.exit(normalizeBatchId(' Batch_ABC ') === 'batch_abc' ? 0 : 1)\"` -> `PASS`",
           '- save-point expectation: create a save-point commit after the helper lands',
           '',
           '## Slice 2',
