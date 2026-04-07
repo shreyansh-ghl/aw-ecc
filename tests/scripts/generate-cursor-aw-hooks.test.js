@@ -42,7 +42,7 @@ function runTests() {
     try {
       fs.writeFileSync(TARGET_HOOK_FILE, '// drifted output\n');
       fs.writeFileSync(TARGET_SHARED_FILE, '# drifted output\n');
-      fs.writeFileSync(TARGET_CONFIG_FILE, '{\"drifted\":true}\n');
+      fs.writeFileSync(TARGET_CONFIG_FILE, '{"drifted":true}\n');
       execFileSync('node', [SCRIPT], {
         cwd: REPO_ROOT,
         stdio: ['ignore', 'pipe', 'pipe'],

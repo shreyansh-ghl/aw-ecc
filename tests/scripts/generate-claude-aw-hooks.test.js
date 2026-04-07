@@ -31,8 +31,6 @@ function runTests() {
   let failed = 0;
 
   if (test('regenerates Claude hook outputs from the neutral home source file', () => {
-    const sourceConfigContent = fs.readFileSync(SOURCE_CONFIG_FILE, 'utf8');
-
     try {
       fs.writeFileSync(TARGET_CONFIG_FILE, '{"drifted":true}\n');
       fs.writeFileSync(SOURCE_CONFIG_FILE, '{"drifted":true}\n');

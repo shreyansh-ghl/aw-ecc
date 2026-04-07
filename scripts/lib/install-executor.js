@@ -12,7 +12,6 @@ const {
 const { getInstallTargetAdapter } = require('./install-targets/registry');
 const {
   buildGeneratedClaudeAwHookSourceSuffixes,
-  getClaudeAwHookConfigSourceRelativePath,
 } = require('./claude-aw-hook-files');
 const {
   buildGeneratedCodexAwHookSourceSuffixes,

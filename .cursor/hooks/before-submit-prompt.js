@@ -29,9 +29,17 @@ readStdin().then(raw => {
         break;
       }
     }
-  } catch {}
+  } catch (error) {
+    if (process.env.ECC_DEBUG_HOOKS === '1') {
+      console.error(`[ECC] Failed to inspect prompt payload: ${error.message}`);
+    }
+  }
   try {
     emitAwPromptReminder(raw);
-  } catch {}
+  } catch (error) {
+    if (process.env.ECC_DEBUG_HOOKS === '1') {
+      console.error(`[ECC] Failed to emit AW prompt reminder: ${error.message}`);
+    }
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

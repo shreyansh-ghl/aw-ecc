@@ -44,6 +44,11 @@ async function runTests() {
     assert.deepStrictEqual(Object.keys(SHARED_AW_PHASE_STEPS), [
       'session-start',
       'user-prompt-submit',
+      'pre-tool-use-shell',
+      'pre-tool-use-mcp',
+      'post-tool-use-shell',
+      'post-tool-use-file-edit',
+      'post-tool-use-mcp',
       'pre-compact',
       'session-end',
       'stop',
