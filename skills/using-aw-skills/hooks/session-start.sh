@@ -26,9 +26,109 @@ while [[ "$SEARCH_ROOT" != "/" ]]; do
   SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
 done
 
+if [[ -z "$AW_REGISTRY_ROOT" ]]; then
+  for CANDIDATE_ROOT in "$HOME/.aw_registry" "$HOME/.aw/.aw_registry"; do
+    if [[ -d "$CANDIDATE_ROOT" ]]; then
+      AW_REGISTRY_ROOT="$CANDIDATE_ROOT"
+      break
+    fi
+  done
+fi
+
 if [[ -z "$LOCAL_ROOT" && -z "$AW_REGISTRY_ROOT" ]]; then
   echo '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "WARNING: .aw_registry not found. AW skills unavailable."}}'
   exit 0
+fi
+
+read_frontmatter_name() {
+  local file_path="$1"
+  [[ -f "$file_path" ]] || return 0
+
+  awk '
+    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+    in_frontmatter && $0 == "---" { exit }
+    in_frontmatter && /^name:[[:space:]]*/ {
+      sub(/^name:[[:space:]]*/, "", $0)
+      print
+      exit
+    }
+  ' "$file_path"
+}
+
+extract_skill_excerpt() {
+  local file_path="$1"
+  [[ -f "$file_path" ]] || return 0
+
+  awk '
+    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+    in_frontmatter && $0 == "---" { in_frontmatter = 0; next }
+    in_frontmatter { next }
+    /^[[:space:]]*$/ { next }
+    {
+      print
+      count++
+      if (count >= 4) exit
+    }
+  ' "$file_path"
+}
+
+collect_registry_skills() {
+  local registry_root="$1"
+  local count=0
+  [[ -d "$registry_root/platform" ]] || return 0
+
+  while IFS= read -r skill_file; do
+    local skill_name=""
+    if [[ "$skill_file" == */using-aw-skills/SKILL.md ]]; then
+      continue
+    fi
+    skill_name="$(read_frontmatter_name "$skill_file")"
+    if [[ -z "$skill_name" ]]; then
+      skill_name="$(basename "$(dirname "$skill_file")")"
+    fi
+    printf -- "- %s\n" "$skill_name"
+    count=$((count + 1))
+    if [[ "$count" -ge 6 ]]; then
+      break
+    fi
+  done < <(find "$registry_root/platform" -path '*/skills/*/SKILL.md' | sort)
+}
+
+collect_registry_commands() {
+  local registry_root="$1"
+  local count=0
+  [[ -d "$registry_root/commands" ]] || return 0
+
+  while IFS= read -r command_file; do
+    local command_slug=""
+    local command_name=""
+    command_slug="$(basename "$command_file" .md)"
+    command_name="$(read_frontmatter_name "$command_file")"
+    if [[ -n "$command_name" ]]; then
+      printf -- "- %s: %s\n" "$command_slug" "$command_name"
+    else
+      printf -- "- %s\n" "$command_slug"
+    fi
+    count=$((count + 1))
+    if [[ "$count" -ge 6 ]]; then
+      break
+    fi
+  done < <(find "$registry_root/commands" -mindepth 1 -maxdepth 1 -name '*.md' | sort)
+}
+
+ROUTER_SKILL_PATH=""
+if [[ -n "$LOCAL_ROOT" && -f "$LOCAL_ROOT/skills/using-aw-skills/SKILL.md" ]]; then
+  ROUTER_SKILL_PATH="$LOCAL_ROOT/skills/using-aw-skills/SKILL.md"
+elif [[ -n "$AW_REGISTRY_ROOT" && -f "$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md" ]]; then
+  ROUTER_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
+fi
+
+ROUTER_EXCERPT="$(extract_skill_excerpt "$ROUTER_SKILL_PATH")"
+REGISTRY_SKILLS=""
+REGISTRY_COMMANDS=""
+if [[ -n "$AW_REGISTRY_ROOT" ]]; then
+  REGISTRY_SKILLS="$(collect_registry_skills "$AW_REGISTRY_ROOT")"
+  REGISTRY_COMMANDS="$(collect_registry_commands "$AW_REGISTRY_ROOT")"
 fi
 
 CONTEXT="# AW Session Context
@@ -55,6 +155,27 @@ Do not start with generic implementation, review, or deploy advice before skill 
 ## Router Source
 Use skills/using-aw-skills/SKILL.md as the repo-local router.
 Load domain, platform, and craft skills only after the smallest correct AW route is selected."
+
+if [[ -n "$ROUTER_EXCERPT" ]]; then
+  CONTEXT="${CONTEXT}
+
+## Router Excerpt
+${ROUTER_EXCERPT}"
+fi
+
+if [[ -n "$REGISTRY_SKILLS" ]]; then
+  CONTEXT="${CONTEXT}
+
+## Registry Skills In Scope
+${REGISTRY_SKILLS}"
+fi
+
+if [[ -n "$REGISTRY_COMMANDS" ]]; then
+  CONTEXT="${CONTEXT}
+
+## Registry Commands In Scope
+${REGISTRY_COMMANDS}"
+fi
 
 # --- Output in Claude Code hookSpecificOutput format ---
 # Escape for JSON: newlines, quotes, backslashes

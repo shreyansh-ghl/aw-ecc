@@ -46,7 +46,7 @@ const HARNESS_REGISTRY = Object.freeze({
   claude: {
     name: 'claude',
     getHomeSourceDir: getClaudeAwHomeSourceRelativeDir,
-    getHooksConfigSourceRelativePath: (repoRoot) => {
+    getHooksConfigSourceRelativePath: () => {
       const path = require('path');
       return path.join(getClaudeAwHomeSourceRelativeDir(), 'hooks.json');
     },
@@ -76,7 +76,7 @@ const HARNESS_REGISTRY = Object.freeze({
   cursor: {
     name: 'cursor',
     getHomeSourceDir: getCursorAwHomeSourceRelativeDir,
-    getHooksConfigSourceRelativePath: (repoRoot) => {
+    getHooksConfigSourceRelativePath: () => {
       const path = require('path');
       return path.join(getCursorAwHomeSourceRelativeDir(), 'hooks.json');
     },

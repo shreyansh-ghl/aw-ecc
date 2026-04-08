@@ -8,18 +8,6 @@ const assert = require('assert');
 
 const { runCursorAwPhase, runNamedCursorAwPhase } = require('../../.cursor/hooks/aw-phase-adapter');
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`  ✓ ${name}`);
-    return true;
-  } catch (err) {
-    console.log(`  ✗ ${name}`);
-    console.log(`    Error: ${err.message}`);
-    return false;
-  }
-}
-
 async function asyncTest(name, fn) {
   try {
     await fn();

@@ -34,7 +34,7 @@ function readReleaseFile() {
 
 function envEnabled(name, defaultValue) {
   const value = process.env[name];
-  if (value == null || value === '') {
+  if (value === null || value === undefined || value === '') {
     return defaultValue;
   }
 

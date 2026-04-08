@@ -16,8 +16,6 @@ const SOURCE_CONFIG_FILE = path.join(REPO_ROOT, 'scripts', 'claude-aw-home', 'ho
 
 runSuite('Testing generate-aw-hooks.js (claude)', [
   ['regenerates Claude hook outputs from the neutral home source file', () => {
-    const sourceConfigContent = fs.readFileSync(SOURCE_CONFIG_FILE, 'utf8');
-
     try {
       fs.writeFileSync(TARGET_CONFIG_FILE, '{"drifted":true}\n');
       fs.writeFileSync(SOURCE_CONFIG_FILE, '{"drifted":true}\n');

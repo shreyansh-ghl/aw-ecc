@@ -29,9 +29,13 @@ readStdin().then(raw => {
         break;
       }
     }
-  } catch {}
+  } catch (_error) {
+    // Best-effort prompt scanning should never block prompt submission.
+  }
   try {
     emitAwPromptReminder(raw);
-  } catch {}
+  } catch (_error) {
+    // Reminder emission is advisory and should not break the prompt flow.
+  }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));
