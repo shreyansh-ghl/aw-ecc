@@ -27,7 +27,7 @@ function runBash(scriptPath, input = '', env = {}) {
     cwd: REPO_ROOT,
     input,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, ECC_HOOK_DEBUG: '1', ...env },
   });
 }
 

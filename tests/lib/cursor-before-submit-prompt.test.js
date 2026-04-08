@@ -28,7 +28,7 @@ function runBeforeSubmit(raw, env = {}) {
     input: raw,
     encoding: 'utf8',
     cwd: path.join(__dirname, '..', '..'),
-    env: { ...process.env, ...env },
+    env: { ...process.env, ECC_HOOK_DEBUG: '1', ...env },
   });
 
   return {

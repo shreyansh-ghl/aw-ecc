@@ -5,10 +5,15 @@
 
 set -euo pipefail
 
+# Debug mode: set ECC_HOOK_DEBUG=1 to trace execution to stderr
+_dbg() { [ "${ECC_HOOK_DEBUG:-}" = "1" ] && echo "[hook-debug] $*" >&2 || true; }
+
 INPUT=$(cat)
+_dbg "INPUT_LENGTH=${#INPUT}"
 
 TMPFILE=$(mktemp) || exit 0
 trap 'rm -f "$TMPFILE"' EXIT
+_dbg "TMPFILE=$TMPFILE"
 
 PYTHON_CMD=""
 PYTHON_ARGS=()
@@ -42,6 +47,9 @@ resolve_python_cmd() {
 }
 
 resolve_python_cmd || exit 0
+_dbg "PYTHON_CMD=$PYTHON_CMD"
+_dbg "PYTHON_ARGS=${PYTHON_ARGS[*]:-}"
+_dbg "PYTHON_WHICH=$(command -v "$PYTHON_CMD" 2>/dev/null || echo 'NOT_FOUND')"
 
 if [ "${#PYTHON_ARGS[@]}" -gt 0 ]; then
   echo "$INPUT" | "$PYTHON_CMD" "${PYTHON_ARGS[@]}" -c "
@@ -49,7 +57,7 @@ import os, sys, json, re
 d = json.load(sys.stdin)
 cwd = d.get('cwd', '')
 prompt = d.get('prompt', '')
-cwd = re.sub(r'[^a-zA-Z0-9./_@:\\\ -]', '', cwd)
+cwd = re.sub(r'[^a-zA-Z0-9./_@:\\\\~\ -]', '', cwd)
 prompt = prompt[:500]
 stack_overlays_enabled = os.environ.get('AW_ENABLE_STACK_OVERLAY_RULES') == '1'
 print(f'CWD={cwd}')
@@ -72,14 +80,14 @@ elif any(k in prompt_lower for k in ['helm', 'terraform', 'kubernetes', 'k8s', '
     print('DOMAIN=infra')
 else:
     print('DOMAIN=universal')
-" > "$TMPFILE" 2>/dev/null || exit 0
+" > "$TMPFILE" 2>/dev/null || { _dbg "PYTHON_FAILED exit_code=$?"; exit 0; }
 else
   echo "$INPUT" | "$PYTHON_CMD" -c "
 import os, sys, json, re
 d = json.load(sys.stdin)
 cwd = d.get('cwd', '')
 prompt = d.get('prompt', '')
-cwd = re.sub(r'[^a-zA-Z0-9./_@:\\\ -]', '', cwd)
+cwd = re.sub(r'[^a-zA-Z0-9./_@:\\\\~\ -]', '', cwd)
 prompt = prompt[:500]
 stack_overlays_enabled = os.environ.get('AW_ENABLE_STACK_OVERLAY_RULES') == '1'
 print(f'CWD={cwd}')
@@ -102,8 +110,10 @@ elif any(k in prompt_lower for k in ['helm', 'terraform', 'kubernetes', 'k8s', '
     print('DOMAIN=infra')
 else:
     print('DOMAIN=universal')
-" > "$TMPFILE" 2>/dev/null || exit 0
+" > "$TMPFILE" 2>/dev/null || { _dbg "PYTHON_FAILED exit_code=$?"; exit 0; }
 fi
+
+_dbg "TMPFILE_CONTENTS=$(cat "$TMPFILE")"
 
 CWD="" DOMAIN="universal" STACK=""
 while IFS='=' read -r key value; do
@@ -113,6 +123,9 @@ while IFS='=' read -r key value; do
     STACK)  STACK="$value" ;;
   esac
 done < "$TMPFILE"
+
+_dbg "CWD=$CWD"
+_dbg "DOMAIN=$DOMAIN"
 
 RULES_DIR=""
 DOMAIN_AGENTS=""
@@ -126,8 +139,13 @@ elif [ -d "$CWD/.aw_rules" ]; then
   DOMAIN_AGENTS="$RULES_DIR/$DOMAIN/AGENTS.md"
 fi
 
-[ -n "$RULES_DIR" ] || exit 0
-[ -f "$DOMAIN_AGENTS" ] || exit 0
+_dbg "RULES_DIR=$RULES_DIR"
+_dbg "DOMAIN_AGENTS=$DOMAIN_AGENTS"
+_dbg "RULES_DIR_EXISTS=$([ -d "$CWD/.aw_registry/.aw_rules/platform" ] && echo yes || echo no)"
+_dbg "LS_CWD=$(ls -la "$CWD" 2>&1 | head -5)"
+
+[ -n "$RULES_DIR" ] || { _dbg "EXIT: no RULES_DIR"; exit 0; }
+[ -f "$DOMAIN_AGENTS" ] || { _dbg "EXIT: no DOMAIN_AGENTS file"; exit 0; }
 
 if [ -n "$STACK" ] && [ -f "$RULES_DIR/$DOMAIN/$STACK/AGENTS.md" ]; then
   STACK_AGENTS="$RULES_DIR/$DOMAIN/$STACK/AGENTS.md"
