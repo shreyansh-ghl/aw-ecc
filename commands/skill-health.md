@@ -43,7 +43,7 @@ node "$ECC_ROOT/scripts/skills-health.js" --dashboard --json
 
 1. Run the skills-health.js script with --dashboard flag
 2. Display the output to the user
-3. If any skills are declining, highlight them and suggest running /evolve
+3. If any skills are declining, highlight them and suggest running /aw:evolve
 4. If there are pending amendments, suggest reviewing them
 
 ## Panels

@@ -1,6 +1,9 @@
 ---
-name: projects
+name: aw:projects
 description: List known projects and their instinct statistics
+argument-hint: ""
+status: active
+stage: learning
 command: true
 ---
 
@@ -25,7 +28,7 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py projects
 ## Usage
 
 ```bash
-/projects
+/aw:projects
 ```
 
 ## What to Do

@@ -32,7 +32,7 @@ npm run claw
 /help                          Show help
 /clear                         Clear current session history
 /history                       Print full conversation history
-/sessions                      List saved sessions
+/aw:sessions                   List saved sessions
 /model [name]                  Show/set model
 /load <skill-name>             Hot-load a skill into context
 /branch <session-name>         Branch current session

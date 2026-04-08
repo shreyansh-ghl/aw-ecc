@@ -165,8 +165,9 @@ function runTests() {
     const logs = captureLog(() => output.nextSteps());
     const combined = logs.join('\n');
     assert.ok(combined.includes('Next Steps'), 'Should show Next Steps title');
-    assert.ok(combined.includes('/instinct-import'), 'Should show import command');
-    assert.ok(combined.includes('/evolve'), 'Should show evolve command');
+    assert.ok(combined.includes('/aw:instinct-import'), 'Should show import command');
+    assert.ok(combined.includes('/aw:evolve'), 'Should show evolve command');
+    assert.ok(combined.includes('/aw:publish-learning'), 'Should show publish command');
   })) passed++; else failed++;
 
   // footer() tests

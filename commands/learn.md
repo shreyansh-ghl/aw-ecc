@@ -1,3 +1,12 @@
+---
+name: aw:learn
+description: Extract a reusable pattern from the current session and draft it as a local learned skill.
+argument-hint: "<current session or pattern to extract>"
+status: active
+stage: learning
+command: true
+---
+
 # /aw:learn - Extract Reusable Patterns
 
 Analyze the current session and extract any patterns worth saving as skills.
@@ -68,3 +77,4 @@ Create a skill file at `~/.claude/skills/learned/[pattern-name].md`:
 - Don't extract one-time issues (specific API outages, etc.)
 - Focus on patterns that will save time in future sessions
 - Keep skills focused - one pattern per skill
+- Local learned skills are personal working memory. If the pattern should ship across Codex, Cursor, and Claude, promote it into repo `skills/` through `/aw:publish-learning`.

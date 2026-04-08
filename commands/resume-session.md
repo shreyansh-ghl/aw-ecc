@@ -1,5 +1,10 @@
 ---
+name: aw:resume-session
 description: Load the most recent session file from ~/.claude/sessions/ and resume work with full context from where the last session ended.
+argument-hint: "[YYYY-MM-DD | session file path]"
+status: active
+stage: learning
+command: true
 ---
 
 # Resume Session Command
@@ -17,10 +22,10 @@ This command is the counterpart to `/aw:save-session`.
 ## Usage
 
 ```
-/resume-session                                                      # loads most recent file in ~/.claude/sessions/
-/resume-session 2024-01-15                                           # loads most recent session for that date
-/resume-session ~/.claude/sessions/2024-01-15-session.tmp           # loads a specific legacy-format file
-/resume-session ~/.claude/sessions/2024-01-15-abc123de-session.tmp  # loads a current short-id session file
+/aw:resume-session                                                      # loads most recent file in ~/.claude/sessions/
+/aw:resume-session 2024-01-15                                           # loads most recent session for that date
+/aw:resume-session ~/.claude/sessions/2024-01-15-session.tmp           # loads a specific legacy-format file
+/aw:resume-session ~/.claude/sessions/2024-01-15-abc123de-session.tmp  # loads a current short-id session file
 ```
 
 ## Process
@@ -107,7 +112,7 @@ Note the gap — "⚠️ This session is from N days ago (threshold: 7 days). Th
 Read it and follow the same briefing process — the format is the same regardless of source.
 
 **Session file is empty or malformed:**
-Report: "Session file found but appears empty or unreadable. You may need to create a new one with /save-session."
+Report: "Session file found but appears empty or unreadable. You may need to create a new one with /aw:save-session."
 
 ---
 

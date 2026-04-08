@@ -10,17 +10,17 @@ The current catalog exposed by this repo is:
 
 - 28 agents
 - 158 skills
-- 69 commands
+- 70 commands
 
 ## Quick Start Snapshot
 
-Installing `aw-ecc` gives your workspace access to 28 agents, 158 skills, and 69 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
+Installing `aw-ecc` gives your workspace access to 28 agents, 158 skills, and 70 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
 
 | Surface | Availability |
 | --- | --- |
 | Agents | ✅ 28 agents |
 | Skills | ✅ 158 skills |
-| Commands | ✅ 69 commands |
+| Commands | ✅ 70 commands |
 
 These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
 
@@ -95,6 +95,15 @@ Each stage skill should also activate the matching GHL platform skill family by 
 
 The namespace families let the model auto-discover GHL platform skills without hardcoding every individual name.
 After the primary AW stage is selected, `using-platform-skills` should choose the smallest supporting platform stack.
+
+## Learning And Portability
+
+`aw-ecc` now treats local learning and shipped skills as two different surfaces:
+
+- instincts, learned skills, and evolved outputs are local working memory under home-directory learning roots
+- repo `skills/` are the portable shipped surface that installs across Codex, Cursor, and Claude
+
+Use `/aw:learn-eval` and `/aw:evolve` to refine local learning, then `/aw:publish-learning` when a pattern should become a real cross-harness repo skill.
 
 ## Org Standards
 

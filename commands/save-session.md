@@ -1,5 +1,10 @@
 ---
-description: Save current session state to a dated file in ~/.claude/sessions/ so work can be resumed in a future session with full context.
+name: aw:save-session
+description: Save the current session state to a dated file so work can be resumed later with full context.
+argument-hint: "[optional note or session label]"
+status: active
+stage: learning
+command: true
 ---
 
 # Save Session Command

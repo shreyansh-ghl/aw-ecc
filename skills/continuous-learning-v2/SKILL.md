@@ -112,7 +112,7 @@ Session Activity (in a git repo)
 |   * grep-before-edit.yaml (0.6) [global]     |
 +---------------------------------------------+
       |
-      | /evolve clusters + /promote
+      | /aw:evolve clusters + /aw:promote
       v
 +---------------------------------------------+
 |  projects/<hash>/evolved/ (project-scoped)   |
@@ -200,24 +200,37 @@ mkdir -p ~/.claude/homunculus/{instincts/{personal,inherited},evolved/{agents,sk
 ### 3. Use the Instinct Commands
 
 ```bash
-/instinct-status     # Show learned instincts (project + global)
-/evolve              # Cluster related instincts into skills/commands
-/instinct-export     # Export instincts to file
-/instinct-import     # Import instincts from others
-/promote             # Promote project instincts to global scope
-/projects            # List all known projects and their instinct counts
+/aw:instinct-status     # Show learned instincts (project + global)
+/aw:evolve              # Cluster related instincts into skills/commands
+/aw:instinct-export     # Export instincts to file
+/aw:instinct-import     # Import instincts from others
+/aw:promote             # Promote project instincts to global scope
+/aw:projects            # List all known projects and their instinct counts
+/aw:publish-learning    # Publish a learned or evolved pattern into repo skills
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/instinct-status` | Show all instincts (project-scoped + global) with confidence |
-| `/evolve` | Cluster related instincts into skills/commands, suggest promotions |
-| `/instinct-export` | Export instincts (filterable by scope/domain) |
-| `/instinct-import <file>` | Import instincts with scope control |
-| `/promote [id]` | Promote project instincts to global scope |
-| `/projects` | List all known projects and their instinct counts |
+| `/aw:instinct-status` | Show all instincts (project-scoped + global) with confidence |
+| `/aw:evolve` | Cluster related instincts into skills/commands, suggest promotions |
+| `/aw:instinct-export` | Export instincts (filterable by scope/domain) |
+| `/aw:instinct-import <file>` | Import instincts with scope control |
+| `/aw:promote [id]` | Promote project instincts to global scope |
+| `/aw:projects` | List all known projects and their instinct counts |
+| `/aw:publish-learning` | Curate learned or evolved patterns into repo skills that ship across Codex, Cursor, and Claude |
+
+## Portability
+
+Instincts and evolved structures are local working memory by default.
+They help the system learn, but they are not automatically shipped to other harness installs.
+
+If a pattern should become a real portable skill across Codex, Cursor, and Claude:
+
+1. validate it locally with `/aw:learn-eval` or `/aw:evolve`
+2. promote any cross-project instincts with `/aw:promote` when needed
+3. publish the resulting skill into repo `skills/` through `/aw:publish-learning`
 
 ## Configuration
 
@@ -306,7 +319,7 @@ python3 instinct-cli.py promote
 python3 instinct-cli.py promote --dry-run
 ```
 
-The `/evolve` command also suggests promotion candidates.
+The `/aw:evolve` command also suggests promotion candidates.
 
 ## Confidence Scoring
 

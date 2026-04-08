@@ -1,6 +1,9 @@
 ---
-name: instinct-status
+name: aw:instinct-status
 description: Show learned instincts (project + global) with confidence
+argument-hint: "[--domain <name> | --low-confidence]"
+status: active
+stage: learning
 command: true
 ---
 
@@ -25,7 +28,7 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py status
 ## Usage
 
 ```
-/instinct-status
+/aw:instinct-status
 ```
 
 ## What to Do
