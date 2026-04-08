@@ -201,6 +201,46 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true  # Allows PR to proceed, but marks job as failed if vulnerabilities found
 
+  version-bump:
+    name: Version Bump Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Get PR version
+        id: pr
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Get base version
+        id: base
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          echo "version=$(git show origin/${{ github.base_ref }}:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        run: |
+          PR_VERSION="${{ steps.pr.outputs.version }}"
+          BASE_VERSION="${{ steps.base.outputs.version }}"
+          echo "Base version: $BASE_VERSION"
+          echo "PR version:   $PR_VERSION"
+
+          if [ "$PR_VERSION" = "$BASE_VERSION" ]; then
+            echo "::error::Version in package.json ($PR_VERSION) was not incremented. Bump the version before merging."
+            exit 1
+          fi
+
+          # Verify PR version is greater using node semver comparison
+          IS_GREATER=$(node -e "
+            const [a, b] = ['$PR_VERSION', '$BASE_VERSION'].map(v => v.split('.').map(Number));
+            const gt = a[0] > b[0] || (a[0] === b[0] && a[1] > b[1]) || (a[0] === b[0] && a[1] === b[1] && a[2] > b[2]);
+            process.exit(gt ? 0 : 1);
+          ")
+          echo "Version bump verified: $BASE_VERSION → $PR_VERSION"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
