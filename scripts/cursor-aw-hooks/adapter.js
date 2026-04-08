@@ -22,6 +22,13 @@ function readStdin() {
 }
 
 function getPluginRoot() {
+  // Scripts under scripts/hooks/ require('../../../lib/utils') and other deps
+  // from the full aw-ecc repo tree. The deployed ~/.cursor/scripts/ copy is
+  // incomplete (no scripts/lib/), so we must resolve to ~/.aw-ecc/ — the
+  // git-cloned repo that has everything (same as Codex's direct approach).
+  // Fall back to the classic 2-levels-up for Claude Code plugin layout.
+  const eccDir = path.join(require('os').homedir(), '.aw-ecc');
+  if (require('fs').existsSync(path.join(eccDir, 'scripts', 'hooks'))) return eccDir;
   return path.resolve(__dirname, '..', '..');
 }
 

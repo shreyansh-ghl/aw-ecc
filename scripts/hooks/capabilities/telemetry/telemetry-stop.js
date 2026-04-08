@@ -53,8 +53,11 @@ function runStop() {
   const inputTokens = toNumber(usage.input_tokens || usage.prompt_tokens || 0);
   const outputTokens = toNumber(usage.output_tokens || usage.completion_tokens || 0);
 
-  // Skip if no token data (empty response)
-  if (inputTokens === 0 && outputTokens === 0) return;
+  // Skip only if no token data AND no model info (truly empty payload).
+  // Cursor/Codex stop events may not include tokens but still carry model
+  // and conversation metadata worth recording.
+  const hasModel = !!(input.model || input._cursor?.model);
+  if (inputTokens === 0 && outputTokens === 0 && !hasModel) return;
 
   ensureTelemetryDir();
 
