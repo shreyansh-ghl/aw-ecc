@@ -79,7 +79,7 @@ import os, sys, json, re
 d = json.load(sys.stdin)
 cwd = d.get('cwd', '')
 prompt = d.get('prompt', '')
-cwd = re.sub(r'[^a-zA-Z0-9./_@ -]', '', cwd)
+cwd = re.sub(r'[^a-zA-Z0-9./_@:\\\ -]', '', cwd)
 prompt = prompt[:500]
 stack_overlays_enabled = os.environ.get('AW_ENABLE_STACK_OVERLAY_RULES') == '1'
 print(f'CWD={cwd}')
