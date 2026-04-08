@@ -19,6 +19,18 @@ const GENERATED_AW_HOOKS = Object.freeze({
       ],
       description: 'Load AW routing context at session start',
     },
+    {
+      matcher: 'startup|clear|compact',
+      hooks: [
+        {
+          type: 'command',
+          command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js" "session-start:telemetry" "scripts/hooks/capabilities/telemetry/telemetry-session-start.js" "minimal,standard,strict"',
+          async: true,
+          timeout: 15,
+        },
+      ],
+      description: 'Initialize telemetry session metadata and cache model pricing',
+    },
   ],
   UserPromptSubmit: [
     {

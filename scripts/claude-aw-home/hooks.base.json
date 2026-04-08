@@ -128,6 +128,17 @@
           }
         ],
         "description": "Save state before context compaction"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"pre-compact:telemetry\" \"scripts/hooks/capabilities/telemetry/telemetry-pre-compact.js\" \"minimal,standard,strict\"",
+            "timeout": 15
+          }
+        ],
+        "description": "Flush accumulated telemetry data before context compaction"
       }
     ],
     "SessionStart": [
@@ -140,6 +151,18 @@
           }
         ],
         "description": "Load AW routing context at session start"
+      },
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"session-start:telemetry\" \"scripts/hooks/capabilities/telemetry/telemetry-session-start.js\" \"minimal,standard,strict\"",
+            "async": true,
+            "timeout": 15
+          }
+        ],
+        "description": "Initialize telemetry session metadata and cache model pricing"
       }
     ],
     "UserPromptSubmit": [
@@ -300,6 +323,30 @@
           }
         ],
         "description": "Track token and cost metrics per session"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"stop:telemetry\" \"scripts/hooks/capabilities/telemetry/telemetry-stop.js\" \"minimal,standard,strict\"",
+            "async": true,
+            "timeout": 10
+          }
+        ],
+        "description": "Record token usage and cost for platform telemetry"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"stop:pr-detect\" \"scripts/hooks/capabilities/pr-detection/pr-detect-stop.js\" \"standard,strict\"",
+            "async": true,
+            "timeout": 10
+          }
+        ],
+        "description": "Detect PR creation in transcript and store in session metadata"
       }
     ],
     "SessionEnd": [
@@ -314,6 +361,17 @@
           }
         ],
         "description": "Session end lifecycle marker (non-blocking)"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-with-flags.js\" \"session-end:telemetry\" \"scripts/hooks/capabilities/telemetry/telemetry-session-end.js\" \"minimal,standard,strict\"",
+            "timeout": 15
+          }
+        ],
+        "description": "Final telemetry flush with session duration and cleanup"
       }
     ]
   }

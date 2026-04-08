@@ -7,6 +7,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
       payloadMode: 'raw',
     },
+    {
+      hookId: 'session-start:telemetry',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/capabilities/telemetry/telemetry-session-start.js',
+      payloadMode: 'claude',
+    },
   ],
   'user-prompt-submit': [
     {
@@ -115,6 +122,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/pre-compact.js',
       payloadMode: 'claude',
     },
+    {
+      hookId: 'pre-compact:telemetry',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/capabilities/telemetry/telemetry-pre-compact.js',
+      payloadMode: 'claude',
+    },
   ],
   'session-end': [
     {
@@ -122,6 +136,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       allowedProfiles: ['minimal', 'standard', 'strict'],
       runner: 'node',
       relativeScriptPath: 'scripts/hooks/session-end-marker.js',
+      payloadMode: 'claude',
+    },
+    {
+      hookId: 'session-end:telemetry',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/capabilities/telemetry/telemetry-session-end.js',
       payloadMode: 'claude',
     },
   ],
@@ -152,6 +173,20 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       allowedProfiles: ['minimal', 'standard', 'strict'],
       runner: 'node',
       relativeScriptPath: 'scripts/hooks/cost-tracker.js',
+      payloadMode: 'claude',
+    },
+    {
+      hookId: 'stop:telemetry',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/capabilities/telemetry/telemetry-stop.js',
+      payloadMode: 'claude',
+    },
+    {
+      hookId: 'stop:pr-detect',
+      allowedProfiles: ['standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/capabilities/pr-detection/pr-detect-stop.js',
       payloadMode: 'claude',
     },
   ],

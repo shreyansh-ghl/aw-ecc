@@ -224,6 +224,10 @@ async function runTests() {
       { type: 'node', relativeScriptPath: 'scripts/hooks/evaluate-session.js', payload: { transformed: true } },
       { type: 'enabled', hookId: 'stop:cost-tracker' },
       { type: 'node', relativeScriptPath: 'scripts/hooks/cost-tracker.js', payload: { transformed: true } },
+      { type: 'enabled', hookId: 'stop:telemetry' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/capabilities/telemetry/telemetry-stop.js', payload: { transformed: true } },
+      { type: 'enabled', hookId: 'stop:pr-detect' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/capabilities/pr-detection/pr-detect-stop.js', payload: { transformed: true } },
     ]);
   })) passed++; else failed++;
 
