@@ -31,11 +31,12 @@ function test(name, fn) {
   }
 }
 
-function runSync(homeDir) {
+function runSync(homeDir, extraEnv = {}) {
   const env = {
     ...process.env,
     HOME: homeDir,
     CODEX_HOME: path.join(homeDir, '.codex'),
+    ...extraEnv,
   };
 
   fs.mkdirSync(path.join(homeDir, '.codex'), { recursive: true });
@@ -93,6 +94,26 @@ function runTests() {
       for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
         assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
       }
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('sync succeeds when ripgrep is unavailable on PATH', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      const fallbackPath = [
+        path.dirname(process.execPath),
+        '/usr/bin',
+        '/bin',
+      ].join(':');
+
+      runSync(homeDir, { PATH: fallbackPath });
+
+      const codexHome = path.join(homeDir, '.codex');
+      assert.ok(fs.existsSync(path.join(codexHome, 'prompts', 'ecc-prompts-manifest.txt')));
+      assert.ok(fs.existsSync(path.join(codexHome, 'hooks.json')));
     } finally {
       cleanup(homeDir);
     }
