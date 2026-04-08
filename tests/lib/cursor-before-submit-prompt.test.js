@@ -28,7 +28,7 @@ function runBeforeSubmit(raw, env = {}) {
     input: raw,
     encoding: 'utf8',
     cwd: path.join(__dirname, '..', '..'),
-    env: { ...process.env, ECC_HOOK_DEBUG: '1', ...env },
+    env: { ...process.env, ...env },
   });
 
   return {
@@ -74,13 +74,6 @@ function runTests() {
       });
 
       const result = runBeforeSubmit(raw);
-
-      // Diagnostic output for CI debugging
-      console.log(`    [DEBUG] cwd=${cwd}`);
-      console.log(`    [DEBUG] platform=${process.platform}`);
-      console.log(`    [DEBUG] exit_code=${result.code}`);
-      console.log(`    [DEBUG] stdout=${JSON.stringify(result.stdout)}`);
-      console.log(`    [DEBUG] stderr=${JSON.stringify(result.stderr)}`);
 
       assert.strictEqual(result.code, 0);
       assert.strictEqual(result.stdout, raw);
