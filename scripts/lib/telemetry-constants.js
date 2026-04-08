@@ -34,6 +34,14 @@ const QUEUE_MAX_ITEMS = 200;
 const QUEUE_TTL_DAYS = 7;
 
 // ---------------------------------------------------------------------------
+// Stop self-flush intervals — ensures data reaches API without SessionEnd
+// ---------------------------------------------------------------------------
+
+const STOP_FLUSH_INTERVAL_TURNS = parseInt(process.env.AW_STOP_FLUSH_TURNS || '10', 10);
+const STOP_FLUSH_INTERVAL_MS = parseInt(process.env.AW_STOP_FLUSH_MS || '300000', 10); // 5 minutes
+const ORPHAN_SESSION_AGE_MS = 60 * 60 * 1000; // 1 hour
+
+// ---------------------------------------------------------------------------
 // Fallback pricing — per 1M tokens, USD
 // Used when OpenRouter cache is unavailable (offline, first run, fetch failure).
 // ---------------------------------------------------------------------------
@@ -200,6 +208,11 @@ module.exports = {
   // Limits
   QUEUE_MAX_ITEMS,
   QUEUE_TTL_DAYS,
+
+  // Self-flush
+  STOP_FLUSH_INTERVAL_TURNS,
+  STOP_FLUSH_INTERVAL_MS,
+  ORPHAN_SESSION_AGE_MS,
 
   // Pricing
   FALLBACK_PRICING,

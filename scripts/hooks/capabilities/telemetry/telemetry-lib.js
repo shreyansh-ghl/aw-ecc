@@ -20,6 +20,9 @@ const {
   QUEUE_FILE,
   QUEUE_MAX_ITEMS,
   QUEUE_TTL_DAYS,
+  STOP_FLUSH_INTERVAL_TURNS,
+  STOP_FLUSH_INTERVAL_MS,
+  ORPHAN_SESSION_AGE_MS,
   getPricingForModel,
   getApiUrl,
 } = require('../../../lib/telemetry-constants');
@@ -457,6 +460,127 @@ function aggregateEntries(entries) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Stop self-flush — periodic API push from the Stop hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether the Stop hook should perform an async API flush.
+ * Returns true if enough turns or enough wall time has elapsed since last flush.
+ *
+ * @param {object} sessionMeta - Current session metadata (mutated: turn_count incremented)
+ * @returns {boolean}
+ */
+function shouldSelfFlush(sessionMeta) {
+  if (!sessionMeta) return false;
+
+  // Increment turn count
+  sessionMeta.turn_count = (sessionMeta.turn_count || 0) + 1;
+
+  // Check turn-based interval
+  const turnsSinceFlush = sessionMeta.turn_count - (sessionMeta.last_flush_turn || 0);
+  if (turnsSinceFlush >= STOP_FLUSH_INTERVAL_TURNS) return true;
+
+  // Check time-based interval
+  const lastFlushTs = sessionMeta.last_flush_ts ? new Date(sessionMeta.last_flush_ts).getTime() : 0;
+  if (lastFlushTs === 0) return false; // No time-based flush on first pass (let turn count trigger it)
+  return (Date.now() - lastFlushTs) >= STOP_FLUSH_INTERVAL_MS;
+}
+
+/**
+ * Mark a self-flush as completed in session metadata.
+ * @param {object} sessionMeta - Session metadata to update (mutated in place)
+ */
+function markFlushed(sessionMeta) {
+  if (!sessionMeta) return;
+  sessionMeta.last_flush_turn = sessionMeta.turn_count || 0;
+  sessionMeta.last_flush_ts = new Date().toISOString();
+}
+
+// ---------------------------------------------------------------------------
+// Orphan recovery — recover data from crashed/killed sessions
+// ---------------------------------------------------------------------------
+
+/**
+ * Scan for stale session files from prior sessions that were never cleanly closed.
+ * For each orphan: enqueue their unflushed data with status "abandoned", then delete the file.
+ *
+ * @param {string} currentSessionId - The current session's ID (excluded from orphan scan)
+ * @returns {{ recovered: number, enqueued: number }}
+ */
+function recoverOrphanedSessions(currentSessionId) {
+  let recovered = 0;
+  let enqueued = 0;
+
+  try {
+    if (!fs.existsSync(TELEMETRY_DIR)) return { recovered, enqueued };
+
+    const files = fs.readdirSync(TELEMETRY_DIR);
+    const now = Date.now();
+
+    for (const file of files) {
+      if (!file.startsWith('session-') || !file.endsWith('.json')) continue;
+
+      const filePath = path.join(TELEMETRY_DIR, file);
+
+      // Extract session ID from filename: session-{id}.json
+      const sessionId = file.slice('session-'.length, -'.json'.length);
+      if (sessionId === currentSessionId) continue;
+
+      // Check file age
+      try {
+        const stat = fs.statSync(filePath);
+        const ageMs = now - stat.mtimeMs;
+        if (ageMs < ORPHAN_SESSION_AGE_MS) continue; // Not stale yet
+      } catch {
+        continue;
+      }
+
+      // Read orphaned session metadata
+      const orphanMeta = readSessionMetadata(sessionId);
+      if (!orphanMeta) {
+        // Corrupt or empty — just delete
+        deleteSessionMetadata(sessionId);
+        recovered++;
+        continue;
+      }
+
+      // Check if there are unflushed entries for this session
+      // We can't isolate per-session unflushed entries cheaply (costs.jsonl is shared),
+      // but we enqueue a "abandoned" status event so the server knows the session ended abnormally.
+      const payload = {
+        shell_run_id: sessionId,
+        session_id: sessionId,
+        command: 'session',
+        status: 'abandoned',
+        branch: orphanMeta.branch || 'unknown',
+        model: 'unknown',
+        platform: orphanMeta.platform || 'unknown',
+        platform_version: orphanMeta.platform_version || 'unknown',
+        project_hash: orphanMeta.project_hash || null,
+        tokens_used: 0,
+        cost_usd: 0,
+        session_duration_ms: orphanMeta.start_ts
+          ? now - new Date(orphanMeta.start_ts).getTime()
+          : null,
+        compaction_count: orphanMeta.compaction_count || 0,
+        turn_count: orphanMeta.turn_count || 0,
+      };
+
+      enqueue(payload, '/usage-telemetry/ingest');
+      enqueued++;
+
+      // Clean up the orphaned session file
+      deleteSessionMetadata(sessionId);
+      recovered++;
+    }
+  } catch {
+    // Non-fatal — don't block session start
+  }
+
+  return { recovered, enqueued };
+}
+
 module.exports = {
   // Directory
   ensureTelemetryDir,
@@ -499,4 +623,9 @@ module.exports = {
 
   // Aggregation
   aggregateEntries,
+
+  // Resilience — self-flush & orphan recovery
+  shouldSelfFlush,
+  markFlushed,
+  recoverOrphanedSessions,
 };

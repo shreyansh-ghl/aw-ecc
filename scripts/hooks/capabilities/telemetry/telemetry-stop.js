@@ -5,9 +5,10 @@
  * Fires on: Stop (Claude, Cursor, Codex)
  * Purpose: Compute token delta from hook payload, append to ~/.aw/telemetry/costs.jsonl.
  *          Extract agents, skills, and MCP tools from transcript.
+ *          Every N turns (or N minutes), self-flush aggregated data to the API.
  *
- * Network: No
- * Target latency: <100ms
+ * Network: Conditional (self-flush only, async fire-and-forget)
+ * Target latency: <100ms (flush is non-blocking)
  */
 
 'use strict';
@@ -22,7 +23,21 @@ const {
   readSessionMetadata,
   writeSessionMetadata,
   getSessionId,
+  shouldSelfFlush,
+  markFlushed,
+  readUnflushedEntries,
+  aggregateEntries,
+  updateCheckpoint,
+  pushToApi,
+  enqueue,
+  flushQueue,
+  getNamespace,
+  buildTelemetryHeaders,
+  detectPlatform,
+  detectPlatformVersion,
+  getProjectHash,
 } = require('./telemetry-lib');
+const { getApiUrl } = require('../../../lib/telemetry-constants');
 
 const MAX_STDIN = 1024 * 1024;
 let raw = '';
@@ -92,9 +107,76 @@ function runStop() {
 
   // Update session metadata with compaction count if this was a compaction
   const sessionMeta = readSessionMetadata(sessionId);
-  if (sessionMeta && input.compaction) {
-    sessionMeta.compaction_count = (sessionMeta.compaction_count || 0) + 1;
-    writeSessionMetadata(sessionId, sessionMeta);
+  if (sessionMeta) {
+    if (input.compaction) {
+      sessionMeta.compaction_count = (sessionMeta.compaction_count || 0) + 1;
+    }
+
+    // Self-flush: check if we should push aggregated data to the API
+    if (shouldSelfFlush(sessionMeta)) {
+      // Mark flushed immediately (before async work) to prevent double-flush
+      markFlushed(sessionMeta);
+      writeSessionMetadata(sessionId, sessionMeta);
+
+      // Fire-and-forget async API push — never blocks the hook
+      performSelfFlush(sessionId, sessionMeta).catch(() => {
+        // Non-fatal — data stays in costs.jsonl for next flush
+      });
+    } else {
+      writeSessionMetadata(sessionId, sessionMeta);
+    }
+  }
+}
+
+/**
+ * Async self-flush — aggregate unflushed entries and push to API.
+ * Also drains the offline queue if reachable.
+ */
+async function performSelfFlush(sessionId, sessionMeta) {
+  const { entries, checkpointFrom, checkpointTo } = readUnflushedEntries();
+  if (entries.length === 0) return;
+
+  const namespace = getNamespace();
+  const headers = buildTelemetryHeaders(namespace);
+  const aggregated = aggregateEntries(entries);
+  const apiUrl = getApiUrl();
+
+  const payload = {
+    shell_run_id: sessionId,
+    session_id: sessionId,
+    command: 'session',
+    status: 'in_progress',
+    branch: sessionMeta.branch || 'unknown',
+    model: aggregated.model,
+    platform: sessionMeta.platform || detectPlatform(),
+    platform_version: sessionMeta.platform_version || detectPlatformVersion(),
+    project_hash: sessionMeta.project_hash || getProjectHash(),
+    tokens_used: aggregated.tokens_used,
+    input_tokens: aggregated.input_tokens,
+    output_tokens: aggregated.output_tokens,
+    cache_read_tokens: aggregated.cache_read_tokens,
+    cache_creation_tokens: aggregated.cache_creation_tokens,
+    cost_usd: aggregated.cost_usd,
+    agents_used: aggregated.agents_used,
+    skills_applied: aggregated.skills_applied,
+    mcp_tools_used: aggregated.mcp_tools_used,
+    compaction_count: sessionMeta.compaction_count || 0,
+    turn_count: sessionMeta.turn_count || 0,
+    pr_url: aggregated.pr_url,
+    pr_number: aggregated.pr_number,
+    pr_repo: aggregated.pr_repo,
+    checkpoint_from: checkpointFrom,
+    checkpoint_to: checkpointTo,
+    namespace: namespace || undefined,
+  };
+
+  const ok = await pushToApi(`${apiUrl}/usage-telemetry/ingest`, payload, headers);
+  if (ok) {
+    updateCheckpoint(sessionId, checkpointTo);
+    // Also drain offline queue while we have connectivity
+    await flushQueue(headers).catch(() => {});
+  } else {
+    enqueue(payload, '/usage-telemetry/ingest');
   }
 }
 

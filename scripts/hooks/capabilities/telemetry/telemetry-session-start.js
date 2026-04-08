@@ -22,6 +22,7 @@ const {
   getProjectHash,
   getNamespace,
   getSessionId,
+  recoverOrphanedSessions,
 } = require('./telemetry-lib');
 
 const { runCommand } = require('../../../lib/utils');
@@ -37,6 +38,12 @@ async function main() {
   const branch = branchResult.success ? branchResult.output : 'unknown';
 
   ensureTelemetryDir();
+
+  // Recover orphaned sessions from prior crashed/killed sessions
+  const orphanResult = recoverOrphanedSessions(sessionId);
+  if (orphanResult.recovered > 0) {
+    log(`[Telemetry:SessionStart] Recovered ${orphanResult.recovered} orphaned session(s), enqueued ${orphanResult.enqueued}`);
+  }
 
   const metadata = {
     session_id: sessionId,
