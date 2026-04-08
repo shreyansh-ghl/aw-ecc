@@ -10,12 +10,41 @@ INPUT=$(cat)
 TMPFILE=$(mktemp) || exit 0
 trap 'rm -f "$TMPFILE"' EXIT
 
-PYTHON_CMD="python3"
-if ! command -v python3 >/dev/null 2>&1; then
-  PYTHON_CMD="python"
-fi
+PYTHON_CMD=""
+PYTHON_ARGS=()
 
-echo "$INPUT" | "$PYTHON_CMD" -c "
+resolve_python_cmd() {
+  if [ -n "${CLV2_PYTHON_CMD:-}" ] && command -v "$CLV2_PYTHON_CMD" >/dev/null 2>&1; then
+    PYTHON_CMD="$CLV2_PYTHON_CMD"
+    PYTHON_ARGS=()
+    return 0
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="python3"
+    PYTHON_ARGS=()
+    return 0
+  fi
+
+  if command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="python"
+    PYTHON_ARGS=()
+    return 0
+  fi
+
+  if command -v py >/dev/null 2>&1; then
+    PYTHON_CMD="py"
+    PYTHON_ARGS=(-3)
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_python_cmd || exit 0
+
+if [ "${#PYTHON_ARGS[@]}" -gt 0 ]; then
+  echo "$INPUT" | "$PYTHON_CMD" "${PYTHON_ARGS[@]}" -c "
 import os, sys, json, re
 d = json.load(sys.stdin)
 cwd = d.get('cwd', '')
@@ -44,6 +73,37 @@ elif any(k in prompt_lower for k in ['helm', 'terraform', 'kubernetes', 'k8s', '
 else:
     print('DOMAIN=universal')
 " > "$TMPFILE" 2>/dev/null || exit 0
+else
+  echo "$INPUT" | "$PYTHON_CMD" -c "
+import os, sys, json, re
+d = json.load(sys.stdin)
+cwd = d.get('cwd', '')
+prompt = d.get('prompt', '')
+cwd = re.sub(r'[^a-zA-Z0-9./_@ -]', '', cwd)
+prompt = prompt[:500]
+stack_overlays_enabled = os.environ.get('AW_ENABLE_STACK_OVERLAY_RULES') == '1'
+print(f'CWD={cwd}')
+prompt_lower = prompt.lower()
+if any(k in prompt_lower for k in ['controller', 'service', 'module', '@body', 'nestjs', 'worker', 'dto']):
+    print('DOMAIN=backend')
+    if stack_overlays_enabled and any(k in prompt_lower for k in ['nestjs', '@body', '@controller', '@module', 'class-validator', 'dto']):
+        print('STACK=nestjs')
+    elif stack_overlays_enabled and any(k in prompt_lower for k in ['connectrpc', 'connect-go', 'buf.gen', 'protoc-gen-connect-go']):
+        print('STACK=go-connect')
+elif any(k in prompt_lower for k in ['vue', 'component', 'template', 'frontend', '<script', 'nuxt']):
+    print('DOMAIN=frontend')
+    if stack_overlays_enabled and any(k in prompt_lower for k in ['nuxt', 'app.vue', 'useasyncdata', 'definepagemeta']):
+        print('STACK=nuxt')
+    elif stack_overlays_enabled and any(k in prompt_lower for k in ['vue', '<script', 'script setup', 'composable']):
+        print('STACK=vue')
+elif any(k in prompt_lower for k in ['mongo', 'redis', 'schema', 'migration', 'database', 'index']):
+    print('DOMAIN=data')
+elif any(k in prompt_lower for k in ['helm', 'terraform', 'kubernetes', 'k8s', 'deploy', 'dockerfile']):
+    print('DOMAIN=infra')
+else:
+    print('DOMAIN=universal')
+" > "$TMPFILE" 2>/dev/null || exit 0
+fi
 
 CWD="" DOMAIN="universal" STACK=""
 while IFS='=' read -r key value; do

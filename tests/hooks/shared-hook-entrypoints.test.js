@@ -92,6 +92,15 @@ function runTests() {
     });
   })) passed++; else failed++;
 
+  if (test('shared user-prompt-submit wrapper includes portable python fallback logic', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+    const source = fs.readFileSync(scriptPath, 'utf8');
+
+    assert.ok(source.includes('CLV2_PYTHON_CMD'), 'Expected shared prompt wrapper to honor CLV2_PYTHON_CMD');
+    assert.ok(source.includes('command -v py'), 'Expected shared prompt wrapper to fall back to py on Windows');
+    assert.ok(source.includes('PYTHON_ARGS=(-3)'), 'Expected shared prompt wrapper to launch py with -3');
+  })) passed++; else failed++;
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }
