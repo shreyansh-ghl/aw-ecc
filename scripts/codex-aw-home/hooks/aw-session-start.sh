@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Drain stdin because Codex writes a JSON payload even though this wrapper
+# only returns AW session context and does not use the payload body.
+cat >/dev/null || true
+
 TARGETS=(
   "$HOME/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
   "$HOME/.aw/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"

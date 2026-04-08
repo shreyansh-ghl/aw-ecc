@@ -6,4 +6,5 @@ if [[ -f "$TARGET" ]]; then
   exec bash "$TARGET"
 fi
 
+cat >/dev/null || true
 exit 0

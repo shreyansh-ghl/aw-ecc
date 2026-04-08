@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Drain stdin because session-start emits static AW routing context and does
+# not inspect the incoming payload.
+cat >/dev/null || true
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_ROOT=""
 SEARCH_ROOT="$SCRIPT_DIR"
