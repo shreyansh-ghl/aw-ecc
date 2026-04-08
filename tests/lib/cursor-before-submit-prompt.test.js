@@ -75,6 +75,13 @@ function runTests() {
 
       const result = runBeforeSubmit(raw);
 
+      // Diagnostic output for CI debugging
+      console.log(`    [DEBUG] cwd=${cwd}`);
+      console.log(`    [DEBUG] platform=${process.platform}`);
+      console.log(`    [DEBUG] exit_code=${result.code}`);
+      console.log(`    [DEBUG] stdout=${JSON.stringify(result.stdout)}`);
+      console.log(`    [DEBUG] stderr=${JSON.stringify(result.stderr)}`);
+
       assert.strictEqual(result.code, 0);
       assert.strictEqual(result.stdout, raw);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
