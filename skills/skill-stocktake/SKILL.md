@@ -1,11 +1,11 @@
 ---
-description: "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation."
+description: "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation using the shared skill-quality-review rubric."
 origin: ECC
 ---
 
 # skill-stocktake
 
-Slash command (`/skill-stocktake`) that audits all Claude skills and commands using a quality checklist + AI holistic judgment. Supports two modes: Quick Scan for recently changed skills, and Full Stocktake for a complete review.
+Slash command (`/skill-stocktake`) that audits all Claude skills and commands using the shared `skill-quality-review` rubric plus AI holistic judgment. Supports two modes: Quick Scan for recently changed skills, and Full Stocktake for a complete review.
 
 ## Scope
 
@@ -74,17 +74,19 @@ Scanning:
 
 ### Phase 2 — Quality Evaluation
 
-Launch an Agent tool subagent (**general-purpose agent**) with the full inventory and checklist:
+Launch an Agent tool subagent (**general-purpose agent**) with the full inventory and the shared skill-review rubric:
 
 ```text
 Agent(
   subagent_type="general-purpose",
   prompt="
-Evaluate the following skill inventory against the checklist.
+Evaluate the following skill inventory against the rubric.
+
+Load the local `skill-quality-review` skill first and use its rubric for per-skill judgments.
 
 [INVENTORY]
 
-[CHECKLIST]
+[RUBRIC]
 
 Return JSON for each skill:
 { \"verdict\": \"Keep\"|\"Improve\"|\"Update\"|\"Retire\"|\"Merge into [X]\", \"reason\": \"...\" }
@@ -92,7 +94,7 @@ Return JSON for each skill:
 )
 ```
 
-The subagent reads each skill, applies the checklist, and returns per-skill JSON:
+The subagent reads each skill, applies `skill-quality-review`, and returns per-skill JSON:
 
 `{ "verdict": "Keep"|"Improve"|"Update"|"Retire"|"Merge into [X]", "reason": "..." }`
 
@@ -102,12 +104,14 @@ After all skills are evaluated: set `status: "completed"`, proceed to Phase 3.
 
 **Resume detection:** If `status: "in_progress"` is found on startup, resume from the first unevaluated skill.
 
-Each skill is evaluated against this checklist:
+Each skill is evaluated against the `skill-quality-review` rubric:
 
 ```
-- [ ] Content overlap with other skills checked
-- [ ] Overlap with MEMORY.md / CLAUDE.md checked
-- [ ] Freshness of technical references verified (use WebSearch if tool names / CLI flags / APIs are present)
+- [ ] Correctness checked: commands, paths, references, and technical claims are internally valid
+- [ ] Clarity checked: trigger, scope, and output expectations are explicit
+- [ ] Effectiveness checked: a cold reader can follow the workflow without hidden prerequisites
+- [ ] Maintainability checked: overlap, duplication, and context cost are justified
+- [ ] Freshness of unstable technical references verified (use WebSearch if tool names / CLI flags / APIs are present)
 - [ ] Usage frequency considered
 ```
 
@@ -188,6 +192,6 @@ Obtain via Bash: `date -u +%Y-%m-%dT%H:%M:%SZ`. Never use a date-only approximat
 
 ## Notes
 
-- Evaluation is blind: the same checklist applies to all skills regardless of origin (ECC, self-authored, auto-extracted)
+- Evaluation is blind: the same rubric applies to all skills regardless of origin (ECC, self-authored, auto-extracted)
 - Archive / delete operations always require explicit user confirmation
 - No verdict branching by skill origin

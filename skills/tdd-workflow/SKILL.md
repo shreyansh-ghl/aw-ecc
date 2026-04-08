@@ -1,410 +1,145 @@
 ---
 name: tdd-workflow
-description: Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.
+description: Use when implementing or fixing observable behavior with fail-first proof. Guides explicit RED -> GREEN -> REFACTOR, risk-based test scope, and repo-specific validation without assuming one framework or blanket coverage target.
 origin: ECC
 ---
 
 # Test-Driven Development Workflow
 
-This skill ensures all code development follows TDD principles with comprehensive test coverage.
-
-## When to Activate
-
-- Writing new features or functionality
-- Fixing bugs or issues
-- Refactoring existing code
-- Adding API endpoints
-- Creating new components
-
-## Core Principles
-
-### 1. Tests BEFORE Code
-ALWAYS write tests first, then implement code to make tests pass.
-
-### 2. Coverage Requirements
-- Minimum 80% coverage (unit + integration + E2E)
-- All edge cases covered
-- Error scenarios tested
-- Boundary conditions verified
-
-### 3. Test Types
-
-#### Unit Tests
-- Individual functions and utilities
-- Component logic
-- Pure functions
-- Helpers and utilities
-
-#### Integration Tests
-- API endpoints
-- Database operations
-- Service interactions
-- External API calls
-
-#### E2E Tests (Playwright)
-- Critical user flows
-- Complete workflows
-- Browser automation
-- UI interactions
-
-## TDD Workflow Steps
-
-### Step 1: Write User Journeys
-```
-As a [role], I want to [action], so that [benefit]
-
-Example:
-As a user, I want to search for markets semantically,
-so that I can find relevant markets even without exact keywords.
-```
-
-### Step 2: Generate Test Cases
-For each user journey, create comprehensive test cases:
-
-```typescript
-describe('Semantic Search', () => {
-  it('returns relevant markets for query', async () => {
-    // Test implementation
-  })
-
-  it('handles empty query gracefully', async () => {
-    // Test edge case
-  })
-
-  it('falls back to substring search when Redis unavailable', async () => {
-    // Test fallback behavior
-  })
-
-  it('sorts results by similarity score', async () => {
-    // Test sorting logic
-  })
-})
-```
-
-### Step 3: Run Tests (They Should Fail)
-```bash
-npm test
-# Tests should fail - we haven't implemented yet
-```
-
-### Step 4: Implement Code
-Write minimal code to make tests pass:
-
-```typescript
-// Implementation guided by tests
-export async function searchMarkets(query: string) {
-  // Implementation here
-}
-```
-
-### Step 5: Run Tests Again
-```bash
-npm test
-# Tests should now pass
-```
-
-### Step 6: Refactor
-Improve code quality while keeping tests green:
-- Remove duplication
-- Improve naming
-- Optimize performance
-- Enhance readability
-
-### Step 7: Verify Coverage
-```bash
-npm run test:coverage
-# Verify 80%+ coverage achieved
-```
-
-## Testing Patterns
-
-### Unit Test Pattern (Jest/Vitest)
-```typescript
-import { render, screen, fireEvent } from '@testing-library/react'
-import { Button } from './Button'
-
-describe('Button Component', () => {
-  it('renders with correct text', () => {
-    render(<Button>Click me</Button>)
-    expect(screen.getByText('Click me')).toBeInTheDocument()
-  })
-
-  it('calls onClick when clicked', () => {
-    const handleClick = jest.fn()
-    render(<Button onClick={handleClick}>Click</Button>)
-
-    fireEvent.click(screen.getByRole('button'))
-
-    expect(handleClick).toHaveBeenCalledTimes(1)
-  })
-
-  it('is disabled when disabled prop is true', () => {
-    render(<Button disabled>Click</Button>)
-    expect(screen.getByRole('button')).toBeDisabled()
-  })
-})
-```
-
-### API Integration Test Pattern
-```typescript
-import { NextRequest } from 'next/server'
-import { GET } from './route'
-
-describe('GET /api/markets', () => {
-  it('returns markets successfully', async () => {
-    const request = new NextRequest('http://localhost/api/markets')
-    const response = await GET(request)
-    const data = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(data.success).toBe(true)
-    expect(Array.isArray(data.data)).toBe(true)
-  })
-
-  it('validates query parameters', async () => {
-    const request = new NextRequest('http://localhost/api/markets?limit=invalid')
-    const response = await GET(request)
-
-    expect(response.status).toBe(400)
-  })
-
-  it('handles database errors gracefully', async () => {
-    // Mock database failure
-    const request = new NextRequest('http://localhost/api/markets')
-    // Test error handling
-  })
-})
-```
-
-### E2E Test Pattern (Playwright)
-```typescript
-import { test, expect } from '@playwright/test'
-
-test('user can search and filter markets', async ({ page }) => {
-  // Navigate to markets page
-  await page.goto('/')
-  await page.click('a[href="/markets"]')
-
-  // Verify page loaded
-  await expect(page.locator('h1')).toContainText('Markets')
-
-  // Search for markets
-  await page.fill('input[placeholder="Search markets"]', 'election')
-
-  // Wait for debounce and results
-  await page.waitForTimeout(600)
-
-  // Verify search results displayed
-  const results = page.locator('[data-testid="market-card"]')
-  await expect(results).toHaveCount(5, { timeout: 5000 })
-
-  // Verify results contain search term
-  const firstResult = results.first()
-  await expect(firstResult).toContainText('election', { ignoreCase: true })
-
-  // Filter by status
-  await page.click('button:has-text("Active")')
-
-  // Verify filtered results
-  await expect(results).toHaveCount(3)
-})
-
-test('user can create a new market', async ({ page }) => {
-  // Login first
-  await page.goto('/creator-dashboard')
-
-  // Fill market creation form
-  await page.fill('input[name="name"]', 'Test Market')
-  await page.fill('textarea[name="description"]', 'Test description')
-  await page.fill('input[name="endDate"]', '2025-12-31')
-
-  // Submit form
-  await page.click('button[type="submit"]')
-
-  // Verify success message
-  await expect(page.locator('text=Market created successfully')).toBeVisible()
-
-  // Verify redirect to market page
-  await expect(page).toHaveURL(/\/markets\/test-market/)
-})
-```
-
-## Test File Organization
-
-```
-src/
-├── components/
-│   ├── Button/
-│   │   ├── Button.tsx
-│   │   ├── Button.test.tsx          # Unit tests
-│   │   └── Button.stories.tsx       # Storybook
-│   └── MarketCard/
-│       ├── MarketCard.tsx
-│       └── MarketCard.test.tsx
-├── app/
-│   └── api/
-│       └── markets/
-│           ├── route.ts
-│           └── route.test.ts         # Integration tests
-└── e2e/
-    ├── markets.spec.ts               # E2E tests
-    ├── trading.spec.ts
-    └── auth.spec.ts
-```
-
-## Mocking External Services
-
-### Supabase Mock
-```typescript
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({
-          data: [{ id: 1, name: 'Test Market' }],
-          error: null
-        }))
-      }))
-    }))
-  }
-}))
-```
-
-### Redis Mock
-```typescript
-jest.mock('@/lib/redis', () => ({
-  searchMarketsByVector: jest.fn(() => Promise.resolve([
-    { slug: 'test-market', similarity_score: 0.95 }
-  ])),
-  checkRedisHealth: jest.fn(() => Promise.resolve({ connected: true }))
-}))
-```
-
-### OpenAI Mock
-```typescript
-jest.mock('@/lib/openai', () => ({
-  generateEmbedding: jest.fn(() => Promise.resolve(
-    new Array(1536).fill(0.1) // Mock 1536-dim embedding
-  ))
-}))
-```
-
-## Test Coverage Verification
-
-### Run Coverage Report
-```bash
-npm run test:coverage
-```
-
-### Coverage Thresholds
-```json
-{
-  "jest": {
-    "coverageThresholds": {
-      "global": {
-        "branches": 80,
-        "functions": 80,
-        "lines": 80,
-        "statements": 80
-      }
-    }
-  }
-}
-```
-
-## Common Testing Mistakes to Avoid
-
-### ❌ WRONG: Testing Implementation Details
-```typescript
-// Don't test internal state
-expect(component.state.count).toBe(5)
-```
-
-### ✅ CORRECT: Test User-Visible Behavior
-```typescript
-// Test what users see
-expect(screen.getByText('Count: 5')).toBeInTheDocument()
-```
-
-### ❌ WRONG: Brittle Selectors
-```typescript
-// Breaks easily
-await page.click('.css-class-xyz')
-```
-
-### ✅ CORRECT: Semantic Selectors
-```typescript
-// Resilient to changes
-await page.click('button:has-text("Submit")')
-await page.click('[data-testid="submit-button"]')
-```
-
-### ❌ WRONG: No Test Isolation
-```typescript
-// Tests depend on each other
-test('creates user', () => { /* ... */ })
-test('updates same user', () => { /* depends on previous test */ })
-```
-
-### ✅ CORRECT: Independent Tests
-```typescript
-// Each test sets up its own data
-test('creates user', () => {
-  const user = createTestUser()
-  // Test logic
-})
-
-test('updates user', () => {
-  const user = createTestUser()
-  // Update logic
-})
-```
-
-## Continuous Testing
-
-### Watch Mode During Development
-```bash
-npm test -- --watch
-# Tests run automatically on file changes
-```
-
-### Pre-Commit Hook
-```bash
-# Runs before every commit
-npm test && npm run lint
-```
-
-### CI/CD Integration
-```yaml
-# GitHub Actions
-- name: Run Tests
-  run: npm test -- --coverage
-- name: Upload Coverage
-  uses: codecov/codecov-action@v3
-```
-
-## Best Practices
-
-1. **Write Tests First** - Always TDD
-2. **One Assert Per Test** - Focus on single behavior
-3. **Descriptive Test Names** - Explain what's tested
-4. **Arrange-Act-Assert** - Clear test structure
-5. **Mock External Dependencies** - Isolate unit tests
-6. **Test Edge Cases** - Null, undefined, empty, large
-7. **Test Error Paths** - Not just happy paths
-8. **Keep Tests Fast** - Unit tests < 50ms each
-9. **Clean Up After Tests** - No side effects
-10. **Review Coverage Reports** - Identify gaps
-
-## Success Metrics
-
-- 80%+ code coverage achieved
-- All tests passing (green)
-- No skipped or disabled tests
-- Fast test execution (< 30s for unit tests)
-- E2E tests cover critical user flows
-- Tests catch bugs before production
-
----
-
-**Remember**: Tests are not optional. They are the safety net that enables confident refactoring, rapid development, and production reliability.
+## Overview
+
+`tdd-workflow` is the portable AW/ECC skill for fail-first implementation.
+It is not a framework-specific example pack and it is not a blanket rule that every change needs unit, integration, and E2E coverage all at once.
+
+Use it to drive behavior-changing work through explicit:
+
+- RED proof first
+- minimal GREEN implementation second
+- REFACTOR only while the same proof stays green
+
+The exact test tools, coverage thresholds, and runtime checks should follow the repo and the risk of the change.
+
+## When to Use
+
+- a feature changes observable behavior
+- a bug fix should start from a real failing proof
+- a refactor changes live behavior enough that a safety net is needed
+- a public contract, API path, or user-visible workflow needs regression protection
+
+## When Not to Use
+
+- the change is docs-only
+- the change is pure config, scaffolding, or packaging with no meaningful test-first path
+- the behavior is still unclear and needs planning or investigation first
+
+When test-first is not meaningful, use the surrounding build contract instead:
+record the best pre-change proof available and the focused post-change validation that will prove the slice.
+
+## Core Rules
+
+1. Write the failing proof before implementation.
+   The proof can be a unit test, integration test, reproduction script, contract check, or another deterministic failing signal.
+2. Run the exact RED command.
+   Do not assume the proof fails for the right reason until you observe it.
+3. Make the smallest change that turns RED into GREEN.
+   Avoid speculative cleanup, broad abstraction, or adjacent fixes during the GREEN step.
+4. Refactor only with the same proof staying green.
+   If the proof changes during refactor, you are no longer doing safe TDD.
+5. Expand evidence based on risk.
+   Unit, integration, browser/runtime, and E2E coverage should be proportional to the changed behavior and the repo's standards.
+
+## Workflow
+
+1. Name the behavior under change.
+   State the exact contract, bug, or user-visible outcome that must change.
+2. Choose the smallest RED proof.
+   Prefer the narrowest deterministic proof that would fail before the change and pass after it.
+3. Write the RED proof first.
+   Include the exact command that will run it.
+4. Run the RED command and capture the failure.
+   Confirm the failure matches the intended behavior gap instead of a setup mistake.
+5. Implement the smallest GREEN change.
+   Change only what is needed to satisfy the failing proof.
+6. Run the exact GREEN command.
+   Confirm the same proof now passes.
+7. Refactor while staying green.
+   Use `code-simplification` when the passing implementation is heavier than necessary.
+8. Widen validation only as needed.
+   Add broader tests or runtime checks when the change crosses boundaries or increases risk.
+9. Record the proof trail.
+   Keep the RED command, GREEN command, and any broader follow-up evidence visible in the work log or task artifact.
+
+## Choosing Test Scope
+
+| Scope | Use when | Expected proof |
+|---|---|---|
+| Unit | pure logic or one focused behavior changed | small targeted test |
+| Integration | boundaries between modules, APIs, DB, queues, or services changed | contract-level check across the boundary |
+| Runtime / browser | DOM, network, rendering, console, or real client behavior matters | browser or runtime proof |
+| E2E | critical user flow or release-critical journey changed | end-to-end scenario for the critical path |
+
+Do not force E2E tests for every slice.
+Do not skip them when the changed behavior is only trustworthy with end-to-end proof.
+
+## Coverage Guidance
+
+- follow repo thresholds when they already exist
+- expand tests around changed behavior and nearby regression risk
+- treat coverage numbers as a floor or signal, not the only definition of enough proof
+- do not invent a universal target for repos that do not track coverage that way
+
+## Framework and Stack Support
+
+Keep this skill portable.
+When stack-specific patterns matter, load the matching testing skill alongside it, for example:
+
+- `python-testing`
+- `golang-testing`
+- `kotlin-testing`
+- `cpp-testing`
+- `rust-testing`
+- `django-tdd`
+- `laravel-tdd`
+- `springboot-tdd`
+- `e2e-testing`
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "I know the fix, so I can add the test after." | Without RED proof first, you do not know the fix actually closes the original gap. |
+| "I'll make the design cleaner while I am here." | Extra change during GREEN hides what was actually required to pass. |
+| "Unit tests are enough for this UI bug." | Some behavior is only trustworthy with runtime or E2E proof. |
+| "Coverage is high, so the safety net is good enough." | Broad coverage can still miss the exact changed behavior. |
+
+## Red Flags
+
+- implementation starts before a RED proof exists
+- the RED command is never actually run
+- the GREEN step includes unrelated cleanup
+- refactor changes the proof target instead of preserving it
+- E2E is demanded for every slice regardless of risk
+- coverage percentage is treated as a substitute for behavior-specific proof
+
+## Verification
+
+Before leaving the TDD loop, confirm:
+
+- [ ] the changed behavior was named explicitly
+- [ ] the RED proof existed before implementation
+- [ ] the RED command was run and failed for the right reason
+- [ ] the GREEN command was run against the same proof
+- [ ] any refactor kept the same proof green
+- [ ] broader validation matched the risk of the change
+- [ ] repo-specific testing standards or coverage thresholds were respected when applicable
+
+## Final Output Shape
+
+Always end with:
+
+- `Behavior`
+- `RED Proof`
+- `GREEN Proof`
+- `Refactor`
+- `Expanded Evidence`
+- `Next`

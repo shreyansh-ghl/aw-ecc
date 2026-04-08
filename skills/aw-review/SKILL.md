@@ -28,6 +28,8 @@ Do not use as a hidden helper that replaces explicit review intent.
    Pull in platform review, design, accessibility, and quality-gate playbooks from the resolved baseline.
 3. Review across the five core axes.
    Correctness, readability and simplicity, architecture, security, and performance.
+   When the review covers concrete code changes, prefer the matching reviewer agent when one exists (`typescript-reviewer`, `python-reviewer`, `java-reviewer`, `kotlin-reviewer`, `go-reviewer`, `rust-reviewer`, `cpp-reviewer`, or `flutter-reviewer`).
+   Otherwise use `code-reviewer` and keep `aw-review` as the canonical stage contract for severity, governance, and readiness.
    Use `../../references/review-findings-severity.md`.
    For readability and maintainability concerns, load `code-simplification`.
    For public contract or boundary changes, load `api-and-interface-design`.
@@ -58,6 +60,7 @@ Review is complete only when one of these is true:
 Every review handoff must make these things obvious:
 
 - which evidence was reviewed
+- which reviewer path was used when code review was part of the scope
 - which findings are blocking versus advisory
 - which governance checks were completed
 - what the readiness outcome is
@@ -88,6 +91,7 @@ Every review handoff must make these things obvious:
 - `status`
 - written artifacts
 - evidence reviewed
+- reviewer agents or reviewer path used
 - blocking findings
 - advisory notes
 - governance status
@@ -101,6 +105,7 @@ Before leaving review, confirm:
 
 - [ ] test and runtime evidence were reviewed first
 - [ ] findings are explicit, evidence-backed, and severity-tagged
+- [ ] reviewer routing is explicit when the scope included concrete code review
 - [ ] governance and readiness checks match the resolved baseline
 - [ ] repairs point back to build or test with clear scope
 - [ ] `verification.md` and `state.json` are updated

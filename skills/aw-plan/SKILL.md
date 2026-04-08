@@ -42,6 +42,8 @@ This legacy heading maps to the detailed planning process below.
    Decide whether the request is already clear enough for direct planning or needs discovery first.
    For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
 4. Plan in dependency order.
+   Perform an explicit architecture review before freezing the technical path.
+   Name the key assumptions, constraints, risks, and mitigations instead of leaving them implied.
    Use dependency graph thinking to decide whether product, design, technical, or tasks work must come first.
    For public interface or contract changes, load `api-and-interface-design`.
    For deprecation, replacement, or migration work, load `deprecation-and-migration`.
@@ -49,9 +51,12 @@ This legacy heading maps to the detailed planning process below.
 5. Slice vertically where possible.
    Prefer end-to-end feature slices and concrete checkpoints over horizontal batch plans.
 6. Write only the missing artifacts.
+   When technical uncertainty exists, route through `aw-spec` before `aw-tasks`.
+   Do not let task planning invent or silently repair an unresolved contract.
    Make every created artifact concrete enough for the next stage to proceed without re-planning file scope, validation, and task order.
 7. Review and update state.
-   Run a placeholder and consistency pass, then update `.aw_docs/features/<feature_slug>/state.json`.
+   Run the full planning self-review: spec coverage, placeholder scan, naming and type consistency, assumptions and constraints, and execution handoff quality.
+   Then update `.aw_docs/features/<feature_slug>/state.json`.
 8. Stop after planning.
    Recommend the next stage without drifting into build, test, or deploy.
 
@@ -100,8 +105,9 @@ Capture:
 - goal
 - scope
 - non-goals
+- assumptions and constraints
 - acceptance criteria
-- risks or dependencies
+- risks, mitigations, or dependencies
 
 ### `design.md`
 
@@ -120,13 +126,25 @@ Canonical internal owner: `aw-spec`
 Capture:
 
 - implementation goal
+- current state and relevant existing patterns
 - scope
+- non-goals
+- assumptions and constraints
+- non-functional requirements when relevant
 - interfaces or contracts
 - technical approach
+- architecture rationale for non-obvious decisions
+- decision and alternatives considered for major technical choices
 - failure modes
+- invariants or compatibility rules that must stay true
+- testing strategy
 - acceptance criteria
 - verification targets
 - expected changed files or modules when those can be inferred safely
+- observability, debugging, or operator-facing constraints when relevant
+- operations and rollback verification when relevant
+- ADR-needed decision when the change has durable architectural impact
+- rollback, migration, or backward-compatibility constraints when relevant
 - key commands, migrations, or rollout constraints that execution must honor
 
 ### `tasks.md`
@@ -140,6 +158,7 @@ Start with a short header and an explicit `## Spec Brief` section that captures:
 - architecture summary
 - execution route: `/aw:build`
 - expected execution mode when it is known safely
+- expected chunk review mode when it is known safely
 
 Before task sections, map the file structure:
 
@@ -171,11 +190,15 @@ Break implementation into small, executable chunks with:
 
 For code behavior, prefer task steps close to:
 
-- write the failing test or capture the failing signal
-- run it to verify the failure is real
+- write the RED test or capture the exact failing proof first
+- run the exact command to verify the RED failure is real
 - write the minimal change
-- rerun the relevant verification to confirm the pass
+- rerun the exact command to confirm GREEN
+- simplify or refactor while keeping the same proof green
 - commit the focused slice
+
+For behavior-changing slices, planning should default to explicit `RED -> GREEN -> REFACTOR` language rather than vague "add tests" instructions.
+If test-first is not meaningful, say why and name the best pre-change proof plus post-change validation instead of silently weakening the contract.
 
 Each step should usually be small enough to fit in about 2-5 minutes.
 Use `../../references/task-sizing-and-checkpoints.md` when sizing or checkpointing gets fuzzy.
@@ -190,6 +213,7 @@ Execution-ready tasks should make it obvious:
 - which phases exist and what each phase is meant to deliver
 - which files change first
 - which validation command or evidence target proves each slice
+- which reviewer path is expected when it is known safely
 - which steps are safe to parallelize
 - which `parallel_group` and `parallel_write_scope` belong to those steps
 - what `max_parallel_subagents` cap build should honor for that plan
@@ -206,9 +230,11 @@ Prefer including:
 - exact or likely changed files and what each one is responsible for
 - exact file paths when they can be inferred safely
 - explicit phase headings for the task plan
+- explicit assumptions, constraints, and risks when they materially affect execution order
 - concrete task goals
 - checkbox execution steps for non-trivial work
-- exact commands and expected outcomes for failure and pass checks
+- exact commands and expected outcomes — use exact RED and GREEN commands for behavior-changing work
+- explicit refactor or simplification follow-up after GREEN when behavior-changing work is non-trivial
 - the minimal validation commands or evidence expected after implementation
 - commit boundaries for meaningful slices
 - save-point commit expectations for meaningful slices
@@ -316,9 +342,11 @@ Before ending the planning stage:
 1. confirm each spec requirement maps to a task or explicit reason it is out of scope
 2. confirm `## Spec Brief` at the top of `tasks.md` matches the approved spec
 3. confirm the phase order is obvious and every phase has a clear outcome
-4. scan for placeholders and vague steps
-5. check that file paths, type names, helper names, and commands stay consistent
-6. confirm the next stage can route directly to `/aw:build` or explicitly state what approval is still missing
+4. confirm assumptions, constraints, and risks are written down where they materially affect execution
+5. scan for placeholders and vague steps
+6. check that file paths, type names, helper names, and commands stay consistent
+7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
+8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
@@ -329,6 +357,7 @@ When `tasks.md` is ready:
 
 - recommend `/aw:build`
 - name the selected execution mode when it is known safely
+- name the selected chunk review mode when it is known safely
 - name any blocker that should send the work back to planning instead of guessing
 
 ## Hard Gates
@@ -350,6 +379,7 @@ When `tasks.md` is ready:
 - written artifacts
 - key inputs
 - internal skills used
+- assumptions or constraints that materially shape execution
 - planned save-point commit policy
 - parallel build policy and cap when parallel execution is planned
 - recommended next commands
@@ -364,5 +394,6 @@ Always end with:
 - `Spec Brief`
 - `Phases`
 - `Execution Readiness`
+- `Execution Mode`
 - `Missing`
 - `Next`

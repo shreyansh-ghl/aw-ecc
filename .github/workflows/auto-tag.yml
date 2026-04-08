@@ -1,4 +1,4 @@
-name: Auto-tag on merge
+name: Auto-tag and Release on merge
 
 on:
   push:
@@ -10,13 +10,15 @@ permissions:
   contents: write
 
 jobs:
-  auto-tag:
-    name: Create version tag from plugin.json
+  auto-tag-and-release:
+    name: Create version tag and GitHub Release from plugin.json
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read version from plugin.json
         id: version
@@ -41,3 +43,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
           git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true

@@ -1,4 +1,7 @@
-name: Release
+name: Release (manual tag)
+
+# Fallback for manually pushed tags — auto-tag.yml handles the normal flow.
+# This ensures a release is created even if someone pushes a tag directly.
 
 on:
   push:
@@ -15,8 +18,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Validate version tag
         run: |
@@ -33,35 +34,12 @@ jobs:
           PLUGIN_VERSION=$(grep -oE '"version": *"[^"]*"' .claude-plugin/plugin.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
           if [ "$TAG_VERSION" != "$PLUGIN_VERSION" ]; then
             echo "::error::Tag version ($TAG_VERSION) does not match plugin.json version ($PLUGIN_VERSION)"
-            echo "Run: ./scripts/release.sh $TAG_VERSION"
             exit 1
           fi
-
-      - name: Generate release highlights
-        id: highlights
-        env:
-          TAG_NAME: ${{ github.ref_name }}
-        run: |
-          TAG_VERSION="${TAG_NAME#v}"
-          cat > release_body.md <<EOF
-          ## ECC ${TAG_VERSION}
-
-          ### What This Release Focuses On
-          - Harness reliability and hook stability across Claude Code, Cursor, OpenCode, and Codex
-          - Stronger eval-driven workflows and quality gates
-          - Better operator UX for autonomous loop execution
-
-          ### Notable Changes
-          - Session persistence and hook lifecycle fixes
-          - Expanded skills and command coverage for harness performance work
-          - Improved release-note generation and changelog hygiene
-
-          ### Notes
-          - For migration tips and compatibility notes, see README and CHANGELOG.
-          EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: release_body.md
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           generate_release_notes: true

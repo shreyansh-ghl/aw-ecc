@@ -145,7 +145,7 @@ For each selected category, print the full list of skills below and ask the user
 | `iterative-retrieval` | Progressive context refinement for subagent context problem |
 | `security-review` | Security checklist: auth, input, secrets, API, payment features |
 | `strategic-compact` | Suggests manual context compaction at logical intervals |
-| `tdd-workflow` | Enforces TDD with 80%+ coverage: unit, integration, E2E |
+| `tdd-workflow` | Guides RED -> GREEN -> REFACTOR with risk-based test scope and repo-specific validation |
 | `verification-loop` | Verification and quality loop patterns |
 
 **Category: Business & Content (5 skills)**

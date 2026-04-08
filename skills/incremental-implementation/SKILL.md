@@ -29,9 +29,11 @@ Each slice should leave the system in a working, testable, reviewable state befo
    Start from approved scope.
    Choose one user-visible behavior, one boundary change, or one safe infrastructure increment.
 2. Define the proof for that slice.
-   Name the failing signal, acceptance check, or runtime evidence that will prove the slice is real.
+   For behavior-changing slices, load `tdd-guide` and define the RED test or failing proof before implementation.
+   For non-behavior slices, name the smallest pre-change proof and the focused post-change validation that will prove the slice is real.
 3. Implement only that slice.
    Avoid adjacent cleanup and hidden follow-on work.
+   Use `code-simplification` when the slice works but is heavier than necessary.
    Use `../../references/build-increments.md` when sizing or rollback shape is fuzzy.
 4. Verify immediately.
    Run the smallest relevant check:
@@ -39,10 +41,14 @@ Each slice should leave the system in a working, testable, reviewable state befo
    - build or typecheck
    - runtime/browser proof
    - migration validation
-5. Save the progress cleanly.
+5. Review the slice before continuing.
+   Use the right reviewer agent when available, otherwise use `code-reviewer`.
+   Resolve blocking findings before the next slice.
+   Only defer advisory findings when they are written down explicitly.
+6. Save the progress cleanly.
    Use `../../references/git-save-points.md` when the work benefits from explicit commit discipline.
    A good save point is small, passing, and easy to explain.
-6. Decide whether to continue or hand off.
+7. Decide whether to continue or hand off.
    If more approved build slices remain, continue with the next slice.
    If the approved build scope is complete and the next unsatisfied need is QA, review, or release work, stop and hand off.
    Do not keep building just because speculative cleanup or unrelated improvements are possible.
@@ -62,6 +68,8 @@ Each slice should leave the system in a working, testable, reviewable state befo
 - one passing slice is treated as the end of build even though approved build slices remain
 - rollback is unclear after the latest patch
 - tests are deferred instead of attached to the slice
+- a behavior-changing slice started without a RED proof
+- a slice advances without reviewer feedback being addressed or explicitly deferred
 - commit/save-point boundaries no longer match meaningful progress
 
 ## Verification
@@ -70,6 +78,9 @@ After each increment, confirm:
 
 - [ ] the slice has one clear purpose
 - [ ] the slice has current proof, not assumed proof
+- [ ] behavior-changing slices used RED -> GREEN -> REFACTOR
+- [ ] non-behavior slices captured pre-change proof and focused validation
+- [ ] reviewer feedback was resolved or explicitly deferred before the next slice
 - [ ] the diff is still reversible and reviewable
 - [ ] the next slice is either the next approved build step or an explicit handoff boundary
 - [ ] save points reflect meaningful progress
