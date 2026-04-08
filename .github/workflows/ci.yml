@@ -211,35 +211,65 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
 
-      - name: Get PR version
+      - name: Get PR version from plugin.json (source of truth)
         id: pr
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(grep -oE '"version": *"[^"]*"' .claude-plugin/plugin.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get base version
         id: base
         run: |
           git fetch origin ${{ github.base_ref }} --depth=1
-          echo "version=$(git show origin/${{ github.base_ref }}:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")" >> $GITHUB_OUTPUT
+          VERSION=$(git show origin/${{ github.base_ref }}:.claude-plugin/plugin.json | grep -oE '"version": *"[^"]*"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Compare versions
+      - name: Verify version is incremented
         run: |
           PR_VERSION="${{ steps.pr.outputs.version }}"
           BASE_VERSION="${{ steps.base.outputs.version }}"
-          echo "Base version: $BASE_VERSION"
-          echo "PR version:   $PR_VERSION"
+          echo "Base version (plugin.json): $BASE_VERSION"
+          echo "PR version   (plugin.json): $PR_VERSION"
 
           if [ "$PR_VERSION" = "$BASE_VERSION" ]; then
-            echo "::error::Version in package.json ($PR_VERSION) was not incremented. Bump the version before merging."
+            echo "::error::Version in .claude-plugin/plugin.json ($PR_VERSION) was not incremented. Bump the version before merging."
             exit 1
           fi
 
-          # Verify PR version is greater using node semver comparison
-          IS_GREATER=$(node -e "
+          node -e "
             const [a, b] = ['$PR_VERSION', '$BASE_VERSION'].map(v => v.split('.').map(Number));
             const gt = a[0] > b[0] || (a[0] === b[0] && a[1] > b[1]) || (a[0] === b[0] && a[1] === b[1] && a[2] > b[2]);
-            process.exit(gt ? 0 : 1);
-          ")
+            if (!gt) { console.error('::error::PR version ($PR_VERSION) is not greater than base ($BASE_VERSION)'); process.exit(1); }
+          "
           echo "Version bump verified: $BASE_VERSION → $PR_VERSION"
+
+      - name: Verify all manifests are in sync
+        run: |
+          PR_VERSION="${{ steps.pr.outputs.version }}"
+          ERRORS=0
+
+          check_version() {
+            local file="$1"
+            local actual
+            actual=$(grep -oE '"version": *"[^"]*"' "$file" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+            if [ "$actual" != "$PR_VERSION" ]; then
+              echo "::error file=$file::Version mismatch: $file has $actual, expected $PR_VERSION (from plugin.json)"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "  ✓ $file → $actual"
+            fi
+          }
+
+          echo "Checking all manifests match plugin.json version ($PR_VERSION):"
+          check_version ".claude-plugin/marketplace.json"
+          check_version "package.json"
+          check_version ".opencode/package.json"
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS manifest(s) have mismatched versions. All must match .claude-plugin/plugin.json ($PR_VERSION)."
+            exit 1
+          fi
+          echo "All manifests in sync ✓"
 
   lint:
     name: Lint
