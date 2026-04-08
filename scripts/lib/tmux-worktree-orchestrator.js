@@ -74,7 +74,7 @@ function ensureUniqueWorkerSlugs(workerPlans) {
 
 function normalizeMaxParallelWorkers(options, workerCount) {
   const rawValue = options.maxParallelWorkers ?? options.max_parallel_workers;
-  if (rawValue == null) {
+  if (rawValue === null || rawValue === undefined) {
     return workerCount;
   }
 

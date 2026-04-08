@@ -2,8 +2,14 @@ const path = require('path');
 
 const {
   createFlatRuleOperations,
+  createRemappedOperation,
   createInstallTargetAdapter,
 } = require('./helpers');
+const {
+  getCursorAwHookSourceRelativeDir,
+  getCursorAwHookConfigSourceRelativePath,
+  getCursorAwSharedHookSourceRelativeDir,
+} = require('../cursor-aw-hook-files');
 
 module.exports = createInstallTargetAdapter({
   id: 'cursor-project',
@@ -38,6 +44,33 @@ module.exports = createInstallTargetAdapter({
             sourceRelativePath,
             destinationDir: path.join(targetRoot, 'rules'),
           });
+        }
+
+        if (sourceRelativePath === '.cursor') {
+          return [
+            adapter.createScaffoldOperation(module.id, sourceRelativePath, planningInput),
+            createRemappedOperation(
+              adapter,
+              module.id,
+              getCursorAwHookSourceRelativeDir(),
+              path.join(targetRoot, 'hooks'),
+              { strategy: 'sync-root-children' }
+            ),
+            createRemappedOperation(
+              adapter,
+              module.id,
+              getCursorAwSharedHookSourceRelativeDir(),
+              path.join(targetRoot, 'hooks', 'shared'),
+              { strategy: 'sync-root-children' }
+            ),
+            createRemappedOperation(
+              adapter,
+              module.id,
+              getCursorAwHookConfigSourceRelativePath(),
+              path.join(targetRoot, 'hooks.json'),
+              { strategy: 'flatten-copy' }
+            ),
+          ];
         }
 
         return [adapter.createScaffoldOperation(module.id, sourceRelativePath, planningInput)];

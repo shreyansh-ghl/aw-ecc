@@ -133,7 +133,7 @@ function runTests() {
       fs.mkdirSync(targetRoot, { recursive: true });
       const normalizedTargetRoot = fs.realpathSync(targetRoot);
       const statePath = path.join(normalizedTargetRoot, 'ecc-install-state.json');
-      const jsonPath = path.join(normalizedTargetRoot, 'hooks.json');
+      const jsonPath = path.join(normalizedTargetRoot, 'managed-settings.json');
       const renderedPath = path.join(normalizedTargetRoot, 'generated.md');
       const removedPath = path.join(normalizedTargetRoot, 'legacy-note.txt');
       fs.writeFileSync(jsonPath, JSON.stringify({ existing: true, managed: false }, null, 2));
@@ -160,7 +160,7 @@ function runTests() {
           {
             kind: 'merge-json',
             moduleId: 'platform-configs',
-            sourceRelativePath: '.cursor/hooks.json',
+            sourceRelativePath: '.cursor/managed-settings.json',
             destinationPath: jsonPath,
             strategy: 'merge-json',
             ownership: 'managed',

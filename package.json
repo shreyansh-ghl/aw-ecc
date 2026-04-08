@@ -1,6 +1,6 @@
 {
   "name": "aw-ecc",
-  "version": "1.2.2",
+  "version": "1.4.19",
   "description": "GoHighLevel Agentic Workspace Engine — forked from Everything Claude Code (ecc-universal)",
   "keywords": [
     "claude-code",
@@ -67,6 +67,8 @@
     "scripts/ci/",
     "scripts/ecc.js",
     "scripts/hooks/",
+    "scripts/cursor-aw-hooks/",
+    "scripts/cursor-aw-home/",
     "scripts/lib/",
     "scripts/claw.js",
     "scripts/doctor.js",
@@ -79,6 +81,7 @@
     "scripts/orchestrate-codex-worker.sh",
     "scripts/orchestrate-worktrees.js",
     "scripts/setup-package-manager.js",
+    "scripts/generate-aw-hooks.js",
     "scripts/skill-create-output.js",
     "scripts/codex/merge-mcp-config.js",
     "scripts/repair.js",
@@ -98,6 +101,8 @@
     "ecc-install": "scripts/install-apply.js"
   },
   "scripts": {
+    "generate-hooks": "node scripts/generate-aw-hooks.js",
+    "prepare": "npm run generate-hooks",
     "postinstall": "echo '\\n  ecc-universal installed!\\n  Run: npx ecc typescript\\n  Compat: npx ecc-install typescript\\n  Docs: https://github.com/affaan-m/everything-claude-code\\n'",
     "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules --ignore tests/results --ignore skills/using-aw-skills/evals/results --ignore docs/pt-BR --ignore docs/tr --ignore docs/zh-CN",
     "harness:audit": "node scripts/harness-audit.js",
@@ -118,7 +123,7 @@
     "c8": "^10.1.2",
     "eslint": "^9.39.2",
     "globals": "^17.1.0",
-    "markdownlint-cli": "^0.47.0"
+    "markdownlint-cli": "^0.48.0"
   },
   "engines": {
     "node": ">=18"
