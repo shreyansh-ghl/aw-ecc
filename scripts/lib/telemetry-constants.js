@@ -2,10 +2,10 @@
 /**
  * Telemetry Constants — single source of truth for pricing, paths, and config.
  *
+ * Prompt-based model: each Stop hook = one queue entry. No sessions, no checkpoints.
+ * Local state: queue.jsonl (pending records) + flush-meta.json (flush counter).
+ *
  * Pricing uses a hardcoded fallback + cached API pricing from OpenRouter.
- * At SessionStart, pricing is fetched from OpenRouter's public /api/v1/models
- * endpoint and cached to ~/.aw/telemetry/pricing.json. Stop/PreCompact/SessionEnd
- * hooks read the cached file, falling back to FALLBACK_PRICING if unavailable.
  */
 
 'use strict';
@@ -20,26 +20,17 @@ const fs = require('fs');
 
 const AW_DIR = path.join(os.homedir(), '.aw');
 const TELEMETRY_DIR = path.join(AW_DIR, 'telemetry');
-const COSTS_FILE = path.join(TELEMETRY_DIR, 'costs.jsonl');
-const CHECKPOINT_FILE = path.join(TELEMETRY_DIR, 'checkpoint.json');
 const QUEUE_FILE = path.join(TELEMETRY_DIR, 'queue.jsonl');
-const SPANS_BUFFER_FILE = path.join(TELEMETRY_DIR, 'spans-buffer.jsonl');
+const FLUSH_META_FILE = path.join(TELEMETRY_DIR, 'flush-meta.json');
 const PRICING_CACHE_FILE = path.join(TELEMETRY_DIR, 'pricing.json');
 
 // ---------------------------------------------------------------------------
-// Queue limits
+// Queue & flush config
 // ---------------------------------------------------------------------------
 
-const QUEUE_MAX_ITEMS = 200;
+const QUEUE_MAX_ITEMS = parseInt(process.env.AW_QUEUE_MAX_ITEMS || '2000', 10);
 const QUEUE_TTL_DAYS = 7;
-
-// ---------------------------------------------------------------------------
-// Stop self-flush intervals — ensures data reaches API without SessionEnd
-// ---------------------------------------------------------------------------
-
-const STOP_FLUSH_INTERVAL_TURNS = parseInt(process.env.AW_STOP_FLUSH_TURNS || '10', 10);
-const STOP_FLUSH_INTERVAL_MS = parseInt(process.env.AW_STOP_FLUSH_MS || '300000', 10); // 5 minutes
-const ORPHAN_SESSION_AGE_MS = 60 * 60 * 1000; // 1 hour
+const FLUSH_THRESHOLD = parseInt(process.env.AW_FLUSH_THRESHOLD || '10', 10);
 
 // ---------------------------------------------------------------------------
 // Fallback pricing — per 1M tokens, USD
@@ -80,23 +71,19 @@ async function fetchAndCachePricing() {
     const json = await res.json();
     if (!json.data || !Array.isArray(json.data)) return false;
 
-    // Extract Anthropic models and normalize pricing
     const pricing = {};
     for (const model of json.data) {
       if (!model.id || !model.pricing) continue;
 
-      // We care about all models, not just Anthropic — cost estimation
-      // should work for any model routed through the hook.
       const p = model.pricing;
       pricing[model.id] = {
-        input: parseFloat(p.prompt || '0') * 1_000_000,   // per-token -> per-1M
+        input: parseFloat(p.prompt || '0') * 1_000_000,
         output: parseFloat(p.completion || '0') * 1_000_000,
         cacheRead: parseFloat(p.cache_read || p.prompt || '0') * 1_000_000,
         cacheCreation: parseFloat(p.cache_creation || p.prompt || '0') * 1_000_000,
       };
     }
 
-    // Ensure telemetry dir exists
     if (!fs.existsSync(TELEMETRY_DIR)) {
       fs.mkdirSync(TELEMETRY_DIR, { recursive: true });
     }
@@ -122,7 +109,6 @@ function loadCachedPricing() {
     const raw = fs.readFileSync(PRICING_CACHE_FILE, 'utf8');
     const data = JSON.parse(raw);
 
-    // Check staleness
     const fetchedAt = new Date(data.fetched_at).getTime();
     if (Date.now() - fetchedAt > PRICING_CACHE_MAX_AGE_MS) return null;
 
@@ -142,14 +128,11 @@ function loadCachedPricing() {
 function getPricingForModel(model) {
   const normalized = String(model || '').toLowerCase();
 
-  // Try cached OpenRouter pricing (exact match first)
   const cached = loadCachedPricing();
   if (cached) {
-    // Exact match (e.g. 'anthropic/claude-sonnet-4-6')
     if (cached[model]) return cached[model];
     if (cached[`anthropic/${model}`]) return cached[`anthropic/${model}`];
 
-    // Fuzzy match — find first key containing the model name
     for (const [key, rates] of Object.entries(cached)) {
       if (key.toLowerCase().includes(normalized) || normalized.includes(key.toLowerCase())) {
         return rates;
@@ -157,10 +140,8 @@ function getPricingForModel(model) {
     }
   }
 
-  // Fallback to hardcoded rates
   if (normalized.includes('haiku')) return FALLBACK_PRICING.haiku;
   if (normalized.includes('opus')) return FALLBACK_PRICING.opus;
-  // Default to sonnet rates for unknown models
   return FALLBACK_PRICING.sonnet;
 }
 
@@ -173,12 +154,10 @@ function getPricingForModel(model) {
  * Priority: AW_API_URL env > ~/.aw/config.json > production default.
  */
 function getApiUrl() {
-  // 1. Environment variable
   if (process.env.AW_API_URL) {
     return process.env.AW_API_URL.replace(/\/+$/, '');
   }
 
-  // 2. Config file
   try {
     const configPath = path.join(AW_DIR, 'config.json');
     if (fs.existsSync(configPath)) {
@@ -191,7 +170,6 @@ function getApiUrl() {
     // Fall through to default
   }
 
-  // 3. Production default
   return 'https://aw-api.gohighlevel.com';
 }
 
@@ -199,20 +177,14 @@ module.exports = {
   // Paths
   AW_DIR,
   TELEMETRY_DIR,
-  COSTS_FILE,
-  CHECKPOINT_FILE,
   QUEUE_FILE,
-  SPANS_BUFFER_FILE,
+  FLUSH_META_FILE,
   PRICING_CACHE_FILE,
 
-  // Limits
+  // Queue & flush
   QUEUE_MAX_ITEMS,
   QUEUE_TTL_DAYS,
-
-  // Self-flush
-  STOP_FLUSH_INTERVAL_TURNS,
-  STOP_FLUSH_INTERVAL_MS,
-  ORPHAN_SESSION_AGE_MS,
+  FLUSH_THRESHOLD,
 
   // Pricing
   FALLBACK_PRICING,

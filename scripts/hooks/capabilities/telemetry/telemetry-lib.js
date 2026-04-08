@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Telemetry Library — shared utilities for all telemetry capability hooks.
+ * Telemetry Library — shared utilities for prompt-based telemetry hooks.
  *
- * Provides: cost estimation, JSONL I/O, checkpoint tracking, offline queue,
- * API push, platform detection, project hash, and namespace resolution.
+ * Prompt-based model: each Stop hook = one queue entry (prompt record).
+ * Local state: queue.jsonl (pending records) + flush-meta.json (flush counter).
+ * No sessions, no checkpoints, no costs.jsonl.
  *
- * All state lives under ~/.aw/telemetry/ (vendor-agnostic).
+ * Provides: queue I/O, flush meta, cost estimation, prompt record building,
+ * artifact extraction, batch API push, platform detection, project hash.
  */
 
 'use strict';
@@ -15,14 +17,11 @@ const path = require('path');
 const crypto = require('crypto');
 const {
   TELEMETRY_DIR,
-  COSTS_FILE,
-  CHECKPOINT_FILE,
   QUEUE_FILE,
+  FLUSH_META_FILE,
   QUEUE_MAX_ITEMS,
   QUEUE_TTL_DAYS,
-  STOP_FLUSH_INTERVAL_TURNS,
-  STOP_FLUSH_INTERVAL_MS,
-  ORPHAN_SESSION_AGE_MS,
+  FLUSH_THRESHOLD,
   getPricingForModel,
   getApiUrl,
 } = require('../../../lib/telemetry-constants');
@@ -37,159 +36,27 @@ function ensureTelemetryDir() {
 }
 
 // ---------------------------------------------------------------------------
-// Session metadata
+// Queue — JSONL append-only with TTL
 // ---------------------------------------------------------------------------
 
-function getSessionMetadataPath(sessionId) {
-  return path.join(TELEMETRY_DIR, `session-${sessionId}.json`);
-}
-
-function readSessionMetadata(sessionId) {
-  try {
-    const p = getSessionMetadataPath(sessionId);
-    if (!fs.existsSync(p)) return null;
-    return JSON.parse(fs.readFileSync(p, 'utf8'));
-  } catch {
-    return null;
-  }
-}
-
-function writeSessionMetadata(sessionId, data) {
+/**
+ * Append a single record to queue.jsonl.
+ * Each record is a self-contained prompt with all context.
+ */
+function appendToQueue(record) {
   ensureTelemetryDir();
-  const p = getSessionMetadataPath(sessionId);
-  fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8');
-}
-
-function deleteSessionMetadata(sessionId) {
-  try {
-    const p = getSessionMetadataPath(sessionId);
-    if (fs.existsSync(p)) fs.unlinkSync(p);
-  } catch {
-    // Ignore cleanup errors
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Cost estimation
-// ---------------------------------------------------------------------------
-
-/**
- * Estimate cost in USD for a given model and token counts.
- * Uses cached OpenRouter pricing with hardcoded fallback.
- */
-function estimateCost(model, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens) {
-  const rates = getPricingForModel(model);
-  const input = (toNumber(inputTokens) / 1_000_000) * rates.input;
-  const output = (toNumber(outputTokens) / 1_000_000) * rates.output;
-  const cacheRead = (toNumber(cacheReadTokens) / 1_000_000) * rates.cacheRead;
-  const cacheCreation = (toNumber(cacheCreationTokens) / 1_000_000) * rates.cacheCreation;
-  return Math.round((input + output + cacheRead + cacheCreation) * 1e6) / 1e6;
-}
-
-function toNumber(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-// ---------------------------------------------------------------------------
-// Costs JSONL — append-only log with incrementing entry_id
-// ---------------------------------------------------------------------------
-
-/**
- * Get the next entry_id by reading the last line of costs.jsonl.
- */
-function getNextEntryId() {
-  try {
-    if (!fs.existsSync(COSTS_FILE)) return 1;
-    const content = fs.readFileSync(COSTS_FILE, 'utf8').trim();
-    if (!content) return 1;
-    const lines = content.split('\n');
-    const lastLine = lines[lines.length - 1];
-    const last = JSON.parse(lastLine);
-    return (last.entry_id || 0) + 1;
-  } catch {
-    return 1;
-  }
+  const entry = {
+    type: 'prompt',
+    data: record,
+    queued_at: new Date().toISOString(),
+  };
+  fs.appendFileSync(QUEUE_FILE, JSON.stringify(entry) + '\n', 'utf8');
 }
 
 /**
- * Append a cost entry to costs.jsonl with an auto-incrementing entry_id.
- * @param {object} entry - Cost entry data (without entry_id)
- * @returns {number} The assigned entry_id
+ * Read all valid queue entries, filtering by TTL and max items.
+ * @returns {object[]} Array of queue entries
  */
-function appendCostEntry(entry) {
-  ensureTelemetryDir();
-  const entryId = getNextEntryId();
-  const row = { entry_id: entryId, ...entry };
-  fs.appendFileSync(COSTS_FILE, JSON.stringify(row) + '\n', 'utf8');
-  return entryId;
-}
-
-// ---------------------------------------------------------------------------
-// Checkpoint — monotonic counter for dedup
-// ---------------------------------------------------------------------------
-
-function readCheckpoint() {
-  try {
-    if (!fs.existsSync(CHECKPOINT_FILE)) return { session_id: null, last_flushed_entry: 0 };
-    return JSON.parse(fs.readFileSync(CHECKPOINT_FILE, 'utf8'));
-  } catch {
-    return { session_id: null, last_flushed_entry: 0 };
-  }
-}
-
-function updateCheckpoint(sessionId, lastFlushedEntry) {
-  ensureTelemetryDir();
-  fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify({
-    session_id: sessionId,
-    last_flushed_entry: lastFlushedEntry,
-    updated_at: new Date().toISOString(),
-  }), 'utf8');
-}
-
-/**
- * Read all unflushed cost entries since the last checkpoint.
- * @returns {{ entries: object[], checkpointFrom: number, checkpointTo: number }}
- */
-function readUnflushedEntries() {
-  const checkpoint = readCheckpoint();
-  const lastFlushed = checkpoint.last_flushed_entry || 0;
-
-  try {
-    if (!fs.existsSync(COSTS_FILE)) return { entries: [], checkpointFrom: lastFlushed, checkpointTo: lastFlushed };
-    const content = fs.readFileSync(COSTS_FILE, 'utf8').trim();
-    if (!content) return { entries: [], checkpointFrom: lastFlushed, checkpointTo: lastFlushed };
-
-    const lines = content.split('\n');
-    const unflushed = [];
-    let maxEntryId = lastFlushed;
-
-    for (const line of lines) {
-      try {
-        const entry = JSON.parse(line);
-        if (entry.entry_id > lastFlushed) {
-          unflushed.push(entry);
-          if (entry.entry_id > maxEntryId) maxEntryId = entry.entry_id;
-        }
-      } catch {
-        // Skip unparseable lines
-      }
-    }
-
-    return {
-      entries: unflushed,
-      checkpointFrom: lastFlushed,
-      checkpointTo: maxEntryId,
-    };
-  } catch {
-    return { entries: [], checkpointFrom: lastFlushed, checkpointTo: lastFlushed };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Offline queue — JSONL with TTL
-// ---------------------------------------------------------------------------
-
 function readQueue() {
   try {
     if (!fs.existsSync(QUEUE_FILE)) return [];
@@ -199,7 +66,7 @@ function readQueue() {
     const now = Date.now();
     const ttlMs = QUEUE_TTL_DAYS * 24 * 60 * 60 * 1000;
 
-    return content.split('\n')
+    const entries = content.split('\n')
       .map(line => {
         try { return JSON.parse(line); } catch { return null; }
       })
@@ -208,93 +75,93 @@ function readQueue() {
         const queuedAt = new Date(item.queued_at).getTime();
         return (now - queuedAt) < ttlMs;
       });
+
+    // Respect max items — keep newest
+    if (entries.length > QUEUE_MAX_ITEMS) {
+      return entries.slice(entries.length - QUEUE_MAX_ITEMS);
+    }
+    return entries;
   } catch {
     return [];
   }
 }
 
+/**
+ * Clear the queue file (truncate to empty).
+ * Called after successful batch flush.
+ */
+function clearQueue() {
+  try {
+    if (fs.existsSync(QUEUE_FILE)) {
+      fs.writeFileSync(QUEUE_FILE, '', 'utf8');
+    }
+  } catch {
+    // Non-fatal
+  }
+}
+
+/**
+ * Write remaining entries back to queue (partial flush failure).
+ */
 function writeQueue(items) {
   ensureTelemetryDir();
   const content = items.map(item => JSON.stringify(item)).join('\n');
   fs.writeFileSync(QUEUE_FILE, content ? content + '\n' : '', 'utf8');
 }
 
-/**
- * Enqueue a failed payload for later retry.
- */
-function enqueue(payload, endpoint) {
-  const queue = readQueue();
-  if (queue.length >= QUEUE_MAX_ITEMS) {
-    // Drop oldest items to make room
-    queue.splice(0, queue.length - QUEUE_MAX_ITEMS + 1);
-  }
-
-  queue.push({
-    payload,
-    endpoint,
-    queued_at: new Date().toISOString(),
-    attempts: 0,
-  });
-
-  writeQueue(queue);
-}
-
-/**
- * Flush the offline queue — POST each item, remove on success.
- * @returns {Promise<{ flushed: number, failed: number }>}
- */
-async function flushQueue(headers = {}) {
-  const queue = readQueue();
-  if (queue.length === 0) return { flushed: 0, failed: 0 };
-
-  const apiUrl = getApiUrl();
-  const remaining = [];
-  let flushed = 0;
-  let failed = 0;
-
-  for (const item of queue) {
-    const ok = await pushToApi(`${apiUrl}${item.endpoint}`, item.payload, headers);
-    if (ok) {
-      flushed++;
-    } else {
-      item.attempts = (item.attempts || 0) + 1;
-      remaining.push(item);
-      failed++;
-    }
-  }
-
-  writeQueue(remaining);
-  return { flushed, failed };
-}
-
 // ---------------------------------------------------------------------------
-// API push
+// Flush metadata — simple counter
 // ---------------------------------------------------------------------------
 
 /**
- * POST JSON to an API endpoint.
- * @returns {Promise<boolean>} true if response was 2xx
+ * Read flush metadata.
+ * @returns {{ last_flush_at: string|null, prompts_since_flush: number, total_prompts_flushed: number }}
  */
-async function pushToApi(url, payload, headers = {}) {
+function readFlushMeta() {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const res = await fetch(url, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body: JSON.stringify(payload),
-    });
-    clearTimeout(timeout);
-
-    return res.ok;
+    if (!fs.existsSync(FLUSH_META_FILE)) {
+      return { last_flush_at: null, prompts_since_flush: 0, total_prompts_flushed: 0 };
+    }
+    return JSON.parse(fs.readFileSync(FLUSH_META_FILE, 'utf8'));
   } catch {
-    return false;
+    return { last_flush_at: null, prompts_since_flush: 0, total_prompts_flushed: 0 };
   }
+}
+
+/**
+ * Update flush metadata.
+ */
+function updateFlushMeta(meta) {
+  ensureTelemetryDir();
+  fs.writeFileSync(FLUSH_META_FILE, JSON.stringify(meta, null, 2), 'utf8');
+}
+
+/**
+ * Check if we should flush the queue based on prompts_since_flush.
+ */
+function shouldFlush(meta) {
+  return (meta.prompts_since_flush || 0) >= FLUSH_THRESHOLD;
+}
+
+// ---------------------------------------------------------------------------
+// Cost estimation
+// ---------------------------------------------------------------------------
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Estimate cost in USD for a given model and token counts.
+ */
+function estimateCost(model, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens) {
+  const rates = getPricingForModel(model);
+  const input = (toNumber(inputTokens) / 1_000_000) * rates.input;
+  const output = (toNumber(outputTokens) / 1_000_000) * rates.output;
+  const cacheRead = (toNumber(cacheReadTokens) / 1_000_000) * rates.cacheRead;
+  const cacheCreation = (toNumber(cacheCreationTokens) / 1_000_000) * rates.cacheCreation;
+  return Math.round((input + output + cacheRead + cacheCreation) * 1e6) / 1e6;
 }
 
 // ---------------------------------------------------------------------------
@@ -306,16 +173,10 @@ async function pushToApi(url, payload, headers = {}) {
  * Returns 'claude-code', 'cursor', 'codex', or 'unknown'.
  */
 function detectPlatform() {
-  // Claude Code sets CLAUDE_SESSION_ID
   if (process.env.CLAUDE_SESSION_ID) return 'claude-code';
-
-  // Cursor sets CURSOR_SESSION_ID or _cursor in payload
   if (process.env.CURSOR_SESSION_ID) return 'cursor';
-
-  // Codex sets CODEX_SESSION_ID or runs from ~/.codex/
   if (process.env.CODEX_SESSION_ID) return 'codex';
 
-  // Heuristic: check parent process or environment
   const parentCmd = process.env._ || '';
   if (parentCmd.includes('cursor')) return 'cursor';
   if (parentCmd.includes('codex')) return 'codex';
@@ -337,14 +198,88 @@ function detectPlatformVersion() {
 // Project hash
 // ---------------------------------------------------------------------------
 
+let _cachedProjectHash = null;
+
 /**
  * Compute a stable project identifier — SHA-256 of git remote origin URL.
- * Falls back to hash of cwd if no git remote.
+ * Falls back to hash of cwd if no git remote. Cached for process lifetime.
  */
 function getProjectHash() {
+  if (_cachedProjectHash) return _cachedProjectHash;
   const remote = runCommand('git remote get-url origin');
   const source = remote.success ? remote.output : process.cwd();
-  return crypto.createHash('sha256').update(source).digest('hex').slice(0, 16);
+  _cachedProjectHash = crypto.createHash('sha256').update(source).digest('hex').slice(0, 16);
+  return _cachedProjectHash;
+}
+
+// ---------------------------------------------------------------------------
+// Branch
+// ---------------------------------------------------------------------------
+
+let _cachedBranch = null;
+
+/**
+ * Get current git branch. Cached for process lifetime.
+ */
+function getBranch() {
+  if (_cachedBranch) return _cachedBranch;
+  const result = runCommand('git rev-parse --abbrev-ref HEAD');
+  _cachedBranch = result.success ? result.output : 'unknown';
+  return _cachedBranch;
+}
+
+// ---------------------------------------------------------------------------
+// Session tag — from env, used as groupable tag (not structural)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get session tag from environment.
+ * This is NOT a session ID in the lifecycle sense — just a groupable tag.
+ */
+function getSessionTag() {
+  return process.env.CLAUDE_SESSION_ID
+    || process.env.CURSOR_SESSION_ID
+    || process.env.CODEX_SESSION_ID
+    || null;
+}
+
+// ---------------------------------------------------------------------------
+// Turn number — extracted from payload or environment
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract turn number from the hook payload.
+ * Different IDEs expose this differently.
+ */
+function getTurnNumber(input) {
+  if (input.turn_number != null) return toNumber(input.turn_number);
+  if (input.conversation_turn_count != null) return toNumber(input.conversation_turn_count);
+  if (input._cursor?.turn != null) return toNumber(input._cursor.turn);
+  if (input.turn != null) return toNumber(input.turn);
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Prompt ID — deterministic dedup key
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a deterministic prompt_id for dedup.
+ * SHA-256(session_tag + turn_number). Falls back to timestamp-based if missing.
+ */
+function generatePromptId(sessionTag, turnNumber) {
+  if (sessionTag && turnNumber != null) {
+    return crypto.createHash('sha256')
+      .update(`${sessionTag}:${turnNumber}`)
+      .digest('hex')
+      .slice(0, 64);
+  }
+  // Fallback: include timestamp + random to avoid collisions
+  const fallbackSeed = `${sessionTag || 'unknown'}:${Date.now()}:${Math.random()}`;
+  return crypto.createHash('sha256')
+    .update(fallbackSeed)
+    .digest('hex')
+    .slice(0, 64);
 }
 
 // ---------------------------------------------------------------------------
@@ -353,13 +288,13 @@ function getProjectHash() {
 
 /**
  * Read namespace from AW registry sync config.
- * Used for X-Namespace header on API calls.
  */
 function getNamespace() {
   try {
+    const homedir = process.env.HOME || require('os').homedir();
     const syncConfigPaths = [
-      path.join(process.env.HOME || os.homedir(), '.aw_registry', '.sync-config.json'),
-      path.join(process.env.HOME || os.homedir(), '.aw', '.aw_registry', '.sync-config.json'),
+      path.join(homedir, '.aw_registry', '.sync-config.json'),
+      path.join(homedir, '.aw', '.aw_registry', '.sync-config.json'),
     ];
 
     for (const p of syncConfigPaths) {
@@ -386,246 +321,271 @@ function buildTelemetryHeaders(namespace) {
 }
 
 // ---------------------------------------------------------------------------
-// Session ID
+// Prompt record building
 // ---------------------------------------------------------------------------
 
 /**
- * Get a stable session ID from the environment.
+ * Build a complete prompt record from the Stop hook stdin payload.
+ *
+ * @param {object} input - Parsed stdin from Stop hook
+ * @returns {object} Prompt record ready for queue
  */
-function getSessionId() {
-  return process.env.CLAUDE_SESSION_ID
-    || process.env.CURSOR_SESSION_ID
-    || process.env.CODEX_SESSION_ID
-    || `unknown-${Date.now()}`;
-}
+function buildPromptRecord(input) {
+  const usage = input.usage || input.token_usage || {};
 
-// ---------------------------------------------------------------------------
-// Aggregation
-// ---------------------------------------------------------------------------
+  const inputTokens = toNumber(usage.input_tokens || usage.prompt_tokens || 0);
+  const outputTokens = toNumber(usage.output_tokens || usage.completion_tokens || 0);
+  const cacheReadTokens = toNumber(usage.cache_read_input_tokens || usage.cache_read_tokens || 0);
+  const cacheCreationTokens = toNumber(usage.cache_creation_input_tokens || usage.cache_creation_tokens || 0);
 
-/**
- * Aggregate cost entries into a single summary for API push.
- * @param {object[]} entries - Array of cost entry objects
- * @returns {object} Aggregated summary
- */
-function aggregateEntries(entries) {
-  let totalInputTokens = 0;
-  let totalOutputTokens = 0;
-  let totalCacheReadTokens = 0;
-  let totalCacheCreationTokens = 0;
-  let totalCostUsd = 0;
-  const modelsUsed = new Set();
-  const agentsUsed = new Set();
-  const skillsApplied = new Set();
-  const mcpToolsUsed = new Set();
-  let compactionCount = 0;
-  let prUrl = null;
-  let prNumber = null;
-  let prRepo = null;
+  const model = String(
+    input.model
+    || input._cursor?.model
+    || process.env.CLAUDE_MODEL
+    || 'unknown'
+  );
 
-  for (const entry of entries) {
-    totalInputTokens += toNumber(entry.input_tokens);
-    totalOutputTokens += toNumber(entry.output_tokens);
-    totalCacheReadTokens += toNumber(entry.cache_read_tokens);
-    totalCacheCreationTokens += toNumber(entry.cache_creation_tokens);
-    totalCostUsd += toNumber(entry.estimated_cost_usd);
+  const sessionTag = getSessionTag();
+  const turnNumber = getTurnNumber(input);
+  const promptId = generatePromptId(sessionTag, turnNumber);
 
-    if (entry.model) modelsUsed.add(entry.model);
-    if (entry.compaction) compactionCount++;
-
-    // Collect attribution arrays
-    if (Array.isArray(entry.agents_used)) entry.agents_used.forEach(a => agentsUsed.add(a));
-    if (Array.isArray(entry.skills_applied)) entry.skills_applied.forEach(s => skillsApplied.add(s));
-    if (Array.isArray(entry.mcp_tools_used)) entry.mcp_tools_used.forEach(t => mcpToolsUsed.add(t));
-
-    // Take last non-null PR info
-    if (entry.pr_url) { prUrl = entry.pr_url; prNumber = entry.pr_number; prRepo = entry.pr_repo; }
-  }
-
-  return {
-    tokens_used: totalInputTokens + totalOutputTokens,
-    input_tokens: totalInputTokens,
-    output_tokens: totalOutputTokens,
-    cache_read_tokens: totalCacheReadTokens,
-    cache_creation_tokens: totalCacheCreationTokens,
-    cost_usd: Math.round(totalCostUsd * 1e6) / 1e6,
-    model: Array.from(modelsUsed).join(',') || 'unknown',
-    agents_used: Array.from(agentsUsed),
-    skills_applied: Array.from(skillsApplied),
-    mcp_tools_used: Array.from(mcpToolsUsed),
-    compaction_count: compactionCount,
-    pr_url: prUrl,
-    pr_number: prNumber,
-    pr_repo: prRepo,
+  const record = {
+    prompt_id: promptId,
+    model,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    cache_read_tokens: cacheReadTokens,
+    cache_creation_tokens: cacheCreationTokens,
+    cost_usd: estimateCost(model, inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens),
+    platform: detectPlatform(),
+    platform_version: detectPlatformVersion(),
+    branch: getBranch(),
+    project_hash: getProjectHash(),
+    session_tag: sessionTag,
+    turn_number: turnNumber,
+    occurred_at: new Date().toISOString(),
   };
-}
 
-// ---------------------------------------------------------------------------
-// Stop self-flush — periodic API push from the Stop hook
-// ---------------------------------------------------------------------------
-
-/**
- * Check whether the Stop hook should perform an async API flush.
- * Returns true if enough turns or enough wall time has elapsed since last flush.
- *
- * @param {object} sessionMeta - Current session metadata (mutated: turn_count incremented)
- * @returns {boolean}
- */
-function shouldSelfFlush(sessionMeta) {
-  if (!sessionMeta) return false;
-
-  // Increment turn count
-  sessionMeta.turn_count = (sessionMeta.turn_count || 0) + 1;
-
-  // Check turn-based interval
-  const turnsSinceFlush = sessionMeta.turn_count - (sessionMeta.last_flush_turn || 0);
-  if (turnsSinceFlush >= STOP_FLUSH_INTERVAL_TURNS) return true;
-
-  // Check time-based interval
-  const lastFlushTs = sessionMeta.last_flush_ts ? new Date(sessionMeta.last_flush_ts).getTime() : 0;
-  if (lastFlushTs === 0) return false; // No time-based flush on first pass (let turn count trigger it)
-  return (Date.now() - lastFlushTs) >= STOP_FLUSH_INTERVAL_MS;
-}
-
-/**
- * Mark a self-flush as completed in session metadata.
- * @param {object} sessionMeta - Session metadata to update (mutated in place)
- */
-function markFlushed(sessionMeta) {
-  if (!sessionMeta) return;
-  sessionMeta.last_flush_turn = sessionMeta.turn_count || 0;
-  sessionMeta.last_flush_ts = new Date().toISOString();
-}
-
-// ---------------------------------------------------------------------------
-// Orphan recovery — recover data from crashed/killed sessions
-// ---------------------------------------------------------------------------
-
-/**
- * Scan for stale session files from prior sessions that were never cleanly closed.
- * For each orphan: enqueue their unflushed data with status "abandoned", then delete the file.
- *
- * @param {string} currentSessionId - The current session's ID (excluded from orphan scan)
- * @returns {{ recovered: number, enqueued: number }}
- */
-function recoverOrphanedSessions(currentSessionId) {
-  let recovered = 0;
-  let enqueued = 0;
-
-  try {
-    if (!fs.existsSync(TELEMETRY_DIR)) return { recovered, enqueued };
-
-    const files = fs.readdirSync(TELEMETRY_DIR);
-    const now = Date.now();
-
-    for (const file of files) {
-      if (!file.startsWith('session-') || !file.endsWith('.json')) continue;
-
-      const filePath = path.join(TELEMETRY_DIR, file);
-
-      // Extract session ID from filename: session-{id}.json
-      const sessionId = file.slice('session-'.length, -'.json'.length);
-      if (sessionId === currentSessionId) continue;
-
-      // Check file age
-      try {
-        const stat = fs.statSync(filePath);
-        const ageMs = now - stat.mtimeMs;
-        if (ageMs < ORPHAN_SESSION_AGE_MS) continue; // Not stale yet
-      } catch {
-        continue;
-      }
-
-      // Read orphaned session metadata
-      const orphanMeta = readSessionMetadata(sessionId);
-      if (!orphanMeta) {
-        // Corrupt or empty — just delete
-        deleteSessionMetadata(sessionId);
-        recovered++;
-        continue;
-      }
-
-      // Check if there are unflushed entries for this session
-      // We can't isolate per-session unflushed entries cheaply (costs.jsonl is shared),
-      // but we enqueue a "abandoned" status event so the server knows the session ended abnormally.
-      const payload = {
-        shell_run_id: sessionId,
-        session_id: sessionId,
-        command: 'session',
-        status: 'abandoned',
-        branch: orphanMeta.branch || 'unknown',
-        model: 'unknown',
-        platform: orphanMeta.platform || 'unknown',
-        platform_version: orphanMeta.platform_version || 'unknown',
-        project_hash: orphanMeta.project_hash || null,
-        tokens_used: 0,
-        cost_usd: 0,
-        session_duration_ms: orphanMeta.start_ts
-          ? now - new Date(orphanMeta.start_ts).getTime()
-          : null,
-        compaction_count: orphanMeta.compaction_count || 0,
-        turn_count: orphanMeta.turn_count || 0,
-      };
-
-      enqueue(payload, '/usage-telemetry/ingest');
-      enqueued++;
-
-      // Clean up the orphaned session file
-      deleteSessionMetadata(sessionId);
-      recovered++;
-    }
-  } catch {
-    // Non-fatal — don't block session start
+  // Extract artifacts from the latest response
+  const artifacts = extractArtifacts(input);
+  if (artifacts.length > 0) {
+    record.artifacts = artifacts;
   }
 
-  return { recovered, enqueued };
+  return record;
+}
+
+// ---------------------------------------------------------------------------
+// Artifact extraction — agents, skills, MCP tools, PRs, errors
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract artifacts from the LATEST response only (not cumulative transcript).
+ *
+ * @param {object} input - Stop hook stdin payload
+ * @returns {Array<{type: string, name: string, meta: object}>}
+ */
+function extractArtifacts(input) {
+  const artifacts = [];
+  const seen = new Set();
+
+  function addArtifact(type, name, meta = {}) {
+    const key = `${type}:${name}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    artifacts.push({ type, name, meta });
+  }
+
+  // Extract from content blocks (Claude format)
+  const contentBlocks = input.content || input.message?.content || [];
+  if (Array.isArray(contentBlocks)) {
+    for (const block of contentBlocks) {
+      if (block.type !== 'tool_use') continue;
+      const name = block.name || '';
+
+      // MCP tools: pattern mcp__server__method
+      if (name.startsWith('mcp__')) {
+        const parts = name.split('__');
+        if (parts.length >= 3) {
+          addArtifact('mcp_tool', parts[1], { method: parts[2], server: parts[1] });
+        }
+      }
+
+      // Agent tool invocations
+      if (name === 'Agent' && block.input?.subagent_type) {
+        addArtifact('agent', block.input.subagent_type, {});
+      }
+
+      // Skill tool invocations
+      if (name === 'Skill' && block.input?.skill) {
+        addArtifact('skill', block.input.skill, {});
+      }
+    }
+  }
+
+  // Extract PR URLs from response text
+  const responseText = extractResponseText(input);
+  if (responseText) {
+    const prRegex = /https?:\/\/github\.com\/([^/]+\/[^/]+)\/pull\/(\d+)/g;
+    let match;
+    while ((match = prRegex.exec(responseText)) !== null) {
+      addArtifact('pr', match[0], {
+        pr_repo: match[1],
+        pr_number: parseInt(match[2], 10),
+        pr_url: match[0],
+      });
+    }
+
+    // Extract error patterns from response text
+    const errorPatterns = [
+      { regex: /rate.?limit/i, name: 'rate_limit', category: 'api_error' },
+      { regex: /overloaded/i, name: 'overloaded', category: 'api_error' },
+      { regex: /context.?window|context.?length/i, name: 'context_overflow', category: 'context_error' },
+      { regex: /permission.?denied|unauthorized|403/i, name: 'permission_denied', category: 'auth_error' },
+    ];
+
+    for (const { regex, name, category } of errorPatterns) {
+      if (regex.test(responseText)) {
+        addArtifact('error', name, { error_category: category });
+      }
+    }
+  }
+
+  // Extract from stop_reason if available
+  if (input.stop_reason === 'error' || input.status === 'error') {
+    const errorMsg = input.error?.message || input.error_message || 'unknown_error';
+    addArtifact('error', 'stop_error', {
+      error_message: String(errorMsg).slice(0, 500),
+      error_category: 'stop_error',
+    });
+  }
+
+  return artifacts;
+}
+
+/**
+ * Extract text content from the response for regex scanning.
+ */
+function extractResponseText(input) {
+  const contentBlocks = input.content || input.message?.content || [];
+  if (Array.isArray(contentBlocks)) {
+    const textParts = contentBlocks
+      .filter(b => b.type === 'text' && b.text)
+      .map(b => b.text);
+    if (textParts.length > 0) return textParts.join('\n');
+  }
+
+  if (typeof input.response === 'string') return input.response;
+  if (typeof input.output === 'string') return input.output;
+
+  return '';
+}
+
+// ---------------------------------------------------------------------------
+// Batch API push
+// ---------------------------------------------------------------------------
+
+/**
+ * POST a batch of prompt records to the API.
+ *
+ * @param {string} url - Full API URL
+ * @param {object[]} prompts - Array of prompt records
+ * @param {object} headers - Request headers
+ * @returns {Promise<boolean>} true if 2xx response
+ */
+async function batchPostToApi(url, prompts, headers = {}) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify({ prompts }),
+    });
+    clearTimeout(timeout);
+
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Flush the queue — read all entries, batch POST, clear on success.
+ *
+ * @param {object} headers - Request headers (including X-Namespace)
+ * @returns {Promise<{ flushed: number, failed: boolean }>}
+ */
+async function flushQueueToApi(headers = {}) {
+  const entries = readQueue();
+  if (entries.length === 0) return { flushed: 0, failed: false };
+
+  const prompts = entries
+    .filter(e => e.type === 'prompt' && e.data)
+    .map(e => e.data);
+
+  if (prompts.length === 0) {
+    clearQueue();
+    return { flushed: 0, failed: false };
+  }
+
+  const apiUrl = getApiUrl();
+  const url = `${apiUrl}/telemetry/usage/ingest`;
+
+  const ok = await batchPostToApi(url, prompts, headers);
+  if (ok) {
+    clearQueue();
+    const meta = readFlushMeta();
+    meta.last_flush_at = new Date().toISOString();
+    meta.total_prompts_flushed = (meta.total_prompts_flushed || 0) + prompts.length;
+    meta.prompts_since_flush = 0;
+    updateFlushMeta(meta);
+    return { flushed: prompts.length, failed: false };
+  }
+
+  return { flushed: 0, failed: true };
 }
 
 module.exports = {
   // Directory
   ensureTelemetryDir,
 
-  // Session metadata
-  getSessionMetadataPath,
-  readSessionMetadata,
-  writeSessionMetadata,
-  deleteSessionMetadata,
+  // Queue
+  appendToQueue,
+  readQueue,
+  clearQueue,
+  writeQueue,
+
+  // Flush meta
+  readFlushMeta,
+  updateFlushMeta,
+  shouldFlush,
 
   // Cost estimation
   estimateCost,
   toNumber,
 
-  // Costs JSONL
-  getNextEntryId,
-  appendCostEntry,
-
-  // Checkpoint
-  readCheckpoint,
-  updateCheckpoint,
-  readUnflushedEntries,
-
-  // Queue
-  readQueue,
-  writeQueue,
-  enqueue,
-  flushQueue,
-
-  // API
-  pushToApi,
-
   // Detection
   detectPlatform,
   detectPlatformVersion,
   getProjectHash,
+  getBranch,
   getNamespace,
   buildTelemetryHeaders,
-  getSessionId,
+  getSessionTag,
+  getTurnNumber,
+  generatePromptId,
 
-  // Aggregation
-  aggregateEntries,
+  // Prompt building
+  buildPromptRecord,
+  extractArtifacts,
 
-  // Resilience — self-flush & orphan recovery
-  shouldSelfFlush,
-  markFlushed,
-  recoverOrphanedSessions,
+  // API
+  batchPostToApi,
+  flushQueueToApi,
 };
