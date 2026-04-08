@@ -116,5 +116,4 @@ assets/images/security/badrudi-exploit.mp4
 scripts/claude-aw-home/hooks.json
 scripts/cursor-aw-home/hooks.json
 scripts/codex-aw-home/hooks.json
-# Claude runtime output (copy of scripts/claude-aw-home/hooks.json)
-hooks/hooks.json
+# Claude runtime output is shipped in releases and must stay tracked
