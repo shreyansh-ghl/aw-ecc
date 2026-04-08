@@ -10,7 +10,12 @@ INPUT=$(cat)
 TMPFILE=$(mktemp) || exit 0
 trap 'rm -f "$TMPFILE"' EXIT
 
-echo "$INPUT" | python3 -c "
+PYTHON_CMD="python3"
+if ! command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+echo "$INPUT" | "$PYTHON_CMD" -c "
 import os, sys, json, re
 d = json.load(sys.stdin)
 cwd = d.get('cwd', '')
