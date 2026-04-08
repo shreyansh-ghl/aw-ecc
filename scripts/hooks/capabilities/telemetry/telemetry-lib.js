@@ -22,8 +22,8 @@ const {
   QUEUE_TTL_DAYS,
   getPricingForModel,
   getApiUrl,
-} = require('../../lib/telemetry-constants');
-const { ensureDir, runCommand, log } = require('../../lib/utils');
+} = require('../../../lib/telemetry-constants');
+const { ensureDir, runCommand, log } = require('../../../lib/utils');
 
 // ---------------------------------------------------------------------------
 // Directory setup
