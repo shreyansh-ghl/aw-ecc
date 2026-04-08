@@ -233,7 +233,7 @@ Prefer including:
 - explicit assumptions, constraints, and risks when they materially affect execution order
 - concrete task goals
 - checkbox execution steps for non-trivial work
-- exact RED and GREEN commands with expected outcomes for behavior-changing work
+- exact commands and expected outcomes — use exact RED and GREEN commands for behavior-changing work
 - explicit refactor or simplification follow-up after GREEN when behavior-changing work is non-trivial
 - the minimal validation commands or evidence expected after implementation
 - commit boundaries for meaningful slices

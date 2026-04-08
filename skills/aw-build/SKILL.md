@@ -34,7 +34,7 @@ Do not use for vague ideation, unclear bugs, or release-only work.
    Use `../../references/build-increments.md` to keep changes thin, reversible, and rollback-friendly.
    For multi-file or high-risk work, load `incremental-implementation`.
 5. Build one slice or one bounded parallel wave at a time.
-   For any slice that changes observable behavior, fixes a bug, or refactors live behavior, load `tdd-guide` and require explicit RED -> GREEN -> REFACTOR.
+   For any slice that changes observable behavior, fixes a bug, or refactors live behavior, load `tdd-guide` and require explicit RED-GREEN-REFACTOR (RED -> GREEN -> REFACTOR).
    For config, docs, infra, migration, or other non-behavior slices where test-first is not meaningful, record the best pre-change proof available before editing and the focused post-change validation that will prove the slice.
    During implementation, prefer the simplest change that fits existing patterns.
    Avoid speculative abstractions, unnecessary branching, and adjacent cleanup outside the approved slice.

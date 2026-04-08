@@ -95,8 +95,8 @@ Before handoff, run this inline review:
 
 1. spec coverage check against the approved direction
 2. placeholder scan
-3. internal consistency and naming check
-4. scope and decomposition check
+3. internal consistency check (including naming)
+4. scope check (including decomposition)
 5. assumptions, constraints, and rollout completeness check
 6. alternatives and decision-rationale check
 7. testing and operations completeness check
