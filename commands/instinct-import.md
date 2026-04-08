@@ -1,6 +1,9 @@
 ---
-name: instinct-import
+name: aw:instinct-import
 description: Import instincts from file or URL into project/global scope
+argument-hint: "<file-or-url> [--dry-run] [--force] [--min-confidence <n>] [--scope project|global]"
+status: active
+stage: learning
 command: true
 ---
 
@@ -25,10 +28,10 @@ Import instincts from local file paths or HTTP(S) URLs.
 ## Usage
 
 ```
-/instinct-import team-instincts.yaml
-/instinct-import https://github.com/org/repo/instincts.yaml
-/instinct-import team-instincts.yaml --dry-run
-/instinct-import team-instincts.yaml --scope global --force
+/aw:instinct-import team-instincts.yaml
+/aw:instinct-import https://github.com/org/repo/instincts.yaml
+/aw:instinct-import team-instincts.yaml --dry-run
+/aw:instinct-import team-instincts.yaml --scope global --force
 ```
 
 ## What to Do
@@ -110,5 +113,5 @@ Skipped: 3 instincts (equal/higher confidence already exists)
 
 New instincts saved to: ~/.claude/homunculus/instincts/inherited/
 
-Run /aw:instinct-status to see all instincts.
+Run `/aw:instinct-status` to see all instincts.
 ```

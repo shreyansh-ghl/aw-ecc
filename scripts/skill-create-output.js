@@ -158,9 +158,10 @@ ${chalk.bold('Files Tracked:')}    ${chalk.green(data.files)}
   nextSteps() {
     console.log(box('📋 Next Steps', `
 ${chalk.yellow('1.')} Review the generated SKILL.md
-${chalk.yellow('2.')} Import instincts: ${chalk.cyan('/instinct-import <path>')}
-${chalk.yellow('3.')} View learned patterns: ${chalk.cyan('/instinct-status')}
-${chalk.yellow('4.')} Evolve into skills: ${chalk.cyan('/evolve')}
+${chalk.yellow('2.')} Import instincts: ${chalk.cyan('/aw:instinct-import <path>')}
+${chalk.yellow('3.')} View learned patterns: ${chalk.cyan('/aw:instinct-status')}
+${chalk.yellow('4.')} Evolve into skills: ${chalk.cyan('/aw:evolve')}
+${chalk.yellow('5.')} Publish portable skills: ${chalk.cyan('/aw:publish-learning')}
 `));
     console.log('\n');
   }

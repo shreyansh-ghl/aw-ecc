@@ -1,5 +1,10 @@
 ---
-description: "Extract reusable patterns from the session, self-evaluate quality before saving, and determine the right save location (Global vs Project)."
+name: aw:learn-eval
+description: "Extract reusable patterns from the session, evaluate quality, and decide whether they stay local or should be published."
+argument-hint: "<current session or pattern to evaluate>"
+status: active
+stage: learning
+command: true
 ---
 
 # /aw:learn-eval - Extract, Evaluate, then Save
@@ -24,6 +29,7 @@ Look for:
    - Ask: "Would this pattern be useful in a different project?"
    - **Global** (`~/.claude/skills/learned/`): Generic patterns usable across 2+ projects (bash compatibility, LLM API behavior, debugging techniques, etc.)
    - **Project** (`.claude/skills/learned/` in current project): Project-specific knowledge (quirks of a particular config file, project-specific architecture decisions, etc.)
+   - **Portable / Published** (`skills/<skill-name>/` in this repo): Patterns that should ship across Codex, Cursor, and Claude through the normal `aw-ecc` install path
    - When in doubt, choose Global (moving Global → Project is easier than the reverse)
 
 4. Draft the skill file using this format:
@@ -85,6 +91,7 @@ origin: auto-extracted
    - **Improve then Save**: Present the required improvements + revised draft + updated checklist/verdict after one re-evaluation; if the revised verdict is **Save**, save after user confirmation, otherwise follow the new verdict
    - **Save**: Present save path + checklist results + 1-line verdict rationale + full draft → save after user confirmation
    - **Absorb into [X]**: Present target path + additions (diff format) + checklist results + verdict rationale → append after user confirmation
+   - **Portable / Published**: Route the pattern through `/aw:publish-learning` so it becomes a curated repo skill instead of staying only in a home-directory learning root
    - **Drop**: Show checklist results + reasoning only (no confirmation needed)
 
 7. Save / Absorb to the determined location
@@ -114,3 +121,4 @@ This version replaces the previous 5-dimension numeric scoring rubric (Specifici
 - Focus on patterns that will save time in future sessions
 - Keep skills focused — one pattern per skill
 - When the verdict is Absorb, append to the existing skill rather than creating a new file
+- When the pattern should become a harness-portable skill, prefer `/aw:publish-learning` over leaving it only in `~/.claude/skills/learned/` or `~/.claude/homunculus/.../evolved/skills/`

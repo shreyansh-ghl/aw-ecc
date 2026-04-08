@@ -1,6 +1,9 @@
 ---
-name: evolve
-description: Analyze instincts and suggest or generate evolved structures
+name: aw:evolve
+description: Analyze instincts and suggest or generate evolved skills, commands, and agents
+argument-hint: "[--generate]"
+status: active
+stage: learning
 command: true
 ---
 
@@ -28,8 +31,8 @@ Analyzes instincts and clusters related ones into higher-level structures:
 ## Usage
 
 ```
-/evolve                    # Analyze all instincts and suggest evolutions
-/evolve --generate         # Also generate files under evolved/{skills,commands,agents}
+/aw:evolve                    # Analyze all instincts and suggest evolutions
+/aw:evolve --generate         # Also generate files under evolved/{skills,commands,agents}
 ```
 
 ## Evolution Rules
@@ -87,6 +90,7 @@ Example:
 6. If `--generate` is passed, write files to:
    - Project scope: `~/.claude/homunculus/projects/<project-id>/evolved/`
    - Global fallback: `~/.claude/homunculus/evolved/`
+7. If an evolved skill should ship across Codex, Cursor, and Claude, route it into repo `skills/` through `/aw:publish-learning` instead of leaving it only in the local evolved root
 
 ## Output Format
 
@@ -120,6 +124,12 @@ High confidence instincts (>=80%): 5
 ## Flags
 
 - `--generate`: Generate evolved files in addition to analysis output
+
+## Portability
+
+Generated evolved structures are local working memory by default.
+They do not ship through the repo installer until they are curated into repo paths such as `skills/`.
+Use `/aw:publish-learning` when an evolved skill is ready to become a portable repo asset.
 
 ## Generated File Format
 

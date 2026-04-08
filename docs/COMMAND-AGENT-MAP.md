@@ -27,20 +27,23 @@ This document lists each slash command and the primary agent(s) or skills it inv
 | `/multi-backend` | architect | Backend multi-service |
 | `/multi-frontend` | architect | Frontend multi-service |
 | `/multi-workflow` | architect | General multi-service |
-| `/learn` | — | continuous-learning skill, instincts |
-| `/learn-eval` | — | continuous-learning-v2, evaluate then save |
-| `/instinct-status` | — | continuous-learning-v2 |
-| `/instinct-import` | — | continuous-learning-v2 |
-| `/instinct-export` | — | continuous-learning-v2 |
-| `/evolve` | — | continuous-learning-v2, cluster instincts |
-| `/promote` | — | continuous-learning-v2 |
-| `/projects` | — | continuous-learning-v2 |
+| `/aw:learn` | — | continuous-learning skill, local learned skills |
+| `/aw:learn-eval` | — | continuous-learning-v2, evaluate then save or publish |
+| `/aw:instinct-status` | — | continuous-learning-v2 |
+| `/aw:instinct-import` | — | continuous-learning-v2 |
+| `/aw:instinct-export` | — | continuous-learning-v2 |
+| `/aw:evolve` | — | continuous-learning-v2, cluster instincts |
+| `/aw:promote` | — | continuous-learning-v2 |
+| `/aw:projects` | — | continuous-learning-v2 |
+| `/aw:publish-learning` | — | publish learned or evolved patterns into portable repo skills |
+| `/aw:save-session` | — | Session persistence / handoff |
+| `/aw:resume-session` | — | Session restore / reorientation |
 | `/skill-create` | — | skill-create-output script, git history |
 | `/checkpoint` | — | verification-loop skill |
 | `/verify` | — | verification-loop skill |
 | `/eval` | — | eval-harness skill |
 | `/test-coverage` | — | Coverage analysis |
-| `/sessions` | — | Session history |
+| `/aw:sessions` | — | Session history |
 | `/setup-pm` | — | Package manager setup script |
 | `/claw` | — | NanoClaw CLI (scripts/claw.js) |
 | `/pm2` | — | PM2 service lifecycle |
@@ -54,7 +57,7 @@ This document lists each slash command and the primary agent(s) or skills it inv
 
 ## Skills referenced by commands
 
-- **continuous-learning**, **continuous-learning-v2**: `/learn`, `/learn-eval`, `/instinct-*`, `/evolve`, `/promote`, `/projects`
+- **continuous-learning**, **continuous-learning-v2**: `/aw:learn`, `/aw:learn-eval`, `/aw:instinct-*`, `/aw:evolve`, `/aw:promote`, `/aw:projects`, `/aw:publish-learning`
 - **verification-loop**: `/checkpoint`, `/verify`
 - **eval-harness**: `/eval`
 - **security-scan**: `/security-scan` (runs AgentShield)

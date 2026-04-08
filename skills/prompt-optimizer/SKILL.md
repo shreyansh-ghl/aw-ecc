@@ -189,7 +189,7 @@ For tasks that exceed a single session, split into sequential prompts:
 - Prompt 1: Research + Plan (use search-first skill, then /plan)
 - Prompt 2-N: Implement one phase per prompt (each ends with /verify)
 - Final Prompt: Integration test + /code-review across all phases
-- Use /save-session and /resume-session to preserve context between sessions
+- Use /aw:save-session and /aw:resume-session to preserve context between sessions
 
 ---
 
@@ -377,7 +377,7 @@ The blueprint should produce phases like:
 - Phase N: Decommission monolith
 
 Each phase = 1 PR, with /verify gates between phases.
-Use /save-session between phases. Use /resume-session to continue.
+Use /aw:save-session between phases. Use /aw:resume-session to continue.
 Use git worktrees for parallel service extraction when dependencies allow.
 
 Recommended: Opus 4.6 for blueprint planning, Sonnet 4.6 for phase execution.

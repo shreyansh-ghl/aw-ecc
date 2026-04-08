@@ -60,7 +60,7 @@ async function main() {
   if (aliases.length > 0) {
     const aliasNames = aliases.map(a => a.name).join(', ');
     log(`[SessionStart] ${aliases.length} session alias(es) available: ${aliasNames}`);
-    log(`[SessionStart] Use /sessions load <alias> to continue a previous session`);
+    log(`[SessionStart] Use /aw:sessions load <alias> to continue a previous session`);
   }
 
   // Detect and report package manager

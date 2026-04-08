@@ -1,6 +1,9 @@
 ---
-name: promote
+name: aw:promote
 description: Promote project-scoped instincts to global scope
+argument-hint: "[instinct-id] [--force] [--dry-run]"
+status: active
+stage: learning
 command: true
 ---
 
@@ -25,10 +28,10 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py promote 
 ## Usage
 
 ```bash
-/promote                      # Auto-detect promotion candidates
-/promote --dry-run            # Preview auto-promotion candidates
-/promote --force              # Promote all qualified candidates without prompt
-/promote grep-before-edit     # Promote one specific instinct from current project
+/aw:promote                      # Auto-detect promotion candidates
+/aw:promote --dry-run            # Preview auto-promotion candidates
+/aw:promote --force              # Promote all qualified candidates without prompt
+/aw:promote grep-before-edit     # Promote one specific instinct from current project
 ```
 
 ## What to Do

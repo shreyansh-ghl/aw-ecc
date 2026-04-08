@@ -168,6 +168,7 @@ For advanced features (10k+ commits, team sharing, auto-PRs), use the [Skill Cre
 - `/aw:instinct-import` - Import generated instincts
 - `/aw:instinct-status` - View learned instincts
 - `/aw:evolve` - Cluster instincts into skills/agents
+- `/aw:publish-learning` - Promote the resulting local learning into a repo-curated portable skill
 
 ---
 

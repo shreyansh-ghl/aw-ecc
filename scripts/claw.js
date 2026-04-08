@@ -269,7 +269,7 @@ function handleHelp() {
   console.log('  /help                          Show this help');
   console.log('  /clear                         Clear current session history');
   console.log('  /history                       Print full conversation history');
-  console.log('  /sessions                      List saved sessions');
+  console.log('  /aw:sessions                   List saved sessions');
   console.log('  /model [name]                  Show/set model');
   console.log('  /load <skill-name>             Load a skill into active context');
   console.log('  /branch <session-name>         Branch current session into a new session');
@@ -335,7 +335,7 @@ function main() {
         return prompt();
       }
 
-      if (line === '/sessions') {
+      if (line === '/sessions' || line === '/aw:sessions') {
         handleSessions();
         return prompt();
       }

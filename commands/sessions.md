@@ -1,5 +1,10 @@
 ---
+name: aw:sessions
 description: Manage Claude Code session history, aliases, and session metadata.
+argument-hint: "[list|load|alias|info|help] [options]"
+status: active
+stage: learning
+command: true
 ---
 
 # Sessions Command
@@ -8,7 +13,7 @@ Manage Claude Code session history - list, load, alias, and edit sessions stored
 
 ## Usage
 
-`/sessions [list|load|alias|info|help] [options]`
+`/aw:sessions [list|load|alias|info|help] [options]`
 
 ## Actions
 
@@ -16,14 +21,14 @@ Manage Claude Code session history - list, load, alias, and edit sessions stored
 
 Display all sessions with metadata, filtering, and pagination.
 
-Use `/sessions info` when you need operator-surface context for a swarm: branch, worktree path, and session recency.
+Use `/aw:sessions info` when you need operator-surface context for a swarm: branch, worktree path, and session recency.
 
 ```bash
-/sessions                              # List all sessions (default)
-/sessions list                         # Same as above
-/sessions list --limit 10              # Show 10 sessions
-/sessions list --date 2026-02-01       # Filter by date
-/sessions list --search abc            # Search by session ID
+/aw:sessions                              # List all sessions (default)
+/aw:sessions list                         # Same as above
+/aw:sessions list --limit 10              # Show 10 sessions
+/aw:sessions list --date 2026-02-01       # Filter by date
+/aw:sessions list --search abc            # Search by session ID
 ```
 
 **Script:**
@@ -61,10 +66,10 @@ for (const s of result.sessions) {
 Load and display a session's content (by ID or alias).
 
 ```bash
-/sessions load <id|alias>             # Load session
-/sessions load 2026-02-01             # By date (for no-id sessions)
-/sessions load a1b2c3d4               # By short ID
-/sessions load my-alias               # By alias name
+/aw:sessions load <id|alias>             # Load session
+/aw:sessions load 2026-02-01             # By date (for no-id sessions)
+/aw:sessions load a1b2c3d4               # By short ID
+/aw:sessions load my-alias               # By alias name
 ```
 
 **Script:**
@@ -136,8 +141,8 @@ if (session.metadata.worktree) {
 Create a memorable alias for a session.
 
 ```bash
-/sessions alias <id> <name>           # Create alias
-/sessions alias 2026-02-01 today-work # Create alias named "today-work"
+/aw:sessions alias <id> <name>           # Create alias
+/aw:sessions alias 2026-02-01 today-work # Create alias named "today-work"
 ```
 
 **Script:**
@@ -150,7 +155,7 @@ const sessionId = process.argv[1];
 const aliasName = process.argv[2];
 
 if (!sessionId || !aliasName) {
-  console.log('Usage: /sessions alias <id> <name>');
+  console.log('Usage: /aw:sessions alias <id> <name>');
   process.exit(1);
 }
 
@@ -176,8 +181,8 @@ if (result.success) {
 Delete an existing alias.
 
 ```bash
-/sessions alias --remove <name>        # Remove alias
-/sessions unalias <name>               # Same as above
+/aw:sessions alias --remove <name>        # Remove alias
+/aw:sessions unalias <name>               # Same as above
 ```
 
 **Script:**
@@ -187,7 +192,7 @@ const aa = require((()=>{var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())ret
 
 const aliasName = process.argv[1];
 if (!aliasName) {
-  console.log('Usage: /sessions alias --remove <name>');
+  console.log('Usage: /aw:sessions alias --remove <name>');
   process.exit(1);
 }
 
@@ -206,7 +211,7 @@ if (result.success) {
 Show detailed information about a session.
 
 ```bash
-/sessions info <id|alias>              # Show session details
+/aw:sessions info <id|alias>              # Show session details
 ```
 
 **Script:**
@@ -256,7 +261,7 @@ if (aliases.length > 0) {
 Show all session aliases.
 
 ```bash
-/sessions aliases                      # List all aliases
+/aw:sessions aliases                      # List all aliases
 ```
 
 **Script:**
@@ -285,8 +290,8 @@ if (aliases.length === 0) {
 
 ## Operator Notes
 
-- Session files persist `Project`, `Branch`, and `Worktree` in the header so `/sessions info` can disambiguate parallel tmux/worktree runs.
-- For command-center style monitoring, combine `/sessions info`, `git diff --stat`, and the cost metrics emitted by `scripts/hooks/cost-tracker.js`.
+- Session files persist `Project`, `Branch`, and `Worktree` in the header so `/aw:sessions info` can disambiguate parallel tmux/worktree runs.
+- For command-center style monitoring, combine `/aw:sessions info`, `git diff --stat`, and the cost metrics emitted by `scripts/hooks/cost-tracker.js`.
 
 ## Arguments
 
@@ -307,22 +312,22 @@ $ARGUMENTS:
 
 ```bash
 # List all sessions
-/sessions list
+/aw:sessions list
 
 # Create an alias for today's session
-/sessions alias 2026-02-01 today
+/aw:sessions alias 2026-02-01 today
 
 # Load session by alias
-/sessions load today
+/aw:sessions load today
 
 # Show session info
-/sessions info today
+/aw:sessions info today
 
 # Remove alias
-/sessions alias --remove today
+/aw:sessions alias --remove today
 
 # List all aliases
-/sessions aliases
+/aw:sessions aliases
 ```
 
 ## Notes
