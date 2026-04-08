@@ -117,6 +117,9 @@ _dbg "TMPFILE_CONTENTS=$(cat "$TMPFILE")"
 
 CWD="" DOMAIN="universal" STACK=""
 while IFS='=' read -r key value; do
+  # Strip trailing \r from Windows Python CRLF output
+  key="${key%$'\r'}"
+  value="${value%$'\r'}"
   case "${key:-}" in
     CWD)    CWD="$value" ;;
     DOMAIN) DOMAIN="$value" ;;
