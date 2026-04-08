@@ -22,7 +22,10 @@ function readStdin() {
 }
 
 function getPluginRoot() {
-  return path.resolve(__dirname, '..', '..');
+  // When running from ~/.cursor/hooks/, resolve to ~/.aw-ecc (the ECC root)
+  // which contains scripts/hooks/*. The old __dirname-relative approach only
+  // worked for the Claude Code plugin layout (~/.claude/plugins/<plugin>/hooks/).
+  return process.env.AW_ECC_ROOT || path.join(require('os').homedir(), '.aw-ecc');
 }
 
 function transformToClaude(cursorInput, overrides = {}) {
