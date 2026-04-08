@@ -171,11 +171,22 @@ function estimateCost(model, inputTokens, outputTokens, cacheReadTokens, cacheCr
 /**
  * Detect which IDE/platform is running this hook.
  * Returns 'claude-code', 'cursor', 'codex', or 'unknown'.
+ *
+ * Detection order:
+ * 1. IDE-specific env vars (set by some IDE versions)
+ * 2. Script path — hooks deployed to ~/.claude/, ~/.cursor/, or ~/.codex/
+ * 3. Parent command name
  */
 function detectPlatform() {
   if (process.env.CLAUDE_SESSION_ID) return 'claude-code';
   if (process.env.CURSOR_SESSION_ID) return 'cursor';
   if (process.env.CODEX_SESSION_ID) return 'codex';
+
+  // Detect from script path: ~/.claude/scripts/... or ~/.cursor/scripts/... or ~/.codex/hooks/...
+  const scriptPath = __filename.replace(/\\/g, '/');
+  if (scriptPath.includes('/.claude/')) return 'claude-code';
+  if (scriptPath.includes('/.cursor/')) return 'cursor';
+  if (scriptPath.includes('/.codex/') || scriptPath.includes('/.aw-ecc/')) return 'codex';
 
   const parentCmd = process.env._ || '';
   if (parentCmd.includes('cursor')) return 'cursor';
@@ -233,13 +244,16 @@ function getBranch() {
 // ---------------------------------------------------------------------------
 
 /**
- * Get session tag from environment.
+ * Get session tag from environment or hook payload.
  * This is NOT a session ID in the lifecycle sense — just a groupable tag.
+ *
+ * @param {object} [input] - Parsed Stop hook stdin payload
  */
-function getSessionTag() {
+function getSessionTag(input) {
   return process.env.CLAUDE_SESSION_ID
     || process.env.CURSOR_SESSION_ID
     || process.env.CODEX_SESSION_ID
+    || (input && (input.session_id || input.sessionId || input._cursor?.sessionId))
     || null;
 }
 
@@ -254,6 +268,7 @@ function getSessionTag() {
 function getTurnNumber(input) {
   if (input.turn_number != null) return toNumber(input.turn_number);
   if (input.conversation_turn_count != null) return toNumber(input.conversation_turn_count);
+  if (input.stopHookInput?.totalTurns != null) return toNumber(input.stopHookInput.totalTurns);
   if (input._cursor?.turn != null) return toNumber(input._cursor.turn);
   if (input.turn != null) return toNumber(input.turn);
   return null;
@@ -310,12 +325,48 @@ function getNamespace() {
 }
 
 /**
+ * Read the machine_id from ~/.aw/.telemetry config (created by aw init).
+ */
+function getMachineId() {
+  try {
+    const homedir = process.env.HOME || require('os').homedir();
+    const telemetryConfig = path.join(homedir, '.aw', '.telemetry');
+    if (fs.existsSync(telemetryConfig)) {
+      const config = JSON.parse(fs.readFileSync(telemetryConfig, 'utf8'));
+      if (config.machine_id) return config.machine_id;
+    }
+  } catch {
+    // Fall through
+  }
+  return null;
+}
+
+/**
+ * Resolve the GitHub username from git config.
+ */
+function getGitHubUser() {
+  const result = runCommand('git config user.email');
+  if (result.success && result.output) return result.output;
+  const nameResult = runCommand('git config user.name');
+  if (nameResult.success && nameResult.output) return nameResult.output;
+  return null;
+}
+
+/**
  * Build standard headers for telemetry API calls.
  */
 function buildTelemetryHeaders(namespace) {
   const headers = {};
   if (namespace) {
     headers['X-Namespace'] = namespace;
+  }
+  const machineId = getMachineId();
+  if (machineId) {
+    headers['X-Machine-Id'] = machineId;
+  }
+  const githubUser = getGitHubUser();
+  if (githubUser) {
+    headers['X-GitHub-User'] = githubUser;
   }
   return headers;
 }
@@ -345,7 +396,7 @@ function buildPromptRecord(input) {
     || 'unknown'
   );
 
-  const sessionTag = getSessionTag();
+  const sessionTag = getSessionTag(input);
   const turnNumber = getTurnNumber(input);
   const promptId = generatePromptId(sessionTag, turnNumber);
 
@@ -576,6 +627,8 @@ module.exports = {
   getProjectHash,
   getBranch,
   getNamespace,
+  getMachineId,
+  getGitHubUser,
   buildTelemetryHeaders,
   getSessionTag,
   getTurnNumber,
