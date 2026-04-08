@@ -48,7 +48,7 @@ require_file() {
 search_file() {
   local pattern="$1"
   local file="$2"
-  if command -v rg >/dev/null 2>&1; then
+  if [[ "${ECC_DISABLE_RG:-0}" != "1" ]] && command -v rg >/dev/null 2>&1; then
     rg -n "$pattern" "$file" >/dev/null 2>&1
   else
     grep -E -n -- "$pattern" "$file" >/dev/null 2>&1

@@ -22,6 +22,10 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function normalizeSlashes(value) {
+  return String(value || '').replace(/\\/g, '/');
+}
+
 function run(args = [], options = {}) {
   const env = {
     ...process.env,
@@ -180,7 +184,7 @@ function runTests() {
       assert.ok(state.resolution.selectedModules.includes('platform-configs'));
       assert.ok(
         state.operations.some(operation => (
-          operation.sourceRelativePath === path.join('scripts', 'codex-aw-home', 'hooks.json')
+          normalizeSlashes(operation.sourceRelativePath) === 'scripts/codex-aw-home/hooks.json'
           && operation.destinationPath === path.join(codexRoot, 'hooks.json')
         )),
         'Should record manifest-driven neutral Codex hooks.json overlay'
@@ -292,7 +296,7 @@ function runTests() {
       );
       assert.ok(
         state.operations.some(operation => (
-          operation.sourceRelativePath === path.join('scripts', 'claude-aw-home', 'hooks.json')
+          normalizeSlashes(operation.sourceRelativePath) === 'scripts/claude-aw-home/hooks.json'
           && operation.destinationPath === path.join(claudeRoot, 'hooks', 'hooks.json')
         )),
         'Should record manifest-driven neutral Claude hooks.json overlay'

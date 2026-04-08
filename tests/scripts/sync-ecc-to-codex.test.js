@@ -103,13 +103,7 @@ function runTests() {
     const homeDir = createTempDir('sync-codex-home-');
 
     try {
-      const fallbackPath = [
-        path.dirname(process.execPath),
-        '/usr/bin',
-        '/bin',
-      ].join(':');
-
-      runSync(homeDir, { PATH: fallbackPath });
+      runSync(homeDir, { ECC_DISABLE_RG: '1' });
 
       const codexHome = path.join(homeDir, '.codex');
       assert.ok(fs.existsSync(path.join(codexHome, 'prompts', 'ecc-prompts-manifest.txt')));
