@@ -63,6 +63,77 @@ function runTests() {
     assert.strictEqual(statePath, path.join(homeDir, '.claude', 'ecc', 'install-state.json'));
   })) passed++; else failed++;
 
+  if (test('claude scaffold overlays neutral hooks.json into ~/.claude/hooks', () => {
+    const repoRoot = path.join(__dirname, '..', '..');
+    const homeDir = '/Users/example';
+
+    const plan = planInstallTargetScaffold({
+      target: 'claude',
+      repoRoot,
+      homeDir,
+      modules: [
+        {
+          id: 'hooks-runtime',
+          paths: ['hooks'],
+        },
+      ],
+    });
+
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'hooks'
+        && operation.destinationPath === path.join(homeDir, '.claude', 'hooks')
+      )),
+      'Should preserve the hooks directory scaffold for Claude installs'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/claude-aw-home/hooks.json'
+        && operation.destinationPath === path.join(homeDir, '.claude', 'hooks', 'hooks.json')
+      )),
+      'Should overlay neutral Claude hooks.json into ~/.claude/hooks'
+    );
+  })) passed++; else failed++;
+
+  if (test('codex scaffold overlays neutral hooks into ~/.codex', () => {
+    const repoRoot = path.join(__dirname, '..', '..');
+    const homeDir = '/Users/example';
+
+    const plan = planInstallTargetScaffold({
+      target: 'codex',
+      repoRoot,
+      homeDir,
+      modules: [
+        {
+          id: 'platform-configs',
+          paths: ['.codex'],
+        },
+      ],
+    });
+
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === '.codex'
+        && operation.destinationPath === path.join(homeDir, '.codex')
+      )),
+      'Should preserve the .codex scaffold operation for Codex installs'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/codex-aw-home/hooks'
+        && operation.destinationPath === path.join(homeDir, '.codex', 'hooks')
+      )),
+      'Should overlay neutral Codex hook scripts into ~/.codex/hooks'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/codex-aw-home/hooks.json'
+        && operation.destinationPath === path.join(homeDir, '.codex', 'hooks.json')
+      )),
+      'Should overlay neutral Codex hooks.json into ~/.codex'
+    );
+  })) passed++; else failed++;
+
   if (test('plans scaffold operations and flattens native target roots', () => {
     const repoRoot = path.join(__dirname, '..', '..');
     const projectRoot = '/workspace/app';
@@ -140,6 +211,45 @@ function runTests() {
         operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'common', 'coding-style.md')
       )),
       'Should not preserve nested rule directories for cursor installs'
+    );
+  })) passed++; else failed++;
+
+  if (test('cursor scaffold overlays AW-owned hook wrappers from a neutral source path', () => {
+    const repoRoot = path.join(__dirname, '..', '..');
+    const projectRoot = '/workspace/app';
+
+    const plan = planInstallTargetScaffold({
+      target: 'cursor',
+      repoRoot,
+      projectRoot,
+      modules: [
+        {
+          id: 'platform-configs',
+          paths: ['.cursor'],
+        },
+      ],
+    });
+
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-hooks'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks')
+      )),
+      'Should overlay neutral Cursor AW hook sources into .cursor/hooks'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/hooks/shared'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks', 'shared')
+      )),
+      'Should overlay shared AW hook sources into .cursor/hooks/shared'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-home/hooks.json'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks.json')
+      )),
+      'Should overlay neutral Cursor hooks.json into the project .cursor root'
     );
   })) passed++; else failed++;
 

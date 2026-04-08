@@ -4,6 +4,11 @@ const path = require('path');
 const { resolveInstallPlan, loadInstallManifests } = require('./install-manifests');
 const { readInstallState, writeInstallState } = require('./install-state');
 const {
+  getClaudePhaseNames,
+  getCodexPhaseNames,
+  getCursorMappedEventNames,
+} = require('./aw-hook-contract');
+const {
   createManifestInstallPlan,
 } = require('./install-executor');
 const {
@@ -728,6 +733,82 @@ function determineStatus(issues) {
   return 'ok';
 }
 
+function getInstalledHookContractSpec(record) {
+  if (record.adapter.target === 'claude') {
+    return {
+      configPath: path.join(record.targetRoot, 'hooks', 'hooks.json'),
+      keys: getClaudePhaseNames(),
+    };
+  }
+
+  if (record.adapter.target === 'cursor') {
+    return {
+      configPath: path.join(record.targetRoot, 'hooks.json'),
+      keys: getCursorMappedEventNames(),
+      version: 1,
+    };
+  }
+
+  if (record.adapter.target === 'codex') {
+    return {
+      configPath: path.join(record.targetRoot, 'hooks.json'),
+      keys: getCodexPhaseNames(),
+    };
+  }
+
+  return null;
+}
+
+function analyzeInstalledHookContract(record) {
+  const spec = getInstalledHookContractSpec(record);
+  if (!spec || !fs.existsSync(spec.configPath)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(spec.configPath, 'utf8'));
+    const hooks = parsed && typeof parsed === 'object' ? parsed.hooks : null;
+    if (Object.prototype.hasOwnProperty.call(spec, 'version') && parsed.version !== spec.version) {
+      return buildIssue(
+        'error',
+        'hook-config-version-mismatch',
+        `Installed hook config is missing required version ${spec.version}`,
+        {
+          configPath: spec.configPath,
+          expectedVersion: spec.version,
+          actualVersion: parsed.version,
+        }
+      );
+    }
+    const missingKeys = spec.keys.filter(
+      key => !Array.isArray(hooks && hooks[key]) || hooks[key].length === 0
+    );
+
+    if (missingKeys.length === 0) {
+      return null;
+    }
+
+    return buildIssue(
+      'error',
+      'hook-contract-mismatch',
+      `Installed hook config is missing required AW phases: ${missingKeys.join(', ')}`,
+      {
+        configPath: spec.configPath,
+        missingKeys,
+      }
+    );
+  } catch (error) {
+    return buildIssue(
+      'error',
+      'invalid-hook-config',
+      `Installed hook config could not be parsed: ${error.message}`,
+      {
+        configPath: spec.configPath,
+      }
+    );
+  }
+}
+
 function analyzeRecord(record, context) {
   const issues = [];
 
@@ -827,6 +908,11 @@ function analyzeRecord(record, context) {
         paths: operationHealth.unverified.map(entry => entry.destinationPath).filter(Boolean),
       }
     ));
+  }
+
+  const hookContractIssue = analyzeInstalledHookContract(record);
+  if (hookContractIssue) {
+    issues.push(hookContractIssue);
   }
 
   if (state.source.manifestVersion !== context.manifestVersion) {

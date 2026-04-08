@@ -45,10 +45,20 @@ require_file() {
   fi
 }
 
+search_file() {
+  local pattern="$1"
+  local file="$2"
+  if [[ "${ECC_DISABLE_RG:-0}" != "1" ]] && command -v rg >/dev/null 2>&1; then
+    rg -n "$pattern" "$file" >/dev/null 2>&1
+  else
+    grep -E -n -- "$pattern" "$file" >/dev/null 2>&1
+  fi
+}
+
 check_config_pattern() {
   local pattern="$1"
   local label="$2"
-  if rg -n "$pattern" "$CONFIG_FILE" >/dev/null 2>&1; then
+  if search_file "$pattern" "$CONFIG_FILE"; then
     ok "$label"
   else
     fail "$label"
@@ -58,7 +68,7 @@ check_config_pattern() {
 check_config_absent() {
   local pattern="$1"
   local label="$2"
-  if rg -n "$pattern" "$CONFIG_FILE" >/dev/null 2>&1; then
+  if search_file "$pattern" "$CONFIG_FILE"; then
     fail "$label"
   else
     ok "$label"
@@ -73,13 +83,13 @@ require_file "$CONFIG_FILE" "Global config.toml"
 require_file "$AGENTS_FILE" "Global AGENTS.md"
 
 if [[ -f "$AGENTS_FILE" ]]; then
-  if rg -n '^(# Everything Claude Code \(ECC\) — Agent Instructions|# AW SDLC Repo Instructions|<!-- BEGIN ECC -->)' "$AGENTS_FILE" >/dev/null 2>&1; then
+  if search_file '^(# Everything Claude Code \(ECC\) — Agent Instructions|# AW SDLC Repo Instructions|<!-- BEGIN ECC -->)' "$AGENTS_FILE"; then
     ok "AGENTS contains ECC root instructions"
   else
     fail "AGENTS missing ECC root instructions"
   fi
 
-  if rg -n '^# Codex Supplement \(From ECC \.codex/AGENTS\.md\)' "$AGENTS_FILE" >/dev/null 2>&1; then
+  if search_file '^# Codex Supplement \(From ECC \.codex/AGENTS\.md\)' "$AGENTS_FILE"; then
     ok "AGENTS contains ECC Codex supplement"
   else
     fail "AGENTS missing ECC Codex supplement"
@@ -99,14 +109,14 @@ if [[ -f "$CONFIG_FILE" ]]; then
     'mcp_servers.sequential-thinking' \
     'mcp_servers.context7-mcp'
   do
-    if rg -n "^\[$section\]" "$CONFIG_FILE" >/dev/null 2>&1; then
+    if search_file "^\[$section\]" "$CONFIG_FILE"; then
       ok "MCP section [$section] exists"
     else
       fail "MCP section [$section] missing"
     fi
   done
 
-  if rg -n '^\[mcp_servers\.context7\]' "$CONFIG_FILE" >/dev/null 2>&1; then
+  if search_file '^\[mcp_servers\.context7\]' "$CONFIG_FILE"; then
     warn "Duplicate [mcp_servers.context7] exists (context7-mcp is preferred)"
   else
     ok "No duplicate [mcp_servers.context7] section"
@@ -165,11 +175,18 @@ else
   fail "Extension prompts manifest missing"
 fi
 
-command_prompts_count="$(find "$PROMPTS_DIR" -maxdepth 1 -type f -name 'ecc-*.md' 2>/dev/null | wc -l | tr -d ' ')"
+command_prompts_count="$(awk '
+  NF > 0 {
+    count += 1
+  }
+  END {
+    print count + 0
+  }
+' "$PROMPTS_DIR/ecc-prompts-manifest.txt" 2>/dev/null | tr -d ' ')"
 if [[ "$command_prompts_count" -ge 43 ]]; then
-  ok "ECC prompts count is $command_prompts_count (expected >= 43)"
+  ok "ECC command prompts count is $command_prompts_count (expected >= 43)"
 else
-  fail "ECC prompts count is $command_prompts_count (expected >= 43)"
+  fail "ECC command prompts count is $command_prompts_count (expected >= 43)"
 fi
 
 hooks_path="$(git config --global --get core.hooksPath || true)"
