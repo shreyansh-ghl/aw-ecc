@@ -26,9 +26,14 @@ emit_session_start_warning() {
   esac
 }
 
-# Drain stdin because some harnesses stream a JSON payload even though the
-# AW session-start bridge only emits routing context.
-cat >/dev/null || true
+# Drain stdin (non-blocking) because some harnesses stream a JSON payload
+# even though the AW session-start bridge only emits routing context.
+# Use timeout to avoid blocking forever when stdin is an open pipe with no data.
+if [ -t 0 ]; then
+  : # stdin is a terminal — nothing to drain
+else
+  timeout 1 cat >/dev/null 2>/dev/null || true
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
