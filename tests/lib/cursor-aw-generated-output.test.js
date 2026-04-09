@@ -38,6 +38,11 @@ const SHARED_FILE_NAMES = [
 ];
 
 function resolveCommandPath(command) {
+  const managedMatch = String(command || '').match(/scriptName=\\?"([^"]+\.js)\\?"/);
+  if (managedMatch) {
+    return path.join(__dirname, '..', '..', '.cursor', 'hooks', managedMatch[1]);
+  }
+
   const match = String(command || '').match(/^node\s+(.+)$/);
   if (!match) {
     return null;
@@ -130,6 +135,20 @@ function runTests() {
           );
         }
       }
+    }
+  })) passed++; else failed++;
+
+  if (test('generated Cursor hook config uses the portable managed launcher instead of repo-only relative paths', () => {
+    const parsed = JSON.parse(fs.readFileSync(HOME_OUTPUT_FILE, 'utf8'));
+    const managedCommands = [
+      parsed.hooks.sessionStart[0].command,
+      parsed.hooks.beforeSubmitPrompt[0].command,
+      parsed.hooks.stop[0].command,
+    ];
+
+    for (const command of managedCommands) {
+      assert.ok(command.startsWith('node -e '), `Expected portable node launcher, got: ${command}`);
+      assert.ok(!command.includes('node .cursor/hooks/'), `Expected no repo-only relative node path, got: ${command}`);
     }
   })) passed++; else failed++;
 

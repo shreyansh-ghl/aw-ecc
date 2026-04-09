@@ -11,6 +11,7 @@ Cursor-facing rules or prompts should point at:
 - `AGENTS.md`
 - `commands/`
 - `skills/`
+- `.cursor/rules/common-aw-routing.md`
 - `defaults/aw-sdlc/`
 - `docs/aw-sdlc-command-contracts.md`
 - `docs/aw-sdlc-command-skill-architecture.md`
@@ -28,6 +29,14 @@ Map intent to the same public stage surface:
 ## Contract Rule
 
 Cursor-specific prompt wrappers may exist, but they should stay thinner than the AW SDLC stage skills and must not introduce extra public stages.
+
+The global Cursor routing rule should be `alwaysApply: true` and must:
+
+- require `using-aw-skills` first
+- require the smallest correct AW stage route first
+- point Cursor at bundled AW skills under `~/.cursor/skills/`
+- point Cursor at org rules under `~/.aw_rules/platform/`
+- keep repo-local instructions additive only
 
 ## Artifact Rule
 

@@ -40,18 +40,8 @@ function runBeforeSubmit(raw, env = {}) {
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cursor-before-submit-'));
-  const rulesDir = path.join(tempDir, '.aw_registry', '.aw_rules', 'platform', 'backend');
+  const rulesDir = path.join(tempDir, '.aw_rules', 'platform', 'backend');
   fs.mkdirSync(rulesDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(rulesDir, 'AGENTS.md'),
-    [
-      '# Backend Rules',
-      '',
-      '- Use structured logging via @platform-core/logger MUST',
-      '- Never trust client payload locationId Never',
-      '',
-    ].join('\n')
-  );
 
   try {
     return fn(tempDir);
@@ -79,7 +69,9 @@ function runTests() {
       assert.strictEqual(result.stdout, raw);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
       assert.ok(result.stderr.includes('[Rule reminder'), 'Expected rule reminder on stderr');
-      assert.ok(result.stderr.includes('.aw_registry/.aw_rules/platform/backend'), 'Expected backend rules path in reminder');
+      assert.ok(result.stderr.includes('.aw_rules/platform/universal/AGENTS.md'), 'Expected canonical universal rules path in reminder');
+      assert.ok(result.stderr.includes('.aw_rules/platform/security/AGENTS.md'), 'Expected canonical security rules path in reminder');
+      assert.ok(result.stderr.includes('references/ on demand'), 'Expected references guidance in reminder');
     });
   })) passed++; else failed++;
 

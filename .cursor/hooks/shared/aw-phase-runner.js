@@ -26,6 +26,37 @@ function executeStep(runtime, step, payload) {
   return runtime.runManagedNodeHook(step.relativeScriptPath, payload);
 }
 
+function formatCursorSessionStartOutput(stdout, fallbackRaw) {
+  if (typeof stdout !== 'string' || stdout.trim() === '') {
+    return fallbackRaw;
+  }
+
+  try {
+    const payload = JSON.parse(stdout);
+    const additionalContext = payload?.hookSpecificOutput?.additionalContext
+      || payload?.additional_context;
+
+    if (typeof additionalContext === 'string' && additionalContext.trim() !== '') {
+      return `${JSON.stringify({ additional_context: additionalContext }, null, 2)}\n`;
+    }
+  } catch {}
+
+  return fallbackRaw;
+}
+
+function resolveStepOutput(step, execution, fallbackRaw) {
+  if (!execution) {
+    return null;
+  }
+
+  switch (step.outputMode) {
+    case 'cursor-session-start':
+      return formatCursorSessionStartOutput(execution.stdout, fallbackRaw);
+    default:
+      return null;
+  }
+}
+
 async function runSharedAwPhase({ raw, steps, deps = {} }) {
   const runtime = {
     transformToClaude: deps.transformToClaude,
@@ -43,6 +74,7 @@ async function runSharedAwPhase({ raw, steps, deps = {} }) {
 
   const needsClaudeInput = steps.some(step => (step.payloadMode || 'claude') === 'claude');
   const claudeInput = needsClaudeInput ? runtime.transformToClaude(parsedInput) : null;
+  let result = raw;
 
   for (const step of steps) {
     if (!shouldRunStep(step, runtime)) {
@@ -50,10 +82,14 @@ async function runSharedAwPhase({ raw, steps, deps = {} }) {
     }
 
     const payload = resolveStepPayload(step, raw, parsedInput, claudeInput);
-    await executeStep(runtime, step, payload);
+    const execution = await executeStep(runtime, step, payload);
+    const nextResult = resolveStepOutput(step, execution, raw);
+    if (typeof nextResult === 'string') {
+      result = nextResult;
+    }
   }
 
-  return raw;
+  return result;
 }
 
 module.exports = {

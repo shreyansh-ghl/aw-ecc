@@ -422,6 +422,13 @@ function planCursorLegacyInstall(context) {
   addRecursiveCopyOperations(operations, {
     moduleId: 'legacy-cursor-install',
     sourceRoot: context.sourceRoot,
+    sourceRelativeDir: path.join('scripts', 'hooks'),
+    destinationDir: path.join(targetRoot, 'scripts', 'hooks'),
+    strategy: 'sync-root-children',
+  });
+  addRecursiveCopyOperations(operations, {
+    moduleId: 'legacy-cursor-install',
+    sourceRoot: context.sourceRoot,
     sourceRelativeDir: path.join('.cursor', 'hooks'),
     destinationDir: path.join(targetRoot, 'hooks'),
     excludeRelativeFiles: GENERATED_CURSOR_AW_HOOK_FILES,

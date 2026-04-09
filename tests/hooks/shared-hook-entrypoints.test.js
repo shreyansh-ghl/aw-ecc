@@ -33,18 +33,8 @@ function runBash(scriptPath, input = '', env = {}) {
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-hook-'));
-  const rulesDir = path.join(tempDir, '.aw_registry', '.aw_rules', 'platform', 'backend');
+  const rulesDir = path.join(tempDir, '.aw_rules', 'platform', 'backend');
   fs.mkdirSync(rulesDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(rulesDir, 'AGENTS.md'),
-    [
-      '# Backend Rules',
-      '',
-      '- Use structured logging via @platform-core/logger MUST',
-      '- Never trust client payload locationId Never',
-      '',
-    ].join('\n')
-  );
 
   try {
     return fn(tempDir);
@@ -81,7 +71,9 @@ function runTests() {
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Router reminder]'));
       assert.ok(result.stdout.includes('[Rule reminder'));
-      assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'));
+      assert.ok(result.stdout.includes('.aw_rules/platform/universal/AGENTS.md'));
+      assert.ok(result.stdout.includes('.aw_rules/platform/security/AGENTS.md'));
+      assert.ok(result.stdout.includes('references/ on demand'));
     });
   })) passed++; else failed++;
 

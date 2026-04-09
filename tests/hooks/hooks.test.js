@@ -2035,12 +2035,8 @@ async function runTests() {
       const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-hook-rules-'));
 
       try {
-        const backendDir = path.join(tempRoot, '.aw_registry', '.aw_rules', 'platform', 'backend');
+        const backendDir = path.join(tempRoot, '.aw_rules', 'platform', 'backend');
         fs.mkdirSync(backendDir, { recursive: true });
-        fs.writeFileSync(
-          path.join(backendDir, 'AGENTS.md'),
-          '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n'
-        );
 
         const result = await runShellScript(
           scriptPath,
@@ -2053,8 +2049,9 @@ async function runTests() {
         assert.strictEqual(result.code, 0, 'session-start-rules-context should exit 0');
         assert.ok(result.stdout.includes('[AW Router reminder]'), 'prompt reminder should mention AW routing');
         assert.ok(result.stdout.includes('[Rule reminder'), 'prompt reminder should mention scoped rules');
-        assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'), 'prompt reminder should resolve the backend rules path');
-        assert.ok(result.stdout.includes('@platform-core/logger'), 'prompt reminder should include scoped MUST rule content');
+        assert.ok(result.stdout.includes('.aw_rules/platform/universal/AGENTS.md'), 'prompt reminder should resolve the universal rules path');
+        assert.ok(result.stdout.includes('.aw_rules/platform/security/AGENTS.md'), 'prompt reminder should resolve the security rules path');
+        assert.ok(result.stdout.includes('references/ on demand'), 'prompt reminder should mention references guidance');
       } finally {
         fs.rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2098,12 +2095,8 @@ async function runTests() {
       const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-hook-rules-'));
 
       try {
-        const backendDir = path.join(tempRoot, '.aw_registry', '.aw_rules', 'platform', 'backend');
+        const backendDir = path.join(tempRoot, '.aw_rules', 'platform', 'backend');
         fs.mkdirSync(backendDir, { recursive: true });
-        fs.writeFileSync(
-          path.join(backendDir, 'AGENTS.md'),
-          '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n'
-        );
 
         const result = await runShellScript(
           scriptPath,
@@ -2116,8 +2109,9 @@ async function runTests() {
         assert.strictEqual(result.code, 0, 'session-start-rules-context should exit 0');
         assert.ok(result.stdout.includes('[AW Router reminder]'), 'prompt reminder should mention AW routing');
         assert.ok(result.stdout.includes('[Rule reminder'), 'prompt reminder should mention scoped rules');
-        assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'), 'prompt reminder should resolve the backend rules path');
-        assert.ok(result.stdout.includes('@platform-core/logger'), 'prompt reminder should include scoped MUST rule content');
+        assert.ok(result.stdout.includes('.aw_rules/platform/universal/AGENTS.md'), 'prompt reminder should resolve the universal rules path');
+        assert.ok(result.stdout.includes('.aw_rules/platform/security/AGENTS.md'), 'prompt reminder should resolve the security rules path');
+        assert.ok(result.stdout.includes('references/ on demand'), 'prompt reminder should mention references guidance');
       } finally {
         fs.rmSync(tempRoot, { recursive: true, force: true });
       }

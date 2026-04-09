@@ -6,6 +6,7 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       runner: 'shell',
       relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
       payloadMode: 'raw',
+      outputMode: 'cursor-session-start',
     },
   ],
   'user-prompt-submit': [

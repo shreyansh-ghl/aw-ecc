@@ -3,14 +3,14 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node .cursor/hooks/session-start.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"session-start.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "sessionStart",
         "description": "Load previous context and detect environment"
       }
     ],
     "sessionEnd": [
       {
-        "command": "node .cursor/hooks/session-end.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"session-end.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "sessionEnd",
         "description": "Persist session state and evaluate patterns"
       }
@@ -22,91 +22,91 @@
         "description": "Block git hook-bypass flag to protect pre-commit, commit-msg, and pre-push hooks from being skipped"
       },
       {
-        "command": "node .cursor/hooks/before-shell-execution.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-shell-execution.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "beforeShellExecution",
         "description": "Tmux dev server blocker, tmux reminder, git push review"
       }
     ],
     "afterShellExecution": [
       {
-        "command": "node .cursor/hooks/after-shell-execution.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-shell-execution.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "afterShellExecution",
         "description": "PR URL logging, build analysis"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "node .cursor/hooks/after-file-edit.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-file-edit.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "afterFileEdit",
         "description": "Auto-format, TypeScript check, console.log warning"
       }
     ],
     "beforeMCPExecution": [
       {
-        "command": "node .cursor/hooks/before-mcp-execution.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-mcp-execution.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "beforeMCPExecution",
         "description": "MCP audit logging and untrusted server warning"
       }
     ],
     "afterMCPExecution": [
       {
-        "command": "node .cursor/hooks/after-mcp-execution.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-mcp-execution.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "afterMCPExecution",
         "description": "MCP result logging"
       }
     ],
     "beforeReadFile": [
       {
-        "command": "node .cursor/hooks/before-read-file.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-read-file.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "beforeReadFile",
         "description": "Warn when reading sensitive files (.env, .key, .pem)"
       }
     ],
     "beforeSubmitPrompt": [
       {
-        "command": "node .cursor/hooks/before-submit-prompt.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-submit-prompt.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "beforeSubmitPrompt",
         "description": "Detect secrets in prompts (sk-, ghp_, AKIA patterns)"
       }
     ],
     "subagentStart": [
       {
-        "command": "node .cursor/hooks/subagent-start.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"subagent-start.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "subagentStart",
         "description": "Log agent spawning for observability"
       }
     ],
     "subagentStop": [
       {
-        "command": "node .cursor/hooks/subagent-stop.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"subagent-stop.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "subagentStop",
         "description": "Log agent completion"
       }
     ],
     "beforeTabFileRead": [
       {
-        "command": "node .cursor/hooks/before-tab-file-read.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-tab-file-read.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "beforeTabFileRead",
         "description": "Block Tab from reading secrets (.env, .key, .pem, credentials)"
       }
     ],
     "afterTabFileEdit": [
       {
-        "command": "node .cursor/hooks/after-tab-file-edit.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-tab-file-edit.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "afterTabFileEdit",
         "description": "Auto-format Tab edits"
       }
     ],
     "preCompact": [
       {
-        "command": "node .cursor/hooks/pre-compact.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"pre-compact.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "preCompact",
         "description": "Save state before context compaction"
       }
     ],
     "stop": [
       {
-        "command": "node .cursor/hooks/stop.js",
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"stop.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "stop",
         "description": "Console.log audit on all modified files"
       }
