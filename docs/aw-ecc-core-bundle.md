@@ -1,65 +1,76 @@
 # AW ECC Core Bundle
 
-This is the smallest obvious path through `aw-ecc` for teams who want the strongest engineering baseline without learning the whole catalog first.
+This is the smallest obvious path through `aw-ecc` for teams who want a strong default workflow without learning the whole catalog first.
 
 ## Public Stage Flow
 
-The public AW stage surface stays small:
+The public AW surface stays intentionally small:
 
 - `/aw:plan`
-- `/aw:build`
-- `/aw:investigate`
-- `/aw:test`
-- `/aw:review`
+- `/aw:execute`
+- `/aw:verify`
 - `/aw:deploy`
 - `/aw:ship`
 
-Compatibility routes still exist:
+If you only remember one default workflow, use this:
 
-- `/aw:execute` -> `/aw:build`
-- `/aw:verify` -> `/aw:test` or `/aw:review`
-
-For explicit one-run automation, use the internal `aw-yolo` skill instead of overloading `ship`.
-
-## The 19-Skill Engineering Core
-
-These are the Addy-parity engineering skills that now exist as first-class ECC skills or tightly governed AW equivalents.
-
-| Concern | ECC skill(s) |
-|---|---|
-| idea shaping | `idea-refine` |
-| spec discipline | `aw-plan`, `aw-spec` |
-| planning and task breakdown | `aw-plan`, `aw-tasks` |
-| incremental implementation | `incremental-implementation` |
-| context curation | `context-engineering` |
-| frontend engineering | `frontend-ui-engineering` |
-| API and interface design | `api-and-interface-design` |
-| test-driven development | `tdd-workflow` |
-| browser runtime verification | `browser-testing-with-devtools` |
-| debugging and error recovery | `aw-investigate`, `aw-debug` |
-| code review and quality | `aw-review` |
-| code simplification | `code-simplification` |
-| security and hardening | `security-and-hardening` |
-| performance optimization | `performance-optimization` |
-| git workflow and versioning | `git-workflow-and-versioning` |
-| CI/CD and automation | `ci-cd-and-automation` |
-| deprecation and migration | `deprecation-and-migration` |
-| documentation and ADRs | `documentation-and-adrs` |
-| shipping and launch | `aw-ship` |
+1. `/aw:plan` when direction still needs to become a concrete artifact set.
+2. `/aw:execute` when the work is approved and ready to implement.
+3. `/aw:verify` when you need objective review, validation, and readiness evidence.
+4. `/aw:deploy` when the requested outcome is one release action.
+5. `/aw:ship` only when the work really needs the broader end-to-end or multi-release closeout path.
 
 ## Small Obvious Path
 
-If you only remember one default workflow, use this:
+Use this default mental model:
 
-1. `idea-refine` when the request is still fuzzy.
-2. `/aw:plan` when direction needs to become an approved spec and task set.
-3. `/aw:build` when the work is approved and implementation-ready.
-4. `/aw:test` when the feature, bugfix, or release needs fresh QA evidence.
-5. `/aw:review` when findings, governance, or readiness decisions matter.
-6. `/aw:deploy` when you need one release action.
-7. `/aw:ship` when rollout safety, rollback posture, and closeout matter.
+- vague request -> `/aw:plan`
+- approved implementation request -> `/aw:execute`
+- "prove it works" or "review this" -> `/aw:verify`
+- "deploy this" -> `/aw:deploy`
+- "take this all the way through" -> `/aw:ship`
 
-Use `/aw:investigate` any time the root cause is still unclear.
+This keeps the first-run experience centered on stage boundaries instead of the full command catalog.
+
+## Install Profile Shortcut
+
+If you are installing `aw-ecc` directly, keep the same small-first mindset for setup:
+
+- `core` when you want the smallest safe baseline
+- `developer` for most active engineering work
+- `security` or `research` when that is the dominant use case
+- `full` only when you explicitly want the broadest surface on day one
+
+For the focused profile guide and real installer examples, read [aw-ecc-install-profiles.md](./aw-ecc-install-profiles.md).
+
+## Trust Before Scale
+
+Before you add more tools, more parallelism, or broader install surface, lock in the safe defaults:
+
+- smaller install profile
+- fewer enabled MCPs per project
+- approval boundaries around risky actions
+- narrow memory for untrusted workflows
+- isolation for untrusted repos and foreign content
+
+For the focused trust model, read [aw-ecc-security-posture.md](./aw-ecc-security-posture.md).
+
+## Supporting Skills Worth Learning Early
+
+These are the few repo-local skills most likely to make the biggest difference early:
+
+- `aw-brainstorm` for discovery-heavy planning before the plan is frozen
+- `aw-spec` for technical contract authoring inside planning
+- `aw-tasks` for turning a spec into an execution-ready recipe
+- `tdd-workflow` for implementation discipline
+- `verification-loop` for structured quality proof
+- `security-review` for security-focused checks
+- `security-scan` for config and prompt-injection hygiene checks
+- `e2e-testing` for browser-level proof when local tests are not enough
+- `strategic-compact` for context management during longer sessions
+
+You do not need to memorize these up front.
+The public AW commands are still the default entrypoint.
 
 ## Capability Map
 
@@ -67,62 +78,34 @@ If you want X, start with Y:
 
 | If you want... | Start with... |
 |---|---|
-| turn a vague product concept into a concrete direction | `idea-refine` |
-| move from approved direction into deterministic artifacts | `/aw:plan` |
-| build in thin safe slices | `/aw:build` + `incremental-implementation` |
-| design a stable public interface | `api-and-interface-design` |
-| verify real browser behavior | `/aw:test` + `browser-testing-with-devtools` |
-| review for findings and readiness | `/aw:review` |
-| clean up complexity after behavior is stable | `code-simplification` |
-| harden trust boundaries | `security-and-hardening` |
-| optimize using measurements | `performance-optimization` |
-| keep history reviewable and reversible | `git-workflow-and-versioning` |
-| automate gates and rollout safety | `ci-cd-and-automation` |
-| retire old systems safely | `deprecation-and-migration` |
-| capture the why behind a decision | `documentation-and-adrs` |
-| debug an unclear bug or alert | `/aw:investigate` |
+| turn a vague idea into artifacts | `/aw:plan` |
+| implement approved work | `/aw:execute` |
+| review or prove the work | `/aw:verify` |
+| perform one release action | `/aw:deploy` |
+| run the broader closeout flow | `/aw:ship` |
+| shape the plan before writing it | `aw-brainstorm` |
+| improve implementation discipline | `tdd-workflow` |
+| strengthen final proof | `verification-loop` |
+| run browser-level validation | `e2e-testing` |
 
-## Portable vs AW-Internal
+## Why This Exists
 
-The repo now has two practical modes:
+`aw-ecc` has a large catalog on purpose, but onboarding should not feel large.
 
-### Portable engineering skills
+The core bundle exists so that:
 
-These can be used outside a full AW stage flow:
+- the first touch is stage-oriented instead of catalog-oriented
+- teams can adopt the AW workflow without learning every supporting skill
+- deeper repo-local skills become progressive disclosure instead of mandatory study
 
-- `idea-refine`
-- `context-engineering`
-- `incremental-implementation`
-- `frontend-ui-engineering`
-- `api-and-interface-design`
-- `browser-testing-with-devtools`
-- `code-simplification`
-- `security-and-hardening`
-- `performance-optimization`
-- `git-workflow-and-versioning`
-- `ci-cd-and-automation`
-- `deprecation-and-migration`
-- `documentation-and-adrs`
+## Next Step
 
-### AW-governed stage skills
+After the public stage flow feels natural, then expand into:
 
-These own deterministic artifacts and stage contracts:
+- supporting planning helpers
+- TDD and verification support
+- domain-specific patterns
+- orchestration and advanced workflow skills
 
-- `aw-plan`
-- `aw-build`
-- `aw-investigate`
-- `aw-test`
-- `aw-review`
-- `aw-deploy`
-- `aw-ship`
-- `aw-yolo`
-
-## Org Overlay
-
-In GHL repos, the core bundle should still inherit:
-
-- `defaults/aw-sdlc/baseline-profiles.yml`
-- relevant `.aw_rules`
-- platform frontend, services, infra, SDET, design, and review playbooks
-
-That means the core bundle is intentionally small in shape, but still strong in org standards once it lands inside an AW-governed repo.
+For the next layer after this core bundle, read [aw-ecc-leverage-patterns.md](./aw-ecc-leverage-patterns.md).
+That guide focuses on the patterns that improve long-session quality and repeatability.
