@@ -10,6 +10,13 @@ const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 
+// On Windows, bash's $(pwd) returns POSIX-style paths (/c/Users/...) while
+// Node's path.join returns Windows-style (C:\Users\...). Normalize for assertions.
+function toPosix(p) {
+  if (process.platform !== 'win32') return p;
+  return p.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -91,9 +98,9 @@ function runTests() {
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Router reminder]'));
       assert.ok(result.stdout.includes('[Rules reminder]'));
-      assert.ok(result.stdout.includes(`${cwd}/AGENTS.md`));
-      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`));
-      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${toPosix(cwd)}/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${toPosix(cwd)}/.aw_rules/platform/universal/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${toPosix(cwd)}/.aw_rules/platform/security/AGENTS.md`));
     });
   })) passed++; else failed++;
 
