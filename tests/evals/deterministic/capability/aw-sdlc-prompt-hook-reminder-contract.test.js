@@ -5,12 +5,6 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { createRepoSnapshot } = require('../../lib/repo-snapshot');
 
-// On Windows, bash's $(pwd) returns POSIX-style paths (/c/Users/...) while
-// Node's path.join returns Windows-style (C:\Users\...). Normalize for assertions.
-function toPosix(p) {
-  if (process.platform !== 'win32') return p;
-  return p.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-}
 const { REPO_ROOT } = require('../../lib/aw-sdlc-paths');
 
 const REF = process.env.AW_SDLC_EVAL_REF || 'WORKTREE';
@@ -92,9 +86,9 @@ function run() {
       const output = sharedResult.stdout;
       assert.ok(output.includes('[AW Router reminder]'));
       assert.ok(output.includes('[Rules reminder]'));
-      assert.ok(output.includes(`${toPosix(repoRoot)}/AGENTS.md`));
-      assert.ok(output.includes(`${toPosix(repoRoot)}/.aw_rules/platform/universal/AGENTS.md`));
-      assert.ok(output.includes(`${toPosix(repoRoot)}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(output.includes(`${repoRoot}/AGENTS.md`));
+      assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
+      assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
       assert.ok(!output.includes('.aw_registry/.aw_rules/platform'), 'Prompt reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
 
@@ -114,9 +108,9 @@ function run() {
       assert.strictEqual(cursorResult.stdout, cursorPayload);
       assert.ok(cursorResult.stderr.includes('[AW Router reminder]'));
       assert.ok(cursorResult.stderr.includes('[Rules reminder]'));
-      assert.ok(cursorResult.stderr.includes(`${toPosix(repoRoot)}/AGENTS.md`));
-      assert.ok(cursorResult.stderr.includes(`${toPosix(repoRoot)}/.aw_rules/platform/universal/AGENTS.md`));
-      assert.ok(cursorResult.stderr.includes(`${toPosix(repoRoot)}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes(`${repoRoot}/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
       assert.ok(!cursorResult.stderr.includes('.aw_registry/.aw_rules/platform'), 'Cursor reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
   } finally {

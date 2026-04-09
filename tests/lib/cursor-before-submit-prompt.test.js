@@ -10,13 +10,6 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-// On Windows, bash's $(pwd) returns POSIX-style paths (/c/Users/...) while
-// Node's path.join returns Windows-style (C:\Users\...). Normalize for assertions.
-function toPosix(p) {
-  if (process.platform !== 'win32') return p;
-  return p.replace(/\\/g, '/').replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-}
-
 function test(name, fn) {
   try {
     fn();
@@ -104,9 +97,9 @@ function runTests() {
       assert.strictEqual(result.stdout, raw);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
       assert.ok(result.stderr.includes('[Rules reminder]'), 'Expected rules reminder on stderr');
-      assert.ok(result.stderr.includes(`${toPosix(cwd)}/AGENTS.md`), 'Expected repo AGENTS path in reminder');
-      assert.ok(result.stderr.includes(`${toPosix(cwd)}/.aw_rules/platform/universal/AGENTS.md`), 'Expected universal rules path in reminder');
-      assert.ok(result.stderr.includes(`${toPosix(cwd)}/.aw_rules/platform/security/AGENTS.md`), 'Expected security rules path in reminder');
+      assert.ok(result.stderr.includes(`${cwd}/AGENTS.md`), 'Expected repo AGENTS path in reminder');
+      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`), 'Expected universal rules path in reminder');
+      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`), 'Expected security rules path in reminder');
     });
   })) passed++; else failed++;
 
