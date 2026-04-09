@@ -73,7 +73,7 @@ function runTests() {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
     const beforeSubmit = hooks.hooks.beforeSubmitPrompt || [];
     assert.ok(
-      beforeSubmit.some((entry) => entry.command === 'node .cursor/hooks/before-submit-prompt.js'),
+      beforeSubmit.some((entry) => entry.command === 'bash -lc \'exec bash "${CURSOR_PLUGIN_ROOT:-$HOME/.cursor}/hooks/before-submit-prompt.sh"\''),
       'Expected beforeSubmitPrompt to invoke the managed Cursor prompt-submit wrapper'
     );
   })) passed++; else failed++;

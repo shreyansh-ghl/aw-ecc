@@ -1,6 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+escape_for_json() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
+emit_session_start_payload() {
+  local content="$1"
+  local escaped
+  escaped="$(escape_for_json "$content")"
+
+  case "${AW_SESSION_OUTPUT:-claude}" in
+    cursor)
+      printf '{\n  "additional_context": "%s"\n}\n' "$escaped"
+      ;;
+    *)
+      printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped"
+      ;;
+  esac
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_ROOT=""
 SEARCH_ROOT="$SCRIPT_DIR"
@@ -27,7 +52,7 @@ while [[ "$SEARCH_ROOT" != "/" ]]; do
 done
 
 if [[ -z "$LOCAL_ROOT" && -z "$AW_REGISTRY_ROOT" ]]; then
-  echo '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "WARNING: .aw_registry not found. AW skills unavailable."}}'
+  emit_session_start_payload "WARNING: .aw_registry not found. AW skills unavailable."
   exit 0
 fi
 
@@ -56,12 +81,4 @@ Do not start with generic implementation, review, or deploy advice before skill 
 Use skills/using-aw-skills/SKILL.md as the repo-local router.
 Load domain, platform, and craft skills only after the smallest correct AW route is selected."
 
-# --- Output in Claude Code hookSpecificOutput format ---
-# Escape for JSON: newlines, quotes, backslashes
-JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c '
-import sys, json
-content = sys.stdin.read()
-print(json.dumps(content))
-' 2>/dev/null || printf '%s' "$CONTEXT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | awk '{printf "%s\\n", $0}')
-
-echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": ${JSON_CONTEXT}}}"
+emit_session_start_payload "$CONTEXT"

@@ -1,5 +1,5 @@
 /**
- * Tests for .cursor/hooks/before-submit-prompt.js
+ * Tests for .cursor/hooks/before-submit-prompt.sh
  *
  * Run with: node tests/lib/cursor-before-submit-prompt.test.js
  */
@@ -23,8 +23,8 @@ function test(name, fn) {
 }
 
 function runBeforeSubmit(raw, env = {}) {
-  const scriptPath = path.join(__dirname, '..', '..', '.cursor', 'hooks', 'before-submit-prompt.js');
-  const result = spawnSync('node', [scriptPath], {
+  const scriptPath = path.join(__dirname, '..', '..', '.cursor', 'hooks', 'before-submit-prompt.sh');
+  const result = spawnSync('bash', [scriptPath], {
     input: raw,
     encoding: 'utf8',
     cwd: path.join(__dirname, '..', '..'),
@@ -40,15 +40,26 @@ function runBeforeSubmit(raw, env = {}) {
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cursor-before-submit-'));
-  const rulesDir = path.join(tempDir, '.aw_registry', '.aw_rules', 'platform', 'backend');
-  fs.mkdirSync(rulesDir, { recursive: true });
+  const universalRulesDir = path.join(tempDir, '.aw_rules', 'platform', 'universal');
+  const securityRulesDir = path.join(tempDir, '.aw_rules', 'platform', 'security');
+  fs.mkdirSync(universalRulesDir, { recursive: true });
+  fs.mkdirSync(securityRulesDir, { recursive: true });
+  fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), '# Root Agents\n');
   fs.writeFileSync(
-    path.join(rulesDir, 'AGENTS.md'),
+    path.join(universalRulesDir, 'AGENTS.md'),
     [
-      '# Backend Rules',
+      '# Universal Rules',
       '',
       '- Use structured logging via @platform-core/logger MUST',
-      '- Never trust client payload locationId Never',
+      '',
+    ].join('\n')
+  );
+  fs.writeFileSync(
+    path.join(securityRulesDir, 'AGENTS.md'),
+    [
+      '# Security Rules',
+      '',
+      '- Never hardcode secrets Never',
       '',
     ].join('\n')
   );
@@ -69,7 +80,7 @@ function runTests() {
   if (test('passes raw stdin through while emitting AW prompt reminder to stderr', () => {
     withTempRulesDir((cwd) => {
       const raw = JSON.stringify({
-        cwd,
+        workspace_roots: [cwd],
         prompt: 'update this backend service and fix the dto validation',
       });
 
@@ -78,15 +89,17 @@ function runTests() {
       assert.strictEqual(result.code, 0);
       assert.strictEqual(result.stdout, raw);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
-      assert.ok(result.stderr.includes('[Rule reminder'), 'Expected rule reminder on stderr');
-      assert.ok(result.stderr.includes('.aw_registry/.aw_rules/platform/backend'), 'Expected backend rules path in reminder');
+      assert.ok(result.stderr.includes('[Rules reminder]'), 'Expected rule reminder on stderr');
+      assert.ok(result.stderr.includes(`${cwd}/AGENTS.md`), 'Expected root AGENTS.md in reminder');
+      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`), 'Expected universal rules path in reminder');
+      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`), 'Expected security rules path in reminder');
     });
   })) passed++; else failed++;
 
   if (test('warns on potential secrets without changing stdout passthrough', () => {
     withTempRulesDir((cwd) => {
       const raw = JSON.stringify({
-        cwd,
+        workspace_roots: [cwd],
         prompt: 'update this backend service and use sk-1234567890123456789012345 for testing',
       });
 

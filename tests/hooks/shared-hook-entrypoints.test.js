@@ -33,15 +33,26 @@ function runBash(scriptPath, input = '', env = {}) {
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-hook-'));
-  const rulesDir = path.join(tempDir, '.aw_registry', '.aw_rules', 'platform', 'backend');
-  fs.mkdirSync(rulesDir, { recursive: true });
+  const universalRulesDir = path.join(tempDir, '.aw_rules', 'platform', 'universal');
+  const securityRulesDir = path.join(tempDir, '.aw_rules', 'platform', 'security');
+  fs.mkdirSync(universalRulesDir, { recursive: true });
+  fs.mkdirSync(securityRulesDir, { recursive: true });
+  fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), '# Root Agents\n');
   fs.writeFileSync(
-    path.join(rulesDir, 'AGENTS.md'),
+    path.join(universalRulesDir, 'AGENTS.md'),
     [
-      '# Backend Rules',
+      '# Universal Rules',
       '',
       '- Use structured logging via @platform-core/logger MUST',
-      '- Never trust client payload locationId Never',
+      '',
+    ].join('\n')
+  );
+  fs.writeFileSync(
+    path.join(securityRulesDir, 'AGENTS.md'),
+    [
+      '# Security Rules',
+      '',
+      '- Never hardcode secrets Never',
       '',
     ].join('\n')
   );
@@ -72,16 +83,22 @@ function runTests() {
     withTempRulesDir((cwd) => {
       const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
       const raw = JSON.stringify({
-        cwd,
         prompt: 'update this backend service and fix the dto validation',
       });
 
-      const result = runBash(scriptPath, raw);
+      const result = spawnSync('bash', [scriptPath], {
+        cwd,
+        input: raw,
+        encoding: 'utf8',
+        env: process.env,
+      });
 
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Router reminder]'));
-      assert.ok(result.stdout.includes('[Rule reminder'));
-      assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'));
+      assert.ok(result.stdout.includes('[Rules reminder]'));
+      assert.ok(result.stdout.includes(`${cwd}/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`));
     });
   })) passed++; else failed++;
 

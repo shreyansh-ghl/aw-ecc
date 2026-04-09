@@ -9,8 +9,8 @@ const { execFileSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'generate-cursor-aw-hooks.js');
-const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'session-start.js');
-const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'cursor-aw-hooks', 'session-start.js');
+const TARGET_HOOK_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'session-start.sh');
+const SOURCE_HOOK_FILE = path.join(REPO_ROOT, 'scripts', 'cursor-aw-hooks', 'session-start.sh');
 const TARGET_SHARED_FILE = path.join(REPO_ROOT, '.cursor', 'hooks', 'shared', 'session-start.sh');
 const SOURCE_SHARED_FILE = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'session-start.sh');
 const TARGET_CONFIG_FILE = path.join(REPO_ROOT, '.cursor', 'hooks.json');

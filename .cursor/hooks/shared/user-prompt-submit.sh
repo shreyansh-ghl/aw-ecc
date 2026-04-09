@@ -1,87 +1,71 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook — inject a compact AW routing reminder plus scoped rule reminders
+# UserPromptSubmit hook — emit a small, reliable AW routing reminder.
 #
-# Output is printed to stdout as a plain-text prompt reminder.
+# This hook intentionally stays simple:
+# - drain stdin so the harness can always finish writing payloads
+# - remind the model to re-apply using-aw-skills
+# - point at AGENTS.md and the canonical .aw_rules/platform tree when present
 
 set -euo pipefail
 
-INPUT=$(cat)
+cat >/dev/null || true
 
-TMPFILE=$(mktemp) || exit 0
-trap 'rm -f "$TMPFILE"' EXIT
+# On Windows (Git Bash / MSYS), pwd returns POSIX paths (/tmp/...)
+# but callers use native Windows paths (C:\Users\...).
+# Convert via cygpath when available so paths match the caller's format.
+if command -v cygpath >/dev/null 2>&1; then
+  CWD="$(cygpath -w "$(pwd)")"
+else
+  CWD="$(pwd)"
+fi
+AGENTS_PATH="$CWD/AGENTS.md"
+RULES_ROOT=""
 
-echo "$INPUT" | python3 -c "
-import os, sys, json, re
-d = json.load(sys.stdin)
-cwd = d.get('cwd', '')
-prompt = d.get('prompt', '')
-cwd = re.sub(r'[^a-zA-Z0-9./_@ -]', '', cwd)
-prompt = prompt[:500]
-stack_overlays_enabled = os.environ.get('AW_ENABLE_STACK_OVERLAY_RULES') == '1'
-print(f'CWD={cwd}')
-prompt_lower = prompt.lower()
-if any(k in prompt_lower for k in ['controller', 'service', 'module', '@body', 'nestjs', 'worker', 'dto']):
-    print('DOMAIN=backend')
-    if stack_overlays_enabled and any(k in prompt_lower for k in ['nestjs', '@body', '@controller', '@module', 'class-validator', 'dto']):
-        print('STACK=nestjs')
-    elif stack_overlays_enabled and any(k in prompt_lower for k in ['connectrpc', 'connect-go', 'buf.gen', 'protoc-gen-connect-go']):
-        print('STACK=go-connect')
-elif any(k in prompt_lower for k in ['vue', 'component', 'template', 'frontend', '<script', 'nuxt']):
-    print('DOMAIN=frontend')
-    if stack_overlays_enabled and any(k in prompt_lower for k in ['nuxt', 'app.vue', 'useasyncdata', 'definepagemeta']):
-        print('STACK=nuxt')
-    elif stack_overlays_enabled and any(k in prompt_lower for k in ['vue', '<script', 'script setup', 'composable']):
-        print('STACK=vue')
-elif any(k in prompt_lower for k in ['mongo', 'redis', 'schema', 'migration', 'database', 'index']):
-    print('DOMAIN=data')
-elif any(k in prompt_lower for k in ['helm', 'terraform', 'kubernetes', 'k8s', 'deploy', 'dockerfile']):
-    print('DOMAIN=infra')
-else:
-    print('DOMAIN=universal')
-" > "$TMPFILE" 2>/dev/null || exit 0
+for candidate in \
+  "$CWD/.aw_rules/platform" \
+  "$HOME/.aw_rules/platform" \
+  "$HOME/.aw/.aw_rules/platform"
+do
+  if [ -d "$candidate" ]; then
+    RULES_ROOT="$candidate"
+    break
+  fi
+done
 
-CWD="" DOMAIN="universal" STACK=""
-while IFS='=' read -r key value; do
-  case "${key:-}" in
-    CWD)    CWD="$value" ;;
-    DOMAIN) DOMAIN="$value" ;;
-    STACK)  STACK="$value" ;;
-  esac
-done < "$TMPFILE"
+RULE_REFS=()
 
-RULES_DIR=""
-DOMAIN_AGENTS=""
-STACK_AGENTS=""
-
-if [ -d "$CWD/.aw_registry/.aw_rules/platform" ]; then
-  RULES_DIR="$CWD/.aw_registry/.aw_rules/platform"
-  DOMAIN_AGENTS="$RULES_DIR/$DOMAIN/AGENTS.md"
-elif [ -d "$CWD/.aw_rules" ]; then
-  RULES_DIR="$CWD/.aw_rules"
-  DOMAIN_AGENTS="$RULES_DIR/$DOMAIN/AGENTS.md"
+if [ -f "$AGENTS_PATH" ]; then
+  RULE_REFS+=("$AGENTS_PATH")
 fi
 
-[ -n "$RULES_DIR" ] || exit 0
-[ -f "$DOMAIN_AGENTS" ] || exit 0
-
-if [ -n "$STACK" ] && [ -f "$RULES_DIR/$DOMAIN/$STACK/AGENTS.md" ]; then
-  STACK_AGENTS="$RULES_DIR/$DOMAIN/$STACK/AGENTS.md"
+if [ -n "$RULES_ROOT" ]; then
+  if [ -f "$RULES_ROOT/universal/AGENTS.md" ]; then
+    RULE_REFS+=("$RULES_ROOT/universal/AGENTS.md")
+  fi
+  if [ -f "$RULES_ROOT/security/AGENTS.md" ]; then
+    RULE_REFS+=("$RULES_ROOT/security/AGENTS.md")
+  fi
+  RULE_SCOPE="Applicable domain rules live under $RULES_ROOT."
+else
+  RULE_SCOPE="Applicable domain rules live under .aw_rules/platform when synced."
 fi
 
-DOMAIN_RULES=$(head -20 "$DOMAIN_AGENTS" 2>/dev/null || echo "")
-STACK_RULES=""
-if [ -n "$STACK_AGENTS" ]; then
-  STACK_RULES=$(head -20 "$STACK_AGENTS" 2>/dev/null || echo "")
+if [ "${#RULE_REFS[@]}" -gt 0 ]; then
+  RULE_PATHS=""
+  while IFS= read -r line; do
+    if [ -z "$RULE_PATHS" ]; then
+      RULE_PATHS="$line"
+    else
+      RULE_PATHS="$RULE_PATHS, $line"
+    fi
+  done < <(printf '%s\n' "${RULE_REFS[@]}" | awk '!seen[$0]++')
+else
+  RULE_PATHS="AGENTS.md"
 fi
 
-RULE_BULLETS=$(printf '%s\n%s\n' "$DOMAIN_RULES" "$STACK_RULES" | grep -E "^\- .*(MUST|Never)" | awk '!seen[$0]++' | head -8 2>/dev/null || true)
-
-[ -z "$DOMAIN_RULES" ] && [ -z "$STACK_RULES" ] && exit 0
-
-cat << EOF
-[AW Router reminder] Re-apply using-aw-skills for this prompt and re-select the smallest correct AW route and stage skill before substantive work.
-[Rule reminder — $RULES_DIR/$DOMAIN${STACK_AGENTS:+/$STACK}] Active MUST rules for this scope. Follow them.
-${RULE_BULLETS:-See $DOMAIN_AGENTS${STACK_AGENTS:+ and $STACK_AGENTS}}
+cat <<EOF
+[AW Router reminder] Re-apply using-aw-skills for this prompt and select the smallest correct AW route and stage skill before substantive work.
+[Rules reminder] Start with $RULE_PATHS. Universal and security rules always apply. $RULE_SCOPE
 EOF
 
 exit 0

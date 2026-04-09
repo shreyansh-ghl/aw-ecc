@@ -18,9 +18,11 @@ const HOME_SOURCE_FILE = path.join(HOME_SOURCE_DIR, 'hooks.json');
 const FILE_NAMES = [
   'aw-phase-adapter.js',
   'aw-phase-definitions.js',
+  'before-submit-prompt.sh',
   'before-submit-prompt.js',
   'pre-compact.js',
   'session-end.js',
+  'session-start.sh',
   'session-start.js',
   'stop.js',
 ];
@@ -97,6 +99,33 @@ function runTests() {
       fs.readFileSync(HOME_SOURCE_FILE, 'utf8'),
       'Generated .cursor/hooks.json drifted from neutral home source'
     );
+  })) passed++; else failed++;
+
+  if (test('generated .cursor/hooks.json uses shell-first bridge commands for session start and prompt submit', () => {
+    const parsed = JSON.parse(fs.readFileSync(HOME_OUTPUT_FILE, 'utf8'));
+    assert.strictEqual(parsed.version, 1, 'Expected Cursor hooks.json version 1');
+    assert.strictEqual(
+      parsed.hooks.sessionStart?.[0]?.command,
+      'bash -lc \'exec bash "${CURSOR_PLUGIN_ROOT:-$HOME/.cursor}/hooks/session-start.sh"\''
+    );
+    assert.strictEqual(
+      parsed.hooks.beforeSubmitPrompt?.[0]?.command,
+      'bash -lc \'exec bash "${CURSOR_PLUGIN_ROOT:-$HOME/.cursor}/hooks/before-submit-prompt.sh"\''
+    );
+  })) passed++; else failed++;
+
+  if (test('generated .cursor/hooks.json avoids relative .cursor hook commands', () => {
+    const parsed = JSON.parse(fs.readFileSync(HOME_OUTPUT_FILE, 'utf8'));
+    const commands = Object.values(parsed.hooks)
+      .flat()
+      .map((entry) => String(entry.command || ''));
+
+    for (const command of commands) {
+      assert.ok(
+        !command.includes('node .cursor/hooks/') && !command.includes('bash .cursor/hooks/'),
+        `Expected root-aware Cursor command, got: ${command}`
+      );
+    }
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

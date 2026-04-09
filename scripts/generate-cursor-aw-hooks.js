@@ -31,6 +31,9 @@ function main() {
     const destinationPath = path.join(outputDir, fileName);
     const content = fs.readFileSync(sourcePath, 'utf8');
     fs.writeFileSync(destinationPath, content);
+    if (fileName.endsWith('.sh')) {
+      fs.chmodSync(destinationPath, 0o755);
+    }
   }
 
   for (const fileName of CURSOR_AW_SHARED_HOOK_FILES) {
@@ -38,6 +41,9 @@ function main() {
     const destinationPath = path.join(outputSharedDir, fileName);
     const content = fs.readFileSync(sourcePath, 'utf8');
     fs.writeFileSync(destinationPath, content);
+    if (fileName.endsWith('.sh')) {
+      fs.chmodSync(destinationPath, 0o755);
+    }
   }
 
   const hooksJson = serializeCursorHookConfig();

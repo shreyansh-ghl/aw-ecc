@@ -3,9 +3,11 @@ const path = require('path');
 const CURSOR_AW_HOOK_FILES = Object.freeze([
   'aw-phase-adapter.js',
   'aw-phase-definitions.js',
+  'before-submit-prompt.sh',
   'before-submit-prompt.js',
   'pre-compact.js',
   'session-end.js',
+  'session-start.sh',
   'session-start.js',
   'stop.js',
 ]);

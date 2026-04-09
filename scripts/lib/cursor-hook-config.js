@@ -1,16 +1,24 @@
 const { getCursorMappedEventNames } = require('./aw-hook-contract');
 
+function buildCursorRootAwareShellCommand(scriptName) {
+  return `bash -lc 'exec bash "\${CURSOR_PLUGIN_ROOT:-$HOME/.cursor}/hooks/${scriptName}"'`;
+}
+
+function buildCursorRootAwareNodeCommand(scriptName) {
+  return `bash -lc 'exec node "\${CURSOR_PLUGIN_ROOT:-$HOME/.cursor}/hooks/${scriptName}"'`;
+}
+
 const CURSOR_HOOK_ENTRIES = Object.freeze({
   sessionStart: [
     {
-      command: 'node .cursor/hooks/session-start.js',
+      command: buildCursorRootAwareShellCommand('session-start.sh'),
       event: 'sessionStart',
-      description: 'Load previous context and detect environment',
+      description: 'Load AW routing context at session start',
     },
   ],
   sessionEnd: [
     {
-      command: 'node .cursor/hooks/session-end.js',
+      command: buildCursorRootAwareNodeCommand('session-end.js'),
       event: 'sessionEnd',
       description: 'Persist session state and evaluate patterns',
     },
@@ -22,91 +30,91 @@ const CURSOR_HOOK_ENTRIES = Object.freeze({
       description: 'Block git hook-bypass flag to protect pre-commit, commit-msg, and pre-push hooks from being skipped',
     },
     {
-      command: 'node .cursor/hooks/before-shell-execution.js',
+      command: buildCursorRootAwareNodeCommand('before-shell-execution.js'),
       event: 'beforeShellExecution',
       description: 'Tmux dev server blocker, tmux reminder, git push review',
     },
   ],
   afterShellExecution: [
     {
-      command: 'node .cursor/hooks/after-shell-execution.js',
+      command: buildCursorRootAwareNodeCommand('after-shell-execution.js'),
       event: 'afterShellExecution',
       description: 'PR URL logging, build analysis',
     },
   ],
   afterFileEdit: [
     {
-      command: 'node .cursor/hooks/after-file-edit.js',
+      command: buildCursorRootAwareNodeCommand('after-file-edit.js'),
       event: 'afterFileEdit',
       description: 'Auto-format, TypeScript check, console.log warning',
     },
   ],
   beforeMCPExecution: [
     {
-      command: 'node .cursor/hooks/before-mcp-execution.js',
+      command: buildCursorRootAwareNodeCommand('before-mcp-execution.js'),
       event: 'beforeMCPExecution',
       description: 'MCP audit logging and untrusted server warning',
     },
   ],
   afterMCPExecution: [
     {
-      command: 'node .cursor/hooks/after-mcp-execution.js',
+      command: buildCursorRootAwareNodeCommand('after-mcp-execution.js'),
       event: 'afterMCPExecution',
       description: 'MCP result logging',
     },
   ],
   beforeReadFile: [
     {
-      command: 'node .cursor/hooks/before-read-file.js',
+      command: buildCursorRootAwareNodeCommand('before-read-file.js'),
       event: 'beforeReadFile',
       description: 'Warn when reading sensitive files (.env, .key, .pem)',
     },
   ],
   beforeSubmitPrompt: [
     {
-      command: 'node .cursor/hooks/before-submit-prompt.js',
+      command: buildCursorRootAwareShellCommand('before-submit-prompt.sh'),
       event: 'beforeSubmitPrompt',
-      description: 'Detect secrets in prompts (sk-, ghp_, AKIA patterns)',
+      description: 'Inject compact AW routing and rule reminders on each prompt',
     },
   ],
   subagentStart: [
     {
-      command: 'node .cursor/hooks/subagent-start.js',
+      command: buildCursorRootAwareNodeCommand('subagent-start.js'),
       event: 'subagentStart',
       description: 'Log agent spawning for observability',
     },
   ],
   subagentStop: [
     {
-      command: 'node .cursor/hooks/subagent-stop.js',
+      command: buildCursorRootAwareNodeCommand('subagent-stop.js'),
       event: 'subagentStop',
       description: 'Log agent completion',
     },
   ],
   beforeTabFileRead: [
     {
-      command: 'node .cursor/hooks/before-tab-file-read.js',
+      command: buildCursorRootAwareNodeCommand('before-tab-file-read.js'),
       event: 'beforeTabFileRead',
       description: 'Block Tab from reading secrets (.env, .key, .pem, credentials)',
     },
   ],
   afterTabFileEdit: [
     {
-      command: 'node .cursor/hooks/after-tab-file-edit.js',
+      command: buildCursorRootAwareNodeCommand('after-tab-file-edit.js'),
       event: 'afterTabFileEdit',
       description: 'Auto-format Tab edits',
     },
   ],
   preCompact: [
     {
-      command: 'node .cursor/hooks/pre-compact.js',
+      command: buildCursorRootAwareNodeCommand('pre-compact.js'),
       event: 'preCompact',
       description: 'Save state before context compaction',
     },
   ],
   stop: [
     {
-      command: 'node .cursor/hooks/stop.js',
+      command: buildCursorRootAwareNodeCommand('stop.js'),
       event: 'stop',
       description: 'Console.log audit on all modified files',
     },
@@ -131,6 +139,7 @@ function buildCursorHookEntries() {
 
 function buildCursorHookConfig() {
   return {
+    version: 1,
     hooks: buildCursorHookEntries(),
   };
 }
@@ -143,5 +152,7 @@ module.exports = {
   CURSOR_HOOK_ENTRIES,
   buildCursorHookEntries,
   buildCursorHookConfig,
+  buildCursorRootAwareNodeCommand,
+  buildCursorRootAwareShellCommand,
   serializeCursorHookConfig,
 };
