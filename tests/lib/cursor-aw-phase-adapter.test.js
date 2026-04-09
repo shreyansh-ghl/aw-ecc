@@ -26,7 +26,7 @@ async function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (await asyncTest('passes raw input through while running enabled Claude hook steps', async () => {
+  if (await asyncTest('returns Cursor additional_context for session-start while still delegating through the shared phase steps', async () => {
     const calls = [];
     const raw = JSON.stringify({ prompt: 'hello', transcript_path: '/tmp/demo.jsonl' });
     const result = await runCursorAwPhase({
@@ -38,6 +38,7 @@ async function runTests() {
           runner: 'shell',
           relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
           payloadMode: 'raw',
+          outputMode: 'cursor-session-start',
         },
       ],
       deps: {
@@ -51,14 +52,26 @@ async function runTests() {
         },
         runManagedNodeHook(relativeScriptPath, payload) {
           calls.push({ type: 'node', relativeScriptPath, payload });
+          return { stdout: '', stderr: '' };
         },
         runManagedShellHook(relativeScriptPath, payload) {
           calls.push({ type: 'shell', relativeScriptPath, payload });
+          return {
+            stdout: JSON.stringify({
+              hookSpecificOutput: {
+                hookEventName: 'SessionStart',
+                additionalContext: 'Use the AW router first.',
+              },
+            }),
+            stderr: '',
+          };
         },
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.deepStrictEqual(JSON.parse(result), {
+      additional_context: 'Use the AW router first.',
+    });
     assert.deepStrictEqual(calls, [
       {
         type: 'enabled',

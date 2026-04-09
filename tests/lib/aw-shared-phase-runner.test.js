@@ -63,7 +63,7 @@ async function runTests() {
     assert.strictEqual(steps[0].payloadMode, 'raw');
   })) passed++; else failed++;
 
-  if (await asyncTest('runs shell and node steps through the injected runtime', async () => {
+  if (await asyncTest('translates session-start hook output into Cursor additional_context while still running later steps', async () => {
     const calls = [];
     const raw = JSON.stringify({ prompt: 'hello' });
     const result = await runSharedAwPhase({
@@ -75,6 +75,7 @@ async function runTests() {
           runner: 'shell',
           relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
           payloadMode: 'raw',
+          outputMode: 'cursor-session-start',
         },
         {
           hookId: 'stop:cost-tracker',
@@ -95,14 +96,26 @@ async function runTests() {
         },
         runManagedShellHook(relativeScriptPath, payload) {
           calls.push({ type: 'shell', relativeScriptPath, payload });
+          return {
+            stdout: JSON.stringify({
+              hookSpecificOutput: {
+                hookEventName: 'SessionStart',
+                additionalContext: 'Use the AW router first.',
+              },
+            }),
+            stderr: '',
+          };
         },
         runManagedNodeHook(relativeScriptPath, payload) {
           calls.push({ type: 'node', relativeScriptPath, payload });
+          return { stdout: '', stderr: '' };
         },
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.deepStrictEqual(JSON.parse(result), {
+      additional_context: 'Use the AW router first.',
+    });
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { prompt: 'hello' } },
       { type: 'enabled', hookId: 'session:start', allowedProfiles: ['minimal', 'standard', 'strict'] },

@@ -232,6 +232,13 @@ function runTests() {
 
     assert.ok(
       plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/hooks'
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'scripts', 'hooks')
+      )),
+      'Should overlay the shared scripts/hooks runtime into .cursor/scripts/hooks'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
         normalizedRelativePath(operation.sourceRelativePath) === 'scripts/cursor-aw-hooks'
         && operation.destinationPath === path.join(projectRoot, '.cursor', 'hooks')
       )),
