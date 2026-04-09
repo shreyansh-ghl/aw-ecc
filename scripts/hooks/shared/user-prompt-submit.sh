@@ -10,7 +10,14 @@ set -euo pipefail
 
 cat >/dev/null || true
 
-CWD="$(pwd)"
+# On Windows (Git Bash / MSYS), pwd returns POSIX paths (/tmp/...)
+# but callers use native Windows paths (C:\Users\...).
+# Convert via cygpath when available so paths match the caller's format.
+if command -v cygpath >/dev/null 2>&1; then
+  CWD="$(cygpath -w "$(pwd)")"
+else
+  CWD="$(pwd)"
+fi
 AGENTS_PATH="$CWD/AGENTS.md"
 RULES_ROOT=""
 
