@@ -2035,26 +2035,34 @@ async function runTests() {
       const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-hook-rules-'));
 
       try {
-        const backendDir = path.join(tempRoot, '.aw_registry', '.aw_rules', 'platform', 'backend');
-        fs.mkdirSync(backendDir, { recursive: true });
+        fs.writeFileSync(path.join(tempRoot, 'AGENTS.md'), '# Repo Instructions\n');
+        const universalDir = path.join(tempRoot, '.aw_rules', 'platform', 'universal');
+        const securityDir = path.join(tempRoot, '.aw_rules', 'platform', 'security');
+        fs.mkdirSync(universalDir, { recursive: true });
+        fs.mkdirSync(securityDir, { recursive: true });
         fs.writeFileSync(
-          path.join(backendDir, 'AGENTS.md'),
-          '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n'
+          path.join(universalDir, 'AGENTS.md'),
+          '# Universal\n\n- Handle every error explicitly. [MUST]\n'
+        );
+        fs.writeFileSync(
+          path.join(securityDir, 'AGENTS.md'),
+          '# Security\n\n- Never hardcode secrets. [MUST]\n'
         );
 
         const result = await runShellScript(
           scriptPath,
           [],
-          JSON.stringify({ cwd: tempRoot, prompt: 'Please update this NestJS controller service and DTO' }),
+          JSON.stringify({ prompt: 'Please update this NestJS controller service and DTO' }),
           {},
-          path.join(__dirname, '..', '..')
+          tempRoot
         );
 
         assert.strictEqual(result.code, 0, 'session-start-rules-context should exit 0');
         assert.ok(result.stdout.includes('[AW Router reminder]'), 'prompt reminder should mention AW routing');
-        assert.ok(result.stdout.includes('[Rule reminder'), 'prompt reminder should mention scoped rules');
-        assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'), 'prompt reminder should resolve the backend rules path');
-        assert.ok(result.stdout.includes('@platform-core/logger'), 'prompt reminder should include scoped MUST rule content');
+        assert.ok(result.stdout.includes('[Rules reminder]'), 'prompt reminder should mention scoped rules');
+        assert.ok(result.stdout.includes(`${tempRoot}/AGENTS.md`), 'prompt reminder should mention repo AGENTS.md');
+        assert.ok(result.stdout.includes(`${tempRoot}/.aw_rules/platform/universal/AGENTS.md`), 'prompt reminder should resolve the universal rules path');
+        assert.ok(result.stdout.includes(`${tempRoot}/.aw_rules/platform/security/AGENTS.md`), 'prompt reminder should resolve the security rules path');
       } finally {
         fs.rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2098,26 +2106,34 @@ async function runTests() {
       const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-hook-rules-'));
 
       try {
-        const backendDir = path.join(tempRoot, '.aw_registry', '.aw_rules', 'platform', 'backend');
-        fs.mkdirSync(backendDir, { recursive: true });
+        fs.writeFileSync(path.join(tempRoot, 'AGENTS.md'), '# Repo Instructions\n');
+        const universalDir = path.join(tempRoot, '.aw_rules', 'platform', 'universal');
+        const securityDir = path.join(tempRoot, '.aw_rules', 'platform', 'security');
+        fs.mkdirSync(universalDir, { recursive: true });
+        fs.mkdirSync(securityDir, { recursive: true });
         fs.writeFileSync(
-          path.join(backendDir, 'AGENTS.md'),
-          '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n'
+          path.join(universalDir, 'AGENTS.md'),
+          '# Universal\n\n- Handle every error explicitly. [MUST]\n'
+        );
+        fs.writeFileSync(
+          path.join(securityDir, 'AGENTS.md'),
+          '# Security\n\n- Never hardcode secrets. [MUST]\n'
         );
 
         const result = await runShellScript(
           scriptPath,
           [],
-          JSON.stringify({ cwd: tempRoot, prompt: 'Please update this NestJS controller service and DTO' }),
+          JSON.stringify({ prompt: 'Please update this NestJS controller service and DTO' }),
           {},
-          path.join(__dirname, '..', '..')
+          tempRoot
         );
 
         assert.strictEqual(result.code, 0, 'session-start-rules-context should exit 0');
         assert.ok(result.stdout.includes('[AW Router reminder]'), 'prompt reminder should mention AW routing');
-        assert.ok(result.stdout.includes('[Rule reminder'), 'prompt reminder should mention scoped rules');
-        assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'), 'prompt reminder should resolve the backend rules path');
-        assert.ok(result.stdout.includes('@platform-core/logger'), 'prompt reminder should include scoped MUST rule content');
+        assert.ok(result.stdout.includes('[Rules reminder]'), 'prompt reminder should mention scoped rules');
+        assert.ok(result.stdout.includes(`${tempRoot}/AGENTS.md`), 'prompt reminder should mention repo AGENTS.md');
+        assert.ok(result.stdout.includes(`${tempRoot}/.aw_rules/platform/universal/AGENTS.md`), 'prompt reminder should resolve the universal rules path');
+        assert.ok(result.stdout.includes(`${tempRoot}/.aw_rules/platform/security/AGENTS.md`), 'prompt reminder should resolve the security rules path');
       } finally {
         fs.rmSync(tempRoot, { recursive: true, force: true });
       }
