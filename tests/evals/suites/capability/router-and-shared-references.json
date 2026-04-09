@@ -19,6 +19,7 @@
   "tests": [
     "tests/evals/deterministic/capability/aw-shared-references.test.js",
     "tests/evals/deterministic/capability/aw-sdlc-activation-strictness.test.js",
+    "tests/evals/deterministic/capability/aw-sdlc-prompt-hook-reminder-contract.test.js",
     "tests/evals/deterministic/capability/aw-sdlc-skill-trigger-coverage.test.js"
   ],
   "fixtures": [

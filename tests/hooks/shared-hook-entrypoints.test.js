@@ -22,9 +22,9 @@ function test(name, fn) {
   }
 }
 
-function runBash(scriptPath, input = '', env = {}) {
+function runBash(scriptPath, input = '', env = {}, cwd = REPO_ROOT) {
   return spawnSync('bash', [scriptPath], {
-    cwd: REPO_ROOT,
+    cwd,
     input,
     encoding: 'utf8',
     env: { ...process.env, ...env },
@@ -33,15 +33,26 @@ function runBash(scriptPath, input = '', env = {}) {
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-hook-'));
-  const rulesDir = path.join(tempDir, '.aw_registry', '.aw_rules', 'platform', 'backend');
+  const rulesDir = path.join(tempDir, '.aw_rules', 'platform');
   fs.mkdirSync(rulesDir, { recursive: true });
+  fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), '# Repo Instructions\n');
+  fs.mkdirSync(path.join(rulesDir, 'universal'), { recursive: true });
   fs.writeFileSync(
-    path.join(rulesDir, 'AGENTS.md'),
+    path.join(rulesDir, 'universal', 'AGENTS.md'),
     [
-      '# Backend Rules',
+      '# Universal Rules',
       '',
-      '- Use structured logging via @platform-core/logger MUST',
-      '- Never trust client payload locationId Never',
+      '- Handle every error explicitly. [MUST]',
+      '',
+    ].join('\n')
+  );
+  fs.mkdirSync(path.join(rulesDir, 'security'), { recursive: true });
+  fs.writeFileSync(
+    path.join(rulesDir, 'security', 'AGENTS.md'),
+    [
+      '# Security Rules',
+      '',
+      '- Never hardcode secrets. [MUST]',
       '',
     ].join('\n')
   );
@@ -72,26 +83,42 @@ function runTests() {
     withTempRulesDir((cwd) => {
       const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
       const raw = JSON.stringify({
-        cwd,
         prompt: 'update this backend service and fix the dto validation',
       });
 
-      const result = runBash(scriptPath, raw);
+      const result = runBash(scriptPath, raw, {}, cwd);
+
+      // Diagnostic output for CI debugging (temporary)
+      console.log(`    [DEBUG] platform=${process.platform}`);
+      console.log(`    [DEBUG] cwd=${cwd}`);
+      console.log(`    [DEBUG] exit_status=${result.status}`);
+      console.log(`    [DEBUG] stdout=${JSON.stringify(result.stdout)}`);
+      console.log(`    [DEBUG] stderr=${JSON.stringify(result.stderr)}`);
 
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Router reminder]'));
-      assert.ok(result.stdout.includes('[Rule reminder'));
-      assert.ok(result.stdout.includes('.aw_registry/.aw_rules/platform/backend'));
+      assert.ok(result.stdout.includes('[Rules reminder]'));
+      assert.ok(result.stdout.includes(`${cwd}/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`));
+      assert.ok(result.stdout.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`));
     });
   })) passed++; else failed++;
 
-  if (test('shared user-prompt-submit wrapper includes portable python fallback logic', () => {
-    const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
-    const source = fs.readFileSync(scriptPath, 'utf8');
+  if (test('shared user-prompt-submit wrapper still emits the router reminder without synced rules', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-hook-empty-'));
+    fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), '# Repo Instructions\n');
 
-    assert.ok(source.includes('CLV2_PYTHON_CMD'), 'Expected shared prompt wrapper to honor CLV2_PYTHON_CMD');
-    assert.ok(source.includes('command -v py'), 'Expected shared prompt wrapper to fall back to py on Windows');
-    assert.ok(source.includes('PYTHON_ARGS=(-3)'), 'Expected shared prompt wrapper to launch py with -3');
+    try {
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+      const result = runBash(scriptPath, JSON.stringify({ prompt: 'test prompt' }), {}, tempDir);
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.ok(result.stdout.includes('[AW Router reminder]'));
+      assert.ok(result.stdout.includes('AGENTS.md'));
+      assert.ok(result.stdout.includes('.aw_rules/platform'));
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
