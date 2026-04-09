@@ -6,6 +6,7 @@
  */
 
 const { execFileSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const MAX_STDIN = 1024 * 1024;
@@ -22,7 +23,18 @@ function readStdin() {
 }
 
 function getPluginRoot() {
-  return path.resolve(__dirname, '..', '..');
+  const homeStyleRoot = path.resolve(__dirname, '..');
+  const repoStyleRoot = path.resolve(__dirname, '..', '..');
+
+  if (
+    fs.existsSync(path.join(repoStyleRoot, 'package.json'))
+    && fs.existsSync(path.join(repoStyleRoot, 'scripts', 'hooks'))
+    && fs.existsSync(path.join(repoStyleRoot, '.cursor', 'hooks'))
+  ) {
+    return repoStyleRoot;
+  }
+
+  return homeStyleRoot;
 }
 
 function transformToClaude(cursorInput, overrides = {}) {
@@ -83,12 +95,31 @@ function runManagedCommand(command, args, stdinData) {
 }
 
 function runExistingHook(scriptName, stdinData) {
-  const scriptPath = path.join(getPluginRoot(), 'scripts', 'hooks', scriptName);
+  const root = getPluginRoot();
+  const candidates = [
+    path.join(root, 'scripts', 'hooks', scriptName),
+    path.join(root, 'hooks', scriptName),
+  ];
+  const scriptPath = candidates.find(candidate => fs.existsSync(candidate)) || candidates[0];
   return runManagedCommand('node', [scriptPath], stdinData);
 }
 
 function runManagedShellHook(relativeScriptPath, stdinData) {
-  const scriptPath = path.join(getPluginRoot(), relativeScriptPath);
+  const root = getPluginRoot();
+  const normalized = String(relativeScriptPath || '').replace(/\\/g, '/');
+  const fallbackCandidates = [
+    normalized,
+    normalized.replace(/^\.cursor\//, ''),
+    normalized.replace(/^scripts\//, ''),
+    normalized.replace(/^hooks\//, ''),
+    path.posix.join('.cursor', normalized),
+    path.posix.join('scripts', normalized),
+    path.posix.join('hooks', normalized),
+  ];
+  const scriptPath = fallbackCandidates
+    .map(candidate => path.join(root, candidate))
+    .find(candidate => fs.existsSync(candidate))
+    || path.join(root, normalized);
   return runManagedCommand('bash', [scriptPath], stdinData);
 }
 

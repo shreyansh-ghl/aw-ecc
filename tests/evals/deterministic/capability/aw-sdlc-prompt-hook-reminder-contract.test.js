@@ -85,10 +85,10 @@ function run() {
       assert.strictEqual(sharedResult.status, 0, sharedResult.stderr || sharedResult.stdout);
       const output = sharedResult.stdout;
       assert.ok(output.includes('[AW Router reminder]'));
-      assert.ok(output.includes('[Rules reminder]'));
-      assert.ok(output.includes(`${repoRoot}/AGENTS.md`));
+      assert.ok(output.includes('[Rule reminder]'));
       assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
       assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(output.includes('references/ on demand'));
       assert.ok(!output.includes('.aw_registry/.aw_rules/platform'), 'Prompt reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
 
@@ -107,10 +107,10 @@ function run() {
       assert.strictEqual(cursorResult.status, 0, cursorResult.stderr || cursorResult.stdout);
       assert.strictEqual(cursorResult.stdout, cursorPayload);
       assert.ok(cursorResult.stderr.includes('[AW Router reminder]'));
-      assert.ok(cursorResult.stderr.includes('[Rules reminder]'));
-      assert.ok(cursorResult.stderr.includes(`${repoRoot}/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes('[Rule reminder]'));
       assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
       assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes('references/ on demand'));
       assert.ok(!cursorResult.stderr.includes('.aw_registry/.aw_rules/platform'), 'Cursor reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
   } finally {
