@@ -50,7 +50,19 @@ async function runSharedAwPhase({ raw, steps, deps = {} }) {
     }
 
     const payload = resolveStepPayload(step, raw, parsedInput, claudeInput);
-    await executeStep(runtime, step, payload);
+    const result = await executeStep(runtime, step, payload);
+
+    // Emit hook stdout to stderr so the model sees it as context.
+    // Cursor and Claude Code surface stderr content to the LLM,
+    // while stdout is reserved for the passthrough payload.
+    if (result && result.stdout) {
+      process.stderr.write(
+        result.stdout.endsWith('\n') ? result.stdout : `${result.stdout}\n`,
+      );
+    }
+    if (result && result.stderr) {
+      process.stderr.write(result.stderr);
+    }
   }
 
   return raw;
