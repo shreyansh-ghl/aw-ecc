@@ -10,6 +10,7 @@ trigger: User requests implementation of approved work, or a compatible `/aw:exe
 
 `aw-build` owns implementation only.
 It turns approved work into the smallest correct code, config, docs, or migration changes, continues through the full approved build scope in thin slices, and then hands off to test or review instead of self-certifying success.
+Communicate progress so a new reader can follow it quickly: what slice is being built, what evidence proved it, and what action is already underway next.
 
 ## When to Use
 
@@ -34,22 +35,15 @@ Do not use for vague ideation, unclear bugs, or release-only work.
    Use `../../references/build-increments.md` to keep changes thin, reversible, and rollback-friendly.
    For multi-file or high-risk work, load `incremental-implementation`.
 5. Build one slice or one bounded parallel wave at a time.
-   For any slice that changes observable behavior, fixes a bug, or refactors live behavior, load `tdd-guide` and require explicit RED-GREEN-REFACTOR (RED -> GREEN -> REFACTOR).
-   For config, docs, infra, migration, or other non-behavior slices where test-first is not meaningful, record the best pre-change proof available before editing and the focused post-change validation that will prove the slice.
+   For behavior changes, require RED-GREEN or a concrete failing signal.
    During implementation, prefer the simplest change that fits existing patterns.
    Avoid speculative abstractions, unnecessary branching, and adjacent cleanup outside the approved slice.
-   When the working code feels heavier than necessary, load `code-simplification` before save-pointing the slice.
    Use `../../references/testing-patterns.md` when test structure needs support.
 6. Review and simplify the completed slice before advancing.
-   Once a slice is green, run a focused chunk review before advancing.
-   Prefer the language or runtime reviewer agent when one matches the touched code (`typescript-reviewer`, `python-reviewer`, `java-reviewer`, `kotlin-reviewer`, `go-reviewer`, `rust-reviewer`, `cpp-reviewer`, or `flutter-reviewer`).
-   Otherwise use `code-reviewer`.
-   Use the `aw-review` axes for chunk review scope: correctness, readability and simplicity, architecture, security, and performance.
-   Keep this review scoped to the current slice rather than treating it as a full stage handoff.
-   Use `../../references/review-findings-severity.md` for chunk findings language.
-   For readability and maintainability concerns, load `code-simplification`.
-   Fix blocking findings inside the same slice before moving on.
-   Advisory findings may be deferred only when written down in `execution.md` and `state.json` with explicit rationale.
+   Once a slice is green, run a focused review on that slice for correctness, regression risk, and unnecessary complexity.
+   For meaningful multi-file or cross-boundary work, make the review lanes explicit instead of treating review as one generic glance.
+   If the slice changes a shared contract or cross-module path, run the smallest targeted system-wide regression check before moving on.
+   Fix material findings inside the same slice before moving on.
    Before declaring the slice complete, check whether code can be deleted, branches reduced, names clarified, or existing patterns reused without broadening scope.
 7. Continue through the approved build scope.
    Keep moving slice-to-slice until the approved implementation scope for this stage is complete or the next unsatisfied need is no longer build.
@@ -65,13 +59,14 @@ Do not use for vague ideation, unclear bugs, or release-only work.
 9. Record evidence and boundaries.
    Note what changed, what did not change, which slices or parallel waves are complete, which build slices still remain, and which checks were run.
    For each completed slice, note that focused review ran and what simplification was applied or intentionally deferred.
-   When the approved tasks are grouped into phases, record phase transitions explicitly: which phase completed, which phase is now active, and what remains in later phases.
+   When build is executing a phased plan, record phase transitions explicitly and name the current phase plus the completed phases.
    Use `../../references/git-save-points.md` when the work needs explicit save-point discipline.
    For meaningful completed slices, create focused save-point commits.
    For non-trivial commit boundaries, branch hygiene, or worktree isolation, load `git-workflow-and-versioning`.
 10. Hand off cleanly.
    If build scope is complete, route to `aw-test` for QA proof or `aw-review` when the work needs findings, governance, or readiness decisions.
    If the work is blocked mid-build, name the blocker, the last completed slice, and the smallest safe next action instead of stopping with a vague pause.
+   When the next approved slice is safe and unblocked, keep executing it instead of pausing at a suggestion.
 
 ## Completion Contract
 
@@ -85,17 +80,12 @@ A successful slice is a checkpoint, not an automatic terminal state.
 Every build handoff must make these things obvious:
 
 - what approved inputs were used
-- which phases were completed, if the approved plan used phases
-- which phase is current or next, if phased execution is still in flight
 - which slices were completed
 - whether work ran sequentially or in bounded parallel waves
-- what pre-change proof was used for each completed slice
 - which build slices remain, if any
 - which validation was run
-- which reviewer agent reviewed each completed slice
 - whether focused chunk review ran before advancing
 - what simplification was applied per completed slice
-- which findings were fixed versus explicitly deferred
 - which save-point commits were created
 - which exact next command should run next
 
@@ -136,17 +126,13 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 - written artifacts
 - inputs used
 - files changed
-- `completed_phases` when the approved plan used phases
-- `current_phase` for the active or next build phase when phase sequencing exists
 - completed slices
 - remaining slices
+- `completed_phases` when the plan is phased
+- `current_phase` when the plan is phased
 - parallel execution mode and cap when parallel build fan-out was used
-- pre-change proof notes
 - validation commands
-- reviewer agents used
 - slice review notes
-- blocking findings
-- deferred findings
 - simplification notes
 - `save_point_commits`
 - blockers or concerns
@@ -158,15 +144,13 @@ Before leaving build, confirm:
 
 - [ ] the change came from approved inputs or a clearly approved direct technical request
 - [ ] the work was split into thin, reversible increments when non-trivial
-- [ ] behavior-changing slices used explicit RED -> GREEN -> REFACTOR via `tdd-guide`
-- [ ] non-behavior slices recorded pre-change proof and focused post-change validation
+- [ ] behavior changes have failing-signal evidence or a clear explanation of why not
 - [ ] each meaningful completed slice reached green before the next slice started
-- [ ] each meaningful completed slice had a focused review with the right reviewer agent before the next slice started
+- [ ] each meaningful completed slice had a focused review before the next slice started
 - [ ] simplification was applied inside the touched scope before save-pointing the slice
 - [ ] the approved build scope is either complete or blocked explicitly
 - [ ] relevant org standards, platform playbooks, and `.aw_rules` were applied
 - [ ] parallel execution, if used, stayed within the planned worker cap and disjoint write scopes
-- [ ] phased plans, if used, recorded phase completion plus the next phase transition
 - [ ] meaningful completed slices produced recorded save-point commits
 - [ ] `execution.md` and `state.json` are updated
 
@@ -177,7 +161,6 @@ Always end with:
 - `Mode`
 - `Approved Inputs`
 - `Parallelization`
-- `Phase Progress`
 - `Completed Slices`
 - `Remaining Build Scope`
 - `Changes`

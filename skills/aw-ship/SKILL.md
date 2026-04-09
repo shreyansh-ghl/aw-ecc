@@ -40,6 +40,7 @@ Do not guess through missing release inputs when `aw-prepare` should be used fir
 2. Apply the launch checklist.
    Use `../../references/ship-launch-checklist.md`.
    Load `ci-cd-and-automation` when release automation, staged rollout, or rollback machinery is part of the ship decision.
+   Explicitly name pre-flight status, smoke-test expectations, monitoring coverage, and rollback ownership.
 3. Continue until the selected shipping scope is covered.
    Do not stop after one checklist item, one smoke result, or one monitoring note if the requested launch-readiness, rollout, or closeout scope still has open gaps.
 4. Confirm rollback posture.
@@ -47,7 +48,9 @@ Do not guess through missing release inputs when `aw-prepare` should be used fir
 5. Capture monitoring and follow-through.
    Name health checks, monitoring links, smoke results, and ownership.
    For release notes, runbooks, or durable decision capture, load `documentation-and-adrs`.
-6. Close out the release.
+6. Assign a confidence call instead of vague optimism.
+   State whether the release is ready, conditionally ready, or blocked, and why.
+7. Close out the release.
    Update `release.md` and `state.json` with launch or blocker notes.
 
 ## Completion Contract
@@ -63,6 +66,7 @@ Every shipping handoff must make these things obvious:
 - the rollout or monitoring plan
 - the rollback path or rollback blocker
 - the operational evidence captured
+- the current shipping confidence and named owner for follow-through
 - which exact next command should run next, if any
 
 ## Common Rationalizations
@@ -89,9 +93,11 @@ Every shipping handoff must make these things obvious:
 - `status`
 - written artifacts
 - launch readiness
+- shipping confidence
 - rollout plan
 - rollback path
 - evidence captured
+- operational owner
 - blockers
 - recommended next commands
 
@@ -100,6 +106,7 @@ Every shipping handoff must make these things obvious:
 - [ ] launch checklist or blocker is explicit
 - [ ] rollback readiness is documented
 - [ ] monitoring and smoke expectations are named
+- [ ] rollout ownership and confidence are explicit
 - [ ] `release.md` and `state.json` are updated with closeout evidence
 
 ## Final Output Shape
@@ -108,6 +115,7 @@ Always end with:
 
 - `Mode`
 - `Launch Readiness`
+- `Confidence`
 - `Rollout Plan`
 - `Rollback Path`
 - `Evidence`

@@ -10,6 +10,7 @@ trigger: User requests review, readiness, or PR governance, or a legacy verify r
 
 `aw-review` is now a public stage skill.
 It turns evidence into findings, release decisions, and clear next actions.
+Explain findings for a reader with zero context: define the problem in simple terms, point to the evidence, and say what action is required without assuming the reader followed the earlier run.
 
 ## When to Use
 
@@ -24,29 +25,34 @@ Do not use as a hidden helper that replaces explicit review intent.
 
 1. Review the evidence first.
    Start with tests, local validation, E2E, runtime proof, and prior investigation artifacts.
+   Prefer the actual logs, failing checks, screenshots, traces, and diff context over secondhand summaries.
 2. Load the right org-standard playbooks.
    Pull in platform review, design, accessibility, and quality-gate playbooks from the resolved baseline.
-3. Review across the five core axes.
+3. Build the reviewer lanes before judging readiness.
+   At minimum, cover correctness, maintainability, security, performance, and architecture.
+   Add frontend, design, accessibility, i18n, data, infra, or rollout lenses when the change surface requires them.
+   For meaningful multi-file work, review in waves: core correctness first, then specialist lanes, then a final readiness pass that deduplicates overlapping findings.
+4. Review across the five core axes.
    Correctness, readability and simplicity, architecture, security, and performance.
-   When the review covers concrete code changes, prefer the matching reviewer agent when one exists (`typescript-reviewer`, `python-reviewer`, `java-reviewer`, `kotlin-reviewer`, `go-reviewer`, `rust-reviewer`, `cpp-reviewer`, or `flutter-reviewer`).
-   Otherwise use `code-reviewer` and keep `aw-review` as the canonical stage contract for severity, governance, and readiness.
    Use `../../references/review-findings-severity.md`.
    For readability and maintainability concerns, load `code-simplification`.
    For public contract or boundary changes, load `api-and-interface-design`.
    For security-sensitive work, load `security-and-hardening` and `../../references/security-checklist.md`.
    For performance-sensitive work, load `performance-optimization` and `../../references/performance-checklist.md`.
    For branch hygiene, save-point quality, or reviewability concerns, load `git-workflow-and-versioning`.
-4. Classify findings explicitly.
+5. Classify findings explicitly.
    Separate blocking findings from advisory notes.
-   Name evidence, scope, and required fix.
-5. Continue until the requested review scope is covered.
+   Name evidence, scope, required fix, and the review lane that surfaced the issue.
+   Deduplicate repeated findings so one real problem does not become review noise.
+6. Continue until the requested review scope is covered.
    Do not stop after the first finding or the first review axis if correctness, governance, architecture, security, performance, or readiness checks still remain.
-6. Check governance and readiness.
+7. Check governance and readiness.
    Confirm PR checklist, approvals, status checks, rollback notes, and release recommendation.
    For architecture or public-behavior changes that need durable rationale, load `documentation-and-adrs`.
-7. Request fresh testing when needed.
+8. Request fresh testing when needed.
    If evidence is stale, missing, or too broad, route back to `aw-test` for the smallest targeted rerun.
-8. Persist the result.
+   When the next evidence-gathering action is safe and obvious, do it instead of only recommending it.
+9. Persist the result.
    Write `verification.md` and update `state.json`.
 
 ## Completion Contract
@@ -60,7 +66,7 @@ Review is complete only when one of these is true:
 Every review handoff must make these things obvious:
 
 - which evidence was reviewed
-- which reviewer path was used when code review was part of the scope
+- which review lanes ran
 - which findings are blocking versus advisory
 - which governance checks were completed
 - what the readiness outcome is
@@ -91,7 +97,7 @@ Every review handoff must make these things obvious:
 - `status`
 - written artifacts
 - evidence reviewed
-- reviewer agents or reviewer path used
+- review lanes
 - blocking findings
 - advisory notes
 - governance status
@@ -104,8 +110,8 @@ Every review handoff must make these things obvious:
 Before leaving review, confirm:
 
 - [ ] test and runtime evidence were reviewed first
+- [ ] the relevant specialist lanes ran for the actual change surface
 - [ ] findings are explicit, evidence-backed, and severity-tagged
-- [ ] reviewer routing is explicit when the scope included concrete code review
 - [ ] governance and readiness checks match the resolved baseline
 - [ ] repairs point back to build or test with clear scope
 - [ ] `verification.md` and `state.json` are updated
@@ -116,6 +122,7 @@ Always end with:
 
 - `Mode`
 - `Evidence`
+- `Review Lanes`
 - `Findings`
 - `Governance`
 - `Readiness`

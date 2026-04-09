@@ -11,6 +11,7 @@ trigger: Internal only. Use when the user clearly asks for one-run end-to-end au
 `aw-yolo` is the explicit full-flow orchestration skill.
 It exists so `ship` can stay a real shipping stage instead of an overloaded composite label.
 Use it to orchestrate the smallest correct remaining multi-stage path from the current state to a safe release outcome.
+The communication should stay plain and concise for a zero-context reader: current stage, what actually happened, what evidence exists, and what action is being executed now.
 
 ## When to Use
 
@@ -50,28 +51,32 @@ If the user asked for one stage, stay in that stage.
    - `aw-ship`
    Do not leave a stage early just because one slice, one check, or one note succeeded.
    A stage only hands off when its own completion contract is met or it is blocked explicitly.
-4. Preserve stage artifacts.
+4. Add the missing operational rails before continuing.
+   For risky work, name the current abort conditions, retry limits, and approval assumptions before pushing into later stages.
+   Typical auto-stop conditions include repeated build failure on new root causes, critical security findings with no safe fix, missing deploy mechanism, or release evidence that never reaches a trustworthy state.
+5. Preserve stage artifacts.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
-5. Respect stage boundaries.
+6. Respect stage boundaries.
    `aw-yolo` coordinates stages, but it does not collapse them together.
    Build still cannot self-certify.
    Test still cannot quietly implement.
    Deploy still cannot skip verify.
    Ship still owns rollout closeout rather than implementation or release execution.
-6. Respect org standards at each stage.
+7. Respect org standards at each stage.
    Use the resolved GHL baseline profile, platform playbooks, and `.aw_rules`.
-7. Stop cleanly on blockers.
+8. Stop cleanly on blockers.
    Stop immediately if a stage fails, evidence is missing, deploy configuration is unknown, or approval assumptions become unsafe.
    Name the blocking stage and the smallest safe next action.
    Name:
    - the blocking stage
    - what was completed
    - the smallest safe next action
-8. End with a real terminal state.
+9. End with a real terminal state.
    The run is complete only when:
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
+   If the next stage action is safe and obvious, execute it rather than stopping at advice.
 
 ## Final Output Shape
 
@@ -91,6 +96,7 @@ Always end with:
 | "One-run automation means I can skip stage evidence." | Orchestration still owes every required artifact. |
 | "The request mentioned several stages, so I should always start from plan." | Start from the first unsatisfied stage, not from the beginning by habit. |
 | "If test or review fails, I should push through to deploy anyway." | `aw-yolo` must stop at the failing stage and hand back the blocker clearly. |
+| "Autonomous flow means I can improvise retries forever." | One-run automation still needs named retry limits and abort conditions. |
 
 ## Red Flags
 
@@ -106,6 +112,7 @@ Always end with:
 - [ ] the user explicitly wanted full-flow automation
 - [ ] the selected flow is the smallest correct end-to-end sequence
 - [ ] the chosen starting stage matches the current repo/artifact state
+- [ ] risky stages named retry limits and abort conditions before pushing forward
 - [ ] each stage still writes its required artifacts
 - [ ] failed stages stop the flow instead of being hand-waved away
 - [ ] blockers name the exact stage where the run stopped
