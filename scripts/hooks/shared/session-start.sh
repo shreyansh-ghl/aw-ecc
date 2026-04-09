@@ -28,11 +28,9 @@ emit_session_start_warning() {
 
 # Drain stdin (non-blocking) because some harnesses stream a JSON payload
 # even though the AW session-start bridge only emits routing context.
-# Use timeout to avoid blocking forever when stdin is an open pipe with no data.
-if [ -t 0 ]; then
-  : # stdin is a terminal — nothing to drain
-else
-  timeout 1 cat >/dev/null 2>/dev/null || true
+# Use bash read -t (portable) to avoid blocking forever on an open pipe.
+if [ ! -t 0 ]; then
+  while read -t 1 -r _discard 2>/dev/null; do :; done || true
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
