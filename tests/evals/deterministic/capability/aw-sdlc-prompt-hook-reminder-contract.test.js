@@ -81,6 +81,13 @@ function run() {
     });
 
     if (test('shared prompt hook emits the canonical AW reminder contract', () => {
+      // Diagnostic output for CI debugging (temporary)
+      console.log(`    [DEBUG] platform=${process.platform}`);
+      console.log(`    [DEBUG] repoRoot=${repoRoot}`);
+      console.log(`    [DEBUG] exit_status=${sharedResult.status}`);
+      console.log(`    [DEBUG] stdout=${JSON.stringify(sharedResult.stdout)}`);
+      console.log(`    [DEBUG] stderr=${JSON.stringify(sharedResult.stderr)}`);
+
       assert.strictEqual(sharedResult.status, 0, sharedResult.stderr || sharedResult.stdout);
       const output = sharedResult.stdout;
       assert.ok(output.includes('[AW Router reminder]'));

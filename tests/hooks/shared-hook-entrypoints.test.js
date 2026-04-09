@@ -95,6 +95,13 @@ function runTests() {
 
       const result = runBash(scriptPath, raw, {}, cwd);
 
+      // Diagnostic output for CI debugging (temporary)
+      console.log(`    [DEBUG] platform=${process.platform}`);
+      console.log(`    [DEBUG] cwd=${cwd}`);
+      console.log(`    [DEBUG] exit_status=${result.status}`);
+      console.log(`    [DEBUG] stdout=${JSON.stringify(result.stdout)}`);
+      console.log(`    [DEBUG] stderr=${JSON.stringify(result.stderr)}`);
+
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Router reminder]'));
       assert.ok(result.stdout.includes('[Rules reminder]'));
