@@ -13,10 +13,13 @@ extract_cwd() {
 
 resolve_rules_root() {
   local root="${1:-}"
+  local cwd_dir
+  cwd_dir="$(pwd)"
   local candidate
 
   for candidate in \
     "$root/.aw_rules/platform" \
+    "$cwd_dir/.aw_rules/platform" \
     "$HOME/.aw_rules/platform" \
     "$HOME/.aw/.aw_registry/.aw_rules/platform"
   do
