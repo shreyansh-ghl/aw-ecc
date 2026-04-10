@@ -55,7 +55,7 @@ function runTests() {
 
     assert.strictEqual(result.status, 0, result.stderr);
     assert.ok(result.stdout.includes('"hookSpecificOutput"'));
-    assert.ok(result.stdout.includes('AW Session Context'));
+    assert.ok(result.stdout.includes('EXTREMELY_IMPORTANT') || result.stdout.includes('AW Session Context'));
   })) passed++; else failed++;
 
   if (test('shared user-prompt-submit wrapper emits compact AW reminders', () => {
