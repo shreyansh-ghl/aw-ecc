@@ -326,7 +326,12 @@ function runTests() {
 
     try {
       const result = run(['--target', 'antigravity', '--profile', 'core'], { cwd: projectDir, homeDir });
-      assert.strictEqual(result.code, 0, result.stderr);
+      if (result.code !== 0) {
+        console.log(`    [DEBUG] antigravity install exit=${result.code}`);
+        console.log(`    [DEBUG] stderr=${result.stderr.slice(0, 500)}`);
+        console.log(`    [DEBUG] stdout=${result.stdout.slice(0, 500)}`);
+      }
+      assert.strictEqual(result.code, 0, `antigravity install failed: ${result.stderr || result.stdout}`);
 
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'rules', 'common-coding-style.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'skills', 'architect.md')));
@@ -400,7 +405,12 @@ function runTests() {
       }, null, 2));
 
       const result = run(['--config', configPath], { cwd: projectDir, homeDir });
-      assert.strictEqual(result.code, 0, result.stderr);
+      if (result.code !== 0) {
+        console.log(`    [DEBUG] ecc-install exit=${result.code}`);
+        console.log(`    [DEBUG] stderr=${result.stderr.slice(0, 500)}`);
+        console.log(`    [DEBUG] stdout=${result.stdout.slice(0, 500)}`);
+      }
+      assert.strictEqual(result.code, 0, `ecc-install failed: ${result.stderr || result.stdout}`);
 
       assert.ok(fs.existsSync(path.join(homeDir, '.claude', 'skills', 'security-review', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(homeDir, '.claude', 'skills', 'dmux-workflows', 'SKILL.md')));
