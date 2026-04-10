@@ -56,18 +56,12 @@ Do not start with generic implementation, review, or deploy advice before skill 
 Use skills/using-aw-skills/SKILL.md as the repo-local router.
 Load domain, platform, and craft skills only after the smallest correct AW route is selected."
 
-# --- Escape context for JSON embedding ---
+# --- Output in Claude Code hookSpecificOutput format ---
+# Escape for JSON: newlines, quotes, backslashes
 JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c '
 import sys, json
 content = sys.stdin.read()
 print(json.dumps(content))
 ' 2>/dev/null || printf '%s' "$CONTEXT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | awk '{printf "%s\\n", $0}')
 
-# --- Platform-aware output ---
-if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
-  printf '{\n  "additional_context": %s\n}\n' "$JSON_CONTEXT"
-elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
-  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": %s\n  }\n}\n' "$JSON_CONTEXT"
-else
-  printf '{\n  "additionalContext": %s\n}\n' "$JSON_CONTEXT"
-fi
+echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": ${JSON_CONTEXT}}}"
