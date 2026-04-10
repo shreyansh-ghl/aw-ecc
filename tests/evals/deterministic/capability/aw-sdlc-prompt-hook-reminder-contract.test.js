@@ -14,6 +14,7 @@ const MATERIALIZED_PATHS = [
   'scripts/hooks/shared/user-prompt-submit.sh',
   '.cursor/hooks/before-submit-prompt.js',
   '.cursor/hooks/adapter.js',
+  'package.json',
 ];
 
 function writeFile(root, relativePath, content) {
