@@ -10,6 +10,10 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 CANDIDATES=(
   "$ROOT_DIR/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.aw-ecc/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.claude/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.cursor/skills/using-aw-skills/hooks/session-start.sh"
+  "$HOME/.codex/.cursor/skills/using-aw-skills/hooks/session-start.sh"
   "$HOME/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
   "$HOME/.aw/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
 )
