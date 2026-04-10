@@ -1,71 +1,48 @@
 #!/usr/bin/env bash
-# UserPromptSubmit hook — emit a small, reliable AW routing reminder.
-#
-# This hook intentionally stays simple:
-# - drain stdin so the harness can always finish writing payloads
-# - remind the model to re-apply using-aw-skills
-# - point at AGENTS.md and the canonical .aw_rules/platform tree when present
-
 set -euo pipefail
 
-cat >/dev/null || true
+RAW="$(cat || true)"
 
-# On Windows (Git Bash / MSYS), pwd returns POSIX paths (/tmp/...)
-# but callers use native Windows paths (C:\Users\...).
-# Convert via cygpath when available so paths match the caller's format.
-if command -v cygpath >/dev/null 2>&1; then
-  CWD="$(cygpath -w "$(pwd)")"
-else
-  CWD="$(pwd)"
-fi
-AGENTS_PATH="$CWD/AGENTS.md"
-RULES_ROOT=""
+extract_workspace_root() {
+  printf '%s' "$1" | sed -n 's/.*"workspace_roots"[[:space:]]*:[[:space:]]*\[[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
+}
 
-for candidate in \
-  "$CWD/.aw_rules/platform" \
-  "$HOME/.aw_rules/platform" \
-  "$HOME/.aw/.aw_rules/platform"
-do
-  if [ -d "$candidate" ]; then
-    RULES_ROOT="$candidate"
-    break
-  fi
-done
+extract_cwd() {
+  printf '%s' "$1" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
+}
 
-RULE_REFS=()
+resolve_rules_root() {
+  local root="${1:-}"
+  local cwd_dir
+  cwd_dir="$(pwd)"
+  local candidate
 
-if [ -f "$AGENTS_PATH" ]; then
-  RULE_REFS+=("$AGENTS_PATH")
-fi
-
-if [ -n "$RULES_ROOT" ]; then
-  if [ -f "$RULES_ROOT/universal/AGENTS.md" ]; then
-    RULE_REFS+=("$RULES_ROOT/universal/AGENTS.md")
-  fi
-  if [ -f "$RULES_ROOT/security/AGENTS.md" ]; then
-    RULE_REFS+=("$RULES_ROOT/security/AGENTS.md")
-  fi
-  RULE_SCOPE="Applicable domain rules live under $RULES_ROOT."
-else
-  RULE_SCOPE="Applicable domain rules live under .aw_rules/platform when synced."
-fi
-
-if [ "${#RULE_REFS[@]}" -gt 0 ]; then
-  RULE_PATHS=""
-  while IFS= read -r line; do
-    if [ -z "$RULE_PATHS" ]; then
-      RULE_PATHS="$line"
-    else
-      RULE_PATHS="$RULE_PATHS, $line"
+  for candidate in \
+    "$root/.aw_rules/platform" \
+    "$cwd_dir/.aw_rules/platform" \
+    "$HOME/.aw_rules/platform" \
+    "$HOME/.aw/.aw_registry/.aw_rules/platform"
+  do
+    if [ -n "$candidate" ] && [ -d "$candidate" ]; then
+      printf '%s' "$candidate"
+      return 0
     fi
-  done < <(printf '%s\n' "${RULE_REFS[@]}" | awk '!seen[$0]++')
-else
-  RULE_PATHS="AGENTS.md"
+  done
+
+  return 1
+}
+
+WORKSPACE_ROOT="$(extract_workspace_root "$RAW")"
+if [ -z "$WORKSPACE_ROOT" ]; then
+  WORKSPACE_ROOT="$(extract_cwd "$RAW")"
+fi
+
+RULES_ROOT="$(resolve_rules_root "$WORKSPACE_ROOT" || true)"
+if [ -z "$RULES_ROOT" ]; then
+  RULES_ROOT="$HOME/.aw_rules/platform"
 fi
 
 cat <<EOF
-[AW Router reminder] Re-apply using-aw-skills for this prompt and select the smallest correct AW route and stage skill before substantive work.
-[Rules reminder] Start with $RULE_PATHS. Universal and security rules always apply. $RULE_SCOPE
+[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
+[Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
 EOF
-
-exit 0

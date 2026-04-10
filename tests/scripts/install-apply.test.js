@@ -91,30 +91,43 @@ function runTests() {
 
     try {
       const result = run(['typescript'], { cwd: projectDir, homeDir });
-      assert.strictEqual(result.code, 0, result.stderr);
+      // [DEBUG] diagnose Windows CI failure
+      if (result.code !== 0) {
+        console.log(`    [DEBUG] install exit code=${result.code}`);
+        console.log(`    [DEBUG] stdout=${result.stdout.slice(0, 500)}`);
+        console.log(`    [DEBUG] stderr=${result.stderr.slice(0, 500)}`);
+      }
+      assert.strictEqual(result.code, 0, `install failed: ${result.stderr || result.stdout}`);
 
       const claudeRoot = path.join(homeDir, '.claude');
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'common', 'coding-style.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'typescript', 'testing.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'commands', 'plan.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'scripts', 'hooks', 'session-end.js')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'skills', 'tdd-workflow', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'skills', 'coding-standards', 'SKILL.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'plugin.json')));
+      const checks = [
+        ['rules/common/coding-style.md'],
+        ['rules/typescript/testing.md'],
+        ['commands/plan.md'],
+        ['scripts/hooks/session-end.js'],
+        ['skills/tdd-workflow/SKILL.md'],
+        ['skills/coding-standards/SKILL.md'],
+        ['plugin.json'],
+      ];
+      for (const [rel] of checks) {
+        const full = path.join(claudeRoot, rel);
+        assert.ok(fs.existsSync(full), `Missing installed file: ${rel} (${full})`);
+      }
 
       const statePath = path.join(homeDir, '.claude', 'ecc', 'install-state.json');
+      assert.ok(fs.existsSync(statePath), `Missing install-state.json at ${statePath}`);
       const state = readJson(statePath);
-      assert.strictEqual(state.target.id, 'claude-home');
+      assert.strictEqual(state.target.id, 'claude-home', `target.id=${state.target.id}`);
       assert.deepStrictEqual(state.request.legacyLanguages, ['typescript']);
       assert.strictEqual(state.request.legacyMode, true);
       assert.deepStrictEqual(state.request.modules, []);
-      assert.ok(state.resolution.selectedModules.includes('rules-core'));
-      assert.ok(state.resolution.selectedModules.includes('framework-language'));
+      assert.ok(state.resolution.selectedModules.includes('rules-core'), `selectedModules=${JSON.stringify(state.resolution.selectedModules)}`);
+      assert.ok(state.resolution.selectedModules.includes('framework-language'), `selectedModules missing framework-language`);
       assert.ok(
         state.operations.some(operation => (
-          operation.destinationPath === path.join(claudeRoot, 'rules', 'common', 'coding-style.md')
+          normalizeSlashes(operation.destinationPath) === normalizeSlashes(path.join(claudeRoot, 'rules', 'common', 'coding-style.md'))
         )),
-        'Should record common rule file operation'
+        `Should record common rule file operation. Paths: ${JSON.stringify(state.operations.slice(0, 3).map(o => o.destinationPath))}`
       );
     } finally {
       cleanup(homeDir);
@@ -313,7 +326,12 @@ function runTests() {
 
     try {
       const result = run(['--target', 'antigravity', '--profile', 'core'], { cwd: projectDir, homeDir });
-      assert.strictEqual(result.code, 0, result.stderr);
+      if (result.code !== 0) {
+        console.log(`    [DEBUG] antigravity install exit=${result.code}`);
+        console.log(`    [DEBUG] stderr=${result.stderr.slice(0, 500)}`);
+        console.log(`    [DEBUG] stdout=${result.stdout.slice(0, 500)}`);
+      }
+      assert.strictEqual(result.code, 0, `antigravity install failed: ${result.stderr || result.stdout}`);
 
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'rules', 'common-coding-style.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'skills', 'architect.md')));
@@ -387,7 +405,12 @@ function runTests() {
       }, null, 2));
 
       const result = run(['--config', configPath], { cwd: projectDir, homeDir });
-      assert.strictEqual(result.code, 0, result.stderr);
+      if (result.code !== 0) {
+        console.log(`    [DEBUG] ecc-install exit=${result.code}`);
+        console.log(`    [DEBUG] stderr=${result.stderr.slice(0, 500)}`);
+        console.log(`    [DEBUG] stdout=${result.stdout.slice(0, 500)}`);
+      }
+      assert.strictEqual(result.code, 0, `ecc-install failed: ${result.stderr || result.stdout}`);
 
       assert.ok(fs.existsSync(path.join(homeDir, '.claude', 'skills', 'security-review', 'SKILL.md')));
       assert.ok(!fs.existsSync(path.join(homeDir, '.claude', 'skills', 'dmux-workflows', 'SKILL.md')));

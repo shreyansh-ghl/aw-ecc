@@ -14,6 +14,7 @@ const MATERIALIZED_PATHS = [
   'scripts/hooks/shared/user-prompt-submit.sh',
   '.cursor/hooks/before-submit-prompt.js',
   '.cursor/hooks/adapter.js',
+  'package.json',
 ];
 
 function writeFile(root, relativePath, content) {
@@ -75,7 +76,7 @@ function run() {
     });
 
     if (test('shared prompt hook emits the canonical AW reminder contract', () => {
-      // Diagnostic output for CI debugging (temporary)
+      // Diagnostic output for CI debugging
       console.log(`    [DEBUG] platform=${process.platform}`);
       console.log(`    [DEBUG] repoRoot=${repoRoot}`);
       console.log(`    [DEBUG] exit_status=${sharedResult.status}`);
@@ -84,11 +85,11 @@ function run() {
 
       assert.strictEqual(sharedResult.status, 0, sharedResult.stderr || sharedResult.stdout);
       const output = sharedResult.stdout;
-      assert.ok(output.includes('[AW Router reminder]'));
-      assert.ok(output.includes('[Rules reminder]'));
-      assert.ok(output.includes(`${repoRoot}/AGENTS.md`));
-      assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
-      assert.ok(output.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(output.includes('[AW Router reminder]'), 'Expected [AW Router reminder] in output');
+      assert.ok(output.includes('[Rule reminder]'), 'Expected [Rule reminder] in output');
+      assert.ok(output.includes('.aw_rules/platform/universal/AGENTS.md'), 'Expected universal rules path in output');
+      assert.ok(output.includes('.aw_rules/platform/security/AGENTS.md'), 'Expected security rules path in output');
+      assert.ok(output.includes('references/ on demand'), 'Expected references guidance in output');
       assert.ok(!output.includes('.aw_registry/.aw_rules/platform'), 'Prompt reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
 
@@ -104,13 +105,18 @@ function run() {
     });
 
     if (test('cursor prompt hook preserves passthrough and emits canonical reminders from the real repo cwd', () => {
+      // Diagnostic output for CI debugging
+      console.log(`    [DEBUG] cursor exit_status=${cursorResult.status}`);
+      console.log(`    [DEBUG] cursor stdout_len=${(cursorResult.stdout || '').length}`);
+      console.log(`    [DEBUG] cursor stderr=${JSON.stringify(cursorResult.stderr)}`);
+
       assert.strictEqual(cursorResult.status, 0, cursorResult.stderr || cursorResult.stdout);
       assert.strictEqual(cursorResult.stdout, cursorPayload);
-      assert.ok(cursorResult.stderr.includes('[AW Router reminder]'));
-      assert.ok(cursorResult.stderr.includes('[Rules reminder]'));
-      assert.ok(cursorResult.stderr.includes(`${repoRoot}/AGENTS.md`));
-      assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/universal/AGENTS.md`));
-      assert.ok(cursorResult.stderr.includes(`${repoRoot}/.aw_rules/platform/security/AGENTS.md`));
+      assert.ok(cursorResult.stderr.includes('[AW Router reminder]'), 'Expected [AW Router reminder] on stderr');
+      assert.ok(cursorResult.stderr.includes('[Rule reminder]'), 'Expected [Rule reminder] on stderr');
+      assert.ok(cursorResult.stderr.includes('.aw_rules/platform/universal/AGENTS.md'), 'Expected universal rules path on stderr');
+      assert.ok(cursorResult.stderr.includes('.aw_rules/platform/security/AGENTS.md'), 'Expected security rules path on stderr');
+      assert.ok(cursorResult.stderr.includes('references/ on demand'), 'Expected references guidance on stderr');
       assert.ok(!cursorResult.stderr.includes('.aw_registry/.aw_rules/platform'), 'Cursor reminder should not mention the removed legacy rules path');
     })) passed++; else failed++;
   } finally {

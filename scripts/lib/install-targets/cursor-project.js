@@ -52,6 +52,13 @@ module.exports = createInstallTargetAdapter({
             createRemappedOperation(
               adapter,
               module.id,
+              path.join('scripts', 'hooks'),
+              path.join(targetRoot, 'scripts', 'hooks'),
+              { strategy: 'sync-root-children' }
+            ),
+            createRemappedOperation(
+              adapter,
+              module.id,
               getCursorAwHookSourceRelativeDir(),
               path.join(targetRoot, 'hooks'),
               { strategy: 'sync-root-children' }

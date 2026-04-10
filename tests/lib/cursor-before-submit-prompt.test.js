@@ -22,12 +22,12 @@ function test(name, fn) {
   }
 }
 
-function runBeforeSubmit(raw, env = {}, cwd = path.join(__dirname, '..', '..')) {
-  const scriptPath = path.join(__dirname, '..', '..', '.cursor', 'hooks', 'before-submit-prompt.js');
-  const result = spawnSync('node', [scriptPath], {
+function runBeforeSubmit(raw, env = {}) {
+  const scriptPath = path.join(__dirname, '..', '..', '.cursor', 'hooks', 'before-submit-prompt.sh');
+  const result = spawnSync('bash', [scriptPath], {
     input: raw,
     encoding: 'utf8',
-    cwd,
+    cwd: path.join(__dirname, '..', '..'),
     env: { ...process.env, ...env },
   });
 
@@ -40,29 +40,8 @@ function runBeforeSubmit(raw, env = {}, cwd = path.join(__dirname, '..', '..')) 
 
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cursor-before-submit-'));
-  const rulesDir = path.join(tempDir, '.aw_rules', 'platform');
+  const rulesDir = path.join(tempDir, '.aw_rules', 'platform', 'backend');
   fs.mkdirSync(rulesDir, { recursive: true });
-  fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), '# Repo Instructions\n');
-  fs.mkdirSync(path.join(rulesDir, 'universal'), { recursive: true });
-  fs.writeFileSync(
-    path.join(rulesDir, 'universal', 'AGENTS.md'),
-    [
-      '# Universal Rules',
-      '',
-      '- Handle every error explicitly. [MUST]',
-      '',
-    ].join('\n')
-  );
-  fs.mkdirSync(path.join(rulesDir, 'security'), { recursive: true });
-  fs.writeFileSync(
-    path.join(rulesDir, 'security', 'AGENTS.md'),
-    [
-      '# Security Rules',
-      '',
-      '- Never hardcode secrets. [MUST]',
-      '',
-    ].join('\n')
-  );
 
   try {
     return fn(tempDir);
@@ -84,22 +63,15 @@ function runTests() {
         prompt: 'update this backend service and fix the dto validation',
       });
 
-      const result = runBeforeSubmit(raw, {}, cwd);
-
-      // Diagnostic output for CI debugging (temporary)
-      console.log(`    [DEBUG] platform=${process.platform}`);
-      console.log(`    [DEBUG] cwd=${cwd}`);
-      console.log(`    [DEBUG] exit_code=${result.code}`);
-      console.log(`    [DEBUG] stdout_len=${result.stdout.length}`);
-      console.log(`    [DEBUG] stderr=${JSON.stringify(result.stderr)}`);
+      const result = runBeforeSubmit(raw);
 
       assert.strictEqual(result.code, 0);
       assert.strictEqual(result.stdout, raw);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
-      assert.ok(result.stderr.includes('[Rules reminder]'), 'Expected rules reminder on stderr');
-      assert.ok(result.stderr.includes(`${cwd}/AGENTS.md`), 'Expected repo AGENTS path in reminder');
-      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/universal/AGENTS.md`), 'Expected universal rules path in reminder');
-      assert.ok(result.stderr.includes(`${cwd}/.aw_rules/platform/security/AGENTS.md`), 'Expected security rules path in reminder');
+      assert.ok(result.stderr.includes('[Rule reminder'), 'Expected rule reminder on stderr');
+      assert.ok(result.stderr.includes('.aw_rules/platform/universal/AGENTS.md'), 'Expected canonical universal rules path in reminder');
+      assert.ok(result.stderr.includes('.aw_rules/platform/security/AGENTS.md'), 'Expected canonical security rules path in reminder');
+      assert.ok(result.stderr.includes('references/ on demand'), 'Expected references guidance in reminder');
     });
   })) passed++; else failed++;
 
@@ -110,7 +82,7 @@ function runTests() {
         prompt: 'update this backend service and use sk-1234567890123456789012345 for testing',
       });
 
-      const result = runBeforeSubmit(raw, {}, cwd);
+      const result = runBeforeSubmit(raw);
 
       assert.strictEqual(result.code, 0);
       assert.strictEqual(result.stdout, raw);

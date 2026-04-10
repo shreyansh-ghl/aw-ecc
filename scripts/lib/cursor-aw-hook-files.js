@@ -9,9 +9,11 @@ const CURSOR_AW_HOOK_FILES = Object.freeze([
   'before-mcp-execution.js',
   'before-shell-execution.js',
   'before-submit-prompt.js',
+  'before-submit-prompt.sh',
   'pre-compact.js',
   'session-end.js',
   'session-start.js',
+  'session-start.sh',
   'stop.js',
 ]);
 

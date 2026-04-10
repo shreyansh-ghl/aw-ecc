@@ -89,7 +89,12 @@ function runTests() {
         cwd: projectRoot,
         homeDir,
       });
-      assert.strictEqual(installResult.code, 0, installResult.stderr);
+      if (installResult.code !== 0) {
+        console.log(`    [DEBUG] repair pre-install exit=${installResult.code}`);
+        console.log(`    [DEBUG] stderr=${(installResult.stderr || '').slice(0, 500)}`);
+        console.log(`    [DEBUG] stdout=${(installResult.stdout || '').slice(0, 500)}`);
+      }
+      assert.strictEqual(installResult.code, 0, `repair pre-install failed: ${installResult.stderr || installResult.stdout}`);
 
       const normalizedProjectRoot = fs.realpathSync(projectRoot);
       const managedPath = path.join(normalizedProjectRoot, '.cursor', 'hooks', 'session-start.js');
