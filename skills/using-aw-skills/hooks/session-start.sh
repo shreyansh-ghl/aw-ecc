@@ -149,12 +149,22 @@ if [[ -n "$REGISTRY_COMMANDS" ]]; then
 ${REGISTRY_COMMANDS}"
 fi
 
-# --- Output in Claude Code hookSpecificOutput format ---
-# Escape for JSON: newlines, quotes, backslashes
+# --- Escape context for JSON embedding ---
 JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c '
 import sys, json
 content = sys.stdin.read()
 print(json.dumps(content))
 ' 2>/dev/null || printf '%s' "$CONTEXT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | awk '{printf "%s\\n", $0}')
 
-echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": ${JSON_CONTEXT}}}"
+# --- Platform-aware output ---
+# Cursor hooks expect additional_context (snake_case, top-level).
+# Claude Code hooks expect hookSpecificOutput.additionalContext (nested).
+# Claude Code reads BOTH formats without deduplication, so emit only the
+# field the current platform consumes.
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "additional_context": %s\n}\n' "$JSON_CONTEXT"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": %s\n  }\n}\n' "$JSON_CONTEXT"
+else
+  printf '{\n  "additionalContext": %s\n}\n' "$JSON_CONTEXT"
+fi

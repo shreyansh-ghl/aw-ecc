@@ -117,3 +117,5 @@ scripts/claude-aw-home/hooks.json
 scripts/cursor-aw-home/hooks.json
 scripts/codex-aw-home/hooks.json
 # Claude runtime output is shipped in releases and must stay tracked
+
+.aw_rules/

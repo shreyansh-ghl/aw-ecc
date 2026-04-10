@@ -1,7 +1,8 @@
 {
   "name": "aw",
-  "version": "1.0.10",
+  "displayName": "AW Agentic Workspace",
   "description": "GoHighLevel Agentic Workspace Engine — agents, skills, commands, hooks, and rules for GHL development workflows.",
+  "version": "1.0.10",
   "author": {
     "name": "GoHighLevel",
     "url": "https://github.com/shreyansh-ghl/aw-ecc"
@@ -20,5 +21,9 @@
     "code-review",
     "security",
     "workflow"
-  ]
+  ],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks-cursor.json"
 }
