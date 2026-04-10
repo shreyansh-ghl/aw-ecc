@@ -134,7 +134,7 @@ async function runTests() {
 
     assertNoBrokenPipe(result);
     assert.ok(result.stdout.includes('"hookSpecificOutput"'));
-    assert.ok(result.stdout.includes('AW Session Context'));
+    assert.ok(result.stdout.includes('EXTREMELY_IMPORTANT') || result.stdout.includes('AW Session Context'));
   })) passed++; else failed++;
 
   if (await asyncTest('direct using-aw-skills session-start hook drains stdin before emitting context', async () => {
@@ -143,7 +143,7 @@ async function runTests() {
 
     assertNoBrokenPipe(result);
     assert.ok(result.stdout.includes('"hookSpecificOutput"'));
-    assert.ok(result.stdout.includes('AW Session Context'));
+    assert.ok(result.stdout.includes('EXTREMELY_IMPORTANT') || result.stdout.includes('AW Session Context'));
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

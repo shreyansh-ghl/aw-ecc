@@ -2061,7 +2061,7 @@ async function runTests() {
   else failed++;
 
   if (
-    await asyncTest('session-start hook emits compact routing context', async () => {
+    await asyncTest('session-start hook emits full SKILL.md routing context', async () => {
       if (SKIP_BASH) return;
 
       const scriptPath = path.join(__dirname, '..', '..', 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
@@ -2077,11 +2077,11 @@ async function runTests() {
       );
       const context = payload?.hookSpecificOutput?.additionalContext || '';
 
-      assert.ok(context.includes('# AW Session Context'), 'session-start should emit AW startup context');
-      assert.ok(context.length < 6000, `session-start context should stay compact (got ${context.length} chars)`);
+      assert.ok(context.includes('<EXTREMELY_IMPORTANT>'), 'session-start should wrap context in EXTREMELY_IMPORTANT tags');
+      assert.ok(context.includes('using-aw-skills'), 'session-start should reference the router skill');
+      assert.ok(context.includes('YOU MUST USE IT'), 'session-start should include the mandatory activation directive');
       assert.ok(!context.includes('## Available Skills'), 'session-start should not inline the full skills catalog');
       assert.ok(!context.includes('## Available Commands'), 'session-start should not inline the full commands catalog');
-      assert.ok(!context.includes('## Routing Skill'), 'session-start should not inline the full routing skill body');
     })
   )
     passed++;
@@ -2121,7 +2121,7 @@ async function runTests() {
   else failed++;
 
   if (
-    await asyncTest('session-start hook emits compact routing context', async () => {
+    await asyncTest('session-start hook emits full SKILL.md routing context', async () => {
       if (SKIP_BASH) return;
 
       const scriptPath = path.join(__dirname, '..', '..', 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
@@ -2137,11 +2137,11 @@ async function runTests() {
       );
       const context = payload?.hookSpecificOutput?.additionalContext || '';
 
-      assert.ok(context.includes('# AW Session Context'), 'session-start should emit AW startup context');
-      assert.ok(context.length < 6000, `session-start context should stay compact (got ${context.length} chars)`);
+      assert.ok(context.includes('<EXTREMELY_IMPORTANT>'), 'session-start should wrap context in EXTREMELY_IMPORTANT tags');
+      assert.ok(context.includes('using-aw-skills'), 'session-start should reference the router skill');
+      assert.ok(context.includes('YOU MUST USE IT'), 'session-start should include the mandatory activation directive');
       assert.ok(!context.includes('## Available Skills'), 'session-start should not inline the full skills catalog');
       assert.ok(!context.includes('## Available Commands'), 'session-start should not inline the full commands catalog');
-      assert.ok(!context.includes('## Routing Skill'), 'session-start should not inline the full routing skill body');
     })
   )
     passed++;
