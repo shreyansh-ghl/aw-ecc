@@ -1,0 +1,92 @@
+#!/usr/bin/expect -f
+
+if {$argc < 3} {
+  puts stderr "usage: claude-interactive-smoke.exp <workspace> <prompt-file> <timeout-seconds>"
+  exit 2
+}
+
+set workspace [lindex $argv 0]
+set promptFile [lindex $argv 1]
+set timeoutSec [lindex $argv 2]
+set timeout $timeoutSec
+
+set fh [open $promptFile r]
+set prompt [read $fh]
+close $fh
+
+match_max 200000
+log_user 1
+
+spawn claude --effort low --add-dir $workspace
+
+proc confirm_trust {} {
+  send -- "1"
+  after 150
+  send -- "\r"
+}
+
+expect {
+  -re {Security guide|Yes,|Enter to confirm} {
+    confirm_trust
+    exp_continue
+  }
+  -re {Claude Code v|\? for shortcuts|/effort} {}
+  timeout { puts stderr "Timed out waiting for Claude prompt"; exit 124 }
+  eof { puts stderr "Claude exited before prompt"; exit 1 }
+}
+
+send -- $prompt
+send -- "\r"
+
+set sawRoute 0
+set sawStageSkill 0
+set sawConsultedRules 0
+
+while {1} {
+  expect {
+    -re {Security guide|Yes, I trust this folder} {
+      confirm_trust
+      exp_continue
+    }
+    -re {Enter to confirm} {
+      send -- "\r"
+      exp_continue
+    }
+    -re {7\.\s+Skip interview and plan immediately} {
+      send -- "7\r"
+      exp_continue
+    }
+    -re {Selected AW Route:\s*/aw:[[:alnum:]-]+} {
+      set sawRoute 1
+      exp_continue
+    }
+    -re {Primary Stage Skill:\s*aw[-:][[:alnum:]:-]+} {
+      set sawStageSkill 1
+      exp_continue
+    }
+    -re {Consulted Rules:\s*[^\n]+} {
+      set sawConsultedRules 1
+      if {$sawRoute && $sawStageSkill} {
+        exit 0
+      }
+      exp_continue
+    }
+    -re {Claude Code v|\? for shortcuts|/effort|❯} {
+      if {$sawRoute && $sawStageSkill && $sawConsultedRules} {
+        exit 0
+      }
+      exp_continue
+    }
+    timeout {
+      puts stderr "Timed out waiting for Claude response"
+      exit 124
+    }
+    eof {
+      if {$sawRoute && $sawStageSkill && $sawConsultedRules} {
+        exit 0
+      }
+      puts stderr "Claude exited before route declaration"
+      exit 1
+    }
+  }
+}

@@ -46,6 +46,21 @@ Runner scripts remain at the `tests/evals/` root:
 - `run-aw-sdlc-outcomes-parallel.sh`
 - `run-aw-sdlc-routing-golden-path.sh`
 - `run-aw-sdlc-ghl-ai-standalone-smoke.sh`
+- `run-aw-cross-harness-cli-smoke.js`
+
+The cross-harness CLI smoke runner uses the real installed CLIs for Cursor, Codex, and Claude.
+It writes per-harness artifacts under `tests/results/` and checks whether each harness:
+
+- declares the AW route first
+- declares the primary stage skill
+- mentions `using-aw-skills`
+- mentions universal and security rules
+
+Run it with:
+
+```bash
+node tests/evals/run-aw-cross-harness-cli-smoke.js
+```
 
 Default `npm test` / `node tests/run-all.js` behavior is intentionally narrower than the full benchmark stack:
 
