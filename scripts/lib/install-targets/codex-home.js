@@ -55,6 +55,13 @@ module.exports = createInstallTargetAdapter({
           ];
         }
 
+        // Codex home installs should only materialize Codex-owned root files.
+        // Other harness roots like .cursor/, .claude-plugin/, or .opencode/
+        // must not be copied into nested folders under ~/.codex.
+        if (sourceRelativePath.startsWith('.')) {
+          return [];
+        }
+
         return [adapter.createScaffoldOperation(module.id, sourceRelativePath, planningInput)];
       });
     });
