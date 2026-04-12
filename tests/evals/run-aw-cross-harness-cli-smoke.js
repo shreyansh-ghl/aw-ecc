@@ -8,11 +8,12 @@ const { spawnSync } = require('child_process');
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const FIXTURE_PATH = path.join(__dirname, 'fixtures', 'aw-cross-harness-cli-cases.json');
 const CLAUDE_EXPECT_PATH = path.join(__dirname, 'lib', 'claude-interactive-smoke.exp');
-const DEFAULT_WORKSPACE = process.cwd();
+const DEFAULT_WORKSPACE = process.env.AW_CLI_SMOKE_WORKSPACE || process.cwd();
 const TIMESTAMP = new Date().toISOString().replace(/[:.]/g, '-');
 const RESULT_ROOT = process.env.AW_CLI_SMOKE_RESULT_DIR
   || path.join(REPO_ROOT, 'tests', 'results', `aw-cross-harness-cli-smoke-${TIMESTAMP}`);
 const TIMEOUT_MS = Number(process.env.AW_CLI_SMOKE_TIMEOUT_MS || 120000);
+const MAX_RETRIES = Number(process.env.AW_CLI_SMOKE_RETRIES || 0);
 const HARNESS_FILTER = new Set(
   String(process.env.AW_CLI_SMOKE_HARNESSES || '')
     .split(',')
@@ -134,10 +135,12 @@ function canonicalizeStageSkill(value) {
   const token = normalizeToken(value);
   if (!token) return '';
   if (/aw[-:]plan|platform-core-plan/i.test(token)) return 'aw-plan';
+  if (/feature-workflow/i.test(token)) return 'aw-plan';
   if (/architecture-design|spec-writing|bootstrap-new-service|incremental-delivery/i.test(token)) return 'aw-plan';
   if (/aw[-:]investigate|aw[-:]debug|platform-core-investigate/i.test(token)) return 'aw-investigate';
   if (/observability|grafana|log-analysis|incident-report/i.test(token)) return 'aw-investigate';
   if (/aw[-:]review|platform-core-review/i.test(token)) return 'aw-review';
+  if (/full-review|review-all/i.test(token)) return 'aw-review';
   if (/security-review|code-review-pr|reliability-review|maintainability-review|performance-review/i.test(token)) return 'aw-review';
   if (/aw[-:]deploy|platform-core-deploy/i.test(token)) return 'aw-deploy';
   if (/aw[-:]ship|platform-core-ship/i.test(token)) return 'aw-ship';
@@ -307,6 +310,34 @@ function runHarnessCase(harness, testCase, workspace) {
   };
 }
 
+function shouldRetryResult(result) {
+  return (
+    !isSuccessfulResult(result)
+    && /ETIMEDOUT/i.test(result.meta.error || '')
+    && !result.verdict.checks.routeDeclared
+    && !result.verdict.checks.stageSkillDeclared
+  );
+}
+
+function runHarnessCaseWithRetries(harness, testCase, workspace) {
+  let attempt = 0;
+  let lastResult = null;
+
+  while (attempt <= MAX_RETRIES) {
+    lastResult = runHarnessCase(harness, testCase, workspace);
+    lastResult.meta.attempt = attempt + 1;
+    if (!shouldRetryResult(lastResult) || attempt === MAX_RETRIES) {
+      return lastResult;
+    }
+    console.error(
+      `Retrying ${harness.id} :: ${testCase.id} after timeout with no routing evidence (attempt ${attempt + 1}/${MAX_RETRIES + 1})`,
+    );
+    attempt += 1;
+  }
+
+  return lastResult;
+}
+
 function isSuccessfulResult(result) {
   if (!result.verdict.passed) return false;
   if (result.meta.exitCode === 0) return true;
@@ -346,10 +377,12 @@ function writeSummary(results) {
     resultRoot: RESULT_ROOT,
     generatedAt: new Date().toISOString(),
     timeoutMs: TIMEOUT_MS,
+    maxRetries: MAX_RETRIES,
     byHarness,
     results: results.map((result) => ({
       harness: result.harness,
       caseId: result.caseId,
+      attempt: result.meta.attempt || 1,
       exitCode: result.meta.exitCode,
       error: result.meta.error,
       passed: isSuccessfulResult(result),
@@ -379,7 +412,7 @@ function main() {
 
   for (const harness of selectedHarnesses) {
     for (const testCase of selectedCases) {
-      results.push(runHarnessCase(harness, testCase, DEFAULT_WORKSPACE));
+      results.push(runHarnessCaseWithRetries(harness, testCase, DEFAULT_WORKSPACE));
     }
   }
 

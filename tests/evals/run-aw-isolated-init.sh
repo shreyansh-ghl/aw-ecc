@@ -9,7 +9,7 @@ ECC_MODE="${3:-with-ecc}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REAL_HOME="${AW_REAL_HOME:-$HOME}"
 SETUP_HELPER="$REPO_ROOT/tests/evals/setup-aw-isolated-space.sh"
-PACKAGE_SPEC="${AW_PACKAGE_SPEC:-@ghl-ai/aw@0.1.38-beta.23}"
+PACKAGE_SPEC="${AW_PACKAGE_SPEC:-@ghl-ai/aw@beta}"
 
 rm -rf "$ROOT"
 mkdir -p "$ROOT/home" "$ROOT/workspace"

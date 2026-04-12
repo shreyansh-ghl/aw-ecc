@@ -36,13 +36,19 @@ function runBash(scriptPath, input = '', env = {}, cwd = REPO_ROOT) {
 function withTempWorkspace(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-hook-contract-'));
   try {
-    const rulesDir = path.join(tempDir, '.aw_rules', 'platform', 'backend');
+    const rulesDir = path.join(tempDir, '.aw', '.aw_rules', 'platform', 'backend');
+    const universalDir = path.join(tempDir, '.aw', '.aw_rules', 'platform', 'universal');
+    const securityDir = path.join(tempDir, '.aw', '.aw_rules', 'platform', 'security');
     fs.mkdirSync(rulesDir, { recursive: true });
+    fs.mkdirSync(universalDir, { recursive: true });
+    fs.mkdirSync(securityDir, { recursive: true });
     fs.writeFileSync(
       path.join(rulesDir, 'AGENTS.md'),
       '# Backend\n\n- Use @platform-core/logger. [MUST]\n- Never use console.log. [MUST]\n',
       'utf8'
     );
+    fs.writeFileSync(path.join(universalDir, 'AGENTS.md'), '# Universal\n', 'utf8');
+    fs.writeFileSync(path.join(securityDir, 'AGENTS.md'), '# Security\n', 'utf8');
     return fn(tempDir);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -107,8 +113,8 @@ function runTests() {
       assert.equal(payload.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
       assert.match(payload.hookSpecificOutput.additionalContext, /\[AW Router reminder\]/);
       assert.match(payload.hookSpecificOutput.additionalContext, /\[Rule reminder/);
-      assert.match(payload.hookSpecificOutput.additionalContext, /universal\/AGENTS\.md/);
-      assert.match(payload.hookSpecificOutput.additionalContext, /security\/AGENTS\.md/);
+      assert.match(payload.hookSpecificOutput.additionalContext, /\.aw\/\.aw_rules\/platform\/universal\/AGENTS\.md/);
+      assert.match(payload.hookSpecificOutput.additionalContext, /\.aw\/\.aw_rules\/platform\/security\/AGENTS\.md/);
     });
   })) passed++; else failed++;
 
@@ -145,6 +151,39 @@ function runTests() {
         fs.rmSync(fakeHome, { recursive: true, force: true });
       }
     });
+  })) passed++; else failed++;
+
+  if (test('shared prompt reminder prefers .aw/.aw_rules over legacy .aw_rules paths', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-hook-rules-root-'));
+    try {
+      const modernUniversal = path.join(tempDir, '.aw', '.aw_rules', 'platform', 'universal');
+      const modernSecurity = path.join(tempDir, '.aw', '.aw_rules', 'platform', 'security');
+      const legacyUniversal = path.join(tempDir, '.aw_rules', 'platform', 'universal');
+      const legacySecurity = path.join(tempDir, '.aw_rules', 'platform', 'security');
+
+      fs.mkdirSync(modernUniversal, { recursive: true });
+      fs.mkdirSync(modernSecurity, { recursive: true });
+      fs.mkdirSync(legacyUniversal, { recursive: true });
+      fs.mkdirSync(legacySecurity, { recursive: true });
+
+      fs.writeFileSync(path.join(modernUniversal, 'AGENTS.md'), '# Modern Universal\n', 'utf8');
+      fs.writeFileSync(path.join(modernSecurity, 'AGENTS.md'), '# Modern Security\n', 'utf8');
+      fs.writeFileSync(path.join(legacyUniversal, 'AGENTS.md'), '# Legacy Universal\n', 'utf8');
+      fs.writeFileSync(path.join(legacySecurity, 'AGENTS.md'), '# Legacy Security\n', 'utf8');
+
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+      const raw = JSON.stringify({ cwd: tempDir, prompt: 'Plan a backend service' });
+      const result = runBash(scriptPath, raw, {}, tempDir);
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      const expectedModernRoot = path.join(tempDir, '.aw', '.aw_rules', 'platform').replace(/\\/g, '/');
+      const unexpectedLegacyRoot = path.join(tempDir, '.aw_rules', 'platform').replace(/\\/g, '/');
+
+      assert.match(result.stdout, new RegExp(expectedModernRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+      assert.doesNotMatch(result.stdout, new RegExp(`Read ${unexpectedLegacyRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   })) passed++; else failed++;
 
   console.log('\nResults:');
