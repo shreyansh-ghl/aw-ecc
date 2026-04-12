@@ -10,7 +10,7 @@
       "name": "aw",
       "source": "./",
       "description": "Agentic Workspace Engine — agents, skills, commands, hooks, and rules for GHL development workflows.",
-      "version": "1.4.24",
+      "version": "1.4.25",
       "author": {
         "name": "GoHighLevel"
       },
