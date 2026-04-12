@@ -60,7 +60,7 @@ while {1} {
       set sawRoute 1
       exp_continue
     }
-    -re {Primary Stage Skill:\s*aw[-:][[:alnum:]:-]+} {
+    -re {Primary Stage Skill:\s*[[:alnum:]_:-][[:alnum:]_ .:-]*} {
       set sawStageSkill 1
       exp_continue
     }

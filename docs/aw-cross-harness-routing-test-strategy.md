@@ -223,3 +223,24 @@ Use three CI lanes.
 - `doctor` policy suite
 
 This split keeps fast contract failures separate from slower routing validation and consumer integration checks.
+
+## Fresh Environment Command
+
+Use this repo-local command to prove fresh setup plus real CLI routing in one pass:
+
+```bash
+npm run eval:aw:fresh-env-cli-smoke
+```
+
+What it does:
+
+- creates an isolated temp home + workspace
+- installs `@ghl-ai/aw` into that fresh environment
+- runs the real Cursor, Codex, and Claude CLI smokes against that new workspace
+- writes artifacts under the temp root printed by the script
+
+Related helpers:
+
+- `tests/evals/setup-aw-isolated-space.sh`
+- `tests/evals/run-aw-isolated-init.sh`
+- `tests/evals/run-aw-fresh-env-cli-smoke.sh`

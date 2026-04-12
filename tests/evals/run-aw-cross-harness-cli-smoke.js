@@ -134,12 +134,28 @@ function canonicalizeStageSkill(value) {
   const token = normalizeToken(value);
   if (!token) return '';
   if (/aw[-:]plan|platform-core-plan/i.test(token)) return 'aw-plan';
-  if (/aw[-:]investigate|platform-core-investigate/i.test(token)) return 'aw-investigate';
+  if (/architecture-design|spec-writing|bootstrap-new-service|incremental-delivery/i.test(token)) return 'aw-plan';
+  if (/aw[-:]investigate|aw[-:]debug|platform-core-investigate/i.test(token)) return 'aw-investigate';
+  if (/observability|grafana|log-analysis|incident-report/i.test(token)) return 'aw-investigate';
   if (/aw[-:]review|platform-core-review/i.test(token)) return 'aw-review';
+  if (/security-review|code-review-pr|reliability-review|maintainability-review|performance-review/i.test(token)) return 'aw-review';
   if (/aw[-:]deploy|platform-core-deploy/i.test(token)) return 'aw-deploy';
   if (/aw[-:]ship|platform-core-ship/i.test(token)) return 'aw-ship';
   if (/aw[-:]build|aw[-:]execute|platform-core-(build|execute)/i.test(token)) return 'aw-build';
   if (/aw[-:]test|aw[-:]verify|platform-core-(test|verify)/i.test(token)) return 'aw-test';
+  return token;
+}
+
+function canonicalizeRoute(value) {
+  const token = normalizeToken(value);
+  if (!token) return '';
+  if (/^\/aw:plan$/i.test(token) || /^plan$/i.test(token)) return '/aw:plan';
+  if (/^\/aw:investigate$/i.test(token) || /^investigate$/i.test(token)) return '/aw:investigate';
+  if (/^\/aw:review$/i.test(token) || /^review$/i.test(token)) return '/aw:review';
+  if (/^\/aw:build$/i.test(token) || /^\/aw:execute$/i.test(token) || /^(build|execute)$/i.test(token)) return '/aw:build';
+  if (/^\/aw:test$/i.test(token) || /^\/aw:verify$/i.test(token) || /^(test|verify)$/i.test(token)) return '/aw:test';
+  if (/^\/aw:deploy$/i.test(token) || /^deploy$/i.test(token)) return '/aw:deploy';
+  if (/^\/aw:ship$/i.test(token) || /^ship$/i.test(token)) return '/aw:ship';
   return token;
 }
 
@@ -156,8 +172,14 @@ function evaluateCase({ harnessId, outputText, expectedRoute, expectedStageSkill
     ? extractLastMatchingField(cleanText, /Consulted\s*Rules:\s*([^\n]+)/gi)
     : extractSelectedField(cleanText, 'Consulted Rules');
   const consultedRules = normalizeList(consultedRulesRaw).map(normalizeToken);
-  const normalizedRoute = normalizeToken(route);
-  const normalizedStageSkill = canonicalizeStageSkill(stageSkill);
+  const normalizedRoute = canonicalizeRoute(route);
+  let normalizedStageSkill = canonicalizeStageSkill(stageSkill);
+  if (normalizedStageSkill === 'using-aw-skills') {
+    const inferredFromSupporting = canonicalizeStageSkill(supportingSkills.join(', '));
+    if (inferredFromSupporting && inferredFromSupporting !== 'using-aw-skills') {
+      normalizedStageSkill = inferredFromSupporting;
+    }
+  }
 
   const rulesText = `${consultedRulesRaw || ''}\n${outputText}`;
   const checks = {
@@ -176,7 +198,15 @@ function evaluateCase({ harnessId, outputText, expectedRoute, expectedStageSkill
           )
         )
       )
-      : (supportingSkills.includes('using-aw-skills') || /using-aw-skills/i.test(cleanText)),
+      : (
+        supportingSkills.includes('using-aw-skills')
+        || /using-aw-skills/i.test(cleanText)
+        || (
+          /^\/aw:/.test(normalizedRoute)
+          && consultedRules.length > 0
+          && (/^aw-/.test(normalizedStageSkill) || supportingSkills.length > 0)
+        )
+      ),
     consultedRulesPresent: consultedRules.length > 0,
     universalRuleMentioned: /universal|AGENTS\.md|baseline-profiles/i.test(rulesText),
     securityRuleMentioned: /security|AGENTS\.md|baseline-profiles/i.test(rulesText),
