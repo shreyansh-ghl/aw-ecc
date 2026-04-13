@@ -67,9 +67,12 @@ function validateCursorMdcFrontmatter() {
       }
       if (!entry.name.endsWith('.mdc')) continue;
       const content = fs.readFileSync(abs, 'utf-8');
-      if (!content.startsWith('---')) {
+      // Only flag files that HAVE frontmatter but in the wrong position.
+      // Files with no frontmatter at all are valid "plain content" Cursor rules.
+      const hasFrontmatter = /^---\s*$/m.test(content);
+      if (hasFrontmatter && !content.startsWith('---')) {
         const firstLine = content.split('\n', 1)[0].slice(0, 80);
-        errors.push(`${path.relative(repoRoot, abs)}: frontmatter must be at byte 0 (first line is: ${firstLine})`);
+        errors.push(`${path.relative(repoRoot, abs)}: frontmatter exists but is not at byte 0 (first line: ${firstLine})`);
       }
     }
   }
