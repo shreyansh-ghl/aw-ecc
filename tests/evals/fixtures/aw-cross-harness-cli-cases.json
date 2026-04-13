@@ -1,0 +1,20 @@
+[
+  {
+    "id": "plan-backend-service",
+    "prompt": "You are in an AW-routed workspace. Before any substantive answer, follow AW routing and begin with exactly these four lines:\nSelected AW Route: <route>\nPrimary Stage Skill: <skill>\nSupporting Skills: <comma-separated skills>\nConsulted Rules: <comma-separated rules or rule paths>\nIn the Consulted Rules line, explicitly include both universal and security whenever they apply.\nThen answer briefly.\n\nTask: We are starting a new backend service and need a rough plan plus database direction.",
+    "expectedRoute": "/aw:plan",
+    "expectedStageSkill": "aw-plan"
+  },
+  {
+    "id": "investigate-runtime-failure",
+    "prompt": "You are in an AW-routed workspace. Before any substantive answer, follow AW routing and begin with exactly these four lines:\nSelected AW Route: <route>\nPrimary Stage Skill: <skill>\nSupporting Skills: <comma-separated skills>\nConsulted Rules: <comma-separated rules or rule paths>\nIn the Consulted Rules line, explicitly include both universal and security whenever they apply.\nThen answer briefly.\n\nTask: A deployed service is failing intermittently and the root cause is unclear. Tell me the first investigation steps.",
+    "expectedRoute": "/aw:investigate",
+    "expectedStageSkill": "aw-investigate"
+  },
+  {
+    "id": "review-security-risk",
+    "prompt": "You are in an AW-routed workspace. Before any substantive answer, follow AW routing and begin with exactly these four lines:\nSelected AW Route: <route>\nPrimary Stage Skill: <skill>\nSupporting Skills: <comma-separated skills>\nConsulted Rules: <comma-separated rules or rule paths>\nIn the Consulted Rules line, explicitly include both universal and security whenever they apply.\nThen answer briefly.\n\nTask: Review this change for risk. A NestJS controller trusts locationId from req.body and logs with console.log. Give findings only.",
+    "expectedRoute": "/aw:review",
+    "expectedStageSkill": "aw-review"
+  }
+]

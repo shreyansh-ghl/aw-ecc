@@ -160,7 +160,22 @@ function createNamespacedFlatRuleOperations(adapter, moduleId, sourceRelativePat
   return operations;
 }
 
-function createFlatRuleOperations({ moduleId, repoRoot, sourceRelativePath, destinationDir }) {
+/**
+ * Transform an output filename's extension, preserving README.md
+ * (Cursor requires .mdc for rule files; README.md is docs and stays .md).
+ */
+function applyExtensionMapping(fileName, extensionMap) {
+  if (!extensionMap || fileName === 'README.md') {
+    return fileName;
+  }
+  const dot = fileName.lastIndexOf('.');
+  if (dot === -1) return fileName;
+  const ext = fileName.slice(dot);
+  const newExt = extensionMap[ext];
+  return newExt ? fileName.slice(0, dot) + newExt : fileName;
+}
+
+function createFlatRuleOperations({ moduleId, repoRoot, sourceRelativePath, destinationDir, extensionMap }) {
   const normalizedSourcePath = normalizeRelativePath(sourceRelativePath);
   const sourceRoot = path.join(repoRoot || '', normalizedSourcePath);
 
@@ -180,7 +195,8 @@ function createFlatRuleOperations({ moduleId, repoRoot, sourceRelativePath, dest
     if (entry.isDirectory()) {
       const relativeFiles = listRelativeFiles(entryPath);
       for (const relativeFile of relativeFiles) {
-        const flattenedFileName = `${namespace}-${normalizeRelativePath(relativeFile).replace(/\//g, '-')}`;
+        const rawName = `${namespace}-${normalizeRelativePath(relativeFile).replace(/\//g, '-')}`;
+        const flattenedFileName = applyExtensionMapping(rawName, extensionMap);
         operations.push(createManagedOperation({
           moduleId,
           sourceRelativePath: path.join(normalizedSourcePath, namespace, relativeFile),
@@ -189,10 +205,11 @@ function createFlatRuleOperations({ moduleId, repoRoot, sourceRelativePath, dest
         }));
       }
     } else if (entry.isFile()) {
+      const fileName = applyExtensionMapping(entry.name, extensionMap);
       operations.push(createManagedOperation({
         moduleId,
         sourceRelativePath: path.join(normalizedSourcePath, entry.name),
-        destinationPath: path.join(destinationDir, entry.name),
+        destinationPath: path.join(destinationDir, fileName),
         strategy: 'flatten-copy',
       }));
     }

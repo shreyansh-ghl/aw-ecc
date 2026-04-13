@@ -143,8 +143,8 @@ function runTests() {
       const result = run(['--target', 'cursor', 'typescript'], { cwd: projectDir, homeDir });
       assert.strictEqual(result.code, 0, result.stderr);
 
-      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-coding-style.md')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'typescript-testing.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-coding-style.mdc')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'typescript-testing.mdc')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'agents', 'architect.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks.json')));
@@ -270,7 +270,7 @@ function runTests() {
       assert.ok(result.stdout.includes('Mode: manifest'));
       assert.ok(result.stdout.includes('Profile: core'));
       assert.ok(result.stdout.includes('Included components: (none)'));
-      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, commands-core, hooks-runtime, platform-configs, workflow-quality'));
+      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, aw-stages, commands-core, hooks-runtime, platform-configs, workflow-quality'));
       assert.ok(!fs.existsSync(path.join(homeDir, '.claude', 'ecc', 'install-state.json')));
     } finally {
       cleanup(homeDir);
@@ -343,9 +343,10 @@ function runTests() {
       assert.strictEqual(state.request.legacyMode, false);
       assert.deepStrictEqual(
         state.resolution.selectedModules,
-        ['rules-core', 'agents-core', 'commands-core', 'platform-configs', 'workflow-quality']
+        ['rules-core', 'agents-core', 'aw-stages', 'commands-core', 'platform-configs', 'workflow-quality']
       );
       assert.ok(state.resolution.skippedModules.includes('hooks-runtime'));
+      assert.ok(!state.resolution.skippedModules.includes('aw-stages'));
       assert.ok(!state.resolution.skippedModules.includes('workflow-quality'));
       assert.ok(!state.resolution.skippedModules.includes('platform-configs'));
     } finally {
@@ -365,7 +366,7 @@ function runTests() {
       });
       assert.strictEqual(result.code, 0, result.stderr);
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks.json')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-agents.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'typescript-coding-style.mdc')));
 
       const state = readJson(path.join(projectDir, '.cursor', 'ecc-install-state.json'));
       assert.strictEqual(state.request.profile, null);

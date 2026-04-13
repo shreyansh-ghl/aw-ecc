@@ -42,6 +42,53 @@ function collectRuleFiles(dir) {
   return files;
 }
 
+/**
+ * Validate that .mdc files (Cursor rule format) have frontmatter at byte 0.
+ * Anything before the opening `---` — including HTML comments — makes Cursor
+ * treat the file as having no frontmatter, silently breaking alwaysApply/globs.
+ */
+function validateCursorMdcFrontmatter() {
+  const repoRoot = path.join(__dirname, '../..');
+  const errors = [];
+
+  function scan(dir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name.startsWith('.git')) continue;
+      const abs = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        scan(abs);
+        continue;
+      }
+      if (!entry.name.endsWith('.mdc')) continue;
+      const content = fs.readFileSync(abs, 'utf-8');
+      // Only flag files that HAVE frontmatter but in the wrong position.
+      // Files with no frontmatter at all are valid "plain content" Cursor rules.
+      const hasFrontmatter = /^---\s*$/m.test(content);
+      if (hasFrontmatter && !content.startsWith('---')) {
+        const firstLine = content.split('\n', 1)[0].slice(0, 80);
+        errors.push(`${path.relative(repoRoot, abs)}: frontmatter exists but is not at byte 0 (first line: ${firstLine})`);
+      }
+    }
+  }
+
+  scan(repoRoot);
+
+  if (errors.length > 0) {
+    console.error('ERROR: .mdc files with content before frontmatter (breaks Cursor alwaysApply/globs):');
+    for (const err of errors) {
+      console.error(`  - ${err}`);
+    }
+    return false;
+  }
+  return true;
+}
+
 function validateRules() {
   if (!fs.existsSync(RULES_DIR)) {
     console.log('No rules directory found, skipping validation');
@@ -69,6 +116,10 @@ function validateRules() {
       console.error(`ERROR: ${file} - ${err.message}`);
       hasErrors = true;
     }
+  }
+
+  if (!validateCursorMdcFrontmatter()) {
+    hasErrors = true;
   }
 
   if (hasErrors) {

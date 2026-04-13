@@ -134,6 +134,35 @@ function runTests() {
     );
   })) passed++; else failed++;
 
+  if (test('codex scaffold ignores non-Codex harness roots', () => {
+    const repoRoot = path.join(__dirname, '..', '..');
+    const homeDir = '/Users/example';
+
+    const plan = planInstallTargetScaffold({
+      target: 'codex',
+      repoRoot,
+      homeDir,
+      modules: [
+        {
+          id: 'platform-configs',
+          paths: ['.claude-plugin', '.codex', '.cursor', '.opencode', 'mcp-configs'],
+        },
+      ],
+    });
+
+    const nestedHarnessOps = plan.operations.filter(operation => (
+      String(operation.destinationPath || '').includes(path.join(homeDir, '.codex', '.cursor'))
+      || String(operation.destinationPath || '').includes(path.join(homeDir, '.codex', '.claude-plugin'))
+      || String(operation.destinationPath || '').includes(path.join(homeDir, '.codex', '.opencode'))
+    ));
+
+    assert.strictEqual(
+      nestedHarnessOps.length,
+      0,
+      'Codex installs should not copy non-Codex harness roots into ~/.codex'
+    );
+  })) passed++; else failed++;
+
   if (test('plans scaffold operations and flattens native target roots', () => {
     const repoRoot = path.join(__dirname, '..', '..');
     const projectRoot = '/workspace/app';
@@ -172,7 +201,7 @@ function runTests() {
     assert.strictEqual(preserved.strategy, 'flatten-copy');
     assert.strictEqual(
       preserved.destinationPath,
-      path.join(projectRoot, '.cursor', 'rules', 'common-coding-style.md')
+      path.join(projectRoot, '.cursor', 'rules', 'common-coding-style.mdc')
     );
   })) passed++; else failed++;
 
@@ -195,20 +224,20 @@ function runTests() {
     assert.ok(
       plan.operations.some(operation => (
         normalizedRelativePath(operation.sourceRelativePath) === 'rules/common/coding-style.md'
-        && operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'common-coding-style.md')
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'common-coding-style.mdc')
       )),
       'Should flatten common rules into namespaced files'
     );
     assert.ok(
       plan.operations.some(operation => (
         normalizedRelativePath(operation.sourceRelativePath) === 'rules/typescript/testing.md'
-        && operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'typescript-testing.md')
+        && operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'typescript-testing.mdc')
       )),
       'Should flatten language rules into namespaced files'
     );
     assert.ok(
       !plan.operations.some(operation => (
-        operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'common', 'coding-style.md')
+        operation.destinationPath === path.join(projectRoot, '.cursor', 'rules', 'common', 'coding-style.mdc')
       )),
       'Should not preserve nested rule directories for cursor installs'
     );

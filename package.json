@@ -1,6 +1,6 @@
 {
   "name": "aw-ecc",
-  "version": "1.4.30",
+  "version": "1.4.37",
   "description": "GoHighLevel Agentic Workspace Engine — forked from Everything Claude Code (ecc-universal)",
   "keywords": [
     "claude-code",
@@ -110,6 +110,10 @@
     "orchestrate:status": "node scripts/orchestration-status.js",
     "orchestrate:worker": "bash scripts/orchestrate-codex-worker.sh",
     "orchestrate:tmux": "node scripts/orchestrate-worktrees.js",
+    "test:hook-contracts": "node tests/hooks/harness-hook-output-contracts.test.js",
+    "eval:aw:fresh-env-cli-smoke": "bash tests/evals/run-aw-fresh-env-cli-smoke.sh",
+    "eval:aw:published-package-e2e": "bash tests/evals/run-aw-published-package-e2e.sh",
+    "eval:aw:release-gate": "bash tests/evals/run-aw-release-gate.sh",
     "test": "node scripts/ci/validate-agents.js && node scripts/ci/validate-commands.js && node scripts/ci/validate-rules.js && node scripts/ci/validate-skills.js && node scripts/ci/validate-hooks.js && node scripts/ci/validate-install-manifests.js && node scripts/ci/validate-no-personal-paths.js && node scripts/ci/catalog.js --text && node tests/run-all.js",
     "coverage": "c8 --all --include=\"scripts/**/*.js\" --check-coverage --lines 80 --functions 80 --branches 80 --statements 80 --reporter=text --reporter=lcov node tests/run-all.js"
   },

@@ -2,6 +2,10 @@
 
 This document explains how `aw-ecc` testing is structured at a high level.
 
+For the concrete release gate for Cursor, Codex, and Claude routing behavior, also read:
+
+- [aw-cross-harness-routing-test-strategy.md](/private/tmp/aw-ecc-cursor-routing-fixes-clean/docs/aw-cross-harness-routing-test-strategy.md)
+
 The most important distinction is that we track three different dimensions:
 
 1. ownership: which commands, skills, and supporting assets a suite validates

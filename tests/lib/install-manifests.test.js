@@ -118,9 +118,10 @@ function runTests() {
 
     assert.deepStrictEqual(
       plan.selectedModuleIds,
-      ['rules-core', 'agents-core', 'commands-core', 'platform-configs', 'workflow-quality']
+      ['rules-core', 'agents-core', 'aw-stages', 'commands-core', 'platform-configs', 'workflow-quality']
     );
     assert.ok(plan.skippedModuleIds.includes('hooks-runtime'));
+    assert.ok(!plan.skippedModuleIds.includes('aw-stages'));
     assert.ok(!plan.skippedModuleIds.includes('platform-configs'));
     assert.ok(!plan.skippedModuleIds.includes('workflow-quality'));
     assert.strictEqual(plan.targetAdapterId, 'antigravity-project');
