@@ -18,6 +18,14 @@
       ]
     },
     {
+      "id": "baseline:aw-stages",
+      "family": "baseline",
+      "description": "Canonical AW SDLC stage skills and the using-aw-skills router. Ships single source of truth to all harnesses.",
+      "modules": [
+        "aw-stages"
+      ]
+    },
+    {
       "id": "baseline:commands",
       "family": "baseline",
       "description": "Core command library and workflow command docs.",
