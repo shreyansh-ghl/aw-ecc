@@ -366,7 +366,7 @@ function runTests() {
       });
       assert.strictEqual(result.code, 0, result.stderr);
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks.json')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-agents.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-agents.mdc')));
 
       const state = readJson(path.join(projectDir, '.cursor', 'ecc-install-state.json'));
       assert.strictEqual(state.request.profile, null);

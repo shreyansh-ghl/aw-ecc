@@ -320,6 +320,7 @@ Load these skills across stages wherever the context applies:
 - `git-workflow-and-versioning` — branching, commits, and versioning
 - `ci-cd-and-automation` — pipeline setup and build automation
 - `deprecation-and-migration` — staged deprecation and migration patterns
+- `documentation-and-adrs` — documentation strategy and architectural decision records
 
 ## Rules Always Active
 
