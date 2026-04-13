@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test harness for verifying SDLC skill auto-triggering across AI CLIs.
-# Public AW surface under test: /aw:plan, /aw:build, /aw:investigate,
-# /aw:test, /aw:review, /aw:deploy, and /aw:ship.
+# Public AW surface under test: /aw-plan, /aw-build, /aw-investigate,
+# /aw-test, /aw-review, /aw-deploy, and /aw-ship.
 
 set -uo pipefail
 

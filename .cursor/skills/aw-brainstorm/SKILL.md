@@ -11,7 +11,7 @@ trigger: Internal only. Invoked by aw-plan or aw-ship when discovery is still to
 `aw-brainstorm` is an internal depth skill.
 It should make the planning input sharper, not create a parallel public workflow or a second artifact system.
 
-The canonical public route for planning remains `/aw:plan`.
+The canonical public route for planning remains `/aw-plan`.
 
 ## Hard Gate
 

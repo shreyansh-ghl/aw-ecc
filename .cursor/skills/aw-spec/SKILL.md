@@ -11,7 +11,7 @@ trigger: Internal only. Invoked by aw-plan after discovery is approved or when a
 `aw-spec` owns the technical contract layer inside AW planning.
 It turns an approved direction into `.aw_docs/features/<feature_slug>/spec.md` without collapsing directly into implementation tasks or code.
 
-The public planning route remains `/aw:plan`.
+The public planning route remains `/aw-plan`.
 
 ## When to Use
 
@@ -86,7 +86,7 @@ Fix issues inline instead of carrying them into task planning.
 ## Hard Gates
 
 - do not write implementation code
-- do not jump directly to `/aw:build`
+- do not jump directly to `/aw-build`
 - do not create `tasks.md`
 - do not leave contradictory interfaces, names, or file boundaries unresolved
 - do not treat a multi-subsystem request as one spec when it should be decomposed

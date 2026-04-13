@@ -1,7 +1,7 @@
 ---
 name: aw-build
 description: Build approved work from `.aw_docs/features/<feature_slug>/` artifacts in thin, reversible increments with org-standard validation and handoff discipline.
-trigger: User requests implementation of approved work, or a compatible `/aw:execute` request needs to route to the canonical build stage.
+trigger: User requests implementation of approved work, or a compatible `/aw-execute` request needs to route to the canonical build stage.
 ---
 
 # AW Build
@@ -16,7 +16,7 @@ It turns approved work into the smallest correct code, config, docs, or migratio
 - approved implementation artifacts already exist
 - the request is to code, configure, migrate, or document an approved change
 - a bug was already investigated and now needs a concrete fix
-- a legacy `/aw:execute` request arrives
+- a legacy `/aw-execute` request arrives
 
 Do not use for vague ideation, unclear bugs, or release-only work.
 

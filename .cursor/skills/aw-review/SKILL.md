@@ -16,7 +16,7 @@ It turns evidence into findings, release decisions, and clear next actions.
 - the request is findings-oriented review
 - PR governance or readiness matters
 - the work needs a release recommendation
-- a legacy `/aw:verify` request is mostly about review
+- a legacy `/aw-verify` request is mostly about review
 
 Do not use as a hidden helper that replaces explicit review intent.
 

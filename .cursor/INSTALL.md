@@ -20,11 +20,11 @@ Cursor-facing rules or prompts should point at:
 
 Map intent to the same public stage surface:
 
-- `/aw:plan`
-- `/aw:execute`
-- `/aw:verify`
-- `/aw:deploy`
-- `/aw:ship`
+- `/aw-plan`
+- `/aw-execute`
+- `/aw-verify`
+- `/aw-deploy`
+- `/aw-ship`
 
 ## Contract Rule
 

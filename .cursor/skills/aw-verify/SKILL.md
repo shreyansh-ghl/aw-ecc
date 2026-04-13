@@ -16,7 +16,7 @@ The canonical public verification model is now:
 
 ## When to Use
 
-- a legacy `/aw:verify` request arrives
+- a legacy `/aw-verify` request arrives
 - an older doc still frames testing and review as one overloaded stage
 
 ## Workflow

@@ -138,7 +138,7 @@ Start with a short header and an explicit `## Spec Brief` section that captures:
 - feature goal
 - spec brief
 - architecture summary
-- execution route: `/aw:build`
+- execution route: `/aw-build`
 - expected execution mode when it is known safely
 
 Before task sections, map the file structure:
@@ -318,7 +318,7 @@ Before ending the planning stage:
 3. confirm the phase order is obvious and every phase has a clear outcome
 4. scan for placeholders and vague steps
 5. check that file paths, type names, helper names, and commands stay consistent
-6. confirm the next stage can route directly to `/aw:build` or explicitly state what approval is still missing
+6. confirm the next stage can route directly to `/aw-build` or explicitly state what approval is still missing
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
@@ -327,7 +327,7 @@ If the plan cannot survive this self-review, it is not ready for execution hando
 
 When `tasks.md` is ready:
 
-- recommend `/aw:build`
+- recommend `/aw-build`
 - name the selected execution mode when it is known safely
 - name any blocker that should send the work back to planning instead of guessing
 

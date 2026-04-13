@@ -11,7 +11,7 @@ trigger: Internal only. Invoked by aw-plan after spec authoring or when an exist
 `aw-tasks` owns `tasks.md`.
 It turns an approved technical contract into a fresh-worker execution recipe without adding a new public planning command.
 
-The canonical public route remains `/aw:plan`.
+The canonical public route remains `/aw-plan`.
 
 ## When to Use
 
@@ -40,7 +40,7 @@ This legacy heading maps to the detailed planning process below.
 5. Review the task list before handoff.
    Remove placeholders, fix dependency drift, and confirm the steps are build-ready.
 6. Update state and hand off.
-   Update `.aw_docs/features/<feature_slug>/state.json` and recommend `/aw:build`.
+   Update `.aw_docs/features/<feature_slug>/state.json` and recommend `/aw-build`.
 
 ## Task Granularity
 
@@ -121,7 +121,7 @@ Before handoff:
 2. confirm file paths and interface names stay consistent across tasks
 3. confirm no task relies on an undefined helper, type, or command
 4. confirm `## Spec Brief` and the phase order are obvious from the top of `tasks.md`
-5. confirm execution can route straight to `/aw:build`
+5. confirm execution can route straight to `/aw-build`
 
 ## Final Output Shape
 

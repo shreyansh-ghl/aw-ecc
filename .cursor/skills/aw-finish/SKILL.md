@@ -7,7 +7,7 @@ trigger: Internal only. Invoked when verified branch work is done and the next s
 # AW Finish
 
 `aw-finish` is a legacy compatibility skill.
-The canonical public release stage remains `/aw:deploy`, but this helper still owns the branch-completion decision flow when that workflow is needed internally.
+The canonical public release stage remains `/aw-deploy`, but this helper still owns the branch-completion decision flow when that workflow is needed internally.
 
 ## Hard Gate
 
@@ -34,8 +34,8 @@ Staging or production deployment requests should stay on `aw-deploy`.
 
 ## Deprecation Timeline
 
-This skill is still active internally even though `/aw:finish` is deprecated as a public entrypoint.
-Keep `aw-finish` available until `/aw:deploy` fully absorbs branch-completion choices, workspace metadata reuse, and cleanup behavior.
+This skill is still active internally even though `/aw-finish` is deprecated as a public entrypoint.
+Keep `aw-finish` available until `/aw-deploy` fully absorbs branch-completion choices, workspace metadata reuse, and cleanup behavior.
 Public deprecation must not be interpreted as immediate removal of the internal helper.
 
 ## Completion Flow

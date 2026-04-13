@@ -40,13 +40,13 @@ When a task arrives, identify the current delivery phase and load the smallest c
 ```text
 Task arrives
     │
-    ├── Vague idea, spec, or task breakdown? ───────→ /aw:plan
-    ├── Approved change to implement? ──────────────→ /aw:build
-    ├── Bug, alert, or unclear runtime failure? ────→ /aw:investigate
-    ├── Need QA proof or regression evidence? ──────→ /aw:test
-    ├── Need findings or readiness decision? ───────→ /aw:review
-    ├── Need one concrete release action? ──────────→ /aw:deploy
-    ├── Need launch or rollout closeout? ───────────→ /aw:ship
+    ├── Vague idea, spec, or task breakdown? ───────→ /aw-plan
+    ├── Approved change to implement? ──────────────→ /aw-build
+    ├── Bug, alert, or unclear runtime failure? ────→ /aw-investigate
+    ├── Need QA proof or regression evidence? ──────→ /aw-test
+    ├── Need findings or readiness decision? ───────→ /aw-review
+    ├── Need one concrete release action? ──────────→ /aw-deploy
+    ├── Need launch or rollout closeout? ───────────→ /aw-ship
     └── Need one-run end-to-end automation? ───────→ aw-yolo
 ```
 
@@ -58,24 +58,24 @@ If the work is in a real GHL domain, load `using-platform-skills` next.
 The public surface stays intentionally small.
 The canonical routes are the stages shown in the discovery flow above:
 
-- `/aw:plan`, `/aw:build`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`
-- `/aw:investigate`
+- `/aw-plan`, `/aw-build`, `/aw-test`, `/aw-review`, `/aw-deploy`, `/aw-ship`
+- `/aw-investigate`
 
 Default delivery flow:
 
-- `/aw:plan` -> `/aw:build` -> `/aw:test` -> `/aw:review` -> `/aw:deploy` -> `/aw:ship`
+- `/aw-plan` -> `/aw-build` -> `/aw-test` -> `/aw-review` -> `/aw-deploy` -> `/aw-ship`
 
 Conditional route:
 
-- `/aw:investigate`
+- `/aw-investigate`
 
-`/aw:investigate` is a first-class route for bugs, alerts, regressions, and unclear root cause.
+`/aw-investigate` is a first-class route for bugs, alerts, regressions, and unclear root cause.
 It should not be treated as a mandatory phase in every request.
 
 Compatibility entrypoints remain available during migration:
 
-- `/aw:execute` -> `/aw:build`
-- `/aw:verify` -> `/aw:test`, `/aw:review`, or the smallest correct combined verification flow
+- `/aw-execute` -> `/aw-build`
+- `/aw-verify` -> `/aw-test`, `/aw-review`, or the smallest correct combined verification flow
 
 There is also one explicit internal power workflow:
 
@@ -181,7 +181,7 @@ These patterns look productive, but they create routing drift:
 
 1. answering quickly before selecting a route
 2. treating exploration as exempt from routing
-3. choosing `/aw:investigate` for every bug, even when the fix is already known
+3. choosing `/aw-investigate` for every bug, even when the fix is already known
 4. treating `aw-yolo` as the default because it feels convenient
 5. reopening planning during `build` without a real blocker
 6. silently implementing during `test` or `review`
@@ -249,7 +249,7 @@ See [`../../references/domain-skill-loading.md`](../../references/domain-skill-l
 3. Load process skills before stage skills when the process itself changes the right path.
 4. Load domain and craft skills only after the primary route is clear.
 5. Load `using-platform-skills` when a GHL platform family materially changes the work.
-6. When in doubt between diagnosis and implementation, choose `/aw:investigate` only if root cause is still unclear.
+6. When in doubt between diagnosis and implementation, choose `/aw-investigate` only if root cause is still unclear.
 7. When in doubt between a normal route and `aw-yolo`, prefer the normal route.
 
 ## Typical Sequences
@@ -257,19 +257,19 @@ See [`../../references/domain-skill-loading.md`](../../references/domain-skill-l
 For a normal feature:
 
 ```text
-/aw:plan -> /aw:build -> /aw:test -> /aw:review -> /aw:deploy -> /aw:ship
+/aw-plan -> /aw-build -> /aw-test -> /aw-review -> /aw-deploy -> /aw-ship
 ```
 
 For a bug with unclear root cause:
 
 ```text
-/aw:investigate -> /aw:build -> /aw:test -> /aw:review
+/aw-investigate -> /aw-build -> /aw-test -> /aw-review
 ```
 
 For a release-ready change that only needs rollout work:
 
 ```text
-/aw:deploy -> /aw:ship
+/aw-deploy -> /aw-ship
 ```
 
 For explicit one-run automation:
@@ -284,7 +284,7 @@ Before moving past routing, confirm:
 
 - [ ] the smallest correct AW skill stack was selected first
 - [ ] the public route matches the actual stage intent
-- [ ] `/aw:investigate` was only chosen when diagnosis is actually required
+- [ ] `/aw-investigate` was only chosen when diagnosis is actually required
 - [ ] org-standard playbooks and `.aw_rules` are loaded when the baseline requires them
 - [ ] the task is not being silently broadened into extra stages
 - [ ] `aw-yolo` is used only when the user explicitly asked for end-to-end automation

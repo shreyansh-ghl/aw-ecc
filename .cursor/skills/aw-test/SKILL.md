@@ -17,7 +17,7 @@ It turns implementation into current, scoped evidence that review and deploy can
 - the work needs fresh validation after build
 - frontend behavior needs runtime proof
 - release preparation needs broader QA evidence
-- a legacy `/aw:verify` request is primarily about testing
+- a legacy `/aw-verify` request is primarily about testing
 
 Do not use for findings-oriented review or launch closeout.
 

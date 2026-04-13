@@ -40,17 +40,17 @@ Otherwise choose the needed process skill, primary stage skill, and matching rou
 Do not start with generic implementation, review, or deploy advice before skill selection.
 
 ## Primary Routes
-- /aw:plan -> ideas, specs, task breakdown, architecture direction
-- /aw:build -> approved implementation work
-- /aw:investigate -> bugs, alerts, or unclear runtime failures
-- /aw:test -> QA proof and regression evidence
-- /aw:review -> findings, risk review, and readiness
-- /aw:deploy -> rollout or release execution
-- /aw:ship -> release closeout and final handoff
+- /aw-plan -> ideas, specs, task breakdown, architecture direction
+- /aw-build -> approved implementation work
+- /aw-investigate -> bugs, alerts, or unclear runtime failures
+- /aw-test -> QA proof and regression evidence
+- /aw-review -> findings, risk review, and readiness
+- /aw-deploy -> rollout or release execution
+- /aw-ship -> release closeout and final handoff
 
 ## Compatibility Routes
-- /aw:execute -> compatibility route; resolve to /aw:build
-- /aw:verify -> compatibility route; resolve to /aw:test or /aw:review
+- /aw-execute -> compatibility route; resolve to /aw-build
+- /aw-verify -> compatibility route; resolve to /aw-test or /aw-review
 
 ## Router Source
 Use skills/using-aw-skills/SKILL.md as the repo-local router.

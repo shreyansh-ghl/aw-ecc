@@ -13,7 +13,7 @@ The canonical implementation stage is now `aw-build`.
 
 ## When to Use
 
-- a legacy `/aw:execute` request arrives
+- a legacy `/aw-execute` request arrives
 - an older doc or test still refers to execute semantics
 
 Do not create a separate execute-specific workflow.
