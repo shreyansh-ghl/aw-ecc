@@ -43,6 +43,9 @@ module.exports = createInstallTargetAdapter({
             repoRoot,
             sourceRelativePath,
             destinationDir: path.join(targetRoot, 'rules'),
+            // Cursor only loads .mdc rule files; .md is ignored.
+            // Flatten .md rule sources to .mdc at the Cursor target.
+            extensionMap: { '.md': '.mdc' },
           });
         }
 
