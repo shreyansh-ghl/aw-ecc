@@ -29,6 +29,9 @@ Do not use for launch discipline or end-to-end orchestration.
    Use the repo archetype and resolved baseline profile to choose provider and mechanism.
    Load `ci-cd-and-automation` for gate ordering, preview/deploy automation, and rollback-aware pipeline expectations.
    For releases that retire or migrate legacy paths, load `deprecation-and-migration`.
+   When the selected path is branch completion instead of environment deployment, preserve the `aw-finish` compatibility behavior:
+   merge locally, push and create PR, keep as branch, or discard only with explicit confirmation.
+   If `.aw_docs/features/<feature_slug>/workspace.json` exists, use it as the source of truth for active branch, worktree path, and cleanup policy.
 4. Execute or record the blocker.
    Complete the selected release action end-to-end for the chosen mode.
    External failure should still yield deterministic `release.md` evidence.
@@ -47,6 +50,7 @@ Every deploy handoff must make these things obvious:
 - which release mode was selected
 - which provider and mechanism were resolved
 - what evidence or links were produced
+- what happened to the branch or worktree when branch completion was part of the release action
 - what rollback path is currently known
 - which exact next command should run next
 
@@ -56,6 +60,7 @@ Every deploy handoff must make these things obvious:
 |---|---|
 | "Deploy can also handle launch closeout." | Release action and launch discipline are related but distinct. |
 | "I'll just guess the staging mechanism." | Unknown deployment config must fail closed. |
+| "I can discard or clean up the branch as part of deploy by default." | Branch cleanup needs an explicit path and must not destroy active work. |
 
 ## Red Flags
 
@@ -76,6 +81,7 @@ Every deploy handoff must make these things obvious:
 - resolved mechanism
 - build or release links
 - execution evidence
+- branch or worktree outcome when applicable
 - rollback path
 - blockers
 - recommended next commands
