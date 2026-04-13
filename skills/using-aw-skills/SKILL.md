@@ -291,6 +291,7 @@ The public interface stays minimal even if internal helpers are still present.
 - `aw:code-review` is a compatibility alias under `/aw:verify`
 - `aw:tdd` is a compatibility alias under `/aw:execute`
 - `aw:ship` is the explicit composite workflow when a single end-to-end command is desired
+- `aw-yolo` is an internal power workflow for autonomous execution without confirmation prompts — never advertise as a public stage
 
 ## Domain Skills
 
@@ -303,8 +304,33 @@ After choosing the primary stage skill and public route, load the relevant domai
 - test and quality systems -> `platform-sdet:*`
 - review depth -> `platform-review:*`
 
+Platform skill family selection is delegated to `using-platform-skills`.
+Load `using-platform-skills` whenever GHL-domain context is needed alongside the primary stage skill.
+
+## Cross-Cutting Engineering Skills
+
+Load these skills across stages wherever the context applies:
+
+- `incremental-implementation` — delivery strategy and reversible slices
+- `context-engineering` — prompt shaping and context window management
+- `frontend-ui-engineering` — frontend quality and component patterns
+- `idea-refine` — early-stage exploration and idea sharpening
+- `api-and-interface-design` — interface contracts and API design
+- `browser-testing-with-devtools` — browser-level testing and debugging
+- `git-workflow-and-versioning` — branching, commits, and versioning
+- `ci-cd-and-automation` — pipeline setup and build automation
+- `deprecation-and-migration` — staged deprecation and migration patterns
+
 ## Rules Always Active
 
 Relevant `.aw_rules` and platform docs remain active regardless of which public command is selected.
 
 Use them as constraints and source of truth, not as a reason to broaden scope.
+
+## References
+
+Shared context files loaded on demand:
+
+- [context-loading-and-intake](../../references/context-loading-and-intake.md)
+- [route-selection-patterns](../../references/route-selection-patterns.md)
+- [domain-skill-loading](../../references/domain-skill-loading.md)

@@ -270,7 +270,7 @@ function runTests() {
       assert.ok(result.stdout.includes('Mode: manifest'));
       assert.ok(result.stdout.includes('Profile: core'));
       assert.ok(result.stdout.includes('Included components: (none)'));
-      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, commands-core, hooks-runtime, platform-configs, workflow-quality'));
+      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, aw-stages, commands-core, hooks-runtime, platform-configs, workflow-quality'));
       assert.ok(!fs.existsSync(path.join(homeDir, '.claude', 'ecc', 'install-state.json')));
     } finally {
       cleanup(homeDir);
@@ -343,9 +343,10 @@ function runTests() {
       assert.strictEqual(state.request.legacyMode, false);
       assert.deepStrictEqual(
         state.resolution.selectedModules,
-        ['rules-core', 'agents-core', 'commands-core', 'platform-configs', 'workflow-quality']
+        ['rules-core', 'agents-core', 'aw-stages', 'commands-core', 'platform-configs', 'workflow-quality']
       );
       assert.ok(state.resolution.skippedModules.includes('hooks-runtime'));
+      assert.ok(!state.resolution.skippedModules.includes('aw-stages'));
       assert.ok(!state.resolution.skippedModules.includes('workflow-quality'));
       assert.ok(!state.resolution.skippedModules.includes('platform-configs'));
     } finally {

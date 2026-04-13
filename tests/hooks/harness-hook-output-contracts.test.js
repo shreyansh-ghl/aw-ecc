@@ -58,7 +58,7 @@ function withTempWorkspace(fn) {
 function parseJson(output) {
   try {
     return JSON.parse(output);
-  } catch (error) {
+  } catch (_error) {
     throw new Error(`Expected valid JSON, received: ${output.slice(0, 300)}`);
   }
 }
