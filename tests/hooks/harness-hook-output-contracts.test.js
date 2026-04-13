@@ -176,11 +176,17 @@ function runTests() {
       const result = runBash(scriptPath, raw, {}, tempDir);
 
       assert.strictEqual(result.status, 0, result.stderr);
-      const expectedModernRoot = path.join(tempDir, '.aw', '.aw_rules', 'platform').replace(/\\/g, '/');
-      const unexpectedLegacyRoot = path.join(tempDir, '.aw_rules', 'platform').replace(/\\/g, '/');
+      // Build cross-platform regex: each path separator matches either / or \
+      function toPathRegex(p) {
+        return p
+          .replace(/[.*+?^${}()|[\]]/g, '\\$&')
+          .replace(/[/\\]+/g, '[/\\\\]+');
+      }
+      const expectedModernRoot = path.join(tempDir, '.aw', '.aw_rules', 'platform');
+      const unexpectedLegacyRoot = path.join(tempDir, '.aw_rules', 'platform');
 
-      assert.match(result.stdout, new RegExp(expectedModernRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-      assert.doesNotMatch(result.stdout, new RegExp(`Read ${unexpectedLegacyRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+      assert.match(result.stdout, new RegExp(toPathRegex(expectedModernRoot)));
+      assert.doesNotMatch(result.stdout, new RegExp(`Read ${toPathRegex(unexpectedLegacyRoot)}[/\\\\]`));
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
