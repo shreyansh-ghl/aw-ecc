@@ -59,21 +59,10 @@ read_frontmatter_name() {
   ' "$file_path"
 }
 
-extract_skill_excerpt() {
+read_skill_content() {
   local file_path="$1"
   [[ -f "$file_path" ]] || return 0
-
-  awk '
-    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
-    in_frontmatter && $0 == "---" { in_frontmatter = 0; next }
-    in_frontmatter { next }
-    /^[[:space:]]*$/ { next }
-    {
-      print
-      count++
-      if (count >= 4) exit
-    }
-  ' "$file_path"
+  cat "$file_path"
 }
 
 collect_registry_skills() {
@@ -127,7 +116,7 @@ elif [[ -n "$AW_REGISTRY_ROOT" && -f "$AW_REGISTRY_ROOT/platform/core/skills/usi
   ROUTER_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
 fi
 
-ROUTER_EXCERPT="$(extract_skill_excerpt "$ROUTER_SKILL_PATH")"
+ROUTER_CONTENT="$(read_skill_content "$ROUTER_SKILL_PATH")"
 REGISTRY_SKILLS=""
 REGISTRY_COMMANDS=""
 if [[ -n "$AW_REGISTRY_ROOT" ]]; then
@@ -135,37 +124,16 @@ if [[ -n "$AW_REGISTRY_ROOT" ]]; then
   REGISTRY_COMMANDS="$(collect_registry_commands "$AW_REGISTRY_ROOT")"
 fi
 
-CONTEXT="# AW Session Context
+CONTEXT="<EXTREMELY_IMPORTANT>
+You have the AW Agentic Workspace engine.
 
-## First Response Rule
-Before any substantive response, select the smallest correct AW skill stack from the repo-local router.
-Honor an explicit AW command and its mapped stage skill first.
-Otherwise choose the needed process skill, primary stage skill, and matching route by intent, then load deeper domain skills.
-Do not start with generic implementation, review, or deploy advice before skill selection.
+**Below is the full content of your 'using-aw-skills' skill — your router for all AW workflows. For all other skills, use the Skill tool:**
 
-## Primary Routes
-- /aw:plan -> ideas, specs, task breakdown, architecture direction
-- /aw:build -> approved implementation work
-- /aw:investigate -> bugs, alerts, or unclear runtime failures
-- /aw:test -> QA proof and regression evidence
-- /aw:review -> findings, risk review, and readiness
-- /aw:deploy -> rollout or release execution
-- /aw:ship -> release closeout and final handoff
+${ROUTER_CONTENT}
+</EXTREMELY_IMPORTANT>
 
-## Compatibility Routes
-- /aw:execute -> compatibility route; resolve to /aw:build
-- /aw:verify -> compatibility route; resolve to /aw:test or /aw:review
-
-## Router Source
-Use skills/using-aw-skills/SKILL.md as the repo-local router.
-Load domain, platform, and craft skills only after the smallest correct AW route is selected."
-
-if [[ -n "$ROUTER_EXCERPT" ]]; then
-  CONTEXT="${CONTEXT}
-
-## Router Excerpt
-${ROUTER_EXCERPT}"
-fi
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+This is not negotiable. This is not optional. You cannot rationalize your way out of this."
 
 if [[ -n "$REGISTRY_SKILLS" ]]; then
   CONTEXT="${CONTEXT}

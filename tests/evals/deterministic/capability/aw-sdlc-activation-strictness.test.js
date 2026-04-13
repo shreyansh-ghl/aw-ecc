@@ -58,7 +58,7 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('session-start hook injects the first-response activation rule', () => {
+  if (test('session-start hook injects the full SKILL.md with activation directive', () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-sdlc-activation-'));
     const repoRoot = path.join(tempRoot, 'repo');
     const hookPath = path.join(repoRoot, 'skills/using-aw-skills/hooks/session-start.sh');
@@ -89,9 +89,10 @@ function run() {
       const context = payload?.hookSpecificOutput?.additionalContext || '';
 
       for (const phrase of [
-        '## First Response Rule',
-        'select the smallest correct AW skill stack from the repo-local router',
-        'Do not start with generic implementation, review, or deploy advice before skill selection.',
+        '<EXTREMELY_IMPORTANT>',
+        'using-aw-skills',
+        '# Local Router',
+        'YOU MUST USE IT',
       ]) {
         assert.ok(context.includes(phrase), `hook context is missing "${phrase}"`);
       }

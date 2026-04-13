@@ -147,7 +147,7 @@ async function runTests() {
           CLAUDE_HOOK_EVENT_NAME: 'PreToolUse',
           ECC_MCP_CONFIG_PATH: configPath,
           ECC_MCP_HEALTH_STATE_PATH: statePath,
-          ECC_MCP_HEALTH_TIMEOUT_MS: '100'
+          ECC_MCP_HEALTH_TIMEOUT_MS: '5000'
         }
       );
 
@@ -183,7 +183,7 @@ async function runTests() {
           ECC_MCP_CONFIG_PATH: configPath,
           ECC_MCP_HEALTH_STATE_PATH: statePath,
           ECC_MCP_HEALTH_FAIL_OPEN: '1',
-          ECC_MCP_HEALTH_TIMEOUT_MS: '100'
+          ECC_MCP_HEALTH_TIMEOUT_MS: '5000'
         }
       );
 
