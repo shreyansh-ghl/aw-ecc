@@ -137,16 +137,34 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | "Entered under /aw:review so route is locked" | Scope shift → re-route. |
 | "Just mirroring upstream" | Cross-registry propagation is plan-first. |
 
-## Skill Loading Priority
+## Always-On Activation
+
+Before any substantive response, this router must select the smallest correct AW skill stack and matching public route.
+
+- explicit user command → honor and load the mapped stage skill first
+- clear process need → load the needed internal process skill first
+- otherwise choose the smallest correct AW primary stage skill by intent
+- only after the required AW skills are selected, load deeper domain skills or ask clarifying questions
+
+Do not start with generic implementation, review, or deploy advice before skill selection.
+
+## The Rule
+
+If there is even a small chance that an AW process skill, stage skill, or required domain skill applies, load it before responding.
+
+## Skill Priority
 
 1. process skills (`aw-brainstorm`, `aw-debug`, `aw-review`, `aw-prepare`)
 2. primary stage skill (`aw-plan`, `aw-build`, `aw-test`, `aw-review`, `aw-deploy`, `aw-ship`)
 3. domain skills (`platform-services/frontend/data/infra/sdet/review/design/mobile:*`) — delegated to `using-platform-skills`
-4. cross-cutting skills when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`
+
+## Cross-Cutting Engineering Skills
+
+Load across stages when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`
 
 ## Internal Helpers (not public routes)
 
-`aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (autonomous end-to-end orchestration, internal only — never advertise as public route)
+`aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (internal power workflow for autonomous end-to-end orchestration — never advertise as public route)
 
 ## Rules Always Active
 
