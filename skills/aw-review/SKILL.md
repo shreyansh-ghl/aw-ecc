@@ -30,9 +30,11 @@ Do not use as a hidden helper that replaces explicit review intent.
    Both of these must run on every non-trivial review — they are complementary,
    not alternatives. Launch them concurrently:
 
-   **Engine A — Rules-manifest audit** (`aw-rules-review` skill):
-   Generates a per-file worksheet driven by `rule-manifest.json`, mapping each
-   changed file to applicable platform rules by domain + stack. Invocation:
+   **Engine A — Rules-manifest audit** (`aw-rules-review` + `aw-rules` skills):
+   Load both `aw-rules-review` (worksheet generator) and `aw-rules` (rule
+   definitions, audit criteria, scoring rubric). `aw-rules-review` generates
+   the per-file worksheet; `aw-rules` evaluates each rule as pass/fail.
+   Invocation:
    - PR: `node ~/.aw/.aw_registry/platform/core/skills/aw-rules-review/scripts/generate-review-template.mjs --pr <number>`
    - branch diff: `... --diff`
    - files: `... --files "<csv>"`

@@ -7,6 +7,12 @@ description: Generate a per-file review worksheet driven by rule-manifest.json. 
 
 Generate a per-file review worksheet that maps source files to applicable platform rules from `rule-manifest.json`. Supports multiple scoping modes — full repo, PR diff, branch diff, or explicit file list.
 
+## Required Co-Skill
+
+**`aw-rules`** must be loaded alongside this skill. `aw-rules-review` generates the per-file worksheet; `aw-rules` provides the rule definitions, audit criteria, and scoring rubric needed to evaluate each rule as pass/fail. Without `aw-rules`, the worksheet has TODO checkboxes but no way to assess compliance.
+
+When invoked from `aw-review` (Engine A), the `aw-rules` skill is loaded automatically.
+
 ## What This Skill Does
 
 1. Locates `rule-manifest.json` (workspace `.aw_registry/` → global `~/.aw/.aw_registry/`)
