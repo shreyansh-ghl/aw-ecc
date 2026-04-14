@@ -141,7 +141,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
 1. process skills (`aw-brainstorm`, `aw-debug`, `aw-review`, `aw-prepare`)
 2. primary stage skill (`aw-plan`, `aw-build`, `aw-test`, `aw-review`, `aw-deploy`, `aw-ship`)
-3. domain skills (`platform-services/frontend/data/infra/sdet/review:*`) — delegated to `using-platform-skills`
+3. domain skills (`platform-services/frontend/data/infra/sdet/review/design/mobile:*`) — delegated to `using-platform-skills`
 4. cross-cutting skills when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`
 
 ## Internal Helpers (not public routes)
