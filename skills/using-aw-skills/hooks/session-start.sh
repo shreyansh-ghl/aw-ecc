@@ -127,6 +127,8 @@ fi
 CONTEXT="<EXTREMELY_IMPORTANT>
 You have the AW Agentic Workspace engine.
 
+# AW Session Context
+
 **Below is the full content of your 'using-aw-skills' skill — your router for all AW workflows. For all other skills, use the Skill tool:**
 
 ${ROUTER_CONTENT}
