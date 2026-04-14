@@ -31,7 +31,8 @@ Approved plan for this exact work?
 └── YES → Implemented & needs test/review?
           ├── YES → /aw:test or /aw:review
           └── NO  → Deploy/release action?
-                    ├── YES → /aw:deploy or /aw:ship
+                    ├── YES → Single release outcome? → /aw:deploy
+                    │         Launch readiness/rollout/rollback? → /aw:ship
                     └── NO  → /aw:build
 ```
 
@@ -83,7 +84,7 @@ If a follow-up changes the nature of the work (e.g. review session becomes "patc
 
 ## Public Surface
 
-`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` (end-to-end only)
+`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` (launch readiness, rollout, rollback, closeout — NOT end-to-end orchestration)
 
 Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
@@ -97,7 +98,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | `/aw:test` | Produce fresh QA evidence | `verification.md`, `state.json` |
 | `/aw:review` | Findings, governance, readiness | `verification.md`, `state.json` |
 | `/aw:deploy` | One release outcome for verified work | `release.md`, `state.json` |
-| `/aw:ship` | End-to-end flow (PR + deploy, etc.) | all of the above |
+| `/aw:ship` | Launch readiness, rollout safety, rollback, closeout | `release.md`, `state.json`, rollback notes |
 
 ## Intent Routing (quick map)
 
@@ -109,7 +110,8 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | "run tests", "produce evidence", QA proof | `/aw:test` |
 | "review", "is this ready", PR checks, findings, readiness | `/aw:review` |
 | "create PR", "deploy to staging/prod" (single outcome) | `/aw:deploy` |
-| "PR AND deploy", "idea → ship", multiple release outcomes | `/aw:ship` |
+| "is this ready to launch", rollout, rollback plan, release closeout | `/aw:ship` |
+| "idea → production", "do the whole flow", "PR AND deploy" | `aw-yolo` (internal, not a public route — user should stage explicitly) |
 
 ## Scope Guardrails
 
@@ -144,7 +146,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
 ## Internal Helpers (not public routes)
 
-`aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (autonomous, internal only — never advertise)
+`aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (autonomous end-to-end orchestration, internal only — never advertise as public route)
 
 ## Rules Always Active
 
