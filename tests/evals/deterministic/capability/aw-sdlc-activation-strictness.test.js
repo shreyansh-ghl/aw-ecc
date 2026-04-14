@@ -47,11 +47,12 @@ function run() {
   if (test('router skill encodes skill-first activation before deeper behavior', () => {
     const skill = snapshot.readFile('skills/using-aw-skills/SKILL.md');
     for (const phrase of [
-      '## Hard Gate',
-      'before any substantive response',
-      '## Skill Loading Priority',
-      '## Red Flags',
-      'do not produce substantive non-routing output before skill selection',
+      '## Always-On Activation',
+      'Before any substantive response, this router must select the smallest correct AW skill stack and matching public route.',
+      '## The Rule',
+      '## Skill Priority',
+      'only after the required AW skills are selected, load deeper domain skills or ask clarifying questions',
+      'Do not start with generic implementation, review, or deploy advice before skill selection.',
     ]) {
       assert.ok(skill.includes(phrase), `router skill is missing "${phrase}"`);
     }

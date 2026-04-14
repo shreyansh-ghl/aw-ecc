@@ -86,7 +86,7 @@ function run() {
     assert.ok(review.includes('security-and-hardening'));
     assert.ok(review.includes('performance-optimization'));
 
-    assert.ok(router.includes('cross-cutting skills'), 'router should reference cross-cutting skills');
+    assert.ok(router.includes('Cross-Cutting Engineering Skills'));
     assert.ok(router.includes('context-engineering'));
     assert.ok(router.includes('incremental-implementation'));
     assert.ok(router.includes('frontend-ui-engineering'));

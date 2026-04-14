@@ -48,12 +48,7 @@ function collectRuleFiles(dir) {
  * treat the file as having no frontmatter, silently breaking alwaysApply/globs.
  */
 function validateCursorMdcFrontmatter() {
-  const repoRoot = path.resolve(RULES_DIR, '..');
-  // Only scan for .mdc files when running in an actual repo (has .cursor/ dir).
-  // When the test harness overrides RULES_DIR to a temp path, skip this check.
-  if (!fs.existsSync(path.join(repoRoot, '.cursor'))) {
-    return true;
-  }
+  const repoRoot = path.join(__dirname, '../..');
   const errors = [];
 
   function scan(dir) {
