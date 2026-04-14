@@ -1,0 +1,3 @@
+display_name: AW Rules Review
+short_description: Generate a per-file aw-rules review worksheet (full repo, PR diff, branch diff, or file list)
+default_prompt: Generate an aw-rules review worksheet for source files in this workspace. Supports --pr, --diff, --files, or all tracked files.
