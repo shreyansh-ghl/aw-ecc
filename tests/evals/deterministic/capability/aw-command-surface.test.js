@@ -102,7 +102,7 @@ function run() {
     const router = snapshot.readFile('skills/using-aw-skills/SKILL.md');
     assert.ok(router.includes('/aw:ship'));
     assert.ok(router.includes('aw-yolo'));
-    assert.ok(router.includes('internal power workflow'));
+    assert.ok(router.includes('internal only'), 'router should mark yolo as internal only');
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

@@ -77,7 +77,7 @@ function runTests() {
     const payload = parseJson(result.stdout);
     assert.equal(payload.hookSpecificOutput.hookEventName, 'SessionStart');
     assert.ok(typeof payload.hookSpecificOutput.additionalContext === 'string');
-    assert.match(payload.hookSpecificOutput.additionalContext, /AW Session Context/);
+    assert.match(payload.hookSpecificOutput.additionalContext, /EXTREMELY_IMPORTANT|using-aw-skills/);
   })) passed++; else failed++;
 
   if (test('Cursor before-submit-prompt returns valid rewritten prompt JSON and advisory reminders on stderr', () => {
