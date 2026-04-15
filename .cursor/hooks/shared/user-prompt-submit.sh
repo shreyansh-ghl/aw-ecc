@@ -45,7 +45,6 @@ if [ -z "$RULES_ROOT" ]; then
   RULES_ROOT="$HOME/.aw_rules/platform"
 fi
 
-cat <<EOF
-[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
-[Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
-EOF
+printf '[AW Router reminder] Apply using-aw-skills already in your context. Select the correct AW route before responding.\n'
+printf '[Rule reminder] Read %s/universal/AGENTS.md and %s/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.\n' \
+  "$RULES_ROOT" "$RULES_ROOT"
