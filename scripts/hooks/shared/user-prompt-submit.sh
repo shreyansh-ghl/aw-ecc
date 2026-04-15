@@ -46,6 +46,20 @@ if [ -z "$RULES_ROOT" ]; then
 fi
 
 cat <<EOF
-[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
-[Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
+[AW Skill Routing — MUST]
+using-aw-skills is ALREADY LOADED from session start — DO NOT invoke Skill tool to reload it.
+Apply its routing rules directly from your context. Calling Skill("using-aw-skills") again wastes tokens and is a no-op.
+
+Before ANY substantive response to a task, feature, fix, or build request:
+  1. Select the correct AW route using the decision tree already in your context.
+  2. Invoke the Skill tool for the STAGE skill only (not using-aw-skills):
+       /aw:plan        → new feature, spec, architecture — no approved plan yet
+       /aw:build       → approved plan/spec exists — implement it
+       /aw:investigate → runtime bug, alert, unclear failure
+       /aw:test        → QA scope, behavior evidence
+       /aw:review      → findings, readiness, standards check
+  3. Produce the required output shape fields before handing off.
+Responding substantively before invoking the stage skill is a compliance failure.
+
+[Rule reminder] ${RULES_ROOT}/routing/AGENTS.md (mandatory gate) · ${RULES_ROOT}/universal/AGENTS.md · ${RULES_ROOT}/security/AGENTS.md
 EOF
