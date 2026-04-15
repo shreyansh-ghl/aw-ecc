@@ -61,5 +61,5 @@ Before ANY substantive response to a task, feature, fix, or build request:
   3. Produce the required output shape fields before handing off.
 Responding substantively before invoking the stage skill is a compliance failure.
 
-[Rule reminder] ${RULES_ROOT}/routing/AGENTS.md (mandatory gate) · ${RULES_ROOT}/universal/AGENTS.md · ${RULES_ROOT}/security/AGENTS.md
+[Rule reminder] Read ${RULES_ROOT}/routing/AGENTS.md (mandatory gate), ${RULES_ROOT}/universal/AGENTS.md, and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
 EOF
