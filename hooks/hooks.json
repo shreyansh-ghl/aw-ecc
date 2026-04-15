@@ -155,6 +155,17 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/aw-skill-shape-validator.js\"",
+            "timeout": 5
+          }
+        ],
+        "description": "AW skill shape validator — checks /aw:plan, /aw:build, /aw:test, /aw:review outputs contain required shape fields (Mode, Approved Inputs, Phase Progress, etc.)"
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

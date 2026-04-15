@@ -51,3 +51,24 @@ When `aw-yolo` is selected, start from the first unsatisfied stage, not automati
 - the user asks for a release action without proof or review evidence
 - the task appears to need multiple stages, but the user did not ask for end-to-end execution
 - the route choice depends on assumptions that change safety or scope
+
+## Enforcement (Hook-Enforced)
+
+Skill routing compliance is enforced by two hooks:
+
+### 1. UserPromptSubmit — `aw-router-gate.sh`
+Fires on every user prompt. Detects task-type keywords (implement, build, create, fix bug, etc.) and injects a routing reminder before the model responds. Advisory only — never blocks.
+
+### 2. PostToolUse — `aw-skill-shape-validator.js` (Skill matcher)
+Fires after any Skill tool call. Validates that the skill output contains required shape fields. Warns if missing. Advisory only.
+
+**Required output shape per skill:**
+
+| Skill | Required Fields |
+|---|---|
+| `/aw:build` | Mode, Approved Inputs, Phase Progress |
+| `/aw:plan` | Mode, Created, Phases |
+| `/aw:test` | Mode, Scope, Evidence |
+| `/aw:review` | Mode, Findings, Verdict |
+
+Missing fields surface as a `[AW Shape Validator]` warning in the conversation. The agent should complete the missing fields or acknowledge the gap before handing off to the next stage.
