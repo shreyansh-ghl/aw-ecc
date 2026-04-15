@@ -45,7 +45,13 @@ if [ -z "$RULES_ROOT" ]; then
   RULES_ROOT="$HOME/.aw_rules/platform"
 fi
 
-cat <<EOF
-[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
-[Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
-EOF
+# Load routing gate message from central source — single source of truth
+GATE_FILE="${RULES_ROOT}/routing/gate.md"
+if [ -f "$GATE_FILE" ]; then
+  cat "$GATE_FILE"
+else
+  printf '[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.\n'
+fi
+
+printf '[Rule reminder] Read %s/routing/AGENTS.md (mandatory gate), %s/universal/AGENTS.md, and %s/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.\n' \
+  "$RULES_ROOT" "$RULES_ROOT" "$RULES_ROOT"
