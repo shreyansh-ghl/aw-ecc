@@ -210,13 +210,8 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/cost-tracker.js',
       payloadMode: 'claude',
     },
-    {
-      hookId: 'telemetry:stop',
-      allowedProfiles: ['minimal', 'standard', 'strict'],
-      runner: 'node',
-      relativeScriptPath: 'scripts/hooks/aw-usage-stop.js',
-      payloadMode: 'claude',
-    },
+    // telemetry:stop removed — Cursor fires both sessionEnd and stop,
+    // causing duplicate session_ended events. Telemetry is in session-end phase only.
   ],
 });
 

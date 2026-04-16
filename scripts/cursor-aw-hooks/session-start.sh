@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Source telemetry env when Cursor GUI doesn't inherit shell profile (Bug #9)
-if [ -z "${AW_TELEMETRY_URL:-}" ] && [ -f "$HOME/.aw/telemetry/env" ]; then
-  # shellcheck disable=SC1091
-  source "$HOME/.aw/telemetry/env"
-fi
-
 RAW="$(cat || true)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 

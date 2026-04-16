@@ -3,19 +3,22 @@ const { readStdin, transformToClaude, runExistingHook } = require('./adapter');
 readStdin().then(raw => {
   try {
     const input = JSON.parse(raw);
-    const agent = input.agent_name || input.agent || 'unknown';
-    console.error(`[ECC] Agent spawned: ${agent}`);
-  } catch {}
-  // Dispatch agent_spawned telemetry (Gap 4 fix)
-  try {
-    const parsed = JSON.parse(raw);
-    const claudePayload = transformToClaude(parsed);
-    // Set tool_name to Agent so the telemetry hook detects it
+    // Cursor subagentStart payload fields (from docs):
+    // subagent_id, subagent_type, task, parent_conversation_id, subagent_model, is_parallel_worker
+    const agentType = input.subagent_type || 'general-purpose';
+    const task = input.task || '';
+    console.error(`[ECC] Agent spawned: ${agentType} (${task.slice(0, 80)})`);
+
+    // Dispatch agent_spawned telemetry
+    const claudePayload = transformToClaude(input);
     claudePayload.tool_name = 'Agent';
     claudePayload.tool_input = {
       ...claudePayload.tool_input,
-      subagent_type: parsed.agent_type || parsed.subagent_type || 'general-purpose',
-      description: parsed.description || parsed.agent_name || parsed.agent || '',
+      subagent_type: agentType,
+      description: task.slice(0, 200),
+      subagent_id: input.subagent_id || '',
+      subagent_model: input.subagent_model || '',
+      is_parallel_worker: input.is_parallel_worker || false,
     };
     runExistingHook('aw-usage-post-tool-use.js', JSON.stringify(claudePayload));
   } catch {

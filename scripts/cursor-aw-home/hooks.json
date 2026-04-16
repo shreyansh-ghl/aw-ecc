@@ -83,6 +83,20 @@
         "description": "Log agent completion"
       }
     ],
+    "postToolUse": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"post-tool-use.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "postToolUse",
+        "description": "Telemetry: skill_invoked detection for Read tool and other non-shell/edit/MCP tools"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"post-tool-use-failure.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "postToolUseFailure",
+        "description": "Telemetry: tool_error detection on tool failure/timeout/denial"
+      }
+    ],
     "beforeTabFileRead": [
       {
         "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"before-tab-file-read.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",

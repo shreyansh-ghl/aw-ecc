@@ -107,6 +107,20 @@ const CURSOR_HOOK_ENTRIES = Object.freeze({
       description: 'Log agent completion',
     },
   ],
+  postToolUse: [
+    {
+      command: buildManagedCursorHookCommand('post-tool-use.js'),
+      event: 'postToolUse',
+      description: 'Telemetry: skill_invoked detection for Read tool and other non-shell/edit/MCP tools',
+    },
+  ],
+  postToolUseFailure: [
+    {
+      command: buildManagedCursorHookCommand('post-tool-use-failure.js'),
+      event: 'postToolUseFailure',
+      description: 'Telemetry: tool_error detection on tool failure/timeout/denial',
+    },
+  ],
   beforeTabFileRead: [
     {
       command: buildManagedCursorHookCommand('before-tab-file-read.js'),
