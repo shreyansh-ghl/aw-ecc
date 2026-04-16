@@ -55,8 +55,20 @@ async function main() {
     process.exit(0);
   }
 
-  const url = process.env.AW_TELEMETRY_URL
-    ? `${process.env.AW_TELEMETRY_URL.replace(/\/+$/, '')}/telemetry/usage-events`
+  // Resolve telemetry URL: env var → config file → production default.
+  // Config file fallback covers Cursor GUI which doesn't inherit shell env (Bug #9).
+  let baseUrl = process.env.AW_TELEMETRY_URL;
+  if (!baseUrl) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const configPath = path.join(process.env.HOME || require('os').homedir(), '.aw', 'telemetry', 'config.json');
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      baseUrl = config.telemetry_url || null;
+    } catch { /* no config file — use default */ }
+  }
+  const url = baseUrl
+    ? `${baseUrl.replace(/\/+$/, '')}/telemetry/usage-events`
     : DEFAULT_URL;
 
   try {

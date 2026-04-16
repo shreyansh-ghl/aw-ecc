@@ -18,16 +18,10 @@ function buildManagedCursorHookCommand(scriptFileName) {
 
 function buildManagedCursorShellCommand(scriptFileName) {
   const scriptName = String(scriptFileName || '').replace(/\\/g, '/');
-  const command = [
-    'bash -lc',
-    JSON.stringify(
-      `for candidate in "$PWD/.cursor/hooks/${scriptName}" "$HOME/.cursor/hooks/${scriptName}"; do ` +
-        `if [ -f "$candidate" ]; then exec bash "$candidate"; fi; ` +
-      'done; exit 0'
-    ),
-  ].join(' ');
-
-  return command;
+  // Simple fallback: project-level first, then home-level.
+  // Previous version used triple-escaped quoting inside bash -lc that
+  // silently failed when Cursor spawned the process (Bug #8).
+  return `bash -c 'f="$PWD/.cursor/hooks/${scriptName}"; [ -f "$f" ] || f="$HOME/.cursor/hooks/${scriptName}"; exec bash "$f"'`;
 }
 
 const CURSOR_HOOK_ENTRIES = Object.freeze({

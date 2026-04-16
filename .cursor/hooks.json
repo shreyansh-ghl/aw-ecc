@@ -3,7 +3,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "bash -lc \"for candidate in \\\"$PWD/.cursor/hooks/session-start.sh\\\" \\\"$HOME/.cursor/hooks/session-start.sh\\\"; do if [ -f \\\"$candidate\\\" ]; then exec bash \\\"$candidate\\\"; fi; done; exit 0\"",
+        "command": "bash -c 'f=\"$PWD/.cursor/hooks/session-start.sh\"; [ -f \"$f\" ] || f=\"$HOME/.cursor/hooks/session-start.sh\"; exec bash \"$f\"'",
         "event": "sessionStart",
         "description": "Load previous context and detect environment"
       }
@@ -64,7 +64,7 @@
     ],
     "beforeSubmitPrompt": [
       {
-        "command": "bash -lc \"for candidate in \\\"$PWD/.cursor/hooks/before-submit-prompt.sh\\\" \\\"$HOME/.cursor/hooks/before-submit-prompt.sh\\\"; do if [ -f \\\"$candidate\\\" ]; then exec bash \\\"$candidate\\\"; fi; done; exit 0\"",
+        "command": "bash -c 'f=\"$PWD/.cursor/hooks/before-submit-prompt.sh\"; [ -f \"$f\" ] || f=\"$HOME/.cursor/hooks/before-submit-prompt.sh\"; exec bash \"$f\"'",
         "event": "beforeSubmitPrompt",
         "description": "Detect secrets in prompts (sk-, ghp_, AKIA patterns)"
       }
