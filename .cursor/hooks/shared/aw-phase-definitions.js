@@ -15,6 +15,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: '.cursor/hooks/shared/user-prompt-submit.sh',
       payloadMode: 'raw',
     },
+    {
+      hookId: 'telemetry:prompt-submit',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-prompt-submit.js',
+      payloadMode: 'claude',
+    },
   ],
   'pre-tool-use-shell': [
     {
@@ -70,6 +77,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/post-bash-build-complete.js',
       payloadMode: 'claude',
     },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
+    },
   ],
   'post-tool-use-file-edit': [
     {
@@ -109,6 +123,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/post-mcp-log.js',
       payloadMode: 'raw',
     },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
+    },
   ],
   'pre-compact': [
     {
@@ -123,6 +144,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       allowedProfiles: ['minimal', 'standard', 'strict'],
       runner: 'node',
       relativeScriptPath: 'scripts/hooks/session-end-marker.js',
+      payloadMode: 'claude',
+    },
+    {
+      hookId: 'telemetry:session-end',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-stop.js',
       payloadMode: 'claude',
     },
   ],
@@ -153,6 +181,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       allowedProfiles: ['minimal', 'standard', 'strict'],
       runner: 'node',
       relativeScriptPath: 'scripts/hooks/cost-tracker.js',
+      payloadMode: 'claude',
+    },
+    {
+      hookId: 'telemetry:stop',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-stop.js',
       payloadMode: 'claude',
     },
   ],
