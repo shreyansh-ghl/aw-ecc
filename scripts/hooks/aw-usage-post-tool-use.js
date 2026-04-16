@@ -25,8 +25,17 @@ process.stdin.on('end', () => {
     const input = JSON.parse(raw);
     const toolName = input.tool_name || '';
 
-    if (toolName === 'Skill') {
-      const skillName = input.tool_input?.skill || input.tool_input?.args?.skill || '';
+    // Skill detection: Claude uses tool_name='Skill', Cursor reads SKILL.md via 'Read' tool
+    const filePath = input.tool_input?.file_path || '';
+    const isSkillRead = toolName === 'Read' && /\/SKILL\.md$/i.test(filePath);
+
+    if (toolName === 'Skill' || isSkillRead) {
+      let skillName = input.tool_input?.skill || input.tool_input?.args?.skill || '';
+      // For Cursor: extract skill name from path (e.g. .../skills/<skill-name>/SKILL.md)
+      if (!skillName && isSkillRead) {
+        const pathMatch = filePath.match(/\/skills\/([^/]+)\/SKILL\.md$/i);
+        skillName = pathMatch ? pathMatch[1] : filePath.split('/').slice(-2, -1)[0] || '';
+      }
       if (skillName) {
         sendAsync(buildEvent(input, 'skill_invoked', {
           skill_name: skillName,

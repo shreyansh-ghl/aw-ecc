@@ -134,6 +134,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/post-edit-console-warn.js',
       payloadMode: 'claude',
     },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
+    },
   ],
   'post-tool-use-mcp': [
     {
