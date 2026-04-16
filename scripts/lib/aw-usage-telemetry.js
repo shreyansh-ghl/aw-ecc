@@ -42,12 +42,30 @@ function getGitInfo() {
 
 let _configCache = null;
 
+function generateMachineId() {
+  const raw = `${os.hostname()}:${os.userInfo().username}`;
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
 function loadConfig() {
   if (_configCache) return _configCache;
   try {
     _configCache = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
   } catch {
-    _configCache = { enabled: true, machine_id: 'unknown' };
+    // Config missing or corrupt — self-heal by generating it
+    _configCache = { enabled: true, machine_id: generateMachineId() };
+    try {
+      fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(_configCache, null, 2) + '\n');
+    } catch { /* best effort — don't block the hook */ }
+  }
+  // Backfill machine_id if config exists but field is missing
+  if (!_configCache.machine_id || _configCache.machine_id === 'unknown') {
+    _configCache.machine_id = generateMachineId();
+    try {
+      fs.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true });
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(_configCache, null, 2) + '\n');
+    } catch { /* best effort */ }
   }
   return _configCache;
 }
