@@ -460,7 +460,7 @@ cd {workspace_dir}/ai-backend
 npm run start:dev -- performance-ai
 ```
 
-*(Note: If the user explicitly asks to test the "MFA" or "AI One" branch, append `git checkout ai-one-ms-mfa && ` before the start commands).*
+*(Note: If the user explicitly asks to test the "MFA" or "AI One" branch, append `git checkout ai-one-ms-mfa &&` before the start commands).*
 
 ### Micro-app scenario (most common)
 
@@ -515,9 +515,9 @@ Tell the user:
 
 > Your local setup is complete. Here's what's running:
 >
-> - **Shell**: http://localhost:8080 (spm-ts)
-> - **{App name}**: http://localhost:{port} (ghl-crm-frontend/apps/{app-name})
-> - **Your page**: http://localhost:8080/v2/location/{id}/{route}
+> - **Shell**: `http://localhost:8080` (spm-ts)
+> - **{App name}**: `http://localhost:{port}` (ghl-crm-frontend/apps/{app-name})
+> - **Your page**: `http://localhost:8080/v2/location/{id}/{route}`
 >
 > Make changes in `ghl-crm-frontend/apps/{app-name}/src/` and they'll hot-reload in the browser.
 
