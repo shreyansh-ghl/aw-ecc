@@ -43,12 +43,17 @@ function transformToClaude(cursorInput, overrides = {}) {
   const inferredToolName = cursorInput.tool_name
     || (server && tool ? `mcp__${server}__${tool}` : '');
 
+  // Preserve original tool_input fields (skill, subagent_type, description, etc.)
+  const originalToolInput = cursorInput.tool_input || {};
+
   return {
     tool_name: inferredToolName,
     server,
     tool,
+    exit_code: cursorInput.exit_code,
     tool_input: {
-      command: cursorInput.command || cursorInput.args?.command || '',
+      ...originalToolInput,
+      command: cursorInput.command || cursorInput.args?.command || originalToolInput.command || '',
       file_path: cursorInput.path || cursorInput.file || cursorInput.args?.filePath || '',
       server,
       mcp_server: server,
@@ -59,6 +64,10 @@ function transformToClaude(cursorInput, overrides = {}) {
     tool_output: {
       output: cursorInput.output || cursorInput.result || '',
       ...overrides.tool_output,
+    },
+    tool_response: {
+      exit_code: cursorInput.exit_code,
+      output: cursorInput.output || cursorInput.result || '',
     },
     transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
     _cursor: {
