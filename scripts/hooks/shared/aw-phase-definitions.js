@@ -1,3 +1,16 @@
+const PHASE_NAMES = Object.freeze({
+  SESSION_START: 'session-start',
+  USER_PROMPT_SUBMIT: 'user-prompt-submit',
+  PRE_TOOL_USE_SHELL: 'pre-tool-use-shell',
+  PRE_TOOL_USE_MCP: 'pre-tool-use-mcp',
+  POST_TOOL_USE_SHELL: 'post-tool-use-shell',
+  POST_TOOL_USE_FILE_EDIT: 'post-tool-use-file-edit',
+  POST_TOOL_USE_MCP: 'post-tool-use-mcp',
+  PRE_COMPACT: 'pre-compact',
+  SESSION_END: 'session-end',
+  STOP: 'stop',
+});
+
 const SHARED_AW_PHASE_STEPS = Object.freeze({
   'session-start': [
     {
@@ -7,6 +20,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: '.cursor/hooks/shared/session-start.sh',
       payloadMode: 'raw',
       outputMode: 'cursor-session-start',
+    },
+    {
+      hookId: 'telemetry:session-start',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-session-start.js',
+      payloadMode: 'claude',
     },
   ],
   'user-prompt-submit': [
@@ -202,6 +222,7 @@ function getSharedAwPhaseSteps(phaseName) {
 }
 
 module.exports = {
+  PHASE_NAMES,
   SHARED_AW_PHASE_STEPS,
   getSharedAwPhaseSteps,
 };

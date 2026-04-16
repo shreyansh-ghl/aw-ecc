@@ -38,7 +38,27 @@ process.stdin.on('end', () => {
         agent_type: input.tool_input?.subagent_type || 'general-purpose',
         description: input.tool_input?.description || '',
       }));
-    } else if (toolName === 'Shell' || toolName === 'Bash') {
+    }
+
+    // Cursor tool_error detection — Cursor has no PostToolUseFailure phase,
+    // so we check exit_code here for non-zero exits.
+    const exitCode = input.exit_code ?? input.tool_response?.exit_code ?? input.tool_output?.exit_code;
+    if (exitCode !== undefined && exitCode !== null && Number(exitCode) !== 0) {
+      const errMsg = String(
+        input.tool_response?.output
+        || input.tool_response?.stderr
+        || input.tool_output?.output
+        || ''
+      ).slice(0, 500);
+      sendAsync(buildEvent(input, 'tool_error', {
+        tool_name: toolName || 'unknown',
+        error_message: errMsg,
+        failure_type: 'error',
+        exit_code: Number(exitCode),
+      }));
+    }
+
+    if (toolName === 'Shell' || toolName === 'Bash') {
       const cmd = String(input.tool_input?.command || '');
       const output = String(
         input.tool_response?.output
