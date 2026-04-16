@@ -70,6 +70,14 @@ process.stdin.on('end', () => {
 
     if (toolName === 'Shell' || toolName === 'Bash') {
       const cmd = String(input.tool_input?.command || '');
+      // Codex skill detection: Bash commands that read SKILL.md files
+      const skillCmdMatch = cmd.match(/\/skills\/([^/]+)\/SKILL\.md/i);
+      if (skillCmdMatch && skillCmdMatch[1]) {
+        sendAsync(buildEvent(input, 'skill_invoked', {
+          skill_name: skillCmdMatch[1],
+          args: '',
+        }));
+      }
       if (/\baw\s+push\b/.test(cmd)) {
         const skillMatch = cmd.match(/aw\s+push\s+(\S+)/);
         sendAsync(buildEvent(input, 'skill_pushed', {

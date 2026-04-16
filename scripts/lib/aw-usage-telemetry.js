@@ -88,6 +88,8 @@ function getAwVersion() {
 // ── Harness detection ────────────────────────────────────────────────
 
 function detectHarness(input) {
+  // Explicit harness override from shell wrapper (e.g. Codex SessionStart has no turn_id)
+  if (process.env.AW_HARNESS) return process.env.AW_HARNESS;
   if (input._cursor || input.conversation_id || input.cursor_version) return 'cursor';
   // Codex provides turn_id on turn-scoped hooks, Claude does not
   if (input.turn_id !== undefined) return 'codex';
