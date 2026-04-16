@@ -122,6 +122,28 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 - local repo AW routing is not skipped because a parent workspace has rules
 - every first destructive tool call in a turn re-confirms the route
 
+## Mandatory Gates
+
+### spec.md is mandatory
+
+- Every task MUST have `spec.md` before `/aw:build` starts — no exceptions. [MUST]
+- Simple requests get simple specs — but they still get specs. [MUST]
+- Do not skip spec.md because "the request is simple" or "scope seems small". [MUST]
+
+### tasks.md is mandatory for build handoff
+
+- If the plan recommends `/aw:build`, `tasks.md` must exist. [MUST]
+- A plan that says "ready to build" without `tasks.md` is a broken handoff. [MUST]
+
+### RED-GREEN is mandatory for all build slices
+
+- Every `/aw:build` slice MUST follow RED-GREEN-REFACTOR. [MUST]
+- Write or identify a failing test/signal BEFORE writing the fix (RED). [MUST]
+- Confirm the failure is real. Write the minimal change to pass (GREEN). [MUST]
+- Simplify while keeping proof green (REFACTOR). [MUST]
+- For config, docs, or non-code slices where test-first is not meaningful, name the verification evidence explicitly. [MUST]
+- Never skip RED-GREEN because "the change is trivial". [MUST]
+
 ## Red Flags (stop and re-classify)
 
 | Thought | Reality |
