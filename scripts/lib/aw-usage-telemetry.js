@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const SENDER_SCRIPT = path.join(__dirname, '..', 'hooks', 'aw-usage-telemetry-send.js');
 const AW_HOME = path.join(os.homedir(), '.aw');
 const CONFIG_PATH = path.join(AW_HOME, 'telemetry', 'config.json');
+const SESSION_DIR = path.join(AW_HOME, 'telemetry', 'sessions');
 
 // ── Git config cache (once per process) ──────────────────────────────
 
@@ -66,12 +67,21 @@ let _awVersion = null;
 
 function getAwVersion() {
   if (_awVersion) return _awVersion;
+  // Try local ~/.aw/node_modules first, then global npm prefix
+  const candidates = [
+    path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json'),
+  ];
   try {
-    const pkgPath = path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json');
-    _awVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version || null;
-  } catch {
-    _awVersion = null;
+    const globalPrefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 3000 }).trim();
+    candidates.push(path.join(globalPrefix, 'lib', 'node_modules', '@ghl-ai', 'aw', 'package.json'));
+  } catch { /* ignore */ }
+  for (const pkgPath of candidates) {
+    try {
+      _awVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version || null;
+      if (_awVersion) return _awVersion;
+    } catch { /* ignore */ }
   }
+  _awVersion = null;
   return _awVersion;
 }
 
@@ -89,6 +99,25 @@ function detectHarness(input) {
 function computeProjectHash(cwd) {
   if (!cwd) return null;
   return crypto.createHash('sha256').update(cwd).digest('hex').slice(0, 16);
+}
+
+// ── Session model persistence ────────────────────────────────────────
+// SessionStart captures the model; later hooks read it from disk.
+
+function persistSessionModel(sessionId, model) {
+  if (!sessionId || !model) return;
+  try {
+    fs.mkdirSync(SESSION_DIR, { recursive: true });
+    fs.writeFileSync(path.join(SESSION_DIR, sessionId + '.json'), JSON.stringify({ model }));
+  } catch { /* ignore */ }
+}
+
+function readSessionModel(sessionId) {
+  if (!sessionId) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, sessionId + '.json'), 'utf8'));
+    return data.model || null;
+  } catch { return null; }
 }
 
 // ── buildEvent ───────────────────────────────────────────────────────
@@ -109,8 +138,10 @@ function buildEvent(hookInput, eventType, payload) {
   const generationId = input.generation_id || null;
 
   // model: Claude only on SessionStart, Codex/Cursor on all hooks
+  // Fall back to persisted session model from SessionStart
   const model = input.model
     || input._cursor?.model
+    || readSessionModel(sessionId)
     || null;
 
   // cwd: Claude/Codex have input.cwd, Cursor uses workspace_roots
@@ -151,4 +182,4 @@ function sendAsync(event) {
   }
 }
 
-module.exports = { buildEvent, sendAsync, isDisabled, detectHarness, loadConfig };
+module.exports = { buildEvent, sendAsync, isDisabled, detectHarness, loadConfig, persistSessionModel };
