@@ -19,96 +19,109 @@ trigger: User invokes /aw:feature or /feature
 ## The 15 Phases
 
 ### Phase 1: Set up the project
-- **Delegate:** `aw-repo-setup`
+- **Action:** Use the Skill tool to invoke `aw:aw-repo-setup`. Let that skill own the entire setup flow.
 - **What happens:** Identify the GHL app from a screenshot, clone repos, install dependencies, wire Module Federation, start dev servers.
 - **User input:** Screenshot of the page, or "already set up" to skip.
 - **Auto-detect:** If the current working directory is a git repo, ask the user: "I see you're in {repo name}. Is this the right project, or do you need to set up a different one?" Never silently skip — always confirm.
 - **Artifacts:** Local dev environment running.
+- **Gate:** Ask user to confirm setup is complete before proceeding.
 
 ### Phase 2: What do we need?
-- **Delegate:** None — this is a structured Q&A phase, not a skill invocation.
+- **Action:** Structured Q&A — no skill invocation needed. YOU run this phase directly.
 - **What happens:** Ask the user structured questions to understand the feature: who it's for, core behavior, existing features it builds on, constraints, deadline.
 - **User input:** Feature description and answers to questions.
 - **Artifacts:** Requirements captured in conversation (fed into Phase 3).
+- **Gate:** Summarize requirements back to user. Ask "Does this capture everything? Proceed to Phase 3, or tweak something?"
 
 ### Phase 3: Write the spec
-- **Delegate:** `aw-plan` (product mode)
-- **What happens:** Take the requirements from Phase 2 and generate a PRD via `aw-plan`.
+- **Action:** Use the Skill tool to invoke `aw:plan`. Pass the requirements from Phase 2. Let aw-plan generate `prd.md` under `.aw_docs/features/<slug>/`. Do NOT write the PRD yourself — aw-plan owns that artifact.
+- **What happens:** aw-plan takes the requirements and generates a PRD.
 - **User input:** Approval of the PRD.
 - **Artifacts:** `.aw_docs/features/<slug>/prd.md`
+- **Gate:** Show the PRD summary. Ask "Approve this spec? Proceed, tweak, or redo?"
 
 ### Phase 4: Explore approaches
-- **Delegate:** `aw-brainstorm` + `aw-plan` (design mode)
+- **Action:** Use the Skill tool to invoke `aw:brainstorm` for exploring approaches. Once direction is chosen, use the Skill tool to invoke `aw:plan` in design mode. Let aw-plan write `design.md`. Do NOT write design.md yourself.
 - **What happens:** Brainstorm implementation approaches, present trade-offs, let user choose.
 - **User input:** Selection of preferred approach.
 - **Artifacts:** `.aw_docs/features/<slug>/design.md`
+- **Gate:** Show chosen approach summary. Ask "Happy with this direction? Proceed, or explore more?"
 
 ### Phase 5: Technical plan
-- **Delegate:** `aw-plan` (technical + tasks mode)
-- **What happens:** Generate technical spec and task breakdown. Flag API contract changes and breaking changes.
+- **Action:** Use the Skill tool to invoke `aw:plan` in technical mode. Let aw-plan generate `spec.md` and `tasks.md` under `.aw_docs/features/<slug>/`. Do NOT write these yourself.
+- **What happens:** aw-plan generates technical spec and task breakdown. Flags API contract changes and breaking changes.
 - **User input:** Approval of the plan.
 - **Artifacts:** `.aw_docs/features/<slug>/spec.md`, `.aw_docs/features/<slug>/tasks.md`
+- **Gate:** Show plan summary. Ask "Approve this plan? Proceed to build, tweak, or redo?"
 
 ### Phase 6: Write the code
-- **Delegate:** `aw-build`
-- **What happens:** Implement the feature following `tasks.md` in incremental slices.
-- **User input:** Approval per slice (or "continue" for auto-advance).
+- **Action:** Use the Skill tool to invoke `aw:build`. Let aw-build implement the feature following `tasks.md` in incremental slices.
+- **What happens:** Implementation in thin, reversible slices per tasks.md.
+- **User input:** Approval per slice (or "continue" for auto-advance within build).
 - **Artifacts:** Implementation code, `.aw_docs/features/<slug>/execution.md`
+- **Gate:** Ask "Build complete. Proceed to code review, or want to adjust something?"
 
 ### Phase 7: Code review
-- **Delegate:** `aw-review`
-- **What happens:** Run code review on all changes. Report findings by severity.
-- **User input:** None — automatic. Present findings for acknowledgment.
+- **Action:** Use the Skill tool to invoke `aw:review`. Let aw-review run the full review and produce findings.
+- **What happens:** Code review on all changes. Findings reported by severity.
+- **User input:** Automatic — but show findings and ask for acknowledgment.
 - **Artifacts:** Review findings.
+- **Gate:** Show findings summary. Ask "Acknowledge and proceed, or fix something first?"
 
 ### Phase 8: Verify it works
-- **Delegate:** `aw-test`
+- **Action:** Use the Skill tool to invoke `aw:test`. Let aw-test run suites and produce verification.md.
 - **What happens:** Run test suites, report coverage, verify behavior.
-- **User input:** None — automatic. Report results.
+- **User input:** Automatic — show results.
 - **Artifacts:** `.aw_docs/features/<slug>/verification.md`, test results.
+- **Gate:** Show test results. Ask "Tests look good? Proceed, or investigate failures?"
 
 ### Phase 9: Docs & translations
-- **Delegate:** `aw-build` (docs mode)
-- **What happens:** Update documentation, README, check for hardcoded strings (i18n compliance).
-- **User input:** None — automatic.
+- **Action:** Use the Skill tool to invoke `aw:build` in docs mode. Check for hardcoded strings (i18n compliance).
+- **What happens:** Update documentation, README, check i18n.
+- **User input:** Automatic — show what was updated.
 - **Artifacts:** Updated docs, i18n compliance check.
+- **Gate:** Show what was updated. Ask "Docs complete? Proceed, or adjust?"
 
 ### Phase 10: Fix issues
-- **Delegate:** `aw-investigate` + `aw-build`
+- **Action:** If issues exist from Phases 7-9: use the Skill tool to invoke `aw:investigate` for diagnosis, then `aw:build` for fixes. If no issues: auto-skip with notice.
 - **What happens:** Address issues found in Phases 7-9. If new issues surface, loop back to review/test.
 - **User input:** Approval for fixes.
 - **Artifacts:** Fixes applied.
+- **Gate:** Show what was fixed. Ask "Issues resolved? Proceed, or keep fixing?"
 
 ### Phase 11: Production readiness check
-- **Delegate:** `platform-infra-production-readiness` skill
-- **What happens:** Run the production readiness checklist — environment variables, configs, migrations, health probes, resource limits.
+- **Action:** Use the Skill tool to invoke `platform-infra-production-readiness` if available, otherwise run a manual checklist: env vars, configs, migrations, health probes, resource limits.
+- **What happens:** Run the production readiness checklist.
 - **User input:** Acknowledge findings.
 - **Artifacts:** Readiness checklist results.
+- **Gate:** Show checklist results. Ask "Ready for expert review? Proceed, or address findings first?"
 
 ### Phase 12: Expert review
-- **Delegate:** Launch `security-reviewer`, `architect`, and `code-reviewer` agents in parallel
+- **Action:** Launch three Agent tool calls in parallel with `security-reviewer`, `architect`, and `code-reviewer` subagent types. Collect findings.
 - **What happens:** Each specialist agent reviews the changes from their perspective. Collect and present findings by severity.
 - **User input:** Acknowledge findings.
 - **Artifacts:** Specialist review findings.
+- **Gate:** Show combined findings. Ask "Acknowledge and proceed, or fix something first?"
 
 ### Phase 13: Fix PR warnings
-- **Delegate:** `aw-review` (PR mode) + `build-error-resolver` agent
-- **What happens:** Scan for lint errors, type errors, build warnings. Use `build-error-resolver` to auto-fix what's fixable. Report anything that needs manual attention.
-- **User input:** None — fully automatic.
-- **Auto-advance:** If no issues found, advance to Phase 14 immediately.
-- **Artifacts:** Clean PR status.
+- **Action:** Run `git diff --stat` to check for changes, then use the Agent tool with `build-error-resolver` subagent type to auto-fix lint/type/build warnings. Use the Skill tool to invoke `aw:review` in PR mode if needed.
+- **What happens:** Scan for lint errors, type errors, build warnings. Auto-fix what's fixable. Report anything needing manual attention.
+- **User input:** None — fully automatic. But still show results.
+- **Gate:** Show what was fixed/remaining. Ask "PR clean? Proceed to staging, or fix more?"
 
 ### Phase 14: Deploy to staging
-- **Delegate:** `aw-deploy` (staging mode)
+- **Action:** Use the Skill tool to invoke `aw:deploy` in staging mode.
 - **What happens:** Deploy to staging environment. Provide staging URL.
 - **User input:** Confirmation to proceed.
 - **Artifacts:** Staging URL, deploy confirmation.
+- **Gate:** Show staging URL. Ask "Staging looks good? Proceed to production, or need more testing?"
 
 ### Phase 15: Go live
-- **Delegate:** `aw-deploy` (production mode) + `aw-ship`
+- **Action:** Use the Skill tool to invoke `aw:deploy` in production mode, then `aw:ship` for closeout.
 - **What happens:** Deploy to production. Run ship closeout.
 - **User input:** Explicit approval to deploy to production.
 - **Artifacts:** `.aw_docs/features/<slug>/release.md`, production confirmation.
+- **Gate:** Final confirmation before deploy. After deploy, show release summary.
 
 ---
 
@@ -136,13 +149,29 @@ Track progress in `.aw_docs/features/<slug>/state.json`:
 
 ---
 
+## Phase Gate (CRITICAL)
+
+**NEVER auto-advance to the next phase.** At the end of every phase, you MUST:
+
+1. Show what was produced in this phase
+2. Ask the user one of:
+   - "Phase N is complete. Want to **proceed to Phase N+1**, **tweak something** in this phase, or **skip ahead**?"
+   - For automatic phases (7, 8, 9, 13): still show results and ask "Looks good? Proceed to Phase N+1, or want me to adjust something?"
+3. **Wait for explicit approval** before moving forward
+4. If the user wants to tweak: stay in the current phase, make the change, show updated output, ask again
+5. Only advance when the user says "proceed", "continue", "next", "looks good", or equivalent
+
+This is non-negotiable. The user controls the pace.
+
+---
+
 ## Phase Transition UX
 
-Every phase transition shows this block:
+Every phase transition (after user approves) shows this block:
 
 ```
 ────────────────────────────────────────
-  Phase N: {Name} — COMPLETE
+  Phase N: {Name} — COMPLETE ✓
   {What was produced}
 
   Phase N+1: {Name} — STARTING
@@ -213,13 +242,40 @@ Users navigate with natural language:
 When `/aw:feature` is invoked:
 
 1. **Extract feature slug** from the user's description (kebab-case, e.g., "Add bulk email" → `bulk-email`).
-2. **Check for existing state** at `.aw_docs/features/<slug>/state.json`.
-   - If exists: show progress, ask "Resume from Phase N?" or let user navigate.
+2. **Show the full phase overview immediately:**
+
+```
+────────────────────────────────────────
+  /aw:feature — 15-Phase Guided Development
+
+   1. Set up the project        → aw-repo-setup
+   2. What do we need?          → Requirements Q&A
+   3. Write the spec            → aw-plan (PRD)
+   4. Explore approaches        → aw-brainstorm + aw-plan
+   5. Technical plan            → aw-plan (spec + tasks)
+   6. Write the code            → aw-build
+   7. Code review               → aw-review
+   8. Verify it works           → aw-test
+   9. Docs & translations       → aw-build (docs)
+  10. Fix issues                → aw-investigate + aw-build
+  11. Production readiness      → Readiness checklist
+  12. Expert review             → Parallel specialist agents
+  13. Fix PR warnings           → Auto-fix (no user action)
+  14. Deploy to staging         → aw-deploy (staging)
+  15. Go live                   → aw-deploy (prod) + aw-ship
+
+  Every phase is skippable. Say "skip" at any time.
+  Say "show progress" to see this overview again.
+────────────────────────────────────────
+```
+
+3. **Check for existing state** at `.aw_docs/features/<slug>/state.json`.
+   - If exists: show progress with completed/skipped markers, ask "Resume from Phase N?" or let user navigate.
    - If not: create state.json, start at Phase 1.
-3. **Phase 1 detection:** Check if current working directory is a git repo.
+4. **Phase 1 detection:** Check if current working directory is a git repo.
    - If yes: ask user "I see you're in {repo name}. Is this the right project?" If confirmed, skip Phase 1.
    - If no: run Phase 1 (`aw-repo-setup`).
-4. **Begin the phase flow.**
+5. **Begin the phase flow.**
 
 ---
 
