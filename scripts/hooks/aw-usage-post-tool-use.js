@@ -2,7 +2,8 @@
 /**
  * Usage telemetry — PostToolUse hook.
  *
- * Detects: skill invocations, agent spawns, PR creation, skill pushes.
+ * Detects: skill invocations, agent spawns, skill pushes.
+ * PR contribution is tracked via Co-Authored-By trailer in prepare-commit-msg hook.
  * Outputs {} on stdout (Claude/Codex parse stdout as JSON).
  */
 
@@ -69,22 +70,7 @@ process.stdin.on('end', () => {
 
     if (toolName === 'Shell' || toolName === 'Bash') {
       const cmd = String(input.tool_input?.command || '');
-      const output = String(
-        input.tool_response?.output
-        || input.tool_response?.stdout
-        || input.tool_output?.output
-        || ''
-      );
-
-      if (/\bgh\s+pr\s+create\b/.test(cmd)) {
-        const match = output.match(/https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/(\d+)/);
-        if (match) {
-          sendAsync(buildEvent(input, 'pr_created', {
-            pr_url: match[0],
-            pr_number: Number(match[1]),
-          }));
-        }
-      } else if (/\baw\s+push\b/.test(cmd)) {
+      if (/\baw\s+push\b/.test(cmd)) {
         const skillMatch = cmd.match(/aw\s+push\s+(\S+)/);
         sendAsync(buildEvent(input, 'skill_pushed', {
           skill_name: skillMatch ? skillMatch[1] : '',
