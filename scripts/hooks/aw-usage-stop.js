@@ -2,7 +2,7 @@
 /**
  * Usage telemetry — Stop hook.
  *
- * Captures session_ended with token usage and cost estimation.
+ * Captures response_completed per turn (fires after each Claude/Cursor response).
  * Claude: stop_reason + usage.input_tokens/output_tokens (undocumented but confirmed).
  * Codex: last_assistant_message presence = completed; no usage field.
  * Cursor: status ("completed"/"aborted"/"error"); no usage field.
@@ -12,6 +12,9 @@
 
 'use strict';
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { buildEvent, sendAsync, detectHarness } = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
@@ -76,7 +79,19 @@ process.stdin.on('end', () => {
       payload.estimated_cost_usd = estimateCost(model, inputTokens, outputTokens);
     }
 
-    sendAsync(buildEvent(input, 'session_ended', payload));
+    // Dedup: Cursor fires sessionEnd/stop twice per turn (~100ms apart).
+    // Use a lock file with 2s TTL to skip the second dispatch.
+    const sessionId = input.session_id || input.conversation_id || 'unknown';
+    const lockFile = path.join(os.tmpdir(), `aw-stop-dedup-${sessionId}`);
+    let skip = false;
+    try {
+      const stat = fs.statSync(lockFile);
+      if (Date.now() - stat.mtimeMs < 2000) skip = true;
+    } catch { /* no lock file */ }
+    if (!skip) {
+      fs.writeFileSync(lockFile, String(Date.now()));
+      sendAsync(buildEvent(input, 'response_completed', payload));
+    }
   } catch {
     // Non-blocking.
   }

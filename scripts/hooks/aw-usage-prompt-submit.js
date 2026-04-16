@@ -10,6 +10,9 @@
 
 'use strict';
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { buildEvent, sendAsync } = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
@@ -25,7 +28,31 @@ process.stdin.on('data', chunk => {
 process.stdin.on('end', () => {
   try {
     const input = JSON.parse(raw);
-    sendAsync(buildEvent(input, 'prompt_submitted', {}));
+
+    // Dedup: Cursor fires beforeSubmitPrompt twice per prompt (~100ms apart).
+    // Use exclusive file create (wx) as an atomic lock — second process fails.
+    const sessionId = input.session_id || input.conversation_id || 'unknown';
+    const lockFile = path.join(os.tmpdir(), `aw-prompt-dedup-${sessionId}`);
+    let skip = false;
+    try {
+      // Clean stale lock (>2s old)
+      const stat = fs.statSync(lockFile);
+      if (Date.now() - stat.mtimeMs > 2000) {
+        fs.unlinkSync(lockFile);
+      }
+    } catch { /* no lock file */ }
+    try {
+      fs.writeFileSync(lockFile, String(Date.now()), { flag: 'wx' });
+    } catch {
+      // File already exists (created by parallel process) — skip
+      skip = true;
+    }
+
+    if (!skip) {
+      sendAsync(buildEvent(input, 'prompt_submitted', {}));
+      // Clean up lock after brief delay so next prompt isn't blocked
+      setTimeout(() => { try { fs.unlinkSync(lockFile); } catch {} }, 2000);
+    }
   } catch {
     // Non-blocking.
   }
