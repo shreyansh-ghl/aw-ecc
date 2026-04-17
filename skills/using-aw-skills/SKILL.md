@@ -84,7 +84,7 @@ If a follow-up changes the nature of the work (e.g. review session becomes "patc
 
 ## Public Surface
 
-`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` (launch readiness, rollout, rollback, closeout — NOT end-to-end orchestration)
+`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` · `/aw:feature`
 
 Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
@@ -99,6 +99,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | `/aw:review` | Findings, governance, readiness | `verification.md`, `state.json` |
 | `/aw:deploy` | One release outcome for verified work | `release.md`, `state.json` |
 | `/aw:ship` | Launch readiness, rollout safety, rollback, closeout | `release.md`, `state.json`, rollback notes |
+| `/aw:feature` | Guided phase-by-phase SDLC (18 phases) | `state.json`, delegates to stage skills |
 
 ## Intent Routing (quick map)
 
