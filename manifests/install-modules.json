@@ -42,13 +42,14 @@
     {
       "id": "aw-stages",
       "kind": "skills",
-      "description": "Canonical AW SDLC stage skills (aw-plan, aw-build, aw-investigate, aw-test, aw-review, aw-deploy, aw-ship) and supporting internal helpers. Shipped from the single canonical skills/ source; install pipeline transforms /aw: → /aw- for Cursor targets.",
+      "description": "Canonical AW SDLC stage skills (aw-plan, aw-build, aw-investigate, aw-test, aw-review, aw-deploy, aw-ship, aw-feature) and supporting internal helpers. Shipped from the single canonical skills/ source; install pipeline transforms /aw: → /aw- for Cursor targets.",
       "paths": [
         "skills/aw-brainstorm",
         "skills/aw-build",
         "skills/aw-debug",
         "skills/aw-deploy",
         "skills/aw-execute",
+        "skills/aw-feature",
         "skills/aw-finish",
         "skills/aw-investigate",
         "skills/aw-plan",
