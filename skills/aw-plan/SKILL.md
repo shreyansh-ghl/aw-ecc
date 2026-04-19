@@ -38,8 +38,9 @@ This legacy heading maps to the detailed planning process below.
 2. Identify the feature and current artifact state.
    Infer or honor the feature slug.
    Detect which planning artifacts already exist and which are actually missing.
-3. Choose the smallest internal route.
-   Decide whether the request is already clear enough for direct planning or needs discovery first.
+3. Understand the problem before planning it.
+   In `product` mode, start by having a conversation with the user. Think of it like a PM sitting down with a stakeholder — ask about scope, target users, success criteria, edge cases, and constraints. Listen to the answers. Follow up on anything vague. Keep going until the problem is genuinely clear. Only then move to writing artifacts.
+   In other modes, decide whether the request is already clear enough for direct planning or needs discovery first.
    For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
 4. Plan in dependency order.
    Perform an explicit architecture review before freezing the technical path.
@@ -76,7 +77,7 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 
 | Mode | Use when | Primary outputs |
 |---|---|---|
-| `product` | problem, scope, or acceptance criteria are unclear | `prd.md`, `state.json` |
+| `product` | problem, scope, or acceptance criteria are unclear — start with a conversation to understand the user's needs before writing anything | `requirements.md`, `prd.md`, `state.json` |
 | `design` | UX behavior or interface design must be defined | `design.md`, `designs/`, `state.json` |
 | `technical` | implementation approach or architecture must be defined | `spec.md`, `state.json` |
 | `tasks` | implementation work needs to be broken into steps | `tasks.md`, `state.json` |

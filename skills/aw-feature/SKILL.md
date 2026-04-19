@@ -28,32 +28,33 @@ The primary audience is **PMs, designers, and engineers** who want a structured 
 
 ## Workflow
 
-### Step 1: Initialize
+### Step 1: Show the roadmap and stop
+
+The very first response after invocation is always the 18-phase roadmap, a note on which phases would be auto-skipped (with reasons), and a suggested starting phase. Nothing else — no file creation, no code, no planning. Wait for the user to say where to start.
+
+### Step 2: Initialize (after user confirms)
 
 1. Parse `$ARGUMENTS` to derive a feature title and slug
 2. Create `.aw_docs/features/<slug>/` directory
-3. Create `state.json` with all 18 phases set to `pending`
-4. Display the full 18-phase roadmap (from command contract)
+3. Create `state.json` with all 18 phases set to `pending` (mark auto-skipped ones as `skipped`)
 
-### Step 2: Smart Entry Detection
+### Step 3: Smart Entry Detection
 
-Scan for existing context and announce any auto-skips:
+Auto-skip signals (always announce each one):
 - Already in a git repo → skip Phase 1
-- `CLAUDE.md` or onboarding guide exists → skip Phase 2
+- Onboarding artifact exists (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, or `.codex/AGENTS.md`) → skip Phase 2
 - Planning artifacts exist → skip relevant planning phases
 - Implementation exists → suggest starting at testing phase
 - PR exists → suggest starting at PR checks phase
 
-**Always announce every skip.** Never silently skip.
-
-### Step 3: Execute Current Phase
+### Step 4: Execute Current Phase
 
 For each phase:
 
 1. **Announce** — Show phase header with plain-language explanation
 2. **Load backing skill** — Read the SKILL.md for the delegated skill
 3. **Execute** — Run the skill's workflow within its contract
-4. **Update state.json** — **MANDATORY.** Write the phase status immediately. This is the only way to resume across sessions. Use the minimal format: `{ "1": "done", "2": "in_progress" }`. Do this BEFORE showing the completion message.
+4. **Update state.json** — Write the phase status immediately. This is the only way to resume across sessions. Do this BEFORE showing the completion message.
 5. **Show output** — Summarize what was produced
 6. **Pause** — Ask user to proceed, refine, or skip
 
@@ -108,13 +109,13 @@ Artifacts:
 **What:** Understand the repo's architecture, conventions, and entry points.
 **Skill:** `codebase-onboarding`
 **Plain language:** "Let me quickly understand how this codebase is organized."
-**Auto-skip when:** `CLAUDE.md` already exists with onboarding content.
+**Auto-skip when:** A harness-level onboarding artifact already exists (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`, or `.codex/AGENTS.md`).
 
 ### Phase 3: Requirements
-**What:** Interactive Q&A to gather scope, acceptance criteria, and constraints.
+**What:** A conversation to understand the feature before writing anything.
 **Skill:** `aw-plan` (product mode — requirements gathering only)
 **Plain language:** "Let's nail down exactly what this feature needs to do."
-**Behavior:** Ask 3-5 focused questions about scope, users, success criteria. Wait for answers.
+**Behavior:** This phase is a back-and-forth dialogue. Ask about scope, users, success criteria, edge cases, and constraints. Listen to the answers, then follow up on anything unclear. Keep the conversation going until you genuinely understand what to build and how you'd know it's done — then write `requirements.md`.
 
 ### Phase 4: PRD
 **What:** Write a structured product requirements document from Phase 3 outputs.
@@ -123,15 +124,9 @@ Artifacts:
 **Auto-skip when:** `prd.md` already exists for this feature.
 
 ### Phase 5: Design
-**What:** Explore design options, make UX/UI decisions. For frontend features, generate HTML prototype screens.
-**Skill:** `aw-plan` (design mode). For frontend features, also use Stitch MCP (`stitch_generate-screen`) if available.
+**What:** Explore design options, make UX/UI decisions. Generate HTML prototype screens for frontend features.
+**Skill:** `aw-design`
 **Plain language:** "Let's figure out how this should look and work for users."
-
-**Frontend-aware behavior:**
-- If the feature involves **any UI changes**: Generate self-contained HTML prototype files in `.aw_docs/features/<slug>/designs/`. Each file should have inline CSS so the user can open it in a browser to preview. Include a screen-by-screen UX walkthrough and a component inventory (existing components to reuse vs new ones to build).
-- If the feature is **full-stack**: Generate HTML screens for UI parts + document API contract changes.
-- If the feature is **backend-only**: Suggest skipping.
-
 **Suggest skip when:** Backend-only feature with no UI component.
 
 ### Phase 6: Technical Spec

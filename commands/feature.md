@@ -9,25 +9,11 @@ internal_skill: aw-feature
 
 # Feature — Guided SDLC Workflow
 
-You are guiding the user through a complete feature development lifecycle for: $ARGUMENTS
+## Your first response
 
-> **This is a guided workflow.** You pause at every phase boundary and ask the user whether to proceed, refine, or skip. You never auto-advance unless the user explicitly says so.
+When this command is invoked, your entire first response is the roadmap below — nothing else. Do not start any phase, do not create files, do not write code, do not plan. Just show the roadmap and ask where to start.
 
-## Role
-
-Walk the user through 18 SDLC phases from repo setup to production deployment. At each phase, explain what's happening in plain language, execute the phase by delegating to the appropriate skill, and pause for user input before moving on.
-
-## Modes
-
-| Mode | Use when | Behavior |
-|---|---|---|
-| `full` | Starting a new feature from scratch | Begin at Phase 1, show full roadmap |
-| `resume` | Continuing a previously started feature | Read state.json, resume from last incomplete phase |
-| `status` | User wants to see progress | Show progress tracker only |
-
-## On Start — Always Show the Roadmap
-
-When the user invokes this command, **always** begin by showing the full phase roadmap:
+Feature context (for reference, not for acting on yet): $ARGUMENTS
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -79,28 +65,37 @@ You can say:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Then proceed to detect the smart entry point (see below).
+Along with the roadmap, mention which phases you'd auto-skip (e.g., "You're already in a repo so we'd skip Phase 1") and suggest a starting phase. Then ask the user: "Ready to begin at Phase N, or would you like to start somewhere else?"
+
+Wait for the user to respond before doing anything.
 
 ## Smart Entry Detection
 
-Before starting Phase 1, scan for existing context:
+When scanning for auto-skips, check these signals:
 
 | Signal | Action |
 |---|---|
-| Already inside a git repo | Auto-skip Phase 1, **tell the user**: "Skipping Phase 1 (Repo Setup) — you're already in a repo. Starting at Phase 2." |
-| `.aw_docs/features/<slug>/prd.md` exists | Auto-skip Phases 3-4, **tell the user** |
-| `.aw_docs/features/<slug>/spec.md` exists | Auto-skip Phase 6, **tell the user** |
-| `.aw_docs/features/<slug>/tasks.md` exists | Auto-skip Phase 7, **tell the user** |
-| Implementation code exists for this feature | Suggest starting at Phase 9 or later, **ask the user** |
-| PR already exists | Suggest starting at Phase 16, **ask the user** |
+| Already inside a git repo | Skip Phase 1 |
+| Onboarding artifact exists | Skip Phase 2 |
+| `.aw_docs/features/<slug>/prd.md` exists | Skip Phases 3-4 |
+| `.aw_docs/features/<slug>/spec.md` exists | Skip Phase 6 |
+| `.aw_docs/features/<slug>/tasks.md` exists | Skip Phase 7 |
+| Implementation code exists for this feature | Suggest Phase 9 or later, **ask the user** |
+| PR already exists | Suggest Phase 16, **ask the user** |
 
-**Critical rule:** When auto-skipping, always announce it:
-```
-○ Skipping Phase 1 (Repo Setup) — you're already in the repo (go-ai-level).
-○ Skipping Phase 2 (Codebase Onboarding) — CLAUDE.md already exists.
-► Starting at Phase 3 (Requirements).
-  Ready to begin, or would you like to start from a different phase?
-```
+Always announce every skip in the roadmap response. Never silently skip.
+
+## Role
+
+You are a guide walking the user through 18 SDLC phases. At each phase you explain what's happening, delegate to the appropriate skill, and pause for user input before moving on. This is not autonomous — the user drives the pace.
+
+## Modes
+
+| Mode | Use when | Behavior |
+|---|---|---|
+| `full` | Starting a new feature from scratch | Show roadmap, begin at Phase 1 |
+| `resume` | Continuing a previously started feature | Read state.json, resume from last incomplete phase |
+| `status` | User wants to see progress | Show progress tracker only |
 
 ## Phase Execution Pattern
 
@@ -139,7 +134,7 @@ Load the backing skill and execute. See the Phase Definitions table below for wh
 | 2 | Codebase Onboarding | direct skill invocation | `codebase-onboarding` | No |
 | 3 | Requirements | `aw-plan` (product mode) | `aw-plan` | No |
 | 4 | PRD | `aw-plan` (product mode) | `aw-plan` | No |
-| 5 | Design | `aw-plan` (design mode) | `aw-plan` | No |
+| 5 | Design | `aw-design` | `aw-design` | No |
 | 6 | Technical Spec | `aw-plan` (technical mode) | `aw-plan` | No |
 | 7 | Task Breakdown | `aw-plan` (tasks mode) | `aw-plan` | No |
 | 8 | Build | `aw-build` (code mode) | `aw-build`, `incremental-implementation` | No |
@@ -162,32 +157,15 @@ If the user provides a repo URL or name, clone it.
 If already in a repo, auto-skip with announcement.
 
 ### Phase 3 & 4: Requirements + PRD
-Phase 3 is **interactive** — ask the user clarifying questions about scope, acceptance criteria, and constraints.
+Phase 3 is a **conversation** — your job is to understand the feature by talking to the user, not by guessing.
+
+Think of yourself as a product manager sitting down with a stakeholder. You ask about scope, users, success criteria, edge cases, and constraints. You listen to the answers. You follow up on anything that's vague or missing. You keep the conversation going until you genuinely understand what needs to be built and how you'd know it's done. Only then do you write up `requirements.md`.
+
 Phase 4 takes Phase 3 outputs and writes the PRD document.
 These are separate because PMs often know what they want but need help structuring it.
 
 ### Phase 5: Design
-**Frontend-aware behavior:** Before executing, classify the feature:
-
-| Feature type | Design behavior |
-|---|---|
-| **Frontend / UI involved** | Generate HTML prototype screens showing the proposed UI. Use Stitch MCP (`stitch_generate-screen`) if available, otherwise create standalone HTML files in `.aw_docs/features/<slug>/designs/`. Each screen should be a self-contained HTML file with inline CSS that the user can open in a browser to preview. |
-| **Full-stack (API + UI)** | Generate HTML screens for the UI parts + document API contract changes. |
-| **Backend-only / no UI** | Suggest skipping. |
-
-For frontend features, the design output should include:
-- HTML prototype file(s) in `.aw_docs/features/<slug>/designs/`
-- Screen-by-screen walkthrough explaining the UX flow
-- Component inventory (which existing components to reuse, what's new)
-
-```
-# If frontend involved:
-◆ This feature has UI changes. I'll generate HTML prototype screens you can preview in your browser.
-
-# If backend-only:
-○ This looks like a backend-only feature with no UI changes.
-  Skip Phase 5 (Design)? Say "skip" or "no, I want to design something".
-```
+Load and execute `aw-design`. It handles feature type detection (frontend/full-stack/backend-only), generates HTML prototypes using the Highrise design system, and uses Stitch MCP when available. For backend-only features, it suggests skipping.
 
 ### Phase 8: Build
 This is typically the longest phase. Use `incremental-implementation` to break into thin slices.

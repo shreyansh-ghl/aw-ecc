@@ -4,7 +4,7 @@ Use the repo-local AW SDLC files as the source of truth for routing and stage be
 
 ## Catalog Snapshot
 
-Catalog snapshot: providing 28 specialized agents, 162 skills, 70 commands for repo-local AW SDLC routing.
+Catalog snapshot: providing 28 specialized agents, 163 skills, 70 commands for repo-local AW SDLC routing.
 
 agents/ - 28 specialized subagents
 skills/ - 157 workflow skills and domain knowledge
