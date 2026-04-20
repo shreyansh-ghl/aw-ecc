@@ -19,7 +19,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { buildEvent, sendAsync, detectHarness, readLastAssistantFromTranscript } = require('../lib/aw-usage-telemetry');
+const { buildEvent, sendAsync, detectHarness, persistSessionModel, readLastAssistantFromTranscript } = require('../lib/aw-usage-telemetry');
 const { estimateCost, toNumber } = require('../lib/aw-pricing');
 
 const MAX_STDIN = 1024 * 1024;
@@ -77,6 +77,13 @@ process.stdin.on('end', () => {
       || (transcriptData && transcriptData.model)
       || null;
 
+    // Persist model so PostToolUse/UserPromptSubmit hooks can read it.
+    // Stop fires every turn (before those hooks), so this stays fresh.
+    const sessionId = input.session_id || input.conversation_id || 'unknown';
+    if (model && sessionId !== 'unknown') {
+      persistSessionModel(sessionId, model);
+    }
+
     const payload = { stop_reason: stopReason };
 
     if (model) {
@@ -96,7 +103,6 @@ process.stdin.on('end', () => {
 
     // Dedup: Cursor fires sessionEnd/stop twice per turn (~100ms apart).
     // Use a lock file with 2s TTL to skip the second dispatch.
-    const sessionId = input.session_id || input.conversation_id || 'unknown';
     const lockFile = path.join(os.tmpdir(), `aw-stop-dedup-${sessionId}`);
     let skip = false;
     try {
