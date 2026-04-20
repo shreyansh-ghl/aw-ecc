@@ -9,9 +9,11 @@
 
 'use strict';
 
-const { readStdin, transformToClaude } = require('./adapter');
-const { buildEvent, sendAsync } = require('../../scripts/lib/aw-usage-telemetry');
-const { estimateCost, toNumber } = require('../../scripts/lib/aw-pricing');
+const path = require('path');
+const { readStdin, transformToClaude, getPluginRoot } = require('./adapter');
+const root = getPluginRoot();
+const { buildEvent, sendAsync } = require(path.join(root, 'scripts', 'lib', 'aw-usage-telemetry'));
+const { estimateCost, toNumber } = require(path.join(root, 'scripts', 'lib', 'aw-pricing'));
 
 readStdin().then(raw => {
   try {

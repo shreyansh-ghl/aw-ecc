@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-const { readStdin, transformToClaude } = require('./adapter');
+const path = require('path');
+const { readStdin, transformToClaude, getPluginRoot } = require('./adapter');
 readStdin().then(raw => {
   try {
     const input = JSON.parse(raw);
@@ -8,7 +9,8 @@ readStdin().then(raw => {
 
     // Usage telemetry — Cursor-only rich agent_completed event.
     try {
-      const { buildEvent, sendAsync } = require('../../scripts/lib/aw-usage-telemetry');
+      const root = getPluginRoot();
+      const { buildEvent, sendAsync } = require(path.join(root, 'scripts', 'lib', 'aw-usage-telemetry'));
       const claudeInput = transformToClaude(input);
       sendAsync(buildEvent(claudeInput, 'agent_completed', {
         agent_type: input.subagent_type || input.agent_name || agent,
