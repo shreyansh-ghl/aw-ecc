@@ -88,6 +88,11 @@ function getAwVersion() {
   const candidates = [
     path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json'),
   ];
+  // Derive global npm prefix from the running node binary (no shell needed)
+  try {
+    const nodeDir = path.dirname(process.execPath);
+    candidates.push(path.join(nodeDir, '..', 'lib', 'node_modules', '@ghl-ai', 'aw', 'package.json'));
+  } catch { /* ignore */ }
   try {
     const globalPrefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 3000 }).trim();
     candidates.push(path.join(globalPrefix, 'lib', 'node_modules', '@ghl-ai', 'aw', 'package.json'));
