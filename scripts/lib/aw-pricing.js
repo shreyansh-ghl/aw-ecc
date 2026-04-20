@@ -240,29 +240,48 @@ function findRates(model, pricingMap) {
  * Estimate the cost in USD for a model call.
  *
  * @param {string} model - Model identifier (e.g. "claude-sonnet-4-20250514", "gpt-4o")
- * @param {number} inputTokens - Input/prompt token count
+ * @param {number} inputTokens - Total input/prompt token count (includes cache tokens)
  * @param {number} outputTokens - Output/completion token count
+ * @param {object} [opts] - Optional cache token breakdown
+ * @param {number} [opts.cacheReadTokens]  - Tokens served from cache (billed at ~10% of input rate)
+ * @param {number} [opts.cacheWriteTokens] - Tokens written to cache (billed at ~125% of input rate)
  * @returns {number|null} Estimated cost in USD, or null if unknown model or no tokens
  */
-function estimateCost(model, inputTokens, outputTokens) {
+function estimateCost(model, inputTokens, outputTokens, opts) {
   if (!inputTokens && !outputTokens) return null;
+
+  const cacheRead = (opts && opts.cacheReadTokens) || 0;
+  const cacheWrite = (opts && opts.cacheWriteTokens) || 0;
+
+  function computeCost(rates) {
+    if (!rates) return null;
+    const inRate = rates.in;
+    const outRate = rates.out;
+
+    if (cacheRead || cacheWrite) {
+      const nonCached = Math.max(0, inputTokens - cacheRead - cacheWrite);
+      const cost =
+        (nonCached / 1_000_000) * inRate +
+        (cacheRead / 1_000_000) * (inRate * 0.1) +
+        (cacheWrite / 1_000_000) * (inRate * 1.25) +
+        (outputTokens / 1_000_000) * outRate;
+      return Math.round(cost * 1e6) / 1e6;
+    }
+
+    const cost = (inputTokens / 1_000_000) * inRate + (outputTokens / 1_000_000) * outRate;
+    return Math.round(cost * 1e6) / 1e6;
+  }
 
   // Try dynamic pricing first (OpenRouter cache)
   const cached = loadPricingSync();
   if (cached && cached.models) {
-    const rates = findRates(model, cached.models);
-    if (rates) {
-      const cost = (inputTokens / 1_000_000) * rates.in + (outputTokens / 1_000_000) * rates.out;
-      return Math.round(cost * 1e6) / 1e6;
-    }
+    const result = computeCost(findRates(model, cached.models));
+    if (result !== null) return result;
   }
 
   // Fallback to hardcoded pricing
-  const fallbackRates = findRates(model, FALLBACK_PRICING);
-  if (fallbackRates) {
-    const cost = (inputTokens / 1_000_000) * fallbackRates.in + (outputTokens / 1_000_000) * fallbackRates.out;
-    return Math.round(cost * 1e6) / 1e6;
-  }
+  const result = computeCost(findRates(model, FALLBACK_PRICING));
+  if (result !== null) return result;
 
   // Model not found anywhere
   return null;

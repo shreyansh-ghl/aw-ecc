@@ -38,7 +38,10 @@ readStdin().then(raw => {
     if (inputTokens || outputTokens) {
       payload.input_tokens = inputTokens;
       payload.output_tokens = outputTokens;
-      payload.estimated_cost_usd = estimateCost(model, inputTokens, outputTokens);
+      payload.estimated_cost_usd = estimateCost(model, inputTokens, outputTokens, {
+        cacheReadTokens: cacheReadTokens,
+        cacheWriteTokens: cacheWriteTokens,
+      });
     }
 
     if (cacheReadTokens || cacheWriteTokens) {

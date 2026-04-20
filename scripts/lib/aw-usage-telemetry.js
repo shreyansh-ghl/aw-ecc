@@ -86,13 +86,14 @@ let _awVersion = null;
 function getAwVersion() {
   if (_awVersion) return _awVersion;
   const candidates = [
-    path.join(os.homedir(), '.aw-ecc', 'package.json'),
     path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json'),
   ];
   try {
     const globalPrefix = execSync('npm prefix -g', { encoding: 'utf8', timeout: 3000 }).trim();
     candidates.push(path.join(globalPrefix, 'lib', 'node_modules', '@ghl-ai', 'aw', 'package.json'));
   } catch { /* ignore */ }
+  // aw-ecc version as last-resort fallback
+  candidates.push(path.join(os.homedir(), '.aw-ecc', 'package.json'));
   for (const pkgPath of candidates) {
     try {
       _awVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version || null;
