@@ -173,13 +173,8 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/session-end-marker.js',
       payloadMode: 'claude',
     },
-    {
-      hookId: 'telemetry:session-end',
-      allowedProfiles: ['minimal', 'standard', 'strict'],
-      runner: 'node',
-      relativeScriptPath: 'scripts/hooks/aw-usage-stop.js',
-      payloadMode: 'claude',
-    },
+    // telemetry:session-end removed — afterAgentResponse hook now emits
+    // response_completed per turn with direct token/cost data from Cursor.
   ],
   stop: [
     {

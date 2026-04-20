@@ -8,7 +8,7 @@ readStdin().then(raw => {
 
     // Usage telemetry — Cursor-only rich agent_completed event.
     try {
-      const { buildEvent, sendAsync } = require('../scripts/lib/aw-usage-telemetry');
+      const { buildEvent, sendAsync } = require('../../scripts/lib/aw-usage-telemetry');
       const claudeInput = transformToClaude(input);
       sendAsync(buildEvent(claudeInput, 'agent_completed', {
         agent_type: input.subagent_type || input.agent_name || agent,

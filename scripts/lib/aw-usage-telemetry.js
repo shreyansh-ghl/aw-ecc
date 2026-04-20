@@ -85,8 +85,8 @@ let _awVersion = null;
 
 function getAwVersion() {
   if (_awVersion) return _awVersion;
-  // Try local ~/.aw/node_modules first, then global npm prefix
   const candidates = [
+    path.join(os.homedir(), '.aw-ecc', 'package.json'),
     path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json'),
   ];
   try {
@@ -221,7 +221,7 @@ function buildEvent(hookInput, eventType, payload) {
     model,
     machine_id: cfg.machine_id || 'unknown',
     github_user: git.user || input.user_email || null,
-    github_email: git.email || null,
+    github_email: git.email || input.user_email || null,
     project_hash: computeProjectHash(cwd),
     aw_version: getAwVersion(),
     event: eventType,

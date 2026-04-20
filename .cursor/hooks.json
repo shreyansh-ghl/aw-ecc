@@ -118,6 +118,13 @@
         "description": "Save state before context compaction"
       }
     ],
+    "afterAgentResponse": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-agent-response.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "afterAgentResponse",
+        "description": "Telemetry: response_completed with tokens and cost per turn"
+      }
+    ],
     "stop": [
       {
         "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"stop.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",

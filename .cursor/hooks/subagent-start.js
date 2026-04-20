@@ -6,7 +6,7 @@ readStdin().then(raw => {
     // Cursor subagentStart payload fields (from docs):
     // subagent_id, subagent_type, task, parent_conversation_id, subagent_model, is_parallel_worker
     const agentType = input.subagent_type || 'general-purpose';
-    const task = input.task || '';
+    const task = input.task || input.description || '';
     console.error(`[ECC] Agent spawned: ${agentType} (${task.slice(0, 80)})`);
 
     // Dispatch agent_spawned telemetry

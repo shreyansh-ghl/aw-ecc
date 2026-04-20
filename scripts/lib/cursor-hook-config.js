@@ -142,6 +142,13 @@ const CURSOR_HOOK_ENTRIES = Object.freeze({
       description: 'Save state before context compaction',
     },
   ],
+  afterAgentResponse: [
+    {
+      command: buildManagedCursorHookCommand('after-agent-response.js'),
+      event: 'afterAgentResponse',
+      description: 'Telemetry: response_completed with tokens and cost per turn',
+    },
+  ],
   stop: [
     {
       command: buildManagedCursorHookCommand('stop.js'),

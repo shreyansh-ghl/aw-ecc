@@ -70,6 +70,23 @@ function transformToClaude(cursorInput, overrides = {}) {
       output: cursorInput.output || cursorInput.result || '',
     },
     transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
+    // Cursor common schema fields surfaced at top level for buildEvent()
+    generation_id: cursorInput.generation_id,
+    conversation_id: cursorInput.conversation_id,
+    workspace_roots: cursorInput.workspace_roots,
+    model: cursorInput.model,
+    user_email: cursorInput.user_email,
+    cursor_version: cursorInput.cursor_version,
+    status: cursorInput.status,
+    reason: cursorInput.reason,
+    // Token fields — Cursor sends these on afterAgentResponse and stop hooks
+    input_tokens: cursorInput.input_tokens,
+    output_tokens: cursorInput.output_tokens,
+    cache_read_tokens: cursorInput.cache_read_tokens,
+    cache_write_tokens: cursorInput.cache_write_tokens,
+    // Subagent fields
+    task: cursorInput.task,
+    description: cursorInput.description,
     _cursor: {
       conversation_id: cursorInput.conversation_id,
       hook_event_name: cursorInput.hook_event_name,

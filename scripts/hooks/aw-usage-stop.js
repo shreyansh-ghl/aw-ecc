@@ -58,15 +58,18 @@ process.stdin.on('end', () => {
         || 'unknown';
     }
 
-    // Token usage — prefer hook input, fall back to transcript
+    // Token usage — prefer top-level fields (Cursor sends these directly),
+    // then input.usage, then transcript as last resort.
+    const directInputTokens = toNumber(input.input_tokens);
+    const directOutputTokens = toNumber(input.output_tokens);
     const hookUsage = input.usage || {};
     const txUsage = (transcriptData && transcriptData.usage) || {};
     const usage = Object.keys(hookUsage).length > 0 ? hookUsage : txUsage;
 
-    const inputTokens = toNumber(usage.input_tokens || usage.prompt_tokens);
-    const outputTokens = toNumber(usage.output_tokens || usage.completion_tokens);
-    const cacheReadTokens = toNumber(usage.cache_read_input_tokens);
-    const cacheCreateTokens = toNumber(usage.cache_creation_input_tokens);
+    const inputTokens = directInputTokens || toNumber(usage.input_tokens || usage.prompt_tokens);
+    const outputTokens = directOutputTokens || toNumber(usage.output_tokens || usage.completion_tokens);
+    const cacheReadTokens = toNumber(input.cache_read_tokens) || toNumber(usage.cache_read_input_tokens);
+    const cacheCreateTokens = toNumber(input.cache_write_tokens) || toNumber(usage.cache_creation_input_tokens);
 
     // Model: prefer hook input → transcript → session file
     const model = input.model
