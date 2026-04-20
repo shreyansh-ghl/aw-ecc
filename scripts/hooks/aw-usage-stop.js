@@ -2,10 +2,14 @@
 /**
  * Usage telemetry — Stop hook.
  *
- * Captures response_completed per turn (fires after each Claude/Cursor response).
- * Claude: stop_reason + usage.input_tokens/output_tokens (undocumented but confirmed).
- * Codex: last_assistant_message presence = completed; no usage field.
- * Cursor: status ("completed"/"aborted"/"error"); no usage field.
+ * Captures response_completed per turn (fires after each Claude/Cursor/Codex response).
+ *
+ * No harness provides token usage in hook input directly. All three provide
+ * transcript_path — we parse the transcript JSONL to extract model, stop_reason,
+ * and usage for any harness.
+ *
+ * Pricing is resolved dynamically via OpenRouter API (24h cached) with a
+ * hardcoded fallback for when the API is unreachable and no cache exists.
  *
  * Outputs {} on stdout.
  */
@@ -15,32 +19,11 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { buildEvent, sendAsync, detectHarness } = require('../lib/aw-usage-telemetry');
+const { buildEvent, sendAsync, detectHarness, readLastAssistantFromTranscript } = require('../lib/aw-usage-telemetry');
+const { estimateCost, toNumber } = require('../lib/aw-pricing');
 
 const MAX_STDIN = 1024 * 1024;
 let raw = '';
-
-// Pricing per 1M tokens (same as cost-tracker.js)
-const PRICING = {
-  haiku:  { in: 0.80, out: 4.00 },
-  sonnet: { in: 3.00, out: 15.00 },
-  opus:   { in: 15.00, out: 75.00 },
-};
-
-function toNumber(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function estimateCost(model, inputTokens, outputTokens) {
-  if (!inputTokens && !outputTokens) return null;
-  const normalized = String(model || '').toLowerCase();
-  let rates = PRICING.sonnet; // default
-  if (normalized.includes('haiku')) rates = PRICING.haiku;
-  if (normalized.includes('opus')) rates = PRICING.opus;
-  const cost = (inputTokens / 1_000_000) * rates.in + (outputTokens / 1_000_000) * rates.out;
-  return Math.round(cost * 1e6) / 1e6;
-}
 
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => {
@@ -54,29 +37,58 @@ process.stdin.on('end', () => {
     const input = JSON.parse(raw);
     const harness = detectHarness(input);
 
+    // Parse transcript for all harnesses — all three provide transcript_path.
+    // If the transcript format differs across harnesses, the parser returns null gracefully.
+    let transcriptData = null;
+    if (input.transcript_path) {
+      transcriptData = readLastAssistantFromTranscript(input.transcript_path);
+    }
+
     // Normalize stop reason across harnesses
     let stopReason;
     if (harness === 'cursor') {
-      stopReason = input.status || 'unknown';
+      // Cursor adapter maps sessionEnd.reason / stop.status to stop_reason
+      stopReason = input.stop_reason || input.status || input.reason || 'unknown';
     } else if (harness === 'codex') {
       stopReason = input.last_assistant_message ? 'completed' : 'unknown';
     } else {
-      // Claude uses stop_reason
-      stopReason = input.stop_reason || 'unknown';
+      // Claude: prefer hook input, fall back to transcript
+      stopReason = input.stop_reason
+        || (transcriptData && transcriptData.stop_reason)
+        || 'unknown';
     }
 
-    // Token usage — only available on Claude Stop (undocumented)
-    const usage = input.usage || {};
+    // Token usage — prefer hook input, fall back to transcript
+    const hookUsage = input.usage || {};
+    const txUsage = (transcriptData && transcriptData.usage) || {};
+    const usage = Object.keys(hookUsage).length > 0 ? hookUsage : txUsage;
+
     const inputTokens = toNumber(usage.input_tokens || usage.prompt_tokens);
     const outputTokens = toNumber(usage.output_tokens || usage.completion_tokens);
-    const model = input.model || input._cursor?.model || null;
+    const cacheReadTokens = toNumber(usage.cache_read_input_tokens);
+    const cacheCreateTokens = toNumber(usage.cache_creation_input_tokens);
+
+    // Model: prefer hook input → transcript → session file
+    const model = input.model
+      || input._cursor?.model
+      || (transcriptData && transcriptData.model)
+      || null;
 
     const payload = { stop_reason: stopReason };
+
+    if (model) {
+      payload.model = model;
+    }
 
     if (inputTokens || outputTokens) {
       payload.input_tokens = inputTokens;
       payload.output_tokens = outputTokens;
       payload.estimated_cost_usd = estimateCost(model, inputTokens, outputTokens);
+    }
+
+    if (cacheReadTokens || cacheCreateTokens) {
+      payload.cache_read_tokens = cacheReadTokens;
+      payload.cache_create_tokens = cacheCreateTokens;
     }
 
     // Dedup: Cursor fires sessionEnd/stop twice per turn (~100ms apart).
@@ -90,7 +102,14 @@ process.stdin.on('end', () => {
     } catch { /* no lock file */ }
     if (!skip) {
       fs.writeFileSync(lockFile, String(Date.now()));
-      sendAsync(buildEvent(input, 'response_completed', payload));
+
+      // Override model in the event envelope too (buildEvent reads from hook input
+      // which doesn't have model for Claude — inject it so the top-level field is set)
+      const event = buildEvent(input, 'response_completed', payload);
+      if (model && !event.model) {
+        event.model = model;
+      }
+      sendAsync(event);
     }
   } catch {
     // Non-blocking.

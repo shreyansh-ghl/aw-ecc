@@ -109,13 +109,7 @@ function runExistingHook(scriptName, stdinData) {
     path.join(root, 'scripts', 'hooks', scriptName),
     path.join(root, 'hooks', scriptName),
   ];
-  const scriptPath = candidates.find(candidate => fs.existsSync(candidate));
-  if (!scriptPath) {
-    if (process.env.AW_HOOK_DEBUG === '1') {
-      process.stderr.write(`[aw] hook script not found: ${scriptName}, skipping\n`);
-    }
-    return undefined;
-  }
+  const scriptPath = candidates.find(candidate => fs.existsSync(candidate)) || candidates[0];
   return runManagedCommand('node', [scriptPath], stdinData);
 }
 

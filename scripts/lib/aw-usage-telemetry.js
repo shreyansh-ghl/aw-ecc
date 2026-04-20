@@ -140,6 +140,51 @@ function readSessionModel(sessionId) {
   } catch { return null; }
 }
 
+// ── Transcript parsing ───────────────────────────────────────────────
+
+/**
+ * Read the last assistant entry from a transcript JSONL file.
+ * Reads the last 64KB (enough for several entries) to avoid loading
+ * the entire file which can be 10MB+.
+ *
+ * Works across harnesses — Claude, Cursor, and Codex all provide
+ * transcript_path. The parser looks for `type: "assistant"` entries;
+ * if the transcript format differs, it returns null gracefully.
+ *
+ * Returns { model, stop_reason, usage } or null.
+ */
+function readLastAssistantFromTranscript(transcriptPath) {
+  if (!transcriptPath) return null;
+  try {
+    const stat = fs.statSync(transcriptPath);
+    const TAIL_BYTES = 64 * 1024;
+    const start = Math.max(0, stat.size - TAIL_BYTES);
+    const fd = fs.openSync(transcriptPath, 'r');
+    const buf = Buffer.alloc(Math.min(TAIL_BYTES, stat.size));
+    fs.readSync(fd, buf, 0, buf.length, start);
+    fs.closeSync(fd);
+
+    const chunk = buf.toString('utf8');
+    const lines = chunk.split('\n').filter(Boolean);
+
+    // Walk backward to find the last assistant entry
+    for (let i = lines.length - 1; i >= 0; i--) {
+      try {
+        const entry = JSON.parse(lines[i]);
+        if (entry.type === 'assistant' && entry.message) {
+          const msg = entry.message;
+          return {
+            model: msg.model || null,
+            stop_reason: msg.stop_reason || null,
+            usage: msg.usage || null,
+          };
+        }
+      } catch { /* skip malformed lines */ }
+    }
+  } catch { /* transcript unreadable — non-blocking */ }
+  return null;
+}
+
 // ── buildEvent ───────────────────────────────────────────────────────
 
 function buildEvent(hookInput, eventType, payload) {
@@ -202,4 +247,4 @@ function sendAsync(event) {
   }
 }
 
-module.exports = { buildEvent, sendAsync, isDisabled, detectHarness, loadConfig, persistSessionModel };
+module.exports = { buildEvent, sendAsync, isDisabled, detectHarness, loadConfig, persistSessionModel, readLastAssistantFromTranscript };
