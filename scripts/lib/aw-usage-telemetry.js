@@ -83,8 +83,30 @@ function isDisabled() {
 
 let _awVersion = null;
 
+function parseVersionString(raw) {
+  if (!raw) return null;
+  const match = String(raw).match(/\bv?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)\b/);
+  return match ? match[1] : null;
+}
+
 function getAwVersion() {
   if (_awVersion) return _awVersion;
+  const envVersion = parseVersionString(process.env.AW_VERSION);
+  if (envVersion) {
+    _awVersion = envVersion;
+    return _awVersion;
+  }
+  try {
+    const cliVersion = parseVersionString(execSync('aw --version', {
+      encoding: 'utf8',
+      timeout: 1500,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }));
+    if (cliVersion) {
+      _awVersion = cliVersion;
+      return _awVersion;
+    }
+  } catch { /* ignore */ }
   const candidates = [
     path.join(AW_HOME, 'node_modules', '@ghl-ai', 'aw', 'package.json'),
   ];
@@ -101,7 +123,7 @@ function getAwVersion() {
   candidates.push(path.join(os.homedir(), '.aw-ecc', 'package.json'));
   for (const pkgPath of candidates) {
     try {
-      _awVersion = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version || null;
+      _awVersion = parseVersionString(JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version) || null;
       if (_awVersion) return _awVersion;
     } catch { /* ignore */ }
   }
@@ -134,28 +156,82 @@ function persistSessionModel(sessionId, model) {
   if (!sessionId || !model) return;
   try {
     fs.mkdirSync(SESSION_DIR, { recursive: true });
-    fs.writeFileSync(path.join(SESSION_DIR, sessionId + '.json'), JSON.stringify({ model }));
+    const state = readSessionState(sessionId);
+    fs.writeFileSync(path.join(SESSION_DIR, sessionId + '.json'), JSON.stringify({
+      ...state,
+      model,
+    }));
   } catch { /* ignore */ }
 }
 
 function readSessionModel(sessionId) {
-  if (!sessionId) return null;
+  const state = readSessionState(sessionId);
+  return state.model || null;
+}
+
+function readSessionState(sessionId) {
+  if (!sessionId) return {};
   try {
-    const data = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, sessionId + '.json'), 'utf8'));
-    return data.model || null;
-  } catch { return null; }
+    return JSON.parse(fs.readFileSync(path.join(SESSION_DIR, sessionId + '.json'), 'utf8'));
+  } catch { return {}; }
+}
+
+function persistSessionSkill(sessionId, turnId, skill) {
+  if (!sessionId || !skill?.skill_name) return;
+  try {
+    fs.mkdirSync(SESSION_DIR, { recursive: true });
+    const state = readSessionState(sessionId);
+    fs.writeFileSync(path.join(SESSION_DIR, sessionId + '.json'), JSON.stringify({
+      ...state,
+      last_skill: {
+        turn_id: turnId || null,
+        skill_name: skill.skill_name,
+        args: skill.args || '',
+        source: skill.source || 'unknown',
+        updated_at: new Date().toISOString(),
+      },
+    }));
+  } catch { /* ignore */ }
+}
+
+function readSessionSkill(sessionId, turnId) {
+  const skill = readSessionState(sessionId)?.last_skill;
+  if (!skill?.skill_name) return null;
+  if (turnId) {
+    return skill.turn_id === turnId ? skill : null;
+  }
+  return skill.turn_id ? null : skill;
 }
 
 // ── Transcript parsing ───────────────────────────────────────────────
 
+function buildCodexUsage(entry) {
+  if (entry?.type !== 'event_msg' || entry?.payload?.type !== 'token_count') return null;
+  const info = entry.payload?.info || {};
+  const usage = info.last_token_usage || info.total_token_usage;
+  if (!usage || typeof usage !== 'object') return null;
+  return {
+    input_tokens: usage.input_tokens ?? null,
+    output_tokens: usage.output_tokens ?? null,
+    cached_input_tokens: usage.cached_input_tokens ?? null,
+    reasoning_output_tokens: usage.reasoning_output_tokens ?? null,
+  };
+}
+
+function isCodexAssistantEntry(entry) {
+  return entry?.type === 'response_item'
+    && entry?.payload?.type === 'message'
+    && entry?.payload?.role === 'assistant';
+}
+
 /**
  * Read the last assistant entry from a transcript JSONL file.
- * Reads the last 64KB (enough for several entries) to avoid loading
+ * Reads the last 256KB (enough for several entries) to avoid loading
  * the entire file which can be 10MB+.
  *
- * Works across harnesses — Claude, Cursor, and Codex all provide
- * transcript_path. The parser looks for `type: "assistant"` entries;
- * if the transcript format differs, it returns null gracefully.
+ * Works across harnesses — Claude/Cursor transcripts expose assistant
+ * rows directly, while Codex writes `response_item` + `event_msg`
+ * lines and surfaces usage via `token_count`.
  *
  * Returns { model, stop_reason, usage } or null.
  */
@@ -163,7 +239,7 @@ function readLastAssistantFromTranscript(transcriptPath) {
   if (!transcriptPath) return null;
   try {
     const stat = fs.statSync(transcriptPath);
-    const TAIL_BYTES = 64 * 1024;
+    const TAIL_BYTES = 256 * 1024;
     const start = Math.max(0, stat.size - TAIL_BYTES);
     const fd = fs.openSync(transcriptPath, 'r');
     const buf = Buffer.alloc(Math.min(TAIL_BYTES, stat.size));
@@ -172,17 +248,28 @@ function readLastAssistantFromTranscript(transcriptPath) {
 
     const chunk = buf.toString('utf8');
     const lines = chunk.split('\n').filter(Boolean);
+    let latestCodexUsage = null;
 
-    // Walk backward to find the last assistant entry
+    // Walk backward to find the last assistant entry for any harness.
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const entry = JSON.parse(lines[i]);
+        if (!latestCodexUsage) {
+          latestCodexUsage = buildCodexUsage(entry);
+        }
         if (entry.type === 'assistant' && entry.message) {
           const msg = entry.message;
           return {
             model: msg.model || null,
             stop_reason: msg.stop_reason || null,
             usage: msg.usage || null,
+          };
+        }
+        if (isCodexAssistantEntry(entry)) {
+          return {
+            model: null,
+            stop_reason: null,
+            usage: latestCodexUsage,
           };
         }
       } catch { /* skip malformed lines */ }
@@ -253,4 +340,15 @@ function sendAsync(event) {
   }
 }
 
-module.exports = { buildEvent, sendAsync, isDisabled, detectHarness, loadConfig, persistSessionModel, readLastAssistantFromTranscript };
+module.exports = {
+  buildEvent,
+  sendAsync,
+  isDisabled,
+  detectHarness,
+  loadConfig,
+  persistSessionModel,
+  readSessionModel,
+  persistSessionSkill,
+  readSessionSkill,
+  readLastAssistantFromTranscript,
+};

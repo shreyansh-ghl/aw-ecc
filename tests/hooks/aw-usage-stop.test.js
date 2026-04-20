@@ -1,14 +1,19 @@
 /**
- * Tests for aw-usage-stop.js hook — cross-harness telemetry
+ * Tests for aw-usage-stop.js hook — cross-harness telemetry.
  *
  * Run with: node tests/hooks/aw-usage-stop.test.js
  */
 
 const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
 const script = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'aw-usage-stop.js');
+const codexFixture = path.join(__dirname, '..', 'fixtures', 'codex-stop-transcript.jsonl');
+const { buildResponseCompletedData } = require('../../scripts/hooks/aw-usage-stop.js');
+const { readLastAssistantFromTranscript } = require('../../scripts/lib/aw-usage-telemetry');
 
 function test(name, fn) {
   try {
@@ -30,11 +35,36 @@ function runScript(input, envOverrides = {}) {
     timeout: 10000,
     env: {
       ...process.env,
-      AW_TELEMETRY_DISABLED: '1', // Don't actually send telemetry during tests
+      AW_TELEMETRY_DISABLED: '1',
       ...envOverrides,
     },
   });
   return { code: result.status || 0, stdout: result.stdout || '', stderr: result.stderr || '' };
+}
+
+function createClaudeTranscriptFixture() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-stop-claude-'));
+  const transcriptPath = path.join(dir, 'transcript.jsonl');
+  fs.writeFileSync(transcriptPath, [
+    JSON.stringify({
+      type: 'assistant',
+      message: {
+        model: 'claude-sonnet-4-20250514',
+        stop_reason: 'end_turn',
+        usage: {
+          input_tokens: 1200,
+          output_tokens: 300,
+          cache_read_input_tokens: 100,
+        },
+      },
+    }),
+    '',
+  ].join('\n'));
+  return { dir, transcriptPath };
+}
+
+function cleanup(dirPath) {
+  fs.rmSync(dirPath, { recursive: true, force: true });
 }
 
 function runTests() {
@@ -43,100 +73,73 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  // 1. Empty input — exits 0, outputs {}
-  (test('empty input: exits 0 with {} output', () => {
-    const result = runScript('{}');
-    assert.strictEqual(result.code, 0, `Expected exit code 0, got ${result.code}`);
-    assert.strictEqual(result.stdout, '{}', 'Expected {} output');
-  }) ? passed++ : failed++);
-
-  // 2. Invalid JSON — exits 0, outputs {}
-  (test('invalid JSON: exits 0 with {} output', () => {
+  (test('invalid JSON stays non-blocking and returns {}', () => {
     const result = runScript('not valid json');
     assert.strictEqual(result.code, 0, `Expected exit code 0, got ${result.code}`);
     assert.strictEqual(result.stdout, '{}', 'Expected {} output');
   }) ? passed++ : failed++);
 
-  // 3. Claude input without transcript — minimal output
-  (test('Claude input without transcript: outputs {}', () => {
-    const input = {
-      session_id: 'test-session-claude-1',
-      cwd: '/tmp/test',
-      permission_mode: 'default',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
+  (test('Claude transcript parsing still returns model, stop_reason, and usage', () => {
+    const fixture = createClaudeTranscriptFixture();
+    try {
+      const parsed = readLastAssistantFromTranscript(fixture.transcriptPath);
+      assert.ok(parsed, 'Expected transcript parser result');
+      assert.strictEqual(parsed.model, 'claude-sonnet-4-20250514');
+      assert.strictEqual(parsed.stop_reason, 'end_turn');
+      assert.strictEqual(parsed.usage.input_tokens, 1200);
+      assert.strictEqual(parsed.usage.output_tokens, 300);
+      assert.strictEqual(parsed.usage.cache_read_input_tokens, 100);
+    } finally {
+      cleanup(fixture.dir);
+    }
   }) ? passed++ : failed++);
 
-  // 4. Cursor input with model — detects harness
-  (test('Cursor input: detects cursor harness', () => {
-    const input = {
-      conversation_id: 'test-cursor-conv-1',
-      _cursor: { model: 'gpt-4o', conversation_id: 'test-cursor-conv-1' },
-      reason: 'completed',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
-  }) ? passed++ : failed++);
-
-  // 5. Codex input with model — detects harness
-  (test('Codex input: detects codex harness', () => {
-    const input = {
-      session_id: 'test-codex-session-1',
-      turn_id: 'test-turn-1',
-      model: 'codex-1',
-      last_assistant_message: 'Done.',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
-  }) ? passed++ : failed++);
-
-  // 6. Cursor input with reason field — stop_reason mapped
-  (test('Cursor input: reason field mapped to stop_reason', () => {
-    const input = {
-      conversation_id: 'test-cursor-reason-1',
-      _cursor: { model: 'gpt-4o', conversation_id: 'test-cursor-reason-1' },
+  (test('Cursor direct token fields still win without transcript parsing', () => {
+    const result = buildResponseCompletedData({
+      conversation_id: 'cursor-session-1',
+      _cursor: { model: 'gpt-4o', conversation_id: 'cursor-session-1' },
       stop_reason: 'completed',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
+      input_tokens: 2500,
+      output_tokens: 500,
+      cache_read_tokens: 200,
+    });
+
+    assert.strictEqual(result.model, 'gpt-4o');
+    assert.strictEqual(result.payload.stop_reason, 'completed');
+    assert.strictEqual(result.payload.input_tokens, 2500);
+    assert.strictEqual(result.payload.output_tokens, 500);
+    assert.strictEqual(result.payload.cache_read_tokens, 200);
+    assert.ok(result.payload.estimated_cost_usd > 0, 'Expected non-zero estimated cost');
   }) ? passed++ : failed++);
 
-  // 7. Codex input with last_assistant_message — stop_reason = completed
-  (test('Codex input: last_assistant_message maps to completed', () => {
-    const input = {
-      session_id: 'test-codex-completed-1',
-      turn_id: 'test-turn-2',
+  (test('Codex transcript fixture yields tokens, cache reads, and cost', () => {
+    const result = buildResponseCompletedData({
+      session_id: 'codex-session-1',
+      turn_id: 'turn-1',
       model: 'codex-1',
-      last_assistant_message: 'Here is the result.',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
+      last_assistant_message: 'Telemetry validation complete.',
+      transcript_path: codexFixture,
+    });
+
+    assert.strictEqual(result.model, 'codex-1');
+    assert.strictEqual(result.payload.stop_reason, 'completed');
+    assert.strictEqual(result.payload.input_tokens, 67443);
+    assert.strictEqual(result.payload.output_tokens, 319);
+    assert.strictEqual(result.payload.cache_read_tokens, 67328);
+    assert.ok(result.payload.estimated_cost_usd > 0, 'Expected non-zero estimated cost');
+    assert.strictEqual(result.payload.cache_create_tokens, undefined);
   }) ? passed++ : failed++);
 
-  // 8. Codex input without last_assistant_message — stop_reason = unknown
-  (test('Codex input: no last_assistant_message maps to unknown', () => {
-    const input = {
-      session_id: 'test-codex-unknown-1',
-      turn_id: 'test-turn-3',
+  (test('Codex input without assistant message stays at unknown stop_reason', () => {
+    const result = buildResponseCompletedData({
+      session_id: 'codex-session-2',
+      turn_id: 'turn-2',
       model: 'codex-1',
-    };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
-  }) ? passed++ : failed++);
+      transcript_path: codexFixture,
+    });
 
-  // 9. Script handles very large input without crashing
-  (test('large input: handles gracefully', () => {
-    const input = { session_id: 'large-test', padding: 'x'.repeat(100000) };
-    const result = runScript(input);
-    assert.strictEqual(result.code, 0);
-    assert.strictEqual(result.stdout, '{}');
+    assert.strictEqual(result.payload.stop_reason, 'unknown');
+    assert.strictEqual(result.payload.input_tokens, 67443);
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

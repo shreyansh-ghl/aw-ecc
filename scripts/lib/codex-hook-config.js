@@ -7,7 +7,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'bash "$HOME/.codex/hooks/aw-session-start.sh"\'',
+          command: 'bash "$HOME/.codex/hooks/aw-session-start.sh"',
         },
       ],
       description: 'Load AW routing context at session start',
@@ -18,7 +18,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'bash "$HOME/.codex/hooks/aw-user-prompt-submit.sh"\'',
+          command: 'bash "$HOME/.codex/hooks/aw-user-prompt-submit.sh"',
         },
       ],
       description: 'Inject compact AW routing and rule reminders on each prompt',
@@ -30,7 +30,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'bash "$HOME/.codex/hooks/aw-pre-tool-use.sh"\'',
+          command: 'bash "$HOME/.codex/hooks/aw-pre-tool-use.sh"',
         },
       ],
       description: 'Reserved AW pre-tool-use phase for Codex home installs',
@@ -42,7 +42,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'bash "$HOME/.codex/hooks/aw-post-tool-use.sh"\'',
+          command: 'bash "$HOME/.codex/hooks/aw-post-tool-use.sh"',
         },
       ],
       description: 'Reserved AW post-tool-use phase for Codex home installs',
@@ -53,7 +53,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'bash "$HOME/.codex/hooks/aw-stop.sh"\'',
+          command: 'bash "$HOME/.codex/hooks/aw-stop.sh"',
         },
       ],
       description: 'Reserved AW stop phase for Codex home installs',
