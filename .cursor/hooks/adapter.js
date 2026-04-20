@@ -23,8 +23,9 @@ function readStdin() {
 }
 
 function getPluginRoot() {
-  const homeStyleRoot = path.resolve(__dirname, '..');
+  const os = require('os');
   const repoStyleRoot = path.resolve(__dirname, '..', '..');
+  const awEccHome = path.join(os.homedir(), '.aw-ecc');
 
   if (
     fs.existsSync(path.join(repoStyleRoot, 'package.json'))
@@ -34,7 +35,11 @@ function getPluginRoot() {
     return repoStyleRoot;
   }
 
-  return homeStyleRoot;
+  if (fs.existsSync(path.join(awEccHome, 'scripts', 'lib', 'aw-usage-telemetry.js'))) {
+    return awEccHome;
+  }
+
+  return path.resolve(__dirname, '..');
 }
 
 function transformToClaude(cursorInput, overrides = {}) {
