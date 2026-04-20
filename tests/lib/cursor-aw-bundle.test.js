@@ -28,6 +28,7 @@ const REQUIRED_SKILLS = [
   'aw-review',
   'aw-deploy',
   'aw-ship',
+  'aw-feature',
   'aw-execute',
   'aw-verify',
   'aw-brainstorm',

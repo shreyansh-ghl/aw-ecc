@@ -9,18 +9,18 @@
 The current catalog exposed by this repo is:
 
 - 28 agents
-- 160 skills
-- 69 commands
+- 163 skills
+- 70 commands
 
 ## Quick Start Snapshot
 
-Installing `aw-ecc` gives your workspace access to 28 agents, 160 skills, and 69 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
+Installing `aw-ecc` gives your workspace access to 28 agents, 163 skills, and 70 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
 
 | Surface | Availability |
 | --- | --- |
 | Agents | ✅ 28 agents |
-| Skills | ✅ 160 skills |
-| Commands | ✅ 69 commands |
+| Skills | ✅ 163 skills |
+| Commands | ✅ 70 commands |
 
 These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
 
