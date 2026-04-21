@@ -32,10 +32,13 @@ function cleanup(dirPath) {
 
 function loadTelemetryWithHome(homeDir, awVersion, execSyncImpl) {
   const originalHome = process.env.HOME;
+  const originalUserProfile = process.env.USERPROFILE;
   const originalAwVersion = process.env.AW_VERSION;
   const originalExecSync = childProcess.execSync;
 
+  // Set both HOME and USERPROFILE so os.homedir() resolves correctly on all platforms
   process.env.HOME = homeDir;
+  process.env.USERPROFILE = homeDir;
   if (awVersion === undefined) {
     delete process.env.AW_VERSION;
   } else {
@@ -53,6 +56,11 @@ function loadTelemetryWithHome(homeDir, awVersion, execSyncImpl) {
     restore() {
       delete require.cache[MODULE_PATH];
       process.env.HOME = originalHome;
+      if (originalUserProfile === undefined) {
+        delete process.env.USERPROFILE;
+      } else {
+        process.env.USERPROFILE = originalUserProfile;
+      }
       if (originalAwVersion === undefined) {
         delete process.env.AW_VERSION;
       } else {
