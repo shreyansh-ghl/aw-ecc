@@ -240,6 +240,18 @@
           }
         ],
         "description": "Capture tool use results for continuous learning"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/aw-usage-post-tool-use.js\"",
+            "async": true,
+            "timeout": 10
+          }
+        ],
+        "description": "Usage telemetry: skill_invoked, agent_spawned, tool_error events"
       }
     ],
     "PostToolUseFailure": [
@@ -252,6 +264,18 @@
           }
         ],
         "description": "Track failed MCP tool calls, mark unhealthy servers, and attempt reconnect"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/aw-usage-post-tool-use-failure.js\"",
+            "async": true,
+            "timeout": 10
+          }
+        ],
+        "description": "Usage telemetry: tool_error event on tool failure"
       }
     ],
     "Stop": [
@@ -300,6 +324,18 @@
           }
         ],
         "description": "Track token and cost metrics per session"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/aw-usage-stop.js\"",
+            "async": true,
+            "timeout": 10
+          }
+        ],
+        "description": "Usage telemetry: response_completed and session_ended events"
       }
     ],
     "SessionEnd": [
