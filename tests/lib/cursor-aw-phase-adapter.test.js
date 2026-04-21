@@ -317,6 +317,8 @@ async function runTests() {
       { type: 'node', relativeScriptPath: 'scripts/hooks/post-edit-typecheck.js', payload: { transformed: 'edit' } },
       { type: 'enabled', hookId: 'post:edit:console-warn' },
       { type: 'node', relativeScriptPath: 'scripts/hooks/post-edit-console-warn.js', payload: { transformed: 'edit' } },
+      { type: 'enabled', hookId: 'telemetry:post-tool-use' },
+      { type: 'node', relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js', payload: { transformed: 'edit' } },
     ]);
   })) passed++; else failed++;
 

@@ -149,8 +149,8 @@ function runTests() {
     const beforeSubmitPrompt = parsed.hooks.beforeSubmitPrompt[0].command;
     const stop = parsed.hooks.stop[0].command;
 
-    assert.ok(sessionStart.startsWith('bash -lc '), `Expected shell launcher for sessionStart, got: ${sessionStart}`);
-    assert.ok(beforeSubmitPrompt.startsWith('bash -lc '), `Expected shell launcher for beforeSubmitPrompt, got: ${beforeSubmitPrompt}`);
+    assert.ok(sessionStart.startsWith('bash -c '), `Expected shell launcher for sessionStart, got: ${sessionStart}`);
+    assert.ok(beforeSubmitPrompt.startsWith('bash -c '), `Expected shell launcher for beforeSubmitPrompt, got: ${beforeSubmitPrompt}`);
     assert.ok(stop.startsWith('node -e '), `Expected node launcher for stop, got: ${stop}`);
     assert.ok(!sessionStart.includes('node .cursor/hooks/'), `Expected no repo-only relative node path, got: ${sessionStart}`);
     assert.ok(!beforeSubmitPrompt.includes('node .cursor/hooks/'), `Expected no repo-only relative node path, got: ${beforeSubmitPrompt}`);

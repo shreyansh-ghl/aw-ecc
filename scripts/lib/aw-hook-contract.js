@@ -32,7 +32,7 @@ const AW_HOOK_PHASES = [
     tier: 'core',
     claudeEvent: 'PostToolUse',
     codexEvent: 'PostToolUse',
-    cursorEvents: ['afterShellExecution', 'afterFileEdit', 'afterMCPExecution'],
+    cursorEvents: ['afterShellExecution', 'afterFileEdit', 'afterMCPExecution', 'postToolUse'],
   },
   {
     phase: 'Stop',
@@ -53,7 +53,7 @@ const AW_HOOK_PHASES = [
     tier: 'extended',
     claudeEvent: 'PostToolUseFailure',
     codexEvent: null,
-    cursorEvents: [],
+    cursorEvents: ['postToolUseFailure'],
   },
   {
     phase: 'PreCompact',

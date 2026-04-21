@@ -82,6 +82,7 @@ function runTests() {
     assert.strictEqual(row.input_tokens, 1000, 'Expected input_tokens to be 1000');
     assert.strictEqual(row.output_tokens, 500, 'Expected output_tokens to be 500');
     assert.ok(row.timestamp, 'Expected timestamp to be present');
+    assert.ok(row.estimated_cost_usd !== null, 'Expected estimated_cost_usd to be non-null for known model');
     assert.ok(typeof row.estimated_cost_usd === 'number', 'Expected estimated_cost_usd to be a number');
     assert.ok(row.estimated_cost_usd > 0, 'Expected estimated_cost_usd to be positive');
 
@@ -126,7 +127,42 @@ function runTests() {
     const row = JSON.parse(fs.readFileSync(metricsFile, 'utf8').trim());
     assert.strictEqual(row.input_tokens, 0, 'Expected input_tokens to be 0 when missing');
     assert.strictEqual(row.output_tokens, 0, 'Expected output_tokens to be 0 when missing');
-    assert.strictEqual(row.estimated_cost_usd, 0, 'Expected estimated_cost_usd to be 0 when no tokens');
+    assert.strictEqual(row.estimated_cost_usd, null, 'Expected estimated_cost_usd to be null when no tokens');
+
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  }) ? passed++ : failed++);
+
+  // 6. GPT model gets correct pricing
+  (test('GPT-4o model gets correct pricing', () => {
+    const tmpHome = makeTempDir();
+    const input = {
+      model: 'gpt-4o',
+      usage: { input_tokens: 1000000, output_tokens: 500000 },
+    };
+    const result = runScript(input, withTempHome(tmpHome));
+    assert.strictEqual(result.code, 0);
+
+    const metricsFile = path.join(tmpHome, '.claude', 'metrics', 'costs.jsonl');
+    const row = JSON.parse(fs.readFileSync(metricsFile, 'utf8').trim());
+    assert.ok(row.estimated_cost_usd !== null, 'Expected non-null cost for GPT-4o');
+    assert.ok(row.estimated_cost_usd > 0, 'Expected positive cost for GPT-4o');
+
+    fs.rmSync(tmpHome, { recursive: true, force: true });
+  }) ? passed++ : failed++);
+
+  // 7. Unknown model gets null cost
+  (test('unknown model gets null cost', () => {
+    const tmpHome = makeTempDir();
+    const input = {
+      model: 'totally-unknown-model-xyz',
+      usage: { input_tokens: 1000, output_tokens: 500 },
+    };
+    const result = runScript(input, withTempHome(tmpHome));
+    assert.strictEqual(result.code, 0);
+
+    const metricsFile = path.join(tmpHome, '.claude', 'metrics', 'costs.jsonl');
+    const row = JSON.parse(fs.readFileSync(metricsFile, 'utf8').trim());
+    assert.strictEqual(row.estimated_cost_usd, null, 'Expected null cost for unknown model');
 
     fs.rmSync(tmpHome, { recursive: true, force: true });
   }) ? passed++ : failed++);

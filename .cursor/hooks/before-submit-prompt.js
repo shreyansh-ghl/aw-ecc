@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { readStdin, runManagedShellHook } = require('./adapter');
+const { readStdin, runManagedShellHook, runExistingHook, transformToClaude } = require('./adapter');
 
 function emitAwPromptReminder(raw) {
   const result = runManagedShellHook('scripts/hooks/shared/user-prompt-submit.sh', raw);
@@ -36,6 +36,12 @@ readStdin().then(raw => {
     emitAwPromptReminder(raw);
   } catch (_error) {
     // Reminder emission is advisory and should not break the prompt flow.
+  }
+  try {
+    const claudePayload = transformToClaude(JSON.parse(raw));
+    runExistingHook('aw-usage-prompt-submit.js', JSON.stringify(claudePayload));
+  } catch (_error) {
+    // Telemetry is best-effort and should not block prompt submission.
   }
   process.stdout.write(raw);
 }).catch(() => process.exit(0));

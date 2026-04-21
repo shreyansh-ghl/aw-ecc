@@ -3,7 +3,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "bash -lc \"for candidate in \\\"$PWD/.cursor/hooks/session-start.sh\\\" \\\"$HOME/.cursor/hooks/session-start.sh\\\"; do if [ -f \\\"$candidate\\\" ]; then exec bash \\\"$candidate\\\"; fi; done; exit 0\"",
+        "command": "bash -c 'f=\"$PWD/.cursor/hooks/session-start.sh\"; [ -f \"$f\" ] || f=\"$HOME/.cursor/hooks/session-start.sh\"; exec bash \"$f\"'",
         "event": "sessionStart",
         "description": "Load previous context and detect environment"
       }
@@ -64,7 +64,7 @@
     ],
     "beforeSubmitPrompt": [
       {
-        "command": "bash -lc \"for candidate in \\\"$PWD/.cursor/hooks/before-submit-prompt.sh\\\" \\\"$HOME/.cursor/hooks/before-submit-prompt.sh\\\"; do if [ -f \\\"$candidate\\\" ]; then exec bash \\\"$candidate\\\"; fi; done; exit 0\"",
+        "command": "bash -c 'f=\"$PWD/.cursor/hooks/before-submit-prompt.sh\"; [ -f \"$f\" ] || f=\"$HOME/.cursor/hooks/before-submit-prompt.sh\"; exec bash \"$f\"'",
         "event": "beforeSubmitPrompt",
         "description": "Detect secrets in prompts (sk-, ghp_, AKIA patterns)"
       }
@@ -81,6 +81,20 @@
         "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"subagent-stop.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "subagentStop",
         "description": "Log agent completion"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"post-tool-use.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "postToolUse",
+        "description": "Telemetry: skill_invoked detection for Read tool and other non-shell/edit/MCP tools"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"post-tool-use-failure.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "postToolUseFailure",
+        "description": "Telemetry: tool_error detection on tool failure/timeout/denial"
       }
     ],
     "beforeTabFileRead": [
@@ -102,6 +116,13 @@
         "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"pre-compact.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
         "event": "preCompact",
         "description": "Save state before context compaction"
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const scriptName=\\\"after-agent-response.js\\\";const candidates=[path.join(process.cwd(), '.cursor', 'hooks', scriptName),path.join(os.homedir(), '.cursor', 'hooks', scriptName)];const target=candidates.find(candidate => fs.existsSync(candidate));if(!target) process.exit(0);require(target)\"",
+        "event": "afterAgentResponse",
+        "description": "Telemetry: response_completed with tokens and cost per turn"
       }
     ],
     "stop": [

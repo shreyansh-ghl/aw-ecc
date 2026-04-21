@@ -18,16 +18,10 @@ function buildManagedCursorHookCommand(scriptFileName) {
 
 function buildManagedCursorShellCommand(scriptFileName) {
   const scriptName = String(scriptFileName || '').replace(/\\/g, '/');
-  const command = [
-    'bash -lc',
-    JSON.stringify(
-      `for candidate in "$PWD/.cursor/hooks/${scriptName}" "$HOME/.cursor/hooks/${scriptName}"; do ` +
-        `if [ -f "$candidate" ]; then exec bash "$candidate"; fi; ` +
-      'done; exit 0'
-    ),
-  ].join(' ');
-
-  return command;
+  // Simple fallback: project-level first, then home-level.
+  // Previous version used triple-escaped quoting inside bash -lc that
+  // silently failed when Cursor spawned the process (Bug #8).
+  return `bash -c 'f="$PWD/.cursor/hooks/${scriptName}"; [ -f "$f" ] || f="$HOME/.cursor/hooks/${scriptName}"; exec bash "$f"'`;
 }
 
 const CURSOR_HOOK_ENTRIES = Object.freeze({
@@ -113,6 +107,20 @@ const CURSOR_HOOK_ENTRIES = Object.freeze({
       description: 'Log agent completion',
     },
   ],
+  postToolUse: [
+    {
+      command: buildManagedCursorHookCommand('post-tool-use.js'),
+      event: 'postToolUse',
+      description: 'Telemetry: skill_invoked detection for Read tool and other non-shell/edit/MCP tools',
+    },
+  ],
+  postToolUseFailure: [
+    {
+      command: buildManagedCursorHookCommand('post-tool-use-failure.js'),
+      event: 'postToolUseFailure',
+      description: 'Telemetry: tool_error detection on tool failure/timeout/denial',
+    },
+  ],
   beforeTabFileRead: [
     {
       command: buildManagedCursorHookCommand('before-tab-file-read.js'),
@@ -132,6 +140,13 @@ const CURSOR_HOOK_ENTRIES = Object.freeze({
       command: buildManagedCursorHookCommand('pre-compact.js'),
       event: 'preCompact',
       description: 'Save state before context compaction',
+    },
+  ],
+  afterAgentResponse: [
+    {
+      command: buildManagedCursorHookCommand('after-agent-response.js'),
+      event: 'afterAgentResponse',
+      description: 'Telemetry: response_completed with tokens and cost per turn',
     },
   ],
   stop: [

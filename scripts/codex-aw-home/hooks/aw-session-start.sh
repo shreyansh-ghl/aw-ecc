@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
+# aw-managed: codex-global-session-start
 set -euo pipefail
 
-# Drain stdin because Codex writes a JSON payload even though this wrapper
-# only returns AW session context and does not use the payload body.
-cat >/dev/null || true
+# Capture stdin so we can feed it to both telemetry and the AW router delegate.
+STDIN=$(cat)
+
+# Fire session_start telemetry (non-blocking, all output suppressed).
+TELEMETRY_HOOK="$HOME/.aw-ecc/scripts/hooks/aw-usage-session-start.js"
+if [[ -f "$TELEMETRY_HOOK" ]] && command -v node >/dev/null 2>&1; then
+  printf '%s' "$STDIN" | AW_HARNESS=codex node "$TELEMETRY_HOOK" >/dev/null 2>&1 || true
+fi
 
 TARGETS=(
   "$HOME/.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh"
@@ -12,7 +18,8 @@ TARGETS=(
 
 for target in "${TARGETS[@]}"; do
   if [[ -f "$target" ]]; then
-    exec bash "$target"
+    printf '%s' "$STDIN" | bash "$target"
+    exit $?
   fi
 done
 

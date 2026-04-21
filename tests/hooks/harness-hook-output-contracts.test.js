@@ -124,9 +124,23 @@ function runTests() {
       try {
         const targetDir = path.join(fakeHome, '.aw-ecc', 'scripts', 'hooks');
         fs.mkdirSync(targetDir, { recursive: true });
+        const telemetryMarker = path.join(fakeHome, 'prompt-telemetry.txt');
         fs.copyFileSync(
           path.join(REPO_ROOT, 'scripts', 'hooks', 'session-start-rules-context.sh'),
           path.join(targetDir, 'session-start-rules-context.sh')
+        );
+        fs.writeFileSync(
+          path.join(targetDir, 'aw-usage-prompt-submit.js'),
+          `#!/usr/bin/env node
+let raw = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { raw += chunk; });
+process.stdin.on('end', () => {
+  require('fs').writeFileSync(${JSON.stringify(telemetryMarker)}, raw, 'utf8');
+  process.stdout.write('{}');
+});
+`,
+          'utf8'
         );
         const sharedDir = path.join(targetDir, 'shared');
         fs.mkdirSync(sharedDir, { recursive: true });
@@ -147,10 +161,75 @@ function runTests() {
         const payload = parseJson(result.stdout);
         assert.equal(payload.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
         assert.match(payload.hookSpecificOutput.additionalContext, /\[AW Router reminder\]/);
+        assert.strictEqual(fs.readFileSync(telemetryMarker, 'utf8'), raw);
       } finally {
         fs.rmSync(fakeHome, { recursive: true, force: true });
       }
     });
+  })) passed++; else failed++;
+
+  if (test('Codex home post-tool-use wrapper runs the telemetry sidecar without emitting stdout', () => {
+    const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-codex-post-tool-'));
+    try {
+      const hooksDir = path.join(fakeHome, '.aw-ecc', 'scripts', 'hooks');
+      const marker = path.join(fakeHome, 'post-tool-telemetry.txt');
+      fs.mkdirSync(hooksDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(hooksDir, 'aw-usage-post-tool-use.js'),
+        `#!/usr/bin/env node
+let raw = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { raw += chunk; });
+process.stdin.on('end', () => {
+  require('fs').writeFileSync(${JSON.stringify(marker)}, raw, 'utf8');
+  process.stdout.write('{}');
+});
+`,
+        'utf8'
+      );
+
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks', 'aw-post-tool-use.sh');
+      const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'echo hi' } });
+      const result = runBash(scriptPath, raw, { HOME: fakeHome });
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.strictEqual(result.stdout, '');
+      assert.strictEqual(fs.readFileSync(marker, 'utf8'), raw);
+    } finally {
+      fs.rmSync(fakeHome, { recursive: true, force: true });
+    }
+  })) passed++; else failed++;
+
+  if (test('Codex home stop wrapper runs the telemetry sidecar without emitting stdout', () => {
+    const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-codex-stop-'));
+    try {
+      const hooksDir = path.join(fakeHome, '.aw-ecc', 'scripts', 'hooks');
+      const marker = path.join(fakeHome, 'stop-telemetry.txt');
+      fs.mkdirSync(hooksDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(hooksDir, 'aw-usage-stop.js'),
+        `#!/usr/bin/env node
+let raw = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { raw += chunk; });
+process.stdin.on('end', () => {
+  require('fs').writeFileSync(${JSON.stringify(marker)}, raw, 'utf8');
+  process.stdout.write('{}');
+});
+`,
+        'utf8'
+      );
+
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks', 'aw-stop.sh');
+      const raw = JSON.stringify({ transcript_path: '/tmp/example.jsonl', last_assistant_message: 'done' });
+      const result = runBash(scriptPath, raw, { HOME: fakeHome });
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.strictEqual(result.stdout, '');
+      assert.strictEqual(fs.readFileSync(marker, 'utf8'), raw);
+    } finally {
+      fs.rmSync(fakeHome, { recursive: true, force: true });
+    }
   })) passed++; else failed++;
 
   if (test('shared prompt reminder prefers .aw/.aw_rules over legacy .aw_rules paths', () => {

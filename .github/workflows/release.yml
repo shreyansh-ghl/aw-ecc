@@ -14,6 +14,8 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    # Skip pre-release tags (beta, rc, alpha, etc.) — only create releases for stable vX.Y.Z
+    if: ${{ !contains(github.ref_name, '-') }}
 
     steps:
       - name: Checkout

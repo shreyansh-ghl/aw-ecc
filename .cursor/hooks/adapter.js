@@ -23,8 +23,9 @@ function readStdin() {
 }
 
 function getPluginRoot() {
-  const homeStyleRoot = path.resolve(__dirname, '..');
+  const os = require('os');
   const repoStyleRoot = path.resolve(__dirname, '..', '..');
+  const awEccHome = path.join(os.homedir(), '.aw-ecc');
 
   if (
     fs.existsSync(path.join(repoStyleRoot, 'package.json'))
@@ -34,7 +35,11 @@ function getPluginRoot() {
     return repoStyleRoot;
   }
 
-  return homeStyleRoot;
+  if (fs.existsSync(path.join(awEccHome, 'scripts', 'lib', 'aw-usage-telemetry.js'))) {
+    return awEccHome;
+  }
+
+  return path.resolve(__dirname, '..');
 }
 
 function transformToClaude(cursorInput, overrides = {}) {
@@ -43,12 +48,17 @@ function transformToClaude(cursorInput, overrides = {}) {
   const inferredToolName = cursorInput.tool_name
     || (server && tool ? `mcp__${server}__${tool}` : '');
 
+  // Preserve original tool_input fields (skill, subagent_type, description, etc.)
+  const originalToolInput = cursorInput.tool_input || {};
+
   return {
     tool_name: inferredToolName,
     server,
     tool,
+    exit_code: cursorInput.exit_code,
     tool_input: {
-      command: cursorInput.command || cursorInput.args?.command || '',
+      ...originalToolInput,
+      command: cursorInput.command || cursorInput.args?.command || originalToolInput.command || '',
       file_path: cursorInput.path || cursorInput.file || cursorInput.args?.filePath || '',
       server,
       mcp_server: server,
@@ -60,7 +70,28 @@ function transformToClaude(cursorInput, overrides = {}) {
       output: cursorInput.output || cursorInput.result || '',
       ...overrides.tool_output,
     },
+    tool_response: {
+      exit_code: cursorInput.exit_code,
+      output: cursorInput.output || cursorInput.result || '',
+    },
     transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
+    // Cursor common schema fields surfaced at top level for buildEvent()
+    generation_id: cursorInput.generation_id,
+    conversation_id: cursorInput.conversation_id,
+    workspace_roots: cursorInput.workspace_roots,
+    model: cursorInput.model,
+    user_email: cursorInput.user_email,
+    cursor_version: cursorInput.cursor_version,
+    status: cursorInput.status,
+    reason: cursorInput.reason,
+    // Token fields — Cursor sends these on afterAgentResponse and stop hooks
+    input_tokens: cursorInput.input_tokens,
+    output_tokens: cursorInput.output_tokens,
+    cache_read_tokens: cursorInput.cache_read_tokens,
+    cache_write_tokens: cursorInput.cache_write_tokens,
+    // Subagent fields
+    task: cursorInput.task,
+    description: cursorInput.description,
     _cursor: {
       conversation_id: cursorInput.conversation_id,
       hook_event_name: cursorInput.hook_event_name,
@@ -100,7 +131,13 @@ function runExistingHook(scriptName, stdinData) {
     path.join(root, 'scripts', 'hooks', scriptName),
     path.join(root, 'hooks', scriptName),
   ];
-  const scriptPath = candidates.find(candidate => fs.existsSync(candidate)) || candidates[0];
+  const scriptPath = candidates.find(candidate => fs.existsSync(candidate));
+  if (!scriptPath) {
+    if (process.env.AW_HOOK_DEBUG === '1') {
+      process.stderr.write(`[aw] Cannot find hook script: ${scriptName}\n`);
+    }
+    return undefined;
+  }
   return runManagedCommand('node', [scriptPath], stdinData);
 }
 

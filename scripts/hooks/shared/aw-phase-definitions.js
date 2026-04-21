@@ -1,3 +1,16 @@
+const PHASE_NAMES = Object.freeze({
+  SESSION_START: 'session-start',
+  USER_PROMPT_SUBMIT: 'user-prompt-submit',
+  PRE_TOOL_USE_SHELL: 'pre-tool-use-shell',
+  PRE_TOOL_USE_MCP: 'pre-tool-use-mcp',
+  POST_TOOL_USE_SHELL: 'post-tool-use-shell',
+  POST_TOOL_USE_FILE_EDIT: 'post-tool-use-file-edit',
+  POST_TOOL_USE_MCP: 'post-tool-use-mcp',
+  PRE_COMPACT: 'pre-compact',
+  SESSION_END: 'session-end',
+  STOP: 'stop',
+});
+
 const SHARED_AW_PHASE_STEPS = Object.freeze({
   'session-start': [
     {
@@ -8,12 +21,26 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       payloadMode: 'raw',
       outputMode: 'cursor-session-start',
     },
+    {
+      hookId: 'telemetry:session-start',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-session-start.js',
+      payloadMode: 'claude',
+    },
   ],
   'user-prompt-submit': [
     {
       runner: 'shell',
       relativeScriptPath: '.cursor/hooks/shared/user-prompt-submit.sh',
       payloadMode: 'raw',
+    },
+    {
+      hookId: 'telemetry:prompt-submit',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-prompt-submit.js',
+      payloadMode: 'claude',
     },
   ],
   'pre-tool-use-shell': [
@@ -70,6 +97,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/post-bash-build-complete.js',
       payloadMode: 'claude',
     },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
+    },
   ],
   'post-tool-use-file-edit': [
     {
@@ -100,6 +134,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/post-edit-console-warn.js',
       payloadMode: 'claude',
     },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
+    },
   ],
   'post-tool-use-mcp': [
     {
@@ -108,6 +149,13 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       runner: 'node',
       relativeScriptPath: 'scripts/hooks/post-mcp-log.js',
       payloadMode: 'raw',
+    },
+    {
+      hookId: 'telemetry:post-tool-use',
+      allowedProfiles: ['minimal', 'standard', 'strict'],
+      runner: 'node',
+      relativeScriptPath: 'scripts/hooks/aw-usage-post-tool-use.js',
+      payloadMode: 'claude',
     },
   ],
   'pre-compact': [
@@ -125,6 +173,8 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/session-end-marker.js',
       payloadMode: 'claude',
     },
+    // telemetry:session-end removed — afterAgentResponse hook now emits
+    // response_completed per turn with direct token/cost data from Cursor.
   ],
   stop: [
     {
@@ -155,6 +205,8 @@ const SHARED_AW_PHASE_STEPS = Object.freeze({
       relativeScriptPath: 'scripts/hooks/cost-tracker.js',
       payloadMode: 'claude',
     },
+    // telemetry:stop removed — Cursor fires both sessionEnd and stop,
+    // causing duplicate session_ended events. Telemetry is in session-end phase only.
   ],
 });
 
@@ -167,6 +219,7 @@ function getSharedAwPhaseSteps(phaseName) {
 }
 
 module.exports = {
+  PHASE_NAMES,
   SHARED_AW_PHASE_STEPS,
   getSharedAwPhaseSteps,
 };

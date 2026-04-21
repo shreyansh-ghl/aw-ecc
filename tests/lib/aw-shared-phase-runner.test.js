@@ -55,12 +55,14 @@ async function runTests() {
     ]);
   })) passed++; else failed++;
 
-  if (test('user-prompt-submit phase uses the shared shell entrypoint', () => {
+  if (test('user-prompt-submit phase uses the shared shell entrypoint and telemetry', () => {
     const steps = getSharedAwPhaseSteps('user-prompt-submit');
-    assert.strictEqual(steps.length, 1);
+    assert.strictEqual(steps.length, 2);
     assert.strictEqual(steps[0].runner, 'shell');
     assert.strictEqual(steps[0].relativeScriptPath, '.cursor/hooks/shared/user-prompt-submit.sh');
     assert.strictEqual(steps[0].payloadMode, 'raw');
+    assert.strictEqual(steps[1].hookId, 'telemetry:prompt-submit');
+    assert.strictEqual(steps[1].runner, 'node');
   })) passed++; else failed++;
 
   if (await asyncTest('translates session-start hook output into Cursor additional_context while still running later steps', async () => {
