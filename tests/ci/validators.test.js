@@ -112,6 +112,16 @@ function runValidatorWithDir(validatorName, dirConstant, overridePath) {
   const dirRegex = new RegExp(`const ${dirConstant} = .*?;`);
   source = source.replace(dirRegex, `const ${dirConstant} = ${JSON.stringify(overridePath)};`);
 
+  // For validate-rules: the .mdc frontmatter check scans from __dirname which
+  // resolves to the real repo when run via temp wrapper. Redirect it to the
+  // override path's parent so the scan stays within the test sandbox.
+  if (validatorName === 'validate-rules') {
+    source = source.replace(
+      "const repoRoot = path.join(__dirname, '../..');",
+      `const repoRoot = ${JSON.stringify(path.dirname(overridePath))};`
+    );
+  }
+
   return runSourceViaTempFile(source);
 }
 
