@@ -128,9 +128,6 @@ function runTests() {
       models: { 'test-model': { in: 1.0, out: 2.0 } },
     };
 
-    // Use internal test helpers
-    const originalPath = pricingModule._test.CACHE_PATH;
-
     // Write directly to temp path
     fs.writeFileSync(tmpCachePath, JSON.stringify(testData, null, 2));
     const read = JSON.parse(fs.readFileSync(tmpCachePath, 'utf8'));

@@ -21,7 +21,7 @@ const MAX_STDIN = 1024 * 1024;
 function parseMaybeJsonObject(value) {
   if (typeof value !== 'string') return value;
   const trimmed = value.trim();
-  if (!trimmed || !/^[{\[]/.test(trimmed)) return value;
+  if (!trimmed || !/^[{[]/.test(trimmed)) return value;
   try {
     return JSON.parse(trimmed);
   } catch {
