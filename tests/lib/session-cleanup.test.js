@@ -109,7 +109,6 @@ function runTests() {
   })) passed++; else failed++;
 
   if (test('does not throw when session dir does not exist', () => {
-    const dirBackup = SESSION_DIR;
     // Remove the dir entirely
     fs.rmSync(SESSION_DIR, { recursive: true });
     telemetry.pruneStaleSessionFiles(); // should not throw
