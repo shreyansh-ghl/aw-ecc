@@ -21,7 +21,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
           command: 'bash "$HOME/.codex/hooks/aw-user-prompt-submit.sh"',
         },
       ],
-      description: 'Inject compact AW routing and rule reminders on each prompt',
+      description: 'Emit Codex prompt telemetry and inject compact AW routing reminders on each prompt',
     },
   ],
   PreToolUse: [
@@ -45,7 +45,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
           command: 'bash "$HOME/.codex/hooks/aw-post-tool-use.sh"',
         },
       ],
-      description: 'Reserved AW post-tool-use phase for Codex home installs',
+      description: 'Emit Codex post-tool-use telemetry for supported Bash-backed events',
     },
   ],
   Stop: [
@@ -56,7 +56,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
           command: 'bash "$HOME/.codex/hooks/aw-stop.sh"',
         },
       ],
-      description: 'Reserved AW stop phase for Codex home installs',
+      description: 'Emit Codex stop telemetry for response_completed events',
     },
   ],
 });

@@ -96,7 +96,7 @@ async function runTests() {
     assert.strictEqual(result.stdout, '');
   })) passed++; else failed++;
 
-  if (await asyncTest('Codex post-tool-use hook drains stdin even though it is a reserved no-op', async () => {
+  if (await asyncTest('Codex post-tool-use hook drains stdin while running the telemetry sidecar', async () => {
     const scriptPath = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks', 'aw-post-tool-use.sh');
     const result = await runShellScript(scriptPath);
 
@@ -104,7 +104,7 @@ async function runTests() {
     assert.strictEqual(result.stdout, '');
   })) passed++; else failed++;
 
-  if (await asyncTest('Codex stop hook drains stdin even though it is a reserved no-op', async () => {
+  if (await asyncTest('Codex stop hook drains stdin while running the telemetry sidecar', async () => {
     const scriptPath = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks', 'aw-stop.sh');
     const result = await runShellScript(scriptPath);
 
