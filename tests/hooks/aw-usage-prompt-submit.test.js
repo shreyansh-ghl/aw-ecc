@@ -9,6 +9,7 @@ const assert = require('assert');
 const {
   extractAwSlashCommand,
   processPromptSubmitInput,
+  shouldSkipPromptSubmitTelemetry,
 } = require('../../scripts/hooks/aw-usage-prompt-submit.js');
 
 function test(name, fn) {
@@ -79,6 +80,23 @@ function runTests() {
 
     assert.strictEqual(events.length, 1);
     assert.strictEqual(events[0].eventType, 'prompt_submitted');
+  }) ? passed++ : failed++);
+
+  (test('Codex internal title-generation prompts are skipped from telemetry', () => {
+    const shouldSkip = shouldSkipPromptSubmitTelemetry({
+      session_id: 'session-3',
+      turn_id: 'turn-3',
+      model: 'gpt-5.4-mini',
+      transcript_path: null,
+      prompt: [
+        'You are a helpful assistant.',
+        'Generate a concise UI title (18-36 characters) for this task.',
+        'User prompt:',
+        'Find package.json files in this repo and return the paths only.',
+      ].join('\n'),
+    });
+
+    assert.strictEqual(shouldSkip, true);
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

@@ -16,10 +16,15 @@
 
 'use strict';
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { buildEvent, sendAsync, detectHarness, persistSessionModel, readLastAssistantFromTranscript } = require('../lib/aw-usage-telemetry');
+const {
+  buildEvent,
+  sendAsync,
+  detectHarness,
+  persistSessionModel,
+  readLastAssistantFromTranscript,
+  tryAcquireDedupe,
+  isCodexInternalTaskTitleCompletion,
+} = require('../lib/aw-usage-telemetry');
 const { estimateCost, toNumber } = require('../lib/aw-pricing');
 
 const MAX_STDIN = 1024 * 1024;
@@ -120,6 +125,10 @@ function buildResponseCompletedData(input) {
   return { model, payload, sessionId };
 }
 
+function shouldSkipResponseCompleted(input) {
+  return isCodexInternalTaskTitleCompletion(input);
+}
+
 function main() {
   let raw = '';
 
@@ -133,26 +142,27 @@ function main() {
   process.stdin.on('end', () => {
     try {
       const input = JSON.parse(raw);
-      const { model, payload, sessionId } = buildResponseCompletedData(input);
+      if (!shouldSkipResponseCompleted(input)) {
+        const { model, payload, sessionId } = buildResponseCompletedData(input);
 
-      // Dedup: Cursor fires sessionEnd/stop twice per turn (~100ms apart).
-      // Use a lock file with 2s TTL to skip the second dispatch.
-      const lockFile = path.join(os.tmpdir(), `aw-stop-dedup-${sessionId}`);
-      let skip = false;
-      try {
-        const stat = fs.statSync(lockFile);
-        if (Date.now() - stat.mtimeMs < 2000) skip = true;
-      } catch { /* no lock file */ }
-      if (!skip) {
-        fs.writeFileSync(lockFile, String(Date.now()));
-
-        // Override model in the event envelope too (buildEvent reads from hook input
-        // which doesn't have model for Claude — inject it so the top-level field is set).
-        const event = buildEvent(input, 'response_completed', payload);
-        if (model && !event.model) {
-          event.model = model;
+        if (tryAcquireDedupe('response-completed', [
+          sessionId,
+          input?.turn_id || '',
+          input?.transcript_path || '',
+          input?.last_assistant_message || '',
+          input?.model || '',
+          payload.stop_reason || '',
+          payload.input_tokens || '',
+          payload.output_tokens || '',
+        ])) {
+          // Override model in the event envelope too (buildEvent reads from hook input
+          // which doesn't have model for Claude — inject it so the top-level field is set).
+          const event = buildEvent(input, 'response_completed', payload);
+          if (model && !event.model) {
+            event.model = model;
+          }
+          sendAsync(event);
         }
-        sendAsync(event);
       }
     } catch {
       // Non-blocking.
@@ -168,4 +178,5 @@ if (require.main === module) {
 
 module.exports = {
   buildResponseCompletedData,
+  shouldSkipResponseCompleted,
 };

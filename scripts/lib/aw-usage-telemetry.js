@@ -21,6 +21,7 @@ const SENDER_SCRIPT = path.join(__dirname, '..', 'hooks', 'aw-usage-telemetry-se
 const AW_HOME = path.join(os.homedir(), '.aw');
 const CONFIG_PATH = path.join(AW_HOME, 'telemetry', 'config.json');
 const SESSION_DIR = path.join(AW_HOME, 'telemetry', 'sessions');
+const DEDUPE_DIR = path.join(os.tmpdir(), 'aw-usage-telemetry-dedupe');
 
 // ── Git config cache (once per process) ──────────────────────────────
 
@@ -203,6 +204,93 @@ function readSessionSkill(sessionId, turnId) {
   return skill.turn_id ? null : skill;
 }
 
+// ── Short-TTL dedupe guards ──────────────────────────────────────────
+
+function normalizeDedupePart(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function tryAcquireDedupe(scope, parts, ttlMs = 2500) {
+  const normalizedParts = Array.isArray(parts) ? parts.map(normalizeDedupePart) : [normalizeDedupePart(parts)];
+  const digest = crypto.createHash('sha256')
+    .update(normalizedParts.join('\n'))
+    .digest('hex');
+  const safeScope = String(scope || 'event').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
+  const lockPath = path.join(DEDUPE_DIR, `${safeScope}-${digest}.lock`);
+
+  try {
+    fs.mkdirSync(DEDUPE_DIR, { recursive: true });
+  } catch {
+    return true;
+  }
+
+  try {
+    const stat = fs.statSync(lockPath);
+    if (Date.now() - stat.mtimeMs <= ttlMs) {
+      return false;
+    }
+    fs.unlinkSync(lockPath);
+  } catch { /* no active lock */ }
+
+  try {
+    fs.writeFileSync(lockPath, String(Date.now()), { flag: 'wx' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ── Codex internal-session filters ───────────────────────────────────
+
+function resolvePromptText(input) {
+  const candidates = [
+    input?.prompt,
+    input?.user_prompt,
+    input?.message,
+    input?.text,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate;
+    }
+  }
+  return '';
+}
+
+function isCodexInternalTaskTitlePrompt(input) {
+  if (detectHarness(input) !== 'codex') return false;
+  if (input?.transcript_path) return false;
+  const prompt = resolvePromptText(input);
+  return prompt.includes('Generate a concise UI title')
+    && prompt.includes('User prompt:');
+}
+
+function isCodexInternalTaskTitleCompletion(input) {
+  if (detectHarness(input) !== 'codex') return false;
+  if (input?.transcript_path) return false;
+  const rawMessage = typeof input?.last_assistant_message === 'string'
+    ? input.last_assistant_message.trim()
+    : '';
+  if (!rawMessage) return false;
+  try {
+    const parsed = JSON.parse(rawMessage);
+    return parsed
+      && typeof parsed === 'object'
+      && !Array.isArray(parsed)
+      && typeof parsed.title === 'string'
+      && Object.keys(parsed).length === 1;
+  } catch {
+    return false;
+  }
+}
+
 // ── Transcript parsing ───────────────────────────────────────────────
 
 function buildCodexUsage(entry) {
@@ -351,4 +439,8 @@ module.exports = {
   persistSessionSkill,
   readSessionSkill,
   readLastAssistantFromTranscript,
+  resolvePromptText,
+  tryAcquireDedupe,
+  isCodexInternalTaskTitlePrompt,
+  isCodexInternalTaskTitleCompletion,
 };

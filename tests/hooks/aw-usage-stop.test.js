@@ -12,7 +12,7 @@ const { spawnSync } = require('child_process');
 
 const script = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'aw-usage-stop.js');
 const codexFixture = path.join(__dirname, '..', 'fixtures', 'codex-stop-transcript.jsonl');
-const { buildResponseCompletedData } = require('../../scripts/hooks/aw-usage-stop.js');
+const { buildResponseCompletedData, shouldSkipResponseCompleted } = require('../../scripts/hooks/aw-usage-stop.js');
 const { readLastAssistantFromTranscript } = require('../../scripts/lib/aw-usage-telemetry');
 
 function test(name, fn) {
@@ -140,6 +140,18 @@ function runTests() {
 
     assert.strictEqual(result.payload.stop_reason, 'unknown');
     assert.strictEqual(result.payload.input_tokens, 67443);
+  }) ? passed++ : failed++);
+
+  (test('Codex internal title-generation completions are skipped from telemetry', () => {
+    const shouldSkip = shouldSkipResponseCompleted({
+      session_id: 'codex-session-3',
+      turn_id: 'turn-3',
+      model: 'gpt-5.4-mini',
+      transcript_path: null,
+      last_assistant_message: '{"title":"Find package.json files"}',
+    });
+
+    assert.strictEqual(shouldSkip, true);
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

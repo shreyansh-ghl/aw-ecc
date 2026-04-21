@@ -8,7 +8,9 @@ const assert = require('assert');
 
 const {
   collectPostToolUseEvents,
+  inferShellFailureFromMessage,
   normalizeToolResult,
+  shouldEmitSkillName,
 } = require('../../scripts/hooks/aw-usage-post-tool-use.js');
 
 function test(name, fn) {
@@ -86,6 +88,19 @@ function runTests() {
     assert.match(toolError.payload.error_message, /No such file or directory/);
   }) ? passed++ : failed++);
 
+  (test('Codex Bash failure with plain-string tool_response emits tool_error', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Bash',
+      tool_input: { command: 'cat /missing/file.txt' },
+      tool_response: 'cat: /missing/file.txt: No such file or directory\n',
+    });
+
+    const toolError = events.find(event => event.eventType === 'tool_error');
+    assert.ok(toolError, 'Expected tool_error event');
+    assert.strictEqual(toolError.payload.exit_code, undefined);
+    assert.match(toolError.payload.error_message, /No such file or directory/);
+  }) ? passed++ : failed++);
+
   (test('Codex Bash SKILL.md fallback is suppressed when prompt-submit already captured the slash command', () => {
     const events = collectPostToolUseEvents({
       tool_name: 'Bash',
@@ -101,6 +116,42 @@ function runTests() {
     });
 
     assert.strictEqual(events.find(event => event.eventType === 'skill_invoked'), undefined);
+  }) ? passed++ : failed++);
+
+  (test('using-aw-skills is suppressed as a router-only fallback skill', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'cat /Users/test/.codex/skills/using-aw-skills/SKILL.md',
+      },
+    });
+
+    assert.strictEqual(events.find(event => event.eventType === 'skill_invoked'), undefined);
+    assert.strictEqual(shouldEmitSkillName('using-aw-skills'), false);
+  }) ? passed++ : failed++);
+
+  (test('non-router Bash SKILL.md fallback still emits skill_invoked', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'cat /Users/test/.codex/skills/aw-investigate/SKILL.md',
+      },
+    });
+
+    const skill = events.find(event => event.eventType === 'skill_invoked');
+    assert.ok(skill, 'Expected fallback skill_invoked event');
+    assert.strictEqual(skill.payload.skill_name, 'aw-investigate');
+  }) ? passed++ : failed++);
+
+  (test('inferShellFailureFromMessage only flags shell-style failures', () => {
+    assert.strictEqual(
+      inferShellFailureFromMessage('Bash', 'cat: /missing/file.txt: No such file or directory'),
+      true,
+    );
+    assert.strictEqual(
+      inferShellFailureFromMessage('Bash', 'package.json\nsrc/index.ts'),
+      false,
+    );
   }) ? passed++ : failed++);
 
   (test('normalizeToolResult preserves output from JSON-string tool_response', () => {

@@ -11,8 +11,10 @@
 
 const {
   buildEvent,
+  detectHarness,
   sendAsync,
   readSessionSkill,
+  tryAcquireDedupe,
 } = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
@@ -72,6 +74,28 @@ function normalizeToolResult(input) {
   };
 }
 
+function isExplicitFailureExitCode(exitCode) {
+  return exitCode !== null && Number.isFinite(exitCode) && exitCode !== 0;
+}
+
+function inferShellFailureFromMessage(toolName, errorMessage) {
+  if (toolName !== 'Shell' && toolName !== 'Bash') return false;
+  if (typeof errorMessage !== 'string' || !errorMessage.trim()) return false;
+  const patterns = [
+    /(?:^|\n)[^:\n]+:\s.*\bNo such file or directory\b/i,
+    /(?:^|\n)[^:\n]+:\s.*\bPermission denied\b/i,
+    /(?:^|\n)[^:\n]+:\s.*\bOperation not permitted\b/i,
+    /(?:^|\n)(?:bash|zsh|sh): .*?\bcommand not found\b/i,
+    /(?:^|\n)[^:\n]+:\s.*\bcannot access\b/i,
+    /(?:^|\n)[^:\n]+:\s.*\bis a directory\b/i,
+  ];
+  return patterns.some(pattern => pattern.test(errorMessage));
+}
+
+function shouldEmitSkillName(skillName) {
+  return Boolean(skillName) && skillName !== 'using-aw-skills';
+}
+
 function collectPostToolUseEvents(input, options = {}) {
   const events = [];
   const toolName = input?.tool_name || '';
@@ -88,7 +112,7 @@ function collectPostToolUseEvents(input, options = {}) {
       const pathMatch = filePath.match(/\/skills\/([^/]+)\/SKILL\.md$/i);
       skillName = pathMatch ? pathMatch[1] : filePath.split('/').slice(-2, -1)[0] || '';
     }
-    if (skillName) {
+    if (shouldEmitSkillName(skillName)) {
       events.push({
         eventType: 'skill_invoked',
         payload: {
@@ -108,15 +132,19 @@ function collectPostToolUseEvents(input, options = {}) {
   }
 
   const toolResult = normalizeToolResult(input);
-  if (toolResult.exitCode !== null && Number.isFinite(toolResult.exitCode) && toolResult.exitCode !== 0) {
+  if (isExplicitFailureExitCode(toolResult.exitCode)
+    || inferShellFailureFromMessage(toolName, toolResult.errorMessage)) {
+    const payload = {
+      tool_name: toolName || 'unknown',
+      error_message: toolResult.errorMessage,
+      failure_type: 'error',
+    };
+    if (isExplicitFailureExitCode(toolResult.exitCode)) {
+      payload.exit_code = toolResult.exitCode;
+    }
     events.push({
       eventType: 'tool_error',
-      payload: {
-        tool_name: toolName || 'unknown',
-        error_message: toolResult.errorMessage,
-        failure_type: 'error',
-        exit_code: toolResult.exitCode,
-      },
+      payload,
     });
   }
 
@@ -125,7 +153,7 @@ function collectPostToolUseEvents(input, options = {}) {
     // Codex skill detection: Bash commands that read SKILL.md files.
     if (!promptSkillOverride) {
       const skillCmdMatch = cmd.match(/\/skills\/([^/]+)\/SKILL\.md/i);
-      if (skillCmdMatch && skillCmdMatch[1]) {
+      if (skillCmdMatch && shouldEmitSkillName(skillCmdMatch[1])) {
         events.push({
           eventType: 'skill_invoked',
           payload: {
@@ -175,11 +203,22 @@ function main() {
   process.stdin.on('end', () => {
     try {
       const input = JSON.parse(raw);
-      processPostToolUseInput(input, {
-        emit(eventType, payload) {
-          sendAsync(buildEvent(input, eventType, payload));
-        },
-      });
+      const shouldDedup = detectHarness(input) === 'codex' || Boolean(input?.tool_use_id);
+      if (!shouldDedup || tryAcquireDedupe('post-tool-use', [
+        getSessionId(input),
+        input?.turn_id || '',
+        input?.tool_use_id || '',
+        input?.tool_name || '',
+        getCommand(input),
+        input?.tool_input?.file_path || '',
+        input?.tool_input?.description || '',
+      ])) {
+        processPostToolUseInput(input, {
+          emit(eventType, payload) {
+            sendAsync(buildEvent(input, eventType, payload));
+          },
+        });
+      }
     } catch {
       // Non-blocking — never fail the hook.
     }
@@ -194,7 +233,10 @@ if (require.main === module) {
 
 module.exports = {
   collectPostToolUseEvents,
+  inferShellFailureFromMessage,
+  isExplicitFailureExitCode,
   normalizeToolResult,
   parseMaybeJsonObject,
   processPostToolUseInput,
+  shouldEmitSkillName,
 };

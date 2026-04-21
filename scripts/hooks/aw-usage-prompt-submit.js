@@ -10,27 +10,16 @@
 
 'use strict';
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { buildEvent, sendAsync, persistSessionSkill } = require('../lib/aw-usage-telemetry');
+const {
+  buildEvent,
+  sendAsync,
+  persistSessionSkill,
+  resolvePromptText,
+  tryAcquireDedupe,
+  isCodexInternalTaskTitlePrompt,
+} = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
-
-function resolvePromptText(input) {
-  const candidates = [
-    input?.prompt,
-    input?.user_prompt,
-    input?.message,
-    input?.text,
-  ];
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate;
-    }
-  }
-  return '';
-}
 
 function extractAwSlashCommand(input) {
   const prompt = resolvePromptText(input).trim();
@@ -45,6 +34,10 @@ function extractAwSlashCommand(input) {
 
 function getSessionId(input) {
   return input?.session_id || input?.conversation_id || 'unknown';
+}
+
+function shouldSkipPromptSubmitTelemetry(input) {
+  return isCodexInternalTaskTitlePrompt(input);
 }
 
 function processPromptSubmitInput(input, deps = {}) {
@@ -86,35 +79,18 @@ function main() {
   process.stdin.on('end', () => {
     try {
       const input = JSON.parse(raw);
-
-      // Dedup: Cursor fires beforeSubmitPrompt twice per prompt (~100ms apart).
-      // Use exclusive file create (wx) as an atomic lock — second process fails.
-      const sessionId = getSessionId(input);
-      const lockFile = path.join(os.tmpdir(), `aw-prompt-dedup-${sessionId}`);
-      let skip = false;
-      try {
-        // Clean stale lock (>2s old)
-        const stat = fs.statSync(lockFile);
-        if (Date.now() - stat.mtimeMs > 2000) {
-          fs.unlinkSync(lockFile);
-        }
-      } catch { /* no lock file */ }
-      try {
-        fs.writeFileSync(lockFile, String(Date.now()), { flag: 'wx' });
-      } catch {
-        // File already exists (created by parallel process) — skip
-        skip = true;
-      }
-
-      if (!skip) {
+      if (!shouldSkipPromptSubmitTelemetry(input)
+        && tryAcquireDedupe('prompt-submit', [
+          getSessionId(input),
+          input?.turn_id || '',
+          resolvePromptText(input),
+        ])) {
         processPromptSubmitInput(input, {
           emit(eventType, payload) {
             sendAsync(buildEvent(input, eventType, payload));
           },
           persistSkill: persistSessionSkill,
         });
-        // Clean up lock after brief delay so next prompt isn't blocked
-        setTimeout(() => { try { fs.unlinkSync(lockFile); } catch {} }, 2000);
       }
     } catch {
       // Non-blocking.
@@ -132,4 +108,5 @@ module.exports = {
   extractAwSlashCommand,
   processPromptSubmitInput,
   resolvePromptText,
+  shouldSkipPromptSubmitTelemetry,
 };

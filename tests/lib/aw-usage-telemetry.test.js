@@ -171,6 +171,39 @@ function runTests() {
     }
   }) ? passed++ : failed++);
 
+  (test('tryAcquireDedupe blocks duplicate keys within the TTL window', () => {
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-telemetry-home-'));
+    const { telemetry, restore } = loadTelemetryWithHome(tempHome, '1.2.3');
+    try {
+      const keyParts = ['session-5', 'turn-1', 'duplicate prompt'];
+      assert.strictEqual(telemetry.tryAcquireDedupe('prompt-submit-test', keyParts, 5000), true);
+      assert.strictEqual(telemetry.tryAcquireDedupe('prompt-submit-test', keyParts, 5000), false);
+    } finally {
+      restore();
+      cleanup(tempHome);
+    }
+  }) ? passed++ : failed++);
+
+  (test('Codex internal title helpers detect prompt and completion shapes', () => {
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-telemetry-home-'));
+    const { telemetry, restore } = loadTelemetryWithHome(tempHome, '1.2.3');
+    try {
+      assert.strictEqual(telemetry.isCodexInternalTaskTitlePrompt({
+        turn_id: 'turn-1',
+        transcript_path: null,
+        prompt: 'Generate a concise UI title\n\nUser prompt:\nFind package.json files',
+      }), true);
+      assert.strictEqual(telemetry.isCodexInternalTaskTitleCompletion({
+        turn_id: 'turn-1',
+        transcript_path: null,
+        last_assistant_message: '{"title":"Find package.json files"}',
+      }), true);
+    } finally {
+      restore();
+      cleanup(tempHome);
+    }
+  }) ? passed++ : failed++);
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }
