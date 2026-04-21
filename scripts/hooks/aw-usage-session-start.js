@@ -10,7 +10,7 @@
 
 'use strict';
 
-const { buildEvent, sendAsync, persistSessionModel } = require('../lib/aw-usage-telemetry');
+const { buildEvent, sendAsync, persistSessionModel, pruneStaleSessionFiles } = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
 let raw = '';
@@ -30,6 +30,9 @@ process.stdin.on('end', () => {
       || input.conversation_id
       || null;
     const model = input.model || input._cursor?.model || null;
+
+    // Prune stale session files (>24h) to prevent unbounded growth
+    pruneStaleSessionFiles();
 
     // Persist model so PostToolUse/Stop hooks can read it
     persistSessionModel(sessionId, model);

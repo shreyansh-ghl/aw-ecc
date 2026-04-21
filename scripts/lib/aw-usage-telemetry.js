@@ -150,6 +150,27 @@ function computeProjectHash(cwd) {
   return crypto.createHash('sha256').update(cwd).digest('hex').slice(0, 16);
 }
 
+// ── Session file cleanup ─────────────────────────────────────────────
+// Prune session files older than SESSION_MAX_AGE_MS to prevent unbounded growth.
+// Called once per session start — best-effort, never blocks.
+
+const SESSION_MAX_AGE_MS = 72 * 60 * 60 * 1000; // 72 hours
+
+function pruneStaleSessionFiles() {
+  try {
+    const entries = fs.readdirSync(SESSION_DIR);
+    const now = Date.now();
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) continue;
+      const filePath = path.join(SESSION_DIR, entry);
+      const stat = fs.statSync(filePath);
+      if (now - stat.mtimeMs > SESSION_MAX_AGE_MS) {
+        fs.unlinkSync(filePath);
+      }
+    }
+  } catch { /* best effort */ }
+}
+
 // ── Session model persistence ────────────────────────────────────────
 // SessionStart captures the model; later hooks read it from disk.
 
@@ -173,7 +194,11 @@ function readSessionModel(sessionId) {
 function readSessionState(sessionId) {
   if (!sessionId) return {};
   try {
-    return JSON.parse(fs.readFileSync(path.join(SESSION_DIR, sessionId + '.json'), 'utf8'));
+    const filePath = path.join(SESSION_DIR, sessionId + '.json');
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    // Touch mtime so active sessions are never pruned by cleanup
+    try { const now = new Date(); fs.utimesSync(filePath, now, now); } catch { /* ignore */ }
+    return data;
   } catch { return {}; }
 }
 
@@ -435,6 +460,7 @@ module.exports = {
   detectHarness,
   loadConfig,
   persistSessionModel,
+  pruneStaleSessionFiles,
   readSessionModel,
   persistSessionSkill,
   readSessionSkill,
