@@ -20,6 +20,8 @@ Cursor-facing rules or prompts should point at:
 
 Map intent to the same public stage surface:
 
+- `/aw-adk` — create, improve, fix, score, audit CASRE artifacts in .aw_registry/
+- `/aw-publish` — push registry content to remote platform-docs via PR
 - `/aw-plan`
 - `/aw-execute`
 - `/aw-verify`
