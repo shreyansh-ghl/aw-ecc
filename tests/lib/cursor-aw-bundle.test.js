@@ -21,6 +21,8 @@ const INSTALL_MODULES_PATH = path.join(REPO_ROOT, 'manifests', 'install-modules.
 const REQUIRED_SKILLS = [
   'using-aw-skills',
   'using-platform-skills',
+  'aw-adk',
+  'aw-publish',
   'aw-plan',
   'aw-build',
   'aw-investigate',
