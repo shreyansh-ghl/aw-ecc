@@ -93,6 +93,7 @@ The create flow follows an eval-driven iteration loop modeled after skill-creato
 8. **EVAL GATE** — create 2+ colocated eval files
    - Read [eval-placement-guide.md](references/eval-placement-guide.md) for placement rules
    - Each eval must cover: happy path + at least one failure scenario
+   - **Eval prompts must be self-contained.** Include all context inline (interview answers, config values, expected behavior) so the eval can run non-interactively in any AI tool (Claude Code, Cursor, Codex, etc.). Never write an eval prompt that requires the runner to answer follow-up questions.
    - Include at least one eval that validates the dependency chain — e.g., "all agents in the command's roster exist and all skills in those agents' frontmatter resolve to real files." This catches phantom references before they reach production.
    - **Derive evals from the artifact's own structure, not just generic categories.** Look at what you built — phases, human checkpoints, agent roster, error paths — and create evals that exercise those specific mechanisms:
      - **Commands with human checkpoints:** create at least one eval per checkpoint covering both approve AND reject paths. Human gates are the highest-risk behavior — if they don't block, the command's safety guarantee is void.

@@ -1,5 +1,72 @@
 {
   "artifact_name": "aw-adk",
   "artifact_type": "skill",
-  "evals": []
+  "evals": [
+    {
+      "name": "eval-create-skill",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "create-mode"
+    },
+    {
+      "name": "eval-create-agent",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "create-mode"
+    },
+    {
+      "name": "eval-create-command",
+      "category": "functional",
+      "difficulty": "advanced",
+      "group": "create-mode"
+    },
+    {
+      "name": "eval-create-rule",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "create-mode"
+    },
+    {
+      "name": "eval-create-eval",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "create-mode"
+    },
+    {
+      "name": "eval-type-redirect",
+      "category": "behavioral",
+      "difficulty": "advanced",
+      "group": "cross-cutting"
+    },
+    {
+      "name": "eval-score-accuracy",
+      "category": "behavioral",
+      "difficulty": "intermediate",
+      "group": "cross-cutting"
+    },
+    {
+      "name": "eval-colocated-placement",
+      "category": "structural",
+      "difficulty": "basic",
+      "group": "cross-cutting"
+    },
+    {
+      "name": "eval-meta-eval-false-pass",
+      "category": "behavioral",
+      "difficulty": "advanced",
+      "group": "meta-evals"
+    },
+    {
+      "name": "eval-meta-eval-coverage",
+      "category": "structural",
+      "difficulty": "intermediate",
+      "group": "meta-evals"
+    },
+    {
+      "name": "eval-meta-eval-determinism",
+      "category": "behavioral",
+      "difficulty": "advanced",
+      "group": "meta-evals"
+    }
+  ]
 }
