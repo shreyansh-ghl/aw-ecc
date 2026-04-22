@@ -24,6 +24,17 @@ Router for the AW SDLC. MANDATORY on every non-trivial request and re-applied on
 ## Route Decision Tree
 
 ```
+FIRST — Is the user asking you to create, improve, fix, score, or audit
+  an agent, skill, command, rule, or eval? These are markdown files that
+  live in .aw/.aw_registry/ and define how AI tools behave.
+  ├── YES → /aw:adk
+  │         The user wants you to write or edit the file itself.
+  │         Example: "Create a command for database migration" means
+  │         write a command markdown file — not perform an actual
+  │         migration. The subject matter inside the artifact doesn't
+  │         change the route.
+  └── NO  → continue ↓
+
 Approved plan for this exact work?
 ├── NO → Bug/alert/unclear failure?
 │         ├── YES → /aw:investigate
@@ -42,7 +53,7 @@ Approved plan for this exact work?
 - architecture or layer-boundary changes
 - integrations (third-party APIs, external registries, upstream-sourced skills/agents)
 - **router / routing rules / skill orchestration** changes
-- **new/modified skills, agents, commands, rule-manifest entries**
+- **new/modified skills, agents, commands, rule-manifest entries** (exception: if the user wants to create or edit an agent, skill, command, rule, or eval — the files in `.aw/.aw_registry/` that define AI behavior — that's `/aw:adk`. The gate above catches this before you get here.)
 - **`state.json` / `verification.md` / review-or-build contract** changes
 - **cross-registry propagation** (mirroring into platform-core, GitHub→local, etc.)
 - **model assignment changes across multiple agents**
@@ -84,7 +95,7 @@ If a follow-up changes the nature of the work (e.g. review session becomes "patc
 
 ## Public Surface
 
-`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` · `/aw:feature`
+`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` · `/aw:feature` · `/aw:adk`
 
 Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
@@ -100,6 +111,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | `/aw:deploy` | One release outcome for verified work | `release.md`, `state.json` |
 | `/aw:ship` | Launch readiness, rollout safety, rollback, closeout | `release.md`, `state.json`, rollback notes |
 | `/aw:feature` | Guided phase-by-phase SDLC (18 phases) | `state.json`, delegates to stage skills |
+| `/aw:adk` | Author, score, fix, audit any registry artifact (command, agent, skill, rule, eval) | Registry artifacts, evals, `aw link` sync |
 
 ## Intent Routing (quick map)
 
@@ -113,6 +125,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | "create PR", "deploy to staging/prod" (single outcome) | `/aw:deploy` |
 | "is this ready to launch", rollout, rollback plan, release closeout | `/aw:ship` |
 | "idea → production", "do the whole flow", "PR AND deploy" | `aw-yolo` (internal, not a public route — user should stage explicitly) |
+| "create an agent/skill/command/rule/eval", "score my skill", "audit all agents", "ADK", "developer kit" | `/aw:adk` |
 
 ## Scope Guardrails
 
