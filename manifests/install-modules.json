@@ -42,7 +42,7 @@
     {
       "id": "aw-stages",
       "kind": "skills",
-      "description": "Canonical AW SDLC stage skills (aw-plan, aw-build, aw-investigate, aw-test, aw-review, aw-deploy, aw-ship, aw-feature) and supporting internal helpers. Shipped from the single canonical skills/ source; install pipeline transforms /aw: → /aw- for Cursor targets.",
+      "description": "Canonical AW SDLC stage skills (aw-plan, aw-build, aw-investigate, aw-test, aw-review, aw-deploy, aw-ship, aw-feature) and supporting internal helpers. Shipped from the single canonical skills/ source; install pipeline transforms /aw: \u2192 /aw- for Cursor targets.",
       "paths": [
         "skills/aw-brainstorm",
         "skills/aw-build",
@@ -73,6 +73,28 @@
         "opencode"
       ],
       "dependencies": [],
+      "defaultInstall": true,
+      "cost": "light",
+      "stability": "stable"
+    },
+    {
+      "id": "aw-adk",
+      "kind": "skills",
+      "description": "Agent Development Kit \u2014 centralized CASRE (Command, Agent, Skill, Rule, Eval) authoring with lint, scoring, eval creation, and cross-IDE sync.",
+      "paths": [
+        "skills/aw-adk",
+        "commands/adk.md"
+      ],
+      "targets": [
+        "claude",
+        "cursor",
+        "antigravity",
+        "codex",
+        "opencode"
+      ],
+      "dependencies": [
+        "aw-stages"
+      ],
       "defaultInstall": true,
       "cost": "light",
       "stability": "stable"
