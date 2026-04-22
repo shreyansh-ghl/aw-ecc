@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADK Trigger Eval Review</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; max-width: 900px; margin: 0 auto; }
+  h1 { margin-bottom: 8px; }
+  .subtitle { color: #8b949e; margin-bottom: 20px; }
+  .description { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-family: monospace; font-size: 13px; }
+  .eval-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .eval-item textarea { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; color: #c9d1d9; padding: 6px 8px; font-family: inherit; resize: vertical; min-height: 36px; }
+  .toggle { cursor: pointer; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; border: none; }
+  .toggle.trigger { background: #1b4332; color: #2dd4bf; }
+  .toggle.no-trigger { background: #4c1d1d; color: #f87171; }
+  .remove-btn { cursor: pointer; color: #f87171; background: none; border: none; font-size: 18px; }
+  .add-btn, .export-btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; margin-right: 8px; margin-top: 12px; }
+  .add-btn { background: #21262d; color: #c9d1d9; }
+  .export-btn { background: #238636; color: white; }
+  .add-btn:hover { background: #30363d; }
+  .export-btn:hover { background: #2ea043; }
+</style>
+</head>
+<body>
+
+<h1>Trigger Eval Review: <span id="skill-name">__SKILL_NAME_PLACEHOLDER__</span></h1>
+<p class="subtitle">Review and edit trigger eval queries. Toggle should-trigger, add/remove entries, then export.</p>
+
+<div class="description" id="current-description">__SKILL_DESCRIPTION_PLACEHOLDER__</div>
+
+<div id="eval-list"></div>
+
+<button class="add-btn" onclick="addItem(true)">+ Should Trigger</button>
+<button class="add-btn" onclick="addItem(false)">+ Should NOT Trigger</button>
+<button class="export-btn" onclick="exportEvalSet()">Export Eval Set</button>
+
+<script>
+let evalData = __EVAL_DATA_PLACEHOLDER__;
+
+function render() {
+  const list = document.getElementById('eval-list');
+  list.innerHTML = '';
+  evalData.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'eval-item';
+    div.innerHTML = `
+      <button class="toggle ${item.should_trigger ? 'trigger' : 'no-trigger'}" onclick="toggleTrigger(${i})">
+        ${item.should_trigger ? 'TRIGGER' : 'NO TRIGGER'}
+      </button>
+      <textarea oninput="updateQuery(${i}, this.value)">${item.query}</textarea>
+      <button class="remove-btn" onclick="removeItem(${i})">×</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function toggleTrigger(i) { evalData[i].should_trigger = !evalData[i].should_trigger; render(); }
+function updateQuery(i, val) { evalData[i].query = val; }
+function removeItem(i) { evalData.splice(i, 1); render(); }
+function addItem(shouldTrigger) { evalData.push({ query: '', should_trigger: shouldTrigger }); render(); document.querySelector('.eval-item:last-child textarea').focus(); }
+
+function exportEvalSet() {
+  const filtered = evalData.filter(e => e.query.trim());
+  const blob = new Blob([JSON.stringify(filtered, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'eval_set.json';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>

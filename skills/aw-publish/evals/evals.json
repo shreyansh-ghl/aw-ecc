@@ -1,0 +1,29 @@
+{
+  "skill": "aw-publish",
+  "evals": [
+    {
+      "id": "eval-push-modes",
+      "file": "eval-push-modes.md",
+      "description": "Tests correct aw push invocation for auto-detect, single file, namespace, dry-run modes",
+      "scenarios": 4
+    },
+    {
+      "id": "eval-confirmation-gate",
+      "file": "eval-confirmation-gate.md",
+      "description": "Tests that dry-run always runs first and user is always asked before pushing",
+      "scenarios": 3
+    },
+    {
+      "id": "eval-rules-push",
+      "file": "eval-rules-push.md",
+      "description": "Tests correct distinction between aw push (registry) and aw push-rules (rules)",
+      "scenarios": 3
+    },
+    {
+      "id": "eval-intent-detection",
+      "file": "eval-intent-detection.md",
+      "description": "Tests natural language intent detection triggers publish flow without explicit command, plus negative cases for git push, code PRs, and deploys",
+      "scenarios": 8
+    }
+  ]
+}
