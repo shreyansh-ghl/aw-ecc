@@ -71,7 +71,6 @@ Rules live outside the registry in `.aw/.aw_rules/`:
 
 Use this decision tree to **construct** the exact target path. The rules are deterministic — walk the tree, substitute your variables, and you'll have the path. Searching is unnecessary because every combination of namespace + domain + type produces exactly one path.
 
-
 ```
 1. Is this a RULE?
    ├── YES → Platform rule?

@@ -14,7 +14,8 @@ Evaluates whether a skill's description causes it to trigger correctly:
 - should_trigger queries should activate the skill
 - should_not_trigger queries should NOT activate the skill
 
-Uses `claude -p` to test each query and checks if the skill was consulted.
+Tests each query against the configured AI runner and checks if the skill was consulted.
+Supports multiple runners: claude (default), cursor, codex.
 
 Adapted from skill-creator's run_eval.py + run_loop.py for CASRE context.
 """
@@ -55,24 +56,40 @@ def read_skill_description(skill_path: str) -> str:
     return ""
 
 
-def test_trigger(query: str, skill_path: str, model: str) -> bool:
-    """Test if a query triggers the skill using claude -p.
+def detect_runner() -> str:
+    """Auto-detect which AI runner is available."""
+    for runner in ["claude", "cursor", "codex"]:
+        try:
+            subprocess.run([runner, "--version"], capture_output=True, timeout=5)
+            return runner
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+    return "claude"  # fallback
+
+
+def build_runner_command(runner: str, query: str, skill_path: str, model: str) -> list[str]:
+    """Build the CLI command for the given runner."""
+    if runner == "claude":
+        return ["claude", "-p", query, "--model", model, "--max-turns", "1"]
+    elif runner == "cursor":
+        # Cursor uses --prompt flag in CLI mode
+        return ["cursor", "--prompt", query, "--model", model]
+    elif runner == "codex":
+        # Codex uses positional prompt
+        return ["codex", "-q", query, "--model", model]
+    else:
+        return ["claude", "-p", query, "--model", model, "--max-turns", "1"]
+
+
+def test_trigger(query: str, skill_path: str, model: str, runner: str = "claude") -> bool:
+    """Test if a query triggers the skill using the configured runner.
 
     Returns True if the skill was consulted (triggered).
     """
+    cmd = build_runner_command(runner, query, skill_path, model)
     try:
         result = subprocess.run(
-            [
-                "claude",
-                "-p",
-                query,
-                "--skill",
-                skill_path,
-                "--model",
-                model,
-                "--max-turns",
-                "1",
-            ],
+            cmd,
             capture_output=True,
             text=True,
             timeout=120,
@@ -82,11 +99,11 @@ def test_trigger(query: str, skill_path: str, model: str) -> bool:
         skill_name = os.path.basename(skill_path.rstrip("/"))
         return skill_name.lower() in output.lower()
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        print(f"  Warning: claude -p failed: {e}", file=sys.stderr)
+        print(f"  Warning: {runner} failed: {e}", file=sys.stderr)
         return False
 
 
-def evaluate(eval_set: list[dict], skill_path: str, model: str, verbose: bool = False) -> dict:
+def evaluate(eval_set: list[dict], skill_path: str, model: str, verbose: bool = False, runner: str = "claude") -> dict:
     """Run all eval queries and compute accuracy."""
     results = []
     correct = 0
@@ -99,7 +116,7 @@ def evaluate(eval_set: list[dict], skill_path: str, model: str, verbose: bool = 
         if verbose:
             print(f"  [{i + 1}/{total}] Testing: {query[:60]}...", file=sys.stderr)
 
-        triggered = test_trigger(query, skill_path, model)
+        triggered = test_trigger(query, skill_path, model, runner)
         is_correct = triggered == should_trigger
 
         if is_correct:
@@ -135,9 +152,13 @@ def main():
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory or agent file")
     parser.add_argument("--model", default="claude-sonnet-4-6", help="Model ID for testing")
+    parser.add_argument("--runner", default="auto", help="AI runner: claude, cursor, codex, or auto (detect)")
     parser.add_argument("--max-iterations", type=int, default=1, help="Number of evaluation iterations")
     parser.add_argument("--verbose", action="store_true", help="Print progress")
     args = parser.parse_args()
+
+    runner = args.runner if args.runner != "auto" else detect_runner()
+    print(f"Using runner: {runner}")
 
     eval_set = load_eval_set(args.eval_set)
     print(f"Loaded {len(eval_set)} eval queries ({sum(1 for e in eval_set if e['should_trigger'])} should-trigger, {sum(1 for e in eval_set if not e['should_trigger'])} should-not-trigger)")
@@ -148,7 +169,7 @@ def main():
 
     for iteration in range(1, args.max_iterations + 1):
         print(f"\n--- Iteration {iteration} ---")
-        result = evaluate(eval_set, args.skill_path, args.model, args.verbose)
+        result = evaluate(eval_set, args.skill_path, args.model, args.verbose, runner)
 
         print(f"Accuracy: {result['accuracy']:.1%} ({result['correct']}/{result['total']})")
         if result["false_positives"]:

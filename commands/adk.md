@@ -1,7 +1,7 @@
 ---
 name: aw:adk
-description: "Agent Development Kit — create, improve, fix, score, comply, audit, or health-check any CASRE artifact (Command, Agent, Skill, Rule, Eval). Use /aw:adk to author registry content."
-argument-hint: "[type] [mode] [target] — e.g., 'agent create', 'skill score my-skill', 'rule audit all'"
+description: "Agent Development Kit — create, improve, fix, delete, score, comply, audit, or health-check any CASRE artifact (Command, Agent, Skill, Rule, Eval). Use /aw:adk to author registry content."
+argument-hint: "[type] [mode] [target] — e.g., 'agent create', 'skill score my-skill', 'rule audit all', 'agent delete my-agent'"
 status: active
 stage: build
 internal_skill: aw-adk
@@ -9,7 +9,7 @@ internal_skill: aw-adk
 
 # ADK — Agent Development Kit
 
-Use `/aw:adk` to author, score, fix, or audit any artifact in the AW registry.
+Use `/aw:adk` to author, score, fix, delete, or audit any artifact in the AW registry.
 
 ## Usage
 
@@ -21,6 +21,7 @@ Use `/aw:adk` to author, score, fix, or audit any artifact in the AW registry.
 /aw:adk skill score my-skill     → score against rubric
 /aw:adk rule audit all           → audit all rules
 /aw:adk eval create my-agent     → create evals for existing agent
+/aw:adk agent delete my-agent    → remove agent + evals + clean references
 ```
 
 ## Arguments
@@ -28,7 +29,7 @@ Use `/aw:adk` to author, score, fix, or audit any artifact in the AW registry.
 | Position | Values | Default |
 |---|---|---|
 | type | `command` · `agent` · `skill` · `rule` · `eval` | interactive (ask) |
-| mode | `create` · `improve` · `fix` · `score` · `comply` · `audit` · `health` | interactive (ask) |
+| mode | `create` · `improve` · `fix` · `delete` · `score` · `comply` · `audit` · `health` | interactive (ask) |
 | target | artifact name or `all` (for audit/health) | interactive (ask) |
 
 ## Execution

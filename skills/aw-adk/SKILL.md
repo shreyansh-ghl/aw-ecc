@@ -17,6 +17,7 @@ Unified authoring tool for all AW registry artifacts. One entry point, five arti
 - **Comply**: User wants a compliance check against the spec
 - **Audit**: User wants a batch score across all artifacts of a type
 - **Health**: User wants a dashboard of success rates, failure clusters, pending fixes
+- **Delete**: User wants to remove an artifact and clean up all its references
 
 ## Type × Mode Matrix
 
@@ -24,7 +25,7 @@ Unified authoring tool for all AW registry artifacts. One entry point, five arti
 /aw:adk [type] [mode] [target]
 
 Types: command | agent | skill | rule | eval
-Modes: create | improve | fix | score | comply | audit | health
+Modes: create | improve | fix | score | comply | audit | health | delete
 
 Examples:
   /aw:adk                          → interactive: ask type, then mode
@@ -34,6 +35,7 @@ Examples:
   /aw:adk skill score my-skill     → score against rubric
   /aw:adk rule audit all           → audit all rules
   /aw:adk eval create my-agent     → create evals for existing agent
+  /aw:adk agent delete my-agent    → remove agent + its evals + references
 ```
 
 ## CASRE Type Classifier
@@ -107,10 +109,10 @@ The create flow follows an eval-driven iteration loop modeled after skill-creato
    - Aggregate via `scripts/aggregate-benchmark.py`
    - Launch `eval-viewer/generate_review.py` for human review
 10. **ITERATION LOOP** — review → improve → re-test
-   - Read feedback from `feedback.json`
-   - Improve artifact based on weak dimensions
-   - Re-run test prompts into `iteration-<N+1>/`
-   - Repeat until: user satisfied, all feedback empty, or no meaningful progress
+    - Read feedback from `feedback.json`
+    - Improve artifact based on weak dimensions
+    - Re-run test prompts into `iteration-<N+1>/`
+    - Repeat until: user satisfied, all feedback empty, or no meaningful progress
 11. **DESCRIPTION OPTIMIZATION** — (skills and agents only, optional)
     - Generate 10 should-trigger + 10 should-not-trigger queries
     - User reviews via `assets/eval_review.html`
@@ -218,6 +220,33 @@ Batch score all artifacts of a type. Produces a portfolio report with:
 ## Health Flow
 
 Dashboard showing: success rates, failure clusters, pending fixes, score trends.
+
+## Delete Flow
+
+For removing an artifact and all its associated files. Destructive — requires explicit user confirmation.
+
+1. **LOCATE** — construct the artifact path using [registry-structure.md](references/registry-structure.md)
+2. **INVENTORY** — list everything that will be deleted:
+   - The artifact file itself
+   - Colocated evals directory (e.g., `agents/evals/<slug>/`)
+   - Any workspace directories (`<artifact>-workspace/`)
+   - **If type is rule:** the `rule-manifest.json` entry AND the `AGENTS.md` bullet
+   - **If type is command:** agents created exclusively for this command (ask user — they may be shared)
+   - **If type is agent:** check if any command references this agent in its roster (warn if so)
+   - **If type is skill:** check if any agent lists this skill in its `skills:` frontmatter (warn if so)
+3. **REVERSE REFERENCE SCAN** — find everything that points TO this artifact and would become a phantom reference after deletion:
+   - **Agent being deleted:** scan all commands for this agent name in their `## Agent Roster` section
+   - **Skill being deleted:** scan all agents for this skill name in their `skills:` frontmatter
+   - **Command being deleted:** check if any other command or skill references it
+   - **Rule being deleted:** the manifest entry and AGENTS.md bullet (these are cleaned up in step 6)
+   - **Eval being deleted:** just the parent artifact's eval directory (no reverse references)
+   - For each reference found, show it to the user: "WARNING: <file> references this artifact. Deleting will create a phantom dependency. Remove the reference too? (yes/skip)"
+4. **CONFIRM** — show the full inventory (files to delete + references to clean) and ask: "This will delete N files and update M references. Proceed? (yes/no)". Never delete without explicit confirmation.
+5. **DELETE** — remove all inventoried files AND clean up confirmed reverse references (remove the artifact from `skills:` arrays, agent roster rows, etc.)
+6. **REGISTRY CLEANUP**:
+   - **If type is rule:** remove the entry from `rule-manifest.json` and the bullet from `.aw/.aw_rules/platform/<domain>/AGENTS.md`
+   - **If namespace is now empty:** remove the namespace directory (but check `.sync-config.json` — if other artifacts exist in sibling type directories, leave it)
+7. **SYNC** — run `aw link` to propagate the removal to all IDE workspaces
 
 ## Writing Philosophy
 

@@ -62,6 +62,7 @@
         "rules-core",
         "agents-core",
         "aw-stages",
+        "aw-adk",
         "commands-core",
         "hooks-runtime",
         "platform-configs",

@@ -67,6 +67,30 @@
       "category": "behavioral",
       "difficulty": "advanced",
       "group": "meta-evals"
+    },
+    {
+      "name": "eval-delete-agent",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "delete-mode"
+    },
+    {
+      "name": "eval-delete-rule",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "delete-mode"
+    },
+    {
+      "name": "eval-delete-skill",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "delete-mode"
+    },
+    {
+      "name": "eval-delete-command",
+      "category": "functional",
+      "difficulty": "intermediate",
+      "group": "delete-mode"
     }
   ]
 }

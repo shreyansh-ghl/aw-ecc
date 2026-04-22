@@ -25,7 +25,7 @@ description: Quickstart guide for creating CASRE artifacts with the ADK
 > Create a command for incident response in the platform/infra namespace. Phases: triage → investigate → mitigate → postmortem. Human checkpoint before mitigation.
 
 ### Rule
-> Create a rule called no-direct-db-connection for the backend domain. All database access must go through @platform-core/* packages. Severity: MUST. File patterns: *.service.ts, *.repository.ts.
+> Create a rule called no-direct-db-connection for the backend domain. All database access must go through @platform-core/\* packages. Severity: MUST. File patterns: \*.service.ts, \*.repository.ts.
 
 ### Eval
 > Create evals for the existing code-reviewer agent at .aw/.aw_registry/platform/review/agents/code-reviewer.md. One happy path, one where the PR has no issues but the agent flags false positives.
@@ -39,6 +39,7 @@ These phrases trigger the ADK via the `using-aw-skills` router:
 - "audit all agents in platform/services"
 - "fix the lint errors on this skill"
 - "improve the payments-processor agent"
+- "delete the old migration command"
 
 ## What Happens Under the Hood
 
@@ -51,3 +52,15 @@ DESCRIPTION OPT → CROSS-IDE → REGISTRY UPDATES → SYNC
 ```
 
 No steps are optional. Rules, agents, commands, skills, and evals all go through the full flow.
+
+## Deleting Artifacts
+
+The ADK also handles safe deletion with reverse reference scanning:
+
+```
+/aw:adk agent delete my-agent
+```
+
+The delete flow: LOCATE → INVENTORY → REVERSE REFERENCE SCAN → CONFIRM → DELETE → REGISTRY CLEANUP → SYNC
+
+It finds everything that points to the artifact (commands referencing an agent, agents referencing a skill) and offers to clean up those references too — no phantom dependencies left behind.
