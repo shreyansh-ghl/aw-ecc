@@ -35,6 +35,15 @@ FIRST — Is the user asking you to create, improve, fix, score, or audit
   │         change the route.
   └── NO  → continue ↓
 
+SECOND — Is the user asking to push registry artifacts (.aw_registry/
+  or .aw_rules/) to the remote platform-docs registry?
+  Signals: "push this agent/skill/rule to the registry", "publish my
+  registry changes", "sync to platform-docs", "aw push", "aw push-rules"
+  NOTE: Regular git push, code PRs, and deploys are NOT this route.
+  ├── YES → /aw:publish
+  │         Always dry-run first, then confirm before pushing.
+  └── NO  → continue ↓
+
 Approved plan for this exact work?
 ├── NO → Bug/alert/unclear failure?
 │         ├── YES → /aw:investigate
@@ -95,7 +104,7 @@ If a follow-up changes the nature of the work (e.g. review session becomes "patc
 
 ## Public Surface
 
-`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` · `/aw:feature` · `/aw:adk`
+`/aw:plan` · `/aw:build` (alias: `/aw:execute`) · `/aw:investigate` · `/aw:test` (alias: `/aw:verify`) · `/aw:review` · `/aw:deploy` · `/aw:ship` · `/aw:feature` · `/aw:adk` · `/aw:publish`
 
 Honor explicit `/aw:<command>` the user types; do not reinterpret.
 
@@ -112,6 +121,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | `/aw:ship` | Launch readiness, rollout safety, rollback, closeout | `release.md`, `state.json`, rollback notes |
 | `/aw:feature` | Guided phase-by-phase SDLC (18 phases) | `state.json`, delegates to stage skills |
 | `/aw:adk` | Author, score, fix, audit any registry artifact (command, agent, skill, rule, eval) | Registry artifacts, evals, `aw link` sync |
+| `/aw:publish` | Push local artifacts to remote registry via PR (dry-run + confirm gate) | PR to platform-docs |
 
 ## Intent Routing (quick map)
 
@@ -126,6 +136,7 @@ Honor explicit `/aw:<command>` the user types; do not reinterpret.
 | "is this ready to launch", rollout, rollback plan, release closeout | `/aw:ship` |
 | "idea → production", "do the whole flow", "PR AND deploy" | `aw-yolo` (internal, not a public route — user should stage explicitly) |
 | "create an agent/skill/command/rule/eval", "score my skill", "audit all agents", "ADK", "developer kit" | `/aw:adk` |
+| "push this agent/skill/rule to the registry", "publish registry changes", "sync to platform-docs", "aw push" (NOT regular git push or code PRs) | `/aw:publish` |
 
 ## Scope Guardrails
 

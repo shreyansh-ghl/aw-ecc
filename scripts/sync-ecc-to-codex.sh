@@ -54,6 +54,7 @@ AW_CODEX_SKILLS=(
   "aw-ship"
   "aw-brainstorm"
   "aw-adk"
+  "aw-publish"
   "aw-debug"
   "aw-design"
   "aw-feature"

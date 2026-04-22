@@ -100,6 +100,28 @@
       "stability": "stable"
     },
     {
+      "id": "aw-publish",
+      "kind": "skills",
+      "description": "Registry publish skill \u2014 guides pushing locally created/modified CASRE artifacts to the remote platform-docs registry via PR. Intent-based with mandatory confirmation gate.",
+      "paths": [
+        "skills/aw-publish",
+        "commands/publish.md"
+      ],
+      "targets": [
+        "claude",
+        "cursor",
+        "antigravity",
+        "codex",
+        "opencode"
+      ],
+      "dependencies": [
+        "aw-stages"
+      ],
+      "defaultInstall": true,
+      "cost": "light",
+      "stability": "stable"
+    },
+    {
       "id": "commands-core",
       "kind": "commands",
       "description": "Core slash-command library and command docs.",
