@@ -56,9 +56,11 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 ## Execution Rules
 
 1. Classify the request into one primary mode first.
-2. Operate in read-only planning mode until the artifacts are written.
-3. Default to single-scope planning.
-4. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+2. **MANDATORY — before writing any artifact:** Load and run the `grill-with-docs` skill. The AW intake UI questions (purpose, style, sections) are a starting signal only and do NOT satisfy this step. `grill-with-docs` uncovers edge cases, failure modes, acceptance criteria, domain constraints, and hidden dependencies. Do not write `prd.md`, `spec.md`, `design.md`, or `tasks.md` until `grill-with-docs` has completed its interview.
+3. **MANDATORY — after `grill-with-docs` completes, before writing `spec.md` or `tasks.md`:** Load and run `to-prd` to synthesise the conversation into `prd.md`. This applies in ALL modes. `prd.md` must exist before any other artifact is written. Do not skip this step even in technical mode.
+4. Operate in read-only planning mode until the artifacts are written.
+5. Default to single-scope planning.
+6. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
 5. Use existing artifacts as inputs when they are already sufficient.
 6. Route approved technical direction through `aw-spec` before task planning.
 7. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
