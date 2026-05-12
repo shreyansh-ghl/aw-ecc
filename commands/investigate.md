@@ -42,7 +42,8 @@ Record `html_companion_artifacts` in `state.json` with path, profile, status, an
 
 1. Reproduce first.
 2. Capture expected vs actual behavior.
-3. Use the smallest confirming probe before patching.
+3. **MANDATORY — before reading any code files:** Load the `diagnose` skill. Do not open files, grep code, or explore the codebase until `diagnose` has been loaded. `diagnose` enforces the correct reproduce → minimise → hypothesise → instrument → fix → regression-test loop and prevents speculative patching. No exceptions.
+4. Use the smallest confirming probe before patching.
 4. Load org-standard observability and platform playbooks when the baseline requires them.
 5. For frontend issues, include runtime and responsive evidence when relevant.
 6. Name the exact next probe or next command before stopping.

@@ -59,6 +59,7 @@ Record `html_companion_artifacts` in `state.json` with path, profile, status, an
 4. Default to sequential execution unless the approved plan marks disjoint `parallel_candidate` slices with explicit write scopes.
 5. If parallel fan-out is approved, respect the plan’s `max_parallel_subagents` cap, defaulting to `3` when no stricter or larger value is justified.
 6. Break non-trivial work into thin, rollback-friendly slices or bounded parallel waves.
+7. **For each slice that changes observable behavior:** Load the `tdd` skill and follow its RED → GREEN → REFACTOR loop — write a failing test first, confirm it fails, implement the minimal fix, confirm it passes, then refactor. Do not write implementation code before a failing test exists for that slice.
 7. Validate each slice or completed wave before expanding scope.
 8. Keep moving through approved slices until the current build scope is complete or explicitly blocked.
 9. For bug work, require a failing signal or reproduction before broad fixes.
