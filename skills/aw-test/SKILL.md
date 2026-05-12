@@ -92,8 +92,20 @@ Every testing handoff must make these things obvious:
 - evidence artifacts
 - failures
 - unavailable checks
+- `html_companion_artifacts`
 - blockers
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `verification.md` remains canonical for agents.
+When test writes or materially updates `verification.md`, also create or refresh `.aw_docs/html/<feature_slug>-test/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `aw:echo` with the `verification-report` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass QA scope, checks run, pass/fail/unavailable lanes, runtime evidence, screenshots or links when safe, failures, confidence, and next command as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -104,6 +116,7 @@ Before leaving test, confirm:
 - [ ] unavailable checks are marked unavailable, not silently passed
 - [ ] fresh evidence is written to `verification.md`
 - [ ] `state.json` is updated with checks, failures, and next action
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -115,4 +128,5 @@ Always end with:
 - `Evidence`
 - `Failures`
 - `Unavailable`
+- `HTML Companion`
 - `Next`

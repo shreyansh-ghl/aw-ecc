@@ -35,6 +35,7 @@ Perform one explicit release action with the correct GHL provider and mechanism 
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-deploy/index.html` when docs output mode is `dual` or `html`
 - one concrete release outcome artifact:
   - PR URL
   - branch name
@@ -43,6 +44,13 @@ Perform one explicit release action with the correct GHL provider and mechanism 
   - build links
   - status summary
 
+## Human HTML Companion
+
+Markdown `release.md` remains canonical for agents.
+When `/aw:deploy` writes or materially updates release evidence, invoke `aw:echo` with the `release-report` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
+
 ## Deploy Rules
 
 1. Do one release action at a time.
@@ -50,6 +58,7 @@ Perform one explicit release action with the correct GHL provider and mechanism 
 3. Finish the selected release action for the chosen mode or record the blocker explicitly.
 4. Record deterministic evidence even when external execution is blocked.
 5. Hand off to `/aw:ship` when launch, rollout, rollback readiness, or release closeout is requested after deploy.
+6. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
@@ -72,4 +81,5 @@ Always end with:
 - `Execution Evidence`
 - `Rollback Path`
 - `Outcome`
+- `HTML Companion`
 - `Next`

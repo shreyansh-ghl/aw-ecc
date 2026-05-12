@@ -52,6 +52,14 @@ Turn an idea, requirement, approved design, or technical request into the minimu
   - `designs/`
   - `spec.md`
   - `tasks.md`
+- `.aw_docs/html/<feature_slug>-plan/index.html` when docs output mode is `dual` or `html`
+
+## Human HTML Companion
+
+Markdown artifacts remain canonical for agents.
+When `/aw:plan` writes or materially updates planning artifacts, invoke `aw:echo` to produce the TeamOfOne-readable companion unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## Execution Rules
 
@@ -65,6 +73,7 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 8. Do not require a PRD for a technical request that is already well defined.
 9. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
 10. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
+11. Generate or explicitly record the HTML companion status before handoff.
 
 ## Planning Depth
 
@@ -126,5 +135,6 @@ Always end with:
 - `Phases`
 - `Summary`
 - `Execution Readiness`
+- `HTML Companion`
 - `Missing`
 - `Next`

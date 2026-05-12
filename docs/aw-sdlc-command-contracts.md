@@ -137,6 +137,48 @@ For build-stage save-point discipline, `state.json` should record the created sa
 When build executes a phased plan, `execution.md` should record completed phases and the next phase transition, and `state.json` should record `completed_phases` plus `current_phase`.
 When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candidate` slices, explicit write scopes, and a `max_parallel_subagents` cap that defaults to `3` unless another value is justified.
 
+## Human HTML Companion Rule
+
+Markdown artifacts remain canonical for agents and downstream AW stages.
+HTML companions are the TeamOfOne-readable surface for humans, reviewers, and quick share links.
+
+When a public stage writes or materially updates its canonical Markdown artifact, it should also invoke `aw:echo` to create or refresh `.aw_docs/html/<feature_slug>-<stage>/index.html` unless docs output mode resolves to Markdown-only.
+
+`aw-ecc` owns the SDLC trigger, output mode, profile, state, and deterministic path contract.
+The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, and `aw:echo` agent definition.
+`aw:echo` owns communication with humans, not changing the canonical agent source of truth.
+
+Resolve output mode in this order:
+
+1. explicit user or session request
+2. stage-local request
+3. `.aw_docs/config.json` `docs.outputMode`
+4. `AW_DOCS_OUTPUT_MODE`
+5. default `dual`
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+Update `.aw_docs/html/manifest.json` when safe so TeamOfOne docs can surface and share the companion.
+When the user or stage asks for remote sharing, pass the approved TeamOfOne docs
+target repo, branch, path, base URL, and publish authorization to `aw:echo`.
+Echo may publish only the generated human artifacts and safe manifest entries,
+then return repository links and TeamOfOne docs URLs. If the target,
+authorization, or safety checks are missing, record `publish_status: blocked`
+and the blocker instead of inventing a remote link.
+
+The default stage profile map is:
+
+| Stage | HTML path | Profile |
+|---|---|---|
+| `plan` | `.aw_docs/html/<feature_slug>-plan/index.html` | `prd`, `technical-spec`, `implementation-plan`, or `impact-analysis-report` |
+| `spec` | `.aw_docs/html/<feature_slug>-spec/index.html` | `technical-spec` |
+| `tasks` | `.aw_docs/html/<feature_slug>-tasks/index.html` | `implementation-plan` |
+| `build` | `.aw_docs/html/<feature_slug>-build/index.html` | `implementation-plan` |
+| `investigate` | `.aw_docs/html/<feature_slug>-investigate/index.html` | `investigation-report` |
+| `test` | `.aw_docs/html/<feature_slug>-test/index.html` | `verification-report` |
+| `review` | `.aw_docs/html/<feature_slug>-review/index.html` | `pr-one-pager` |
+| `deploy` | `.aw_docs/html/<feature_slug>-deploy/index.html` | `release-report` |
+| `ship` | `.aw_docs/html/<feature_slug>-ship/index.html` | `release-report` |
+
 ## 1. `/aw:plan`
 
 ### Role
@@ -182,6 +224,7 @@ Turn an idea, requirement, approved design, or technical request into the minimu
   - `designs/`
   - `spec.md`
   - `tasks.md`
+- `.aw_docs/html/<feature_slug>-plan/index.html` when output mode is `dual` or `html`
 
 When `tasks.md` is produced, it should:
 
@@ -264,6 +307,7 @@ Implement approved work using the correct build mode, continue until the approve
 - tests or validation changes where applicable
 - `.aw_docs/features/<feature_slug>/execution.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-build/index.html` when output mode is `dual` or `html`
 
 ### Layers
 
@@ -329,8 +373,9 @@ Diagnose bugs, alerts, incidents, or ambiguous failures before proposing a repai
 
 ### Outputs
 
-- updated `.aw_docs/features/<feature_slug>/execution.md` or investigation notes inside the feature folder
+- `.aw_docs/features/<feature_slug>/investigation.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-investigate/index.html` when output mode is `dual` or `html`
 - explicit reproduction, hypothesis, confirmed cause, and recommended next command
 
 ### Layers
@@ -393,6 +438,7 @@ Produce focused QA evidence for a feature, fix, or release candidate.
 
 - `.aw_docs/features/<feature_slug>/verification.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-test/index.html` when output mode is `dual` or `html`
 - fresh evidence for review or a repair recommendation
 
 ### Layers
@@ -454,6 +500,7 @@ Produce findings, governance decisions, and readiness outcomes from the availabl
 
 - `.aw_docs/features/<feature_slug>/verification.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-review/index.html` when output mode is `dual` or `html`
 - explicit overall status and next action
 
 ### Layers
@@ -517,6 +564,7 @@ Execute the requested release action using the resolved org-standard staging or 
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-deploy/index.html` when output mode is `dual` or `html`
 - explicit release action evidence
 
 ### Layers
@@ -579,6 +627,7 @@ Own launch readiness, rollout safety, rollback posture, and release closeout aft
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `state.json`
+- `.aw_docs/html/<feature_slug>-ship/index.html` when output mode is `dual` or `html`
 - launch or blocker summary
 
 ### Layers

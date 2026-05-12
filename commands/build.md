@@ -42,6 +42,14 @@ Implement approved work in thin, reversible slices, continue until the approved 
 - tests or validation changes where applicable
 - `.aw_docs/features/<feature_slug>/execution.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-build/index.html` when docs output mode is `dual` or `html`
+
+## Human HTML Companion
+
+Markdown `execution.md` remains canonical for agents.
+When `/aw:build` writes or materially updates execution evidence, invoke `aw:echo` with the `implementation-plan` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## Execution Rules
 
@@ -60,6 +68,7 @@ Implement approved work in thin, reversible slices, continue until the approved 
 13. Create save-point commits for meaningful completed slices.
 14. If a proposed slice cannot support a clean save-point commit, treat that as a slicing problem instead of normalizing a no-commit checkpoint.
 15. Hand off to `/aw:test` or `/aw:review` with the exact next command instead of claiming readiness without evidence.
+16. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
@@ -87,5 +96,6 @@ Always end with:
 - `Changes`
 - `Validation`
 - `Save Points`
+- `HTML Companion`
 - `Blockers`
 - `Next`
