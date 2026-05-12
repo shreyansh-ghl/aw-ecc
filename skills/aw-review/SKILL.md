@@ -153,8 +153,21 @@ Every review handoff must make these things obvious:
 - advisory notes
 - governance status
 - readiness outcome
+- `html_companion_artifacts`
 - blockers
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `verification.md` remains canonical for agents.
+When review writes or materially updates `verification.md`, also create or refresh `.aw_docs/html/<feature_slug>-review/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` with the `pr-one-pager` profile for reviewer-facing summaries and readiness decisions.
+Use `impact-analysis-report` only when the review output is primarily blast radius or customer impact.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass evidence reviewed, engines run, findings, severity, governance status, readiness outcome, repair path, and next command as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -171,6 +184,7 @@ Before leaving review, confirm:
 - [ ] governance and readiness checks match the resolved baseline
 - [ ] repairs point back to build or test with clear scope
 - [ ] `verification.md` and `state.json` are updated
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -182,4 +196,5 @@ Always end with:
 - `Governance`
 - `Readiness`
 - `Outcome`
+- `HTML Companion`
 - `Next`

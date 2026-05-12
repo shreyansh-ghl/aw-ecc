@@ -97,6 +97,24 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 - do not create random filenames
 - do not write implementation code
 
+## Human HTML Companion
+
+Markdown planning artifacts remain canonical for agents.
+When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` for the companion instead of hand-rolling stage-local HTML.
+Resolve output mode in the order defined by that skill: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Write the planning companion to `.aw_docs/html/<feature_slug>-plan/index.html`.
+Choose the smallest correct profile for the dominant planning output:
+
+- `prd` for product requirements
+- `technical-spec` for technical `spec.md` or architecture-heavy `design.md`
+- `implementation-plan` for `tasks.md` or full planning packets
+- `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
+
+Pass all canonical source paths that shaped the companion, update `.aw_docs/html/manifest.json` when safe, and record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+
 ## Plan Document Template
 
 ### `prd.md`
@@ -348,6 +366,7 @@ Before ending the planning stage:
 6. check that file paths, type names, helper names, and commands stay consistent
 7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
 8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
+9. confirm the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
@@ -383,6 +402,7 @@ When `tasks.md` is ready:
 - assumptions or constraints that materially shape execution
 - planned save-point commit policy
 - parallel build policy and cap when parallel execution is planned
+- `html_companion_artifacts`
 - recommended next commands
 
 ## Final Output Shape
@@ -396,5 +416,6 @@ Always end with:
 - `Phases`
 - `Execution Readiness`
 - `Execution Mode`
+- `HTML Companion`
 - `Missing`
 - `Next`

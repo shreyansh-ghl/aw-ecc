@@ -72,6 +72,17 @@ Capture at least:
 - ADR-needed decision when the change has durable architectural impact
 - rollout, migration, or environment constraints when relevant
 
+## Human HTML Companion
+
+Markdown `spec.md` remains canonical for agents.
+When this helper writes or materially updates `spec.md`, also create or refresh `.aw_docs/html/<feature_slug>-spec/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` with the `technical-spec` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass the approved direction, `spec.md`, relevant source paths, risks, alternatives, interfaces, rollout constraints, and validation strategy as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+
 ## Common Rationalizations
 
 | Rationalization | Reality |
@@ -101,6 +112,7 @@ Before handoff, run this inline review:
 6. alternatives and decision-rationale check
 7. testing and operations completeness check
 8. ambiguity check
+9. HTML companion generated, skipped by output mode, or blocked with a recorded reason
 
 Fix issues inline instead of carrying them into task planning.
 
@@ -124,5 +136,6 @@ Always end with:
 - `Testing Strategy`
 - `Assumptions & Constraints`
 - `Acceptance Criteria`
+- `HTML Companion`
 - `Open Approval Needs`
 - `Recommended Next`

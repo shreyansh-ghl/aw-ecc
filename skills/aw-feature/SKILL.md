@@ -58,6 +58,8 @@ For each phase:
 5. **Show output** — Summarize what was produced
 6. **Pause** — Ask user to proceed, refine, or skip
 
+When the backing stage writes a canonical Markdown artifact, include the generated `.aw_docs/html/<feature_slug>-<stage>/index.html` companion in the output summary, or state that HTML was skipped by output mode or blocked with a recorded reason.
+
 ### Step 4: Handle User Navigation
 
 | User says | Action |
@@ -242,6 +244,11 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 
 **Write trigger:** Immediately after a phase completes or is skipped, before showing the pause prompt. Use the Write tool — do not defer or batch.
 
+## Human HTML Companion
+
+`aw-feature` delegates HTML generation to the backing stage skills.
+Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by `platform-core:human-collaboration-artifacts` through `aw:echo` for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
+
 ## Common Rationalizations
 
 | Rationalization | Reality |
@@ -271,6 +278,7 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 - [ ] Progress tracker uses correct status symbols (✓ ► ○ ⊘)
 - [ ] State.json is updated after every phase transition
 - [ ] Plain-language descriptions are shown for every phase
+- [ ] HTML companion status is shown when a phase produced a stage artifact
 
 ## Final Output Shape
 
@@ -278,5 +286,6 @@ At each phase boundary, always include:
 - `Phase` — current phase number and name
 - `Status` — what was produced or decided
 - `Progress` — visual progress bar + X/18
+- `HTML Companion` — generated path, skipped mode, or blocker when the phase produced a stage artifact
 - `Next` — what the next phase is and a plain-language description
 - `Prompt` — ask user to proceed, refine, or skip

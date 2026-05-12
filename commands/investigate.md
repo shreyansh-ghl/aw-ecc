@@ -28,7 +28,15 @@ Turn vague breakage into a concrete reproduction, localized fault surface, and n
 
 - `.aw_docs/features/<feature_slug>/investigation.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-investigate/index.html` when docs output mode is `dual` or `html`
 - reproduction, expected-vs-actual, hypothesis, and next probe or build handoff
+
+## Human HTML Companion
+
+Markdown `investigation.md` remains canonical for agents.
+When `/aw:investigate` writes or materially updates investigation evidence, invoke `platform-core:human-collaboration-artifacts` and delegate the human-facing HTML generation to `aw:echo` with the `investigation-report` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## Investigation Rules
 
@@ -39,6 +47,7 @@ Turn vague breakage into a concrete reproduction, localized fault surface, and n
 5. For frontend issues, include runtime and responsive evidence when relevant.
 6. Name the exact next probe or next command before stopping.
 7. Do not broaden into implementation until the fault surface is concrete enough.
+8. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
@@ -60,4 +69,5 @@ Always end with:
 - `Expected vs Actual`
 - `Evidence`
 - `Likely Fault Surface`
+- `HTML Companion`
 - `Next`

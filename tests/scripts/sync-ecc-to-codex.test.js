@@ -10,6 +10,7 @@ const { execFileSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'sync-ecc-to-codex.sh');
+const SYNC_TIMEOUT_MS = process.platform === 'win32' ? 90000 : 30000;
 
 function createTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -50,7 +51,7 @@ function runSync(homeDir, extraEnv = {}) {
     env,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: 30000,
+    timeout: SYNC_TIMEOUT_MS,
   });
 }
 

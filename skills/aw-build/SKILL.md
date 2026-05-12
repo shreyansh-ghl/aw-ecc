@@ -149,8 +149,20 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 - deferred findings
 - simplification notes
 - `save_point_commits`
+- `html_companion_artifacts`
 - blockers or concerns
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `execution.md` remains canonical for agents.
+When build writes or materially updates `execution.md`, also create or refresh `.aw_docs/html/<feature_slug>-build/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` with the `implementation-plan` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass approved inputs, completed slices, phase progress, file map, validation evidence, save-point commits, deferred findings, and next command as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -169,6 +181,7 @@ Before leaving build, confirm:
 - [ ] phased plans, if used, recorded phase completion plus the next phase transition
 - [ ] meaningful completed slices produced recorded save-point commits
 - [ ] `execution.md` and `state.json` are updated
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -185,5 +198,6 @@ Always end with:
 - `Chunk Reviews`
 - `Simplification`
 - `Save Points`
+- `HTML Companion`
 - `Blockers`
 - `Next`

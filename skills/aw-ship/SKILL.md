@@ -92,8 +92,20 @@ Every shipping handoff must make these things obvious:
 - rollout plan
 - rollback path
 - evidence captured
+- `html_companion_artifacts`
 - blockers
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `release.md` remains canonical for agents.
+When ship writes or materially updates `release.md`, also create or refresh `.aw_docs/html/<feature_slug>-ship/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` with the `release-report` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass launch readiness, rollout plan, rollback posture, monitoring or smoke evidence, blockers, ownership, and next command as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -101,6 +113,7 @@ Every shipping handoff must make these things obvious:
 - [ ] rollback readiness is documented
 - [ ] monitoring and smoke expectations are named
 - [ ] `release.md` and `state.json` are updated with closeout evidence
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -112,4 +125,5 @@ Always end with:
 - `Rollback Path`
 - `Evidence`
 - `Outcome`
+- `HTML Companion`
 - `Next`

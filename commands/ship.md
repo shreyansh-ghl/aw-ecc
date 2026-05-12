@@ -34,7 +34,15 @@ Confirm the release is ready to launch, roll it out safely, document rollback re
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-ship/index.html` when docs output mode is `dual` or `html`
 - launch recommendation, rollout checkpoints, rollback path, and closeout notes
+
+## Human HTML Companion
+
+Markdown `release.md` remains canonical for agents.
+When `/aw:ship` writes or materially updates launch, rollout, rollback, or closeout evidence, invoke `platform-core:human-collaboration-artifacts` and delegate the human-facing HTML generation to `aw:echo` with the `release-report` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## Shipping Rules
 
@@ -45,6 +53,7 @@ Confirm the release is ready to launch, roll it out safely, document rollback re
 5. Capture post-deploy evidence, monitoring links, and known risks.
 6. For frontend releases, include versioned entry, smoke, and accessibility or design-signoff notes when relevant.
 7. Do not use `ship` as a synonym for composite orchestration.
+8. Generate or explicitly record the HTML companion status before handoff.
 
 ## Internal Phase Routing
 
@@ -74,4 +83,5 @@ Always end with:
 - `Rollback Path`
 - `Evidence`
 - `Outcome`
+- `HTML Companion`
 - `Next`

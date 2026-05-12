@@ -123,8 +123,20 @@ Every deploy handoff must make these things obvious:
 - build or release links
 - execution evidence
 - rollback path
+- `html_companion_artifacts`
 - blockers
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `release.md` remains canonical for agents.
+When deploy writes or materially updates `release.md`, also create or refresh `.aw_docs/html/<feature_slug>-deploy/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `platform-core:human-collaboration-artifacts` and delegate human-facing generation to `aw:echo` with the `release-report` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass selected mode, provider, resolved mechanism, release links, execution evidence, rollback path, blockers, and next command as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -132,6 +144,7 @@ Every deploy handoff must make these things obvious:
 - [ ] provider and mechanism came from repo archetype and baseline resolution
 - [ ] `release.md` and `state.json` are updated
 - [ ] handoff to `aw-ship` is clear when launch discipline is still needed
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -144,4 +157,5 @@ Always end with:
 - `Execution Evidence`
 - `Rollback Path`
 - `Outcome`
+- `HTML Companion`
 - `Next`

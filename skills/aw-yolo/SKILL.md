@@ -53,6 +53,7 @@ If the user asked for one stage, stay in that stage.
 4. Preserve stage artifacts.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
+   When a delegated stage writes a canonical Markdown artifact, preserve that stage's `platform-core:human-collaboration-artifacts` plus `aw:echo` generation obligation too: generate the `.aw_docs/html/<feature_slug>-<stage>/index.html` companion in `dual` or `html` mode, or record the Markdown-only/blocker reason in `state.json`.
 5. Respect stage boundaries.
    `aw-yolo` coordinates stages, but it does not collapse them together.
    Build still cannot self-certify.
@@ -80,6 +81,7 @@ Always end with:
 - `Current Stage`
 - `Completed Stages`
 - `Artifacts Written`
+- `HTML Companions`
 - `Blockers`
 - `Recommended Next`
 
@@ -107,5 +109,6 @@ Always end with:
 - [ ] the selected flow is the smallest correct end-to-end sequence
 - [ ] the chosen starting stage matches the current repo/artifact state
 - [ ] each stage still writes its required artifacts
+- [ ] each eligible stage generated or recorded its HTML companion status
 - [ ] failed stages stop the flow instead of being hand-waved away
 - [ ] blockers name the exact stage where the run stopped
