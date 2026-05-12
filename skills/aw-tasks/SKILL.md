@@ -127,6 +127,17 @@ Never write:
 
 If a worker would have to guess, the task is not ready.
 
+## Human HTML Companion
+
+Markdown `tasks.md` remains canonical for agents.
+When this helper writes or materially updates `tasks.md`, also create or refresh `.aw_docs/html/<feature_slug>-tasks/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `aw:echo` with the `implementation-plan` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass `spec.md`, `tasks.md`, phase order, file map, parallelization metadata, validation commands, save-point expectations, and handoff notes as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+
 ## Verification
 
 Before handoff:
@@ -138,6 +149,7 @@ Before handoff:
 5. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
 6. confirm the execution mode and review mode are clear when they can be known safely
 7. confirm execution can route straight to `/aw:build`
+8. confirm the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -152,4 +164,5 @@ Always end with:
 - `Review Mode`
 - `Parallel Candidates`
 - `Review Result`
+- `HTML Companion`
 - `Recommended Next`

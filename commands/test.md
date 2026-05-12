@@ -28,7 +28,15 @@ Run the smallest correct QA scope for the requested feature, fix, or release and
 
 - `.aw_docs/features/<feature_slug>/verification.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-test/index.html` when docs output mode is `dual` or `html`
 - fresh evidence for local validation, E2E, external validation, or targeted runtime checks
+
+## Human HTML Companion
+
+Markdown `verification.md` remains canonical for agents.
+When `/aw:test` writes or materially updates QA evidence, invoke `aw:echo` with the `verification-report` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## QA Rules
 
@@ -39,6 +47,7 @@ Run the smallest correct QA scope for the requested feature, fix, or release and
 5. Continue until the requested QA scope is covered or explicitly blocked.
 6. Mark unavailable checks as unavailable instead of inventing a pass.
 7. Hand off to `/aw:review` when findings, governance, or readiness still need a decision.
+8. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
@@ -61,4 +70,5 @@ Always end with:
 - `Evidence`
 - `Failures`
 - `Unavailable`
+- `HTML Companion`
 - `Next`

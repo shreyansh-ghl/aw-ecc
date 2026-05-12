@@ -82,8 +82,20 @@ Every investigation handoff must make these things obvious:
 - commands run
 - likely fault surface
 - open questions
+- `html_companion_artifacts`
 - blockers
 - recommended next commands
+
+## Human HTML Companion
+
+Markdown `investigation.md` remains canonical for agents.
+When investigate writes or materially updates `investigation.md`, also create or refresh `.aw_docs/html/<feature_slug>-investigate/index.html` unless docs output mode resolves to Markdown-only.
+
+Use `aw:echo` with the `investigation-report` profile.
+Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+
+Pass expected vs actual behavior, probes, evidence, fault surface, confidence, blockers, and next probe or repair path as the source bundle.
+Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
 
 ## Verification
 
@@ -94,6 +106,7 @@ Before leaving investigate, confirm:
 - [ ] the likely fault surface is concrete enough to guide build
 - [ ] the next stage is clear: build, more investigation, or blocked
 - [ ] `investigation.md` and `state.json` are updated
+- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
 
 ## Final Output Shape
 
@@ -105,5 +118,6 @@ Always end with:
 - `Evidence`
 - `Completed Probes`
 - `Likely Fault Surface`
+- `HTML Companion`
 - `Open Questions`
 - `Next`

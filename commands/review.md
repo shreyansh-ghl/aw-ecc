@@ -28,7 +28,15 @@ This stage may request or rerun targeted tests when existing evidence is stale, 
 
 - `.aw_docs/features/<feature_slug>/verification.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
+- `.aw_docs/html/<feature_slug>-review/index.html` when docs output mode is `dual` or `html`
 - explicit overall status: `PASS`, `PASS_WITH_NOTES`, or `FAIL`
+
+## Human HTML Companion
+
+Markdown `verification.md` remains canonical for agents.
+When `/aw:review` writes or materially updates findings, governance, or readiness evidence, invoke `aw:echo` with the `pr-one-pager` profile unless the resolved output mode is Markdown-only.
+
+Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
 
 ## Review Rules
 
@@ -39,6 +47,7 @@ This stage may request or rerun targeted tests when existing evidence is stale, 
 5. Continue until the requested findings, governance, and readiness scope is covered or explicitly blocked.
 6. Route back to `/aw:build` when repair is needed.
 7. Do not clear findings on stale evidence.
+8. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
@@ -61,4 +70,5 @@ Always end with:
 - `Governance`
 - `Readiness`
 - `Outcome`
+- `HTML Companion`
 - `Next`

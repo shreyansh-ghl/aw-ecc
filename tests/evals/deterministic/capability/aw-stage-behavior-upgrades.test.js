@@ -63,20 +63,28 @@ function test(name, fn) {
 function run() {
   console.log(`\n=== AW Stage Behavior Upgrades (${REF}) ===\n`);
 
+  const planCommand = snapshot.readFile('commands/plan.md');
   const buildCommand = snapshot.readFile('commands/build.md');
   const investigateCommand = snapshot.readFile('commands/investigate.md');
   const testCommand = snapshot.readFile('commands/test.md');
   const reviewCommand = snapshot.readFile('commands/review.md');
   const deployCommand = snapshot.readFile('commands/deploy.md');
   const shipCommand = snapshot.readFile('commands/ship.md');
+  const executeCommand = snapshot.readFile('commands/execute.md');
+  const verifyCommand = snapshot.readFile('commands/verify.md');
+  const featureCommand = snapshot.readFile('commands/feature.md');
   const commandContracts = snapshot.readFile('docs/aw-sdlc-command-contracts.md');
 
+  const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
+  const specSkill = snapshot.readFile('skills/aw-spec/SKILL.md');
+  const tasksSkill = snapshot.readFile('skills/aw-tasks/SKILL.md');
   const buildSkill = snapshot.readFile('skills/aw-build/SKILL.md');
   const investigateSkill = snapshot.readFile('skills/aw-investigate/SKILL.md');
   const testSkill = snapshot.readFile('skills/aw-test/SKILL.md');
   const reviewSkill = snapshot.readFile('skills/aw-review/SKILL.md');
   const deploySkill = snapshot.readFile('skills/aw-deploy/SKILL.md');
   const shipSkill = snapshot.readFile('skills/aw-ship/SKILL.md');
+  const featureSkill = snapshot.readFile('skills/aw-feature/SKILL.md');
   const yoloSkill = snapshot.readFile('skills/aw-yolo/SKILL.md');
 
   let passed = 0;
@@ -154,6 +162,77 @@ function run() {
     assert.ok(commandContracts.includes('save-point commits'));
     assert.ok(commandContracts.includes('completed_phases'));
     assert.ok(commandContracts.includes('current_phase'));
+  })) passed++; else failed++;
+
+  if (test('SDLC stages generate TeamOfOne HTML companions while keeping Markdown canonical', () => {
+    assert.ok(commandContracts.includes('## Human HTML Companion Rule'));
+    assert.ok(commandContracts.includes('HTML companions are the TeamOfOne-readable surface'));
+    assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
+    assert.ok(commandContracts.includes('`aw:echo`'));
+    assert.ok(commandContracts.includes('`html_companion_artifacts`'));
+    assert.ok(!commandContracts.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(!snapshot.fileExists('skills/aw-html-artifact-designer/SKILL.md'));
+    assert.ok(!snapshot.fileExists('skills/aw-excalidraw-diagram-designer/SKILL.md'));
+    assert.ok(!snapshot.fileExists('agents/html-artifact-designer.md'));
+
+    const stageSkills = [
+      planSkill,
+      specSkill,
+      tasksSkill,
+      buildSkill,
+      investigateSkill,
+      testSkill,
+      reviewSkill,
+      deploySkill,
+      shipSkill,
+    ];
+
+    for (const content of stageSkills) {
+      assert.ok(content.includes('aw:echo'));
+      assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
+      assert.ok(content.includes('docs.outputMode'));
+      assert.ok(content.includes('AW_DOCS_OUTPUT_MODE'));
+      assert.ok(content.includes('html_companion_artifacts'));
+      assert.ok(content.includes('Markdown'));
+      assert.ok(content.includes('canonical for agents'));
+    }
+
+    assert.ok(planSkill.includes('.aw_docs/html/<feature_slug>-plan/index.html'));
+    assert.ok(specSkill.includes('`technical-spec` profile'));
+    assert.ok(tasksSkill.includes('`implementation-plan` profile'));
+    assert.ok(buildSkill.includes('.aw_docs/html/<feature_slug>-build/index.html'));
+    assert.ok(investigateSkill.includes('`investigation-report` profile'));
+    assert.ok(testSkill.includes('`verification-report` profile'));
+    assert.ok(reviewSkill.includes('`pr-one-pager` profile'));
+    assert.ok(deploySkill.includes('`release-report` profile'));
+    assert.ok(shipSkill.includes('`release-report` profile'));
+
+    const publicCommands = [
+      planCommand,
+      buildCommand,
+      investigateCommand,
+      testCommand,
+      reviewCommand,
+      deployCommand,
+      shipCommand,
+      executeCommand,
+      verifyCommand,
+      featureCommand,
+    ];
+
+    for (const content of publicCommands) {
+      assert.ok(content.includes('## Human HTML Companion'));
+      assert.ok(content.includes('HTML Companion'));
+      assert.ok(content.includes('aw:echo'));
+      assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
+    }
+
+    assert.ok(featureSkill.includes('aw:echo'));
+    assert.ok(featureSkill.includes('HTML Companion'));
+    assert.ok(yoloSkill.includes('HTML Companions'));
+    assert.ok(yoloSkill.includes('aw:echo'));
+    assert.ok(!featureSkill.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(!yoloSkill.includes('platform-core:human-collaboration-artifacts'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);
