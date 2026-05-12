@@ -58,15 +58,16 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 1. Classify the request into one primary mode first.
 2. **MANDATORY — before writing any artifact:** Load and run the `grill-with-docs` skill. The AW intake UI questions (purpose, style, sections) are a starting signal only and do NOT satisfy this step. `grill-with-docs` uncovers edge cases, failure modes, acceptance criteria, domain constraints, and hidden dependencies. Do not write `prd.md`, `spec.md`, `design.md`, or `tasks.md` until `grill-with-docs` has completed its interview.
 3. **MANDATORY — after `grill-with-docs` completes, before writing `spec.md` or `tasks.md`:** Load and run `to-prd` to synthesise the conversation into `prd.md`. This applies in ALL modes. `prd.md` must exist before any other artifact is written. Do not skip this step even in technical mode.
-4. Operate in read-only planning mode until the artifacts are written.
-5. Default to single-scope planning.
-6. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
-5. Use existing artifacts as inputs when they are already sufficient.
-6. Route approved technical direction through `aw-spec` before task planning.
-7. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
-8. Do not require a PRD for a technical request that is already well defined.
-9. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
-10. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
+4. **MANDATORY — after `prd.md` exists, before writing `tasks.md`:** Load and run `to-issues` to break the PRD into tracer-bullet vertical slices. Each slice must cut end-to-end through all integration layers and be independently demoable. Do not write `tasks.md` from the PRD directly — `to-issues` produces the vertical breakdown that `tasks.md` is built from. Do not skip this step.
+5. Operate in read-only planning mode until the artifacts are written.
+6. Default to single-scope planning.
+7. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+8. Use existing artifacts as inputs when they are already sufficient.
+9. Route approved technical direction through `aw-spec` before task planning.
+10. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
+11. Do not require a PRD for a technical request that is already well defined.
+12. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
+13. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
 
 ## Planning Depth
 

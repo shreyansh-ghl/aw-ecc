@@ -187,6 +187,19 @@ If there is even a small chance that an AW process skill, stage skill, or requir
 
 Load across stages when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`, `aw-adk`
 
+## Matt Pocock Cross-Cutting Skills
+
+| Skill | Load when |
+|---|---|
+| `grill-with-docs` | inside `/aw:plan` — before any artifact, to surface requirements, edge cases, and constraints |
+| `to-prd` | inside `/aw:plan` — after grill completes, to synthesise conversation into `prd.md` |
+| `to-issues` | inside `/aw:plan` — after `prd.md` exists, to break PRD into vertical tracer-bullet GitHub issues before `tasks.md` |
+| `tdd` | inside `/aw:build` — per behavior-changing slice, RED → GREEN → REFACTOR |
+| `diagnose` | inside `/aw:investigate` — before reading any code files |
+| `zoom-out` | any stage — before reading unfamiliar code |
+| `improve-codebase-architecture` | standalone or before plan touching architecture |
+| `grill-me` | non-engineering planning decisions |
+
 ## Internal Helpers (not public routes)
 
 `aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (internal power workflow for autonomous end-to-end orchestration — never advertise as public route)
