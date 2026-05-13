@@ -35,7 +35,7 @@ Perform one explicit release action with the correct GHL provider and mechanism 
 
 - `.aw_docs/features/<feature_slug>/release.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
-- `.aw_docs/html/<feature_slug>-deploy/index.html` when docs output mode is `dual` or `html`
+- `.aw_docs/features/<feature_slug>/release.html` when docs output mode is `dual` or `html`
 - one concrete release outcome artifact:
   - PR URL
   - branch name
@@ -47,9 +47,10 @@ Perform one explicit release action with the correct GHL provider and mechanism 
 ## Human HTML Companion
 
 Markdown `release.md` remains canonical for agents.
-When `/aw:deploy` writes or materially updates release evidence, invoke `aw:echo` with the `release-report` profile unless the resolved output mode is Markdown-only.
+When `/aw:deploy` writes or materially updates release evidence, delegate to the `aw:echo` subagent with the `release-report` profile unless the resolved output mode is Markdown-only.
+HTML is async by default: spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the deploy result.
 
-Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and skipped or blocked reason.
 
 ## Deploy Rules
 

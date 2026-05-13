@@ -28,15 +28,16 @@ Turn vague breakage into a concrete reproduction, localized fault surface, and n
 
 - `.aw_docs/features/<feature_slug>/investigation.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
-- `.aw_docs/html/<feature_slug>-investigate/index.html` when docs output mode is `dual` or `html`
+- `.aw_docs/features/<feature_slug>/investigation.html` when docs output mode is `dual` or `html`
 - reproduction, expected-vs-actual, hypothesis, and next probe or build handoff
 
 ## Human HTML Companion
 
 Markdown `investigation.md` remains canonical for agents.
-When `/aw:investigate` writes or materially updates investigation evidence, invoke `aw:echo` with the `investigation-report` profile unless the resolved output mode is Markdown-only.
+When `/aw:investigate` writes or materially updates investigation evidence, delegate to the `aw:echo` subagent with the `investigation-report` profile unless the resolved output mode is Markdown-only.
+HTML is async by default: spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the investigation result.
 
-Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and skipped or blocked reason.
 
 ## Investigation Rules
 

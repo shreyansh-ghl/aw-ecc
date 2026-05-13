@@ -130,13 +130,14 @@ Every deploy handoff must make these things obvious:
 ## Human HTML Companion
 
 Markdown `release.md` remains canonical for agents.
-When deploy writes or materially updates `release.md`, also create or refresh `.aw_docs/html/<feature_slug>-deploy/index.html` unless docs output mode resolves to Markdown-only.
+When deploy writes or materially updates `release.md`, also create or refresh `.aw_docs/features/<feature_slug>/release.html` unless docs output mode resolves to Markdown-only.
 
-Use `aw:echo` with the `release-report` profile.
+Delegate to the `aw:echo` subagent with the `release-report` profile.
 Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
 
 Pass selected mode, provider, resolved mechanism, release links, execution evidence, rollback path, blockers, and next command as the source bundle.
-Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
+Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the deploy outcome unless the user asks to wait.
 
 ## Verification
 

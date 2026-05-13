@@ -29,12 +29,13 @@ This entrypoint inherits the same rule that build should finish the approved bui
 - implementation changes
 - `.aw_docs/features/<feature_slug>/execution.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
-- `.aw_docs/html/<feature_slug>-build/index.html` when the routed `/aw:build` stage writes an HTML companion
+- `.aw_docs/features/<feature_slug>/execution.html` when the routed `/aw:build` stage writes an HTML companion
 
 ## Human HTML Companion
 
 `/aw:execute` inherits the `/aw:build` HTML companion contract.
-Markdown remains canonical for agents, and `aw:echo` produces the human review companion when output mode is `dual` or `html`.
+Markdown remains canonical for agents, and the `aw:echo` subagent produces the human review companion when output mode is `dual` or `html`.
+HTML is async by default through one background `aw:echo` subagent.
 
 ## Must Not Do
 

@@ -52,14 +52,15 @@ Turn an idea, requirement, approved design, or technical request into the minimu
   - `designs/`
   - `spec.md`
   - `tasks.md`
-- `.aw_docs/html/<feature_slug>-plan/index.html` when docs output mode is `dual` or `html`
+- colocated HTML sidecars beside generated planning artifacts, for example `prd.html`, `design.html`, `spec.html`, and `tasks.html`, when docs output mode is `dual` or `html`
 
 ## Human HTML Companion
 
 Markdown artifacts remain canonical for agents.
-When `/aw:plan` writes or materially updates planning artifacts, invoke `aw:echo` to produce the TeamOfOne-readable companion unless the resolved output mode is Markdown-only.
+When `/aw:plan` writes or materially updates planning artifacts, delegate to the `aw:echo` subagent to produce the TeamOfOne-readable companion unless the resolved output mode is Markdown-only.
+HTML is async by default: spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the Markdown plan.
 
-Record `html_companion_artifacts` in `state.json` with path, profile, status, and skipped or blocked reason.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and skipped or blocked reason.
 
 ## Execution Rules
 

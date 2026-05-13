@@ -89,13 +89,14 @@ Every investigation handoff must make these things obvious:
 ## Human HTML Companion
 
 Markdown `investigation.md` remains canonical for agents.
-When investigate writes or materially updates `investigation.md`, also create or refresh `.aw_docs/html/<feature_slug>-investigate/index.html` unless docs output mode resolves to Markdown-only.
+When investigate writes or materially updates `investigation.md`, also create or refresh `.aw_docs/features/<feature_slug>/investigation.html` unless docs output mode resolves to Markdown-only.
 
-Use `aw:echo` with the `investigation-report` profile.
+Delegate to the `aw:echo` subagent with the `investigation-report` profile.
 Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
 
 Pass expected vs actual behavior, probes, evidence, fault surface, confidence, blockers, and next probe or repair path as the source bundle.
-Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
+Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the investigation handoff unless the user asks to wait.
 
 ## Verification
 

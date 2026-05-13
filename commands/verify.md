@@ -32,12 +32,13 @@ This entrypoint inherits the same rule that the selected test or review scope sh
 
 - `.aw_docs/features/<feature_slug>/verification.md`
 - updated `.aw_docs/features/<feature_slug>/state.json`
-- `.aw_docs/html/<feature_slug>-test/index.html` and/or `.aw_docs/html/<feature_slug>-review/index.html` when the routed stage writes an HTML companion
+- `.aw_docs/features/<feature_slug>/verification.html` and/or `.aw_docs/features/<feature_slug>/verification.html` when the routed stage writes an HTML companion
 
 ## Human HTML Companion
 
 `/aw:verify` inherits the `/aw:test` and `/aw:review` HTML companion contracts.
-Markdown remains canonical for agents, and `aw:echo` produces the human review companion when output mode is `dual` or `html`.
+Markdown remains canonical for agents, and the `aw:echo` subagent produces the human review companion when output mode is `dual` or `html`.
+HTML is async by default through one background `aw:echo` subagent.
 
 ## Must Not Do
 

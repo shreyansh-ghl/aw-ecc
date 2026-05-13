@@ -75,13 +75,14 @@ Capture at least:
 ## Human HTML Companion
 
 Markdown `spec.md` remains canonical for agents.
-When this helper writes or materially updates `spec.md`, also create or refresh `.aw_docs/html/<feature_slug>-spec/index.html` unless docs output mode resolves to Markdown-only.
+When this helper writes or materially updates `spec.md`, also create or refresh `.aw_docs/features/<feature_slug>/spec.html` unless docs output mode resolves to Markdown-only.
 
-Use `aw:echo` with the `technical-spec` profile.
+Delegate to the `aw:echo` subagent with the `technical-spec` profile.
 Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
 
 Pass the approved direction, `spec.md`, relevant source paths, risks, alternatives, interfaces, rollout constraints, and validation strategy as the source bundle.
-Update `.aw_docs/html/manifest.json` when safe, and record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
+Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the canonical spec unless the user asks to wait.
 
 ## Common Rationalizations
 
