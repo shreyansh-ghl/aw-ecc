@@ -156,13 +156,14 @@ Parallel build fan-out must stay within the planned `max_parallel_subagents` cap
 ## Human HTML Companion
 
 Markdown `execution.md` remains canonical for agents.
-When build writes or materially updates `execution.md`, also create or refresh `.aw_docs/html/<feature_slug>-build/index.html` unless docs output mode resolves to Markdown-only.
+When build writes or materially updates `execution.md`, also create or refresh `.aw_docs/features/<feature_slug>/execution.html` unless docs output mode resolves to Markdown-only.
 
-Use `aw:echo` with the `implementation-plan` profile.
+Delegate to the `aw:echo` subagent with the `implementation-plan` profile.
 Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
 
 Pass approved inputs, completed slices, phase progress, file map, validation evidence, save-point commits, deferred findings, and next command as the source bundle.
-Update `.aw_docs/html/manifest.json` when safe, and record path, profile, status, and any skipped, blocked, or manifest reason in `state.json`.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
+Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the build handoff unless the user asks to wait.
 
 ## Verification
 

@@ -102,10 +102,12 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 Markdown planning artifacts remain canonical for agents.
 When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion unless docs output mode resolves to Markdown-only.
 
-Use `aw:echo` for the companion instead of hand-rolling stage-local HTML.
+Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
+`aw:echo` is not a slash command or direct tool. In `dual` or `html` mode, this stage contract authorizes a single `aw:echo` subagent; do not skip HTML only because no direct command is available.
+Spawn one background `aw:echo` subagent. Record `queued` or `generating` plus `run_ref` when available, then return the Markdown plan unless the user asks to wait.
 Resolve output mode in the order defined by that skill: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
 
-Write the planning companion to `.aw_docs/html/<feature_slug>-plan/index.html`.
+Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
 Choose the smallest correct profile for the dominant planning output:
 
 - `prd` for product requirements
@@ -113,7 +115,7 @@ Choose the smallest correct profile for the dominant planning output:
 - `implementation-plan` for `tasks.md` or full planning packets
 - `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
 
-Pass all canonical source paths that shaped the companion, update `.aw_docs/html/manifest.json` when safe, and record `html_companion_artifacts` in `state.json` with path, profile, status, and any skipped, blocked, or manifest reason.
+Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
 
 ## Plan Document Template
 

@@ -58,7 +58,7 @@ For each phase:
 5. **Show output** — Summarize what was produced
 6. **Pause** — Ask user to proceed, refine, or skip
 
-When the backing stage writes a canonical Markdown artifact, include the generated `.aw_docs/html/<feature_slug>-<stage>/index.html` companion in the output summary, or state that HTML was skipped by output mode or blocked with a recorded reason.
+When the backing stage writes a canonical Markdown artifact, include the generated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion in the output summary, or state that HTML was skipped by output mode or blocked with a recorded reason.
 
 ### Step 4: Handle User Navigation
 
@@ -247,7 +247,8 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 ## Human HTML Companion
 
 `aw-feature` delegates HTML generation to the backing stage skills.
-Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by `aw:echo` for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
+Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by the `aw:echo` subagent for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
+HTML is async by default through one background `aw:echo` subagent; phase progression does not wait for rendered HTML unless the user asks.
 
 ## Common Rationalizations
 
