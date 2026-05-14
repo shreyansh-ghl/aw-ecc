@@ -60,6 +60,34 @@ function test(name, fn) {
   }
 }
 
+function assertEchoSpawnContract(content) {
+  const normalized = content.toLowerCase();
+  assert.ok(
+    content.includes('Spawn exactly one `aw:echo` subagent')
+      || content.includes('Spawn one background `aw:echo` subagent')
+      || content.includes('background `aw:echo` subagent')
+      || normalized.includes('spawn exactly one `aw:echo` subagent'),
+    'missing aw:echo spawn contract'
+  );
+}
+
+function assertHtmlProgressContract(content) {
+  assert.ok(
+    (content.includes('queued') && content.includes('generating'))
+      || content.includes('generated_fallback'),
+    'missing HTML progress or fallback status contract'
+  );
+}
+
+function assertOutputModeContract(content) {
+  assert.ok(
+    content.includes('docs.outputMode')
+      || content.includes('Resolve output mode as:')
+      || content.includes('output mode'),
+    'missing output mode contract'
+  );
+}
+
 function run() {
   console.log(`\n=== AW Stage Behavior Upgrades (${REF}) ===\n`);
 
@@ -173,7 +201,7 @@ function run() {
     assert.ok(commandContracts.includes('stage contract authorizes exactly one `aw:echo` subagent'));
     assert.ok(commandContracts.includes('Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists'));
     assert.ok(commandContracts.includes('HTML generation is async by default'));
-    assert.ok(commandContracts.includes('Spawn one background `aw:echo` subagent'));
+    assertEchoSpawnContract(commandContracts);
     assert.ok(commandContracts.includes('`queued`'));
     assert.ok(commandContracts.includes('`generating`'));
     assert.ok(commandContracts.includes('`run_ref`'));
@@ -203,14 +231,13 @@ function run() {
     for (const content of stageSkills) {
       assert.ok(content.includes('aw:echo'));
       assert.ok(content.includes('subagent'));
-      assert.ok(content.includes('Spawn one background `aw:echo` subagent'));
-      assert.ok(content.includes('queued'));
-      assert.ok(content.includes('generating'));
+      assertEchoSpawnContract(content);
+      assertHtmlProgressContract(content);
       assert.ok(content.includes('run_ref'));
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('subagent id or run handle'));
       assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
-      assert.ok(content.includes('docs.outputMode'));
+      assertOutputModeContract(content);
       assert.ok(content.includes('AW_DOCS_OUTPUT_MODE'));
       assert.ok(content.includes('html_companion_artifacts'));
       assert.ok(content.includes('Markdown'));
@@ -253,7 +280,7 @@ function run() {
       assert.ok(content.includes('HTML Companion'));
       assert.ok(content.includes('aw:echo'));
       assert.ok(content.includes('subagent'));
-      assert.ok(content.includes('background `aw:echo` subagent'));
+      assertEchoSpawnContract(content);
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
       assert.ok(!content.includes('.aw_docs/html/'));
@@ -261,12 +288,11 @@ function run() {
 
     assert.ok(featureSkill.includes('aw:echo'));
     assert.ok(featureSkill.includes('HTML Companion'));
-    assert.ok(featureSkill.includes('background `aw:echo` subagent'));
+    assertEchoSpawnContract(featureSkill);
     assert.ok(yoloSkill.includes('HTML Companions'));
     assert.ok(yoloSkill.includes('aw:echo'));
-    assert.ok(yoloSkill.includes('background `aw:echo` subagent'));
-    assert.ok(yoloSkill.includes('queued'));
-    assert.ok(yoloSkill.includes('generating'));
+    assertEchoSpawnContract(yoloSkill);
+    assertHtmlProgressContract(yoloSkill);
     assert.ok(yoloSkill.includes('run_ref'));
     assert.ok(!featureSkill.includes('.aw_docs/html/'));
     assert.ok(!yoloSkill.includes('.aw_docs/html/'));

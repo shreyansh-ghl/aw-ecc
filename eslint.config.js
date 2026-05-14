@@ -30,5 +30,16 @@ module.exports = [
             'no-undef': 'error',
             'eqeqeq': 'warn'
         }
+    },
+    {
+        files: ['**/*.mjs'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
+                ...globals.es2022
+            }
+        }
     }
 ];
