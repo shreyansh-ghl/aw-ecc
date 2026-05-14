@@ -1,11 +1,11 @@
 ---
 name: grill-with-docs
-description: Grilling session that challenges your plan against the existing domain model, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise. Use when user wants to stress-test a plan against their project's language and documented decisions.
+description: Grilling session that challenges your plan against the existing domain model, AW planning context, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise. Use when user wants to stress-test a plan against their project's language and documented decisions.
 ---
 
 ## When To Use
 
-Use this inside planning when the problem is fuzzy, domain language is overloaded, acceptance criteria are under-specified, or existing docs/code may contradict the user's mental model.
+Use this inside planning when the problem is fuzzy, domain language is overloaded, acceptance criteria are under-specified, or existing AW docs, repo docs, or code may contradict the user's mental model.
 
 <what-to-do>
 
@@ -21,7 +21,19 @@ If a question can be answered by exploring the codebase, explore the codebase in
 
 ## Domain awareness
 
-During codebase exploration, also look for existing documentation:
+During codebase exploration, also look for AW planning context and existing documentation.
+
+### AW feature context
+
+If `.aw_docs/` exists, resolve the active AW context before assuming the repo has no glossary or ADRs.
+
+1. Look for an explicit feature slug in the prompt, current branch, PR title, current files, or conversation. If present, inspect `.aw_docs/features/<slug>/`.
+2. If no explicit slug is present, search `.aw_docs/features/` for likely matches using the user's terms. Prefer folders with fresh `state.json`, `prd.md`, `design.md`, `spec.md`, `tasks.md`, `execution.md`, or `verification.md`.
+3. If multiple feature folders plausibly match, name the candidates and ask one short selection question before continuing.
+4. Read relevant AW feature files as planning memory. Markdown files remain the canonical agent-readable source; HTML sidecars are human-facing companions.
+5. Use `state.json`, plan files, PR links, git remotes, and changed paths to identify the target implementation repo or repos. In a workspace that contains multiple repos, do not treat the workspace container root as the domain root.
+
+AW docs do not replace domain docs. They tell you which feature and target repos to inspect. After resolving the AW feature context, inspect the target repo or bounded domain for `CONTEXT.md`, `CONTEXT-MAP.md`, and ADR folders.
 
 ### File structure
 
@@ -53,7 +65,9 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Create files lazily — only when you have something to write. If no `CONTEXT.md` exists in the resolved target repo or bounded context, create one when the first term is resolved. If no `docs/adr/` or `docs/adrs/` exists in that target context, create it when the first ADR is needed.
+
+Do not create `CONTEXT.md` or `docs/adr/` at a workspace container root just because they are missing there. If the root contains `.aw_docs/` plus multiple nested repos, first resolve the AW feature folder and target repo, then create or update docs in the target context.
 
 ## During the session
 
