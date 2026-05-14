@@ -77,7 +77,15 @@ function run() {
       assertIncludes(file, 'to-prd');
       assertIncludes(file, 'to-issues');
       assertIncludes(file, 'do not require');
+      assertIncludes(file, 'Decision Confidence Gate');
     }
+    assertIncludes('commands/plan.md', 'Always invoke `grill-with-docs`');
+    assertNotIncludes('commands/plan.md', 'Use `clear` only');
+    assertNotIncludes('commands/plan.md', 'Use `confirm` when');
+    assertNotIncludes('commands/plan.md', 'Use `grill` for the full');
+    assertIncludes('skills/aw-plan/SKILL.md', 'If `grill-with-docs` returns `clear`');
+    assertIncludes('skills/aw-plan/SKILL.md', 'If it returns `confirm`');
+    assertIncludes('skills/aw-plan/SKILL.md', 'If it returns `grill`');
 
     for (const file of ['commands/build.md', 'skills/aw-build/SKILL.md']) {
       assertIncludes(file, 'tdd-workflow');
@@ -105,6 +113,9 @@ function run() {
     ]) {
       assert.ok(router.includes(`| \`${skill}\``), `router missing ${skill}`);
     }
+    assert.ok(router.includes('Decision Confidence Gate'));
+    assert.ok(router.includes('mostly-clear plans ask one confirmation question'));
+    assert.ok(router.includes('Inside every `/aw:plan` as the Decision Confidence Gate'));
     assert.ok(router.includes('do not require it for already-clear technical plans'));
     assert.ok(router.includes('remote issue publishing requires an explicit user request'));
   })) passed++; else failed++;

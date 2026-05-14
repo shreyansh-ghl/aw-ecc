@@ -43,6 +43,22 @@ function run() {
     }
   })) passed++; else failed++;
 
+  if (test('aw-plan makes grill-with-docs a confidence-gated planning decision', () => {
+    for (const phrase of [
+      '## Decision Confidence Gate',
+      'load `grill-with-docs`',
+      'If `grill-with-docs` returns `clear`',
+      'If it returns `confirm`',
+      'If it returns `grill`',
+      'ask its one recommended confirmation question',
+      'deadline, launch, production',
+      'Do not skip `grill-with-docs` only because code or PR evidence exists',
+      'Do not let `/aw:plan` choose a shortcut before `grill-with-docs` runs',
+    ]) {
+      assert.ok(planSkill.includes(phrase), `aw-plan is missing ${phrase}`);
+    }
+  })) passed++; else failed++;
+
   if (test('planning skills follow the Addy-style anatomy', () => {
     for (const phrase of [
       '## Overview',
