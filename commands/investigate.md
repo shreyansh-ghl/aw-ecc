@@ -44,12 +44,13 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 
 1. Reproduce first.
 2. Capture expected vs actual behavior.
-3. Use the smallest confirming probe before patching.
-4. Load org-standard observability and platform playbooks when the baseline requires them.
-5. For frontend issues, include runtime and responsive evidence when relevant.
-6. Name the exact next probe or next command before stopping.
-7. Do not broaden into implementation until the fault surface is concrete enough.
-8. Generate or explicitly record the HTML companion status before handoff.
+3. Load `diagnose` for unclear bugs, regressions, performance problems, repeated failed fixes, or any case where a reliable feedback loop is not already established.
+4. Use the smallest confirming probe before patching.
+5. Load org-standard observability and platform playbooks when the baseline requires them.
+6. For frontend issues, include runtime and responsive evidence when relevant.
+7. Name the exact next probe or next command before stopping.
+8. Do not broaden into implementation until the fault surface is concrete enough.
+9. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 

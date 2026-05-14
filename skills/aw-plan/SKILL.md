@@ -42,6 +42,7 @@ This legacy heading maps to the detailed planning process below.
    In `product` mode, start by having a conversation with the user. Think of it like a PM sitting down with a stakeholder — ask about scope, target users, success criteria, edge cases, and constraints. Listen to the answers. Follow up on anything vague. Keep going until the problem is genuinely clear. Only then move to writing artifacts.
    In other modes, decide whether the request is already clear enough for direct planning or needs discovery first.
    For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
+   Use `grill-with-docs` when the request is fuzzy, domain-language-heavy, high-impact, or likely to hide edge cases. It is a precision tool, not a mandatory prelude for every plan.
 4. Plan in dependency order.
    Perform an explicit architecture review before freezing the technical path.
    Name the key assumptions, constraints, risks, and mitigations instead of leaving them implied.
@@ -51,6 +52,7 @@ This legacy heading maps to the detailed planning process below.
    For major architectural or public-behavior decisions, load `documentation-and-adrs`.
 5. Slice vertically where possible.
    Prefer end-to-end feature slices and concrete checkpoints over horizontal batch plans.
+   When a task plan needs a slice model before `tasks.md`, load `to-issues` and feed its vertical slices into `aw-tasks`; do not publish remote tracker issues unless the user explicitly requests that.
 6. Write only the missing artifacts.
    When technical uncertainty exists, route through `aw-spec` before `aw-tasks`.
    Do not let task planning invent or silently repair an unresolved contract.
@@ -67,7 +69,10 @@ Use the smallest correct internal route:
 
 - raw idea or under-shaped concept -> `idea-refine`, then `aw-brainstorm` when deeper repo-aware exploration is still needed
 - fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`
+- domain-language-heavy or edge-case-heavy planning -> `grill-with-docs`
+- product/full mode or missing product assumptions -> `to-prd`
 - approved direction but missing technical contract -> `aw-spec`
+- PRD/spec needs implementation-ready vertical slices -> `to-issues`, then `aw-tasks`
 - approved spec but missing execution recipe -> `aw-tasks`
 - already execution-ready tasks -> stop and recommend `aw-build`
 
@@ -96,6 +101,8 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 - do not write planning artifacts to `docs/plans/`
 - do not create random filenames
 - do not write implementation code
+- do not require `prd.md` for a technical request that is already clear enough for `spec.md`
+- do not publish tracker issues from `to-issues` unless explicitly requested
 
 ## Human HTML Companion
 

@@ -34,7 +34,8 @@ Do not use for vague ideation, unclear bugs, or release-only work.
    Use `../../references/build-increments.md` to keep changes thin, reversible, and rollback-friendly.
    For multi-file or high-risk work, load `incremental-implementation`.
 5. Build one slice or one bounded parallel wave at a time.
-   For any slice that changes observable behavior, fixes a bug, or refactors live behavior, load `tdd-guide` and require explicit RED-GREEN-REFACTOR (RED -> GREEN -> REFACTOR).
+   For any slice that changes observable behavior, fixes a bug, or refactors live behavior, load `tdd-workflow` and require explicit RED-GREEN-REFACTOR (RED -> GREEN -> REFACTOR).
+   Use `tdd-guide` when a specialist subagent is useful, and use the `tdd` companion skill when the slice needs deeper behavior-test, mocking, or tracer-bullet guidance.
    For config, docs, infra, migration, or other non-behavior slices where test-first is not meaningful, record the best pre-change proof available before editing and the focused post-change validation that will prove the slice.
    During implementation, prefer the simplest change that fits existing patterns.
    Avoid speculative abstractions, unnecessary branching, and adjacent cleanup outside the approved slice.
@@ -172,7 +173,7 @@ Before leaving build, confirm:
 
 - [ ] the change came from approved inputs or a clearly approved direct technical request
 - [ ] the work was split into thin, reversible increments when non-trivial
-- [ ] behavior-changing slices used explicit RED -> GREEN -> REFACTOR via `tdd-guide`
+- [ ] behavior-changing slices used explicit RED -> GREEN -> REFACTOR via `tdd-workflow` and, when useful, `tdd-guide` or `tdd`
 - [ ] non-behavior slices recorded pre-change proof and focused post-change validation
 - [ ] each meaningful completed slice reached green before the next slice started
 - [ ] each meaningful completed slice had a focused review with the right reviewer agent before the next slice started

@@ -66,16 +66,18 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 ## Execution Rules
 
 1. Classify the request into one primary mode first.
-2. Operate in read-only planning mode until the artifacts are written.
-3. Default to single-scope planning.
-4. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
-5. Use existing artifacts as inputs when they are already sufficient.
-6. Route approved technical direction through `aw-spec` before task planning.
-7. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
-8. Do not require a PRD for a technical request that is already well defined.
-9. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
-10. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
-11. Generate or explicitly record the HTML companion status before handoff.
+2. Use `grill-with-docs` when the request is fuzzy, high-impact, domain-language-heavy, or likely to hide edge cases; do not make it a blanket blocker for small or already-clear plans.
+3. Use `to-prd` only when product scope must be frozen (`product` or `full` mode, or missing product assumptions); do not require a PRD for a technical request that is already well defined.
+4. Use `to-issues` before `tasks.md` when the work needs a vertical-slice breakdown; feed those slices into `aw-tasks` rather than publishing tracker issues by default.
+5. Operate in read-only planning mode until the artifacts are written.
+6. Default to single-scope planning.
+7. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+8. Use existing artifacts as inputs when they are already sufficient.
+9. Route approved technical direction through `aw-spec` before task planning.
+10. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
+11. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
+12. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
+13. Generate or explicitly record the HTML companion status before handoff.
 
 ## Planning Depth
 

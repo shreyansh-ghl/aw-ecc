@@ -61,16 +61,17 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 4. Default to sequential execution unless the approved plan marks disjoint `parallel_candidate` slices with explicit write scopes.
 5. If parallel fan-out is approved, respect the plan’s `max_parallel_subagents` cap, defaulting to `3` when no stricter or larger value is justified.
 6. Break non-trivial work into thin, rollback-friendly slices or bounded parallel waves.
-7. Validate each slice or completed wave before expanding scope.
-8. Keep moving through approved slices until the current build scope is complete or explicitly blocked.
-9. For bug work, require a failing signal or reproduction before broad fixes.
-10. For frontend work, inherit HighRise, accessibility, responsive, and runtime-verification expectations.
-11. Record what changed, what remains, whether execution stayed sequential or ran in bounded parallel waves, and what was intentionally not touched.
-12. If the approved tasks are phased, record each completed phase and name the next phase before handoff.
-13. Create save-point commits for meaningful completed slices.
-14. If a proposed slice cannot support a clean save-point commit, treat that as a slicing problem instead of normalizing a no-commit checkpoint.
-15. Hand off to `/aw:test` or `/aw:review` with the exact next command instead of claiming readiness without evidence.
-16. Generate or explicitly record the HTML companion status before handoff.
+7. For each slice that changes observable behavior, load `tdd-workflow` and follow RED-GREEN-REFACTOR; use the `tdd` companion skill when deeper behavior-test, mocking, or tracer-bullet guidance is needed.
+8. Validate each slice or completed wave before expanding scope.
+9. Keep moving through approved slices until the current build scope is complete or explicitly blocked.
+10. For bug work, require a failing signal or reproduction before broad fixes.
+11. For frontend work, inherit HighRise, accessibility, responsive, and runtime-verification expectations.
+12. Record what changed, what remains, whether execution stayed sequential or ran in bounded parallel waves, and what was intentionally not touched.
+13. If the approved tasks are phased, record each completed phase and name the next phase before handoff.
+14. Create save-point commits for meaningful completed slices.
+15. If a proposed slice cannot support a clean save-point commit, treat that as a slicing problem instead of normalizing a no-commit checkpoint.
+16. Hand off to `/aw:test` or `/aw:review` with the exact next command instead of claiming readiness without evidence.
+17. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 
