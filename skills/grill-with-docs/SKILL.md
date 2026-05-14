@@ -1,6 +1,6 @@
 ---
 name: grill-with-docs
-description: Grilling session that challenges your plan against the existing domain model, AW planning context, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise. Use when user wants to stress-test a plan against their project's language and documented decisions.
+description: Grilling session that challenges your plan against existing AW feature context, the domain model, sharpens terminology, and updates feature-scoped context.md plus selective domain docs as decisions crystallise. Use when user wants to stress-test a plan against their project's language and documented decisions.
 ---
 
 ## When To Use
@@ -39,6 +39,30 @@ If `.aw_docs/` exists, resolve the active AW context before assuming the repo ha
 
 AW docs do not replace domain docs. They tell you which feature and target repos to inspect. After resolving the AW feature context, inspect the target repo or bounded domain for `CONTEXT.md`, `CONTEXT-MAP.md`, and ADR folders.
 
+### Feature context artifact
+
+For `/aw:plan`, write planning-specific language to the active feature folder first.
+
+Default artifact:
+
+```text
+.aw_docs/features/<feature_slug>/context.md
+```
+
+Create `context.md` lazily once the first term, ambiguity, relationship, or planning decision is resolved.
+Do not create `CONTEXT.md` at the workspace or target repo root just because a feature-level term was clarified.
+Treat root or bounded-context `CONTEXT.md` as a promotion target only when the term is stable domain vocabulary that applies beyond the current feature.
+
+When `context.md` is created or materially updated, create or refresh the colocated human companion after the grill completes:
+
+```text
+.aw_docs/features/<feature_slug>/context.html
+```
+
+Use `aw:echo` for the HTML companion when the harness can spawn it.
+Invoking `/aw:plan` in default `dual` mode is already explicit authorization to delegate this one human-facing companion to `aw:echo`; do not skip `context.html` only because `aw:echo` is not a slash command or direct tool.
+If the harness cannot spawn `aw:echo`, create a conservative self-contained fallback `context.html`, record the blocker in the feature `state.json` when present, and keep `context.md` canonical for agents.
+
 ### File structure
 
 Most repos have a single context:
@@ -69,15 +93,15 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists in the resolved target repo or bounded context, create one when the first term is resolved. If no `docs/adr/` or `docs/adrs/` exists in that target context, create it when the first ADR is needed.
+Create files lazily — only when you have something to write. During AW planning, create or update feature-scoped `context.md` first. If no `CONTEXT.md` exists in the resolved target repo or bounded context, create one only when promoting durable domain vocabulary beyond the current feature. If no `docs/adr/` or `docs/adrs/` exists in that target context, create it when the first ADR is needed.
 
-Do not create `CONTEXT.md` or `docs/adr/` at a workspace container root just because they are missing there. If the root contains `.aw_docs/` plus multiple nested repos, first resolve the AW feature folder and target repo, then create or update docs in the target context.
+Do not create `CONTEXT.md` or `docs/adr/` at a workspace container root just because they are missing there. If the root contains `.aw_docs/` plus multiple nested repos, first resolve the AW feature folder and target repo, then write feature-scoped context to `.aw_docs/features/<feature_slug>/context.md`; update target-domain docs only for promoted durable vocabulary or ADR-worthy decisions.
 
 ## During the session
 
 ### Challenge against the glossary
 
-When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
+When the user uses a term that conflicts with the existing language in feature `context.md` or target-domain `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
 
 ### Sharpen fuzzy language
 
@@ -91,11 +115,12 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
 
-### Update CONTEXT.md inline
+### Update context.md inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [context-format.md](./context-format.md).
+When a term is resolved during AW planning, update `.aw_docs/features/<feature_slug>/context.md` right there. Don't batch these up — capture them as they happen. Use the format in [context-format.md](./context-format.md).
 
-Don't couple `CONTEXT.md` to implementation details. Only include terms that are meaningful to domain experts.
+Do not couple feature `context.md` to implementation details. Only include terms, relationships, decisions, and flagged ambiguities that help humans review the plan.
+After the grill is complete, refresh `.aw_docs/features/<feature_slug>/context.html` so the clarified language is readable and shareable for humans.
 
 ### Offer ADRs sparingly
 

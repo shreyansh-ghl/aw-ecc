@@ -1,11 +1,14 @@
-# CONTEXT.md Format
+# Context Format
+
+Use this format for feature-scoped `.aw_docs/features/<feature_slug>/context.md` and for promoted domain `CONTEXT.md` files.
+During AW planning, feature `context.md` is the default write target.
 
 ## Structure
 
 ```md
-# {Context Name}
+# {Feature Or Context Name}
 
-{One or two sentence description of what this context is and why it exists.}
+{One or two sentence description of what this feature or context is and why it exists.}
 
 ## Language
 
@@ -44,6 +47,13 @@ _Avoid_: Client, buyer, account
 - **Show relationships.** Use bold term names and express cardinality where obvious.
 - **Only include terms specific to this project's context.** General programming concepts do not belong even if the project uses them extensively.
 - **Update inline.** When a term is resolved during planning, record it while the decision is fresh.
+- **Default to feature scope.** During AW planning, write to `.aw_docs/features/<feature_slug>/context.md` first.
+- **Promote deliberately.** Update root or bounded-context `CONTEXT.md` only when the vocabulary is stable beyond one feature.
+
+## HTML Companion
+
+When feature `context.md` is created or materially updated, create or refresh the colocated `.aw_docs/features/<feature_slug>/context.html` after the grill completes.
+Markdown remains canonical for agents; HTML is the human-readable companion.
 
 ## Multi-Context Repos
 
