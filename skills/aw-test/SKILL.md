@@ -99,14 +99,15 @@ Every testing handoff must make these things obvious:
 ## Human HTML Companion
 
 Markdown `verification.md` remains canonical for agents.
-When test writes or materially updates `verification.md`, also create or refresh `.aw_docs/features/<feature_slug>/verification.html` unless docs output mode resolves to Markdown-only.
+When test writes or materially updates `verification.md`, also create or refresh `.aw_docs/features/<feature_slug>/verification.html`. HTML sidecars are required stage outputs, not advisory metadata.
 
 Delegate to the `aw:echo` subagent with the `verification-report` profile.
-Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+Invoking `/aw:test` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
+Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
 Pass QA scope, checks run, pass/fail/unavailable lanes, runtime evidence, screenshots or links when safe, failures, confidence, and next command as the source bundle.
-Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the QA evidence unless the user asks to wait.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
+Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn using the `aw:echo` safety and design contract, record `generated_fallback` plus the blocker, and keep Markdown canonical.
 
 ## Verification
 
@@ -117,7 +118,7 @@ Before leaving test, confirm:
 - [ ] unavailable checks are marked unavailable, not silently passed
 - [ ] fresh evidence is written to `verification.md`
 - [ ] `state.json` is updated with checks, failures, and next action
-- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
+- [ ] the HTML companion file exists, or the user explicitly requested Markdown-only
 
 ## Final Output Shape
 

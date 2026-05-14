@@ -38,7 +38,8 @@ This entrypoint inherits the same rule that the selected test or review scope sh
 
 `/aw:verify` inherits the `/aw:test` and `/aw:review` HTML companion contracts.
 Markdown remains canonical for agents, and the `aw:echo` subagent produces the human review companion when output mode is `dual` or `html`.
-HTML is async by default through one background `aw:echo` subagent.
+Subagent authorization: invoking `/aw:verify` in `dual` or `html` output mode is an explicit user request to delegate the human-facing HTML companion to exactly one background `aw:echo` subagent. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
+HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
 
 ## Must Not Do
 

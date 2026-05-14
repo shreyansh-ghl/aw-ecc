@@ -34,21 +34,23 @@ Turn vague breakage into a concrete reproduction, localized fault surface, and n
 ## Human HTML Companion
 
 Markdown `investigation.md` remains canonical for agents.
-When `/aw:investigate` writes or materially updates investigation evidence, delegate to the `aw:echo` subagent with the `investigation-report` profile unless the resolved output mode is Markdown-only.
-HTML is async by default: spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the investigation result.
+When `/aw:investigate` writes or materially updates investigation evidence, delegate to the `aw:echo` subagent with the `investigation-report` profile. Markdown-only is allowed only when the user explicitly requests it for this run.
+Subagent authorization: invoking `/aw:investigate` in `dual` or `html` output mode is an explicit user request to delegate the human-facing HTML companion to exactly one background `aw:echo` subagent. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
+HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
 
-Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and skipped or blocked reason.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
 
 ## Investigation Rules
 
 1. Reproduce first.
 2. Capture expected vs actual behavior.
-3. Use the smallest confirming probe before patching.
-4. Load org-standard observability and platform playbooks when the baseline requires them.
-5. For frontend issues, include runtime and responsive evidence when relevant.
-6. Name the exact next probe or next command before stopping.
-7. Do not broaden into implementation until the fault surface is concrete enough.
-8. Generate or explicitly record the HTML companion status before handoff.
+3. Load `diagnose` for unclear bugs, regressions, performance problems, repeated failed fixes, or any case where a reliable feedback loop is not already established.
+4. Use the smallest confirming probe before patching.
+5. Load org-standard observability and platform playbooks when the baseline requires them.
+6. For frontend issues, include runtime and responsive evidence when relevant.
+7. Name the exact next probe or next command before stopping.
+8. Do not broaden into implementation until the fault surface is concrete enough.
+9. Generate or explicitly record the HTML companion status before handoff.
 
 ## Must Not Do
 

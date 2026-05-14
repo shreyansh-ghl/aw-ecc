@@ -26,6 +26,7 @@ Do not use once the cause is already clear and implementation is ready.
    Record the trigger, expected behavior, actual behavior, and current blast radius.
 2. Reproduce or isolate.
    Use `aw-debug` and `../../references/debug-triage.md`.
+   Load `diagnose` when the failure is unclear, hard to reproduce, performance-related, or has already attracted speculative fixes.
    For browser-visible issues, load `browser-testing-with-devtools`.
    Prefer the smallest confirming probe over speculative patching.
 3. Load the right org-standard context.
@@ -89,14 +90,15 @@ Every investigation handoff must make these things obvious:
 ## Human HTML Companion
 
 Markdown `investigation.md` remains canonical for agents.
-When investigate writes or materially updates `investigation.md`, also create or refresh `.aw_docs/features/<feature_slug>/investigation.html` unless docs output mode resolves to Markdown-only.
+When investigate writes or materially updates `investigation.md`, also create or refresh `.aw_docs/features/<feature_slug>/investigation.html`. HTML sidecars are required stage outputs, not advisory metadata.
 
 Delegate to the `aw:echo` subagent with the `investigation-report` profile.
-Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+Invoking `/aw:investigate` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
+Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
 Pass expected vs actual behavior, probes, evidence, fault surface, confidence, blockers, and next probe or repair path as the source bundle.
-Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the investigation handoff unless the user asks to wait.
+Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
+Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn using the `aw:echo` safety and design contract, record `generated_fallback` plus the blocker, and keep Markdown canonical.
 
 ## Verification
 
@@ -107,7 +109,7 @@ Before leaving investigate, confirm:
 - [ ] the likely fault surface is concrete enough to guide build
 - [ ] the next stage is clear: build, more investigation, or blocked
 - [ ] `investigation.md` and `state.json` are updated
-- [ ] the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
+- [ ] the HTML companion file exists, or the user explicitly requested Markdown-only
 
 ## Final Output Shape
 

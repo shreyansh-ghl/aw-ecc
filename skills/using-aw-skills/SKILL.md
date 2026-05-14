@@ -187,6 +187,19 @@ If there is even a small chance that an AW process skill, stage skill, or requir
 
 Load across stages when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`, `aw-adk`
 
+## Cross-Cutting Deepening Skills
+
+| Skill | Load when |
+|---|---|
+| `grill-with-docs` | Inside `/aw:plan` when requirements, domain language, edge cases, or acceptance criteria are fuzzy enough that a guided interview would materially improve the artifact. |
+| `to-prd` | Inside `/aw:plan` for product/full mode or when missing product assumptions must be frozen into `prd.md`; do not require it for already-clear technical plans. |
+| `to-issues` | Inside `/aw:plan` before `tasks.md` when a PRD/spec needs vertical tracer-bullet slices; remote issue publishing requires an explicit user request. |
+| `tdd` | Inside `/aw:build` as a companion to `tdd-workflow` when behavior-test, mocking, or tracer-bullet judgement needs more depth. |
+| `diagnose` | Inside `/aw:investigate` when the failure is unclear, hard to reproduce, performance-related, or vulnerable to speculative patching. |
+| `zoom-out` | Any stage when unfamiliar code needs a higher-level module map before local edits or review. |
+| `improve-codebase-architecture` | Standalone or before planning/building architecture-heavy changes where shallow modules, bad seams, or poor testability are the core concern. |
+| `grill-me` | Product, design, architecture, or decision review when the user explicitly wants to be questioned before committing to a path. |
+
 ## Internal Helpers (not public routes)
 
 `aw:brainstorm` (discovery only) · `aw:finish` (legacy) · `aw:code-review` → alias of `/aw:review` · `aw:tdd` → alias of `/aw:build` · `aw-yolo` (internal power workflow for autonomous end-to-end orchestration — never advertise as public route)

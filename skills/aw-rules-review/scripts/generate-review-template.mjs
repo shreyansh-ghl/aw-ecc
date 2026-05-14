@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 // CLI
 // ---------------------------------------------------------------------------
 
-const { values: flags, positionals } = parseArgs({
+const { values: flags } = parseArgs({
   options: {
     pr:    { type: 'string',  short: 'p' },
     diff:  { type: 'boolean', short: 'd', default: false },
@@ -83,7 +83,6 @@ function findManifest() {
 
 const manifestPath = findManifest();
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-const rulesById = new Map(manifest.rules.map((r) => [r.id, r]));
 
 console.log(`Manifest: ${manifestPath} (${manifest.rules.length} rules)`);
 
