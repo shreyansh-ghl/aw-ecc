@@ -34,10 +34,11 @@ This stage may request or rerun targeted tests when existing evidence is stale, 
 ## Human HTML Companion
 
 Markdown `verification.md` remains canonical for agents.
-When `/aw:review` writes or materially updates findings, governance, or readiness evidence, delegate to the `aw:echo` subagent with the `pr-one-pager` profile unless the resolved output mode is Markdown-only.
-HTML is async by default: spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the review result.
+When `/aw:review` writes or materially updates findings, governance, or readiness evidence, delegate to the `aw:echo` subagent with the `pr-one-pager` profile. Markdown-only is allowed only when the user explicitly requests it for this run.
+Subagent authorization: invoking `/aw:review` in `dual` or `html` output mode is an explicit user request to delegate the human-facing HTML companion to exactly one background `aw:echo` subagent. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
+HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
 
-Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and skipped or blocked reason.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
 
 ## Review Rules
 

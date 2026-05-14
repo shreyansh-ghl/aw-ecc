@@ -58,7 +58,7 @@ For each phase:
 5. **Show output** — Summarize what was produced
 6. **Pause** — Ask user to proceed, refine, or skip
 
-When the backing stage writes a canonical Markdown artifact, include the generated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion in the output summary, or state that HTML was skipped by output mode or blocked with a recorded reason.
+When the backing stage writes a canonical Markdown artifact, include the generated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion in the output summary. Markdown-only is allowed only when the user explicitly requests it for this run.
 
 ### Step 4: Handle User Navigation
 
@@ -248,7 +248,8 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 
 `aw-feature` delegates HTML generation to the backing stage skills.
 Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by the `aw:echo` subagent for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
-HTML is async by default through one background `aw:echo` subagent; phase progression does not wait for rendered HTML unless the user asks.
+HTML sidecars are required phase outputs, not advisory metadata. Invoking `/aw:feature` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent per artifact-producing phase for HTML companion generation.
+Each artifact-producing phase must produce the colocated `.html` sidecar before its final phase handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn using the `aw:echo` safety and design contract, record `generated_fallback` plus the blocker, and keep Markdown canonical.
 
 ## Common Rationalizations
 
@@ -287,6 +288,6 @@ At each phase boundary, always include:
 - `Phase` — current phase number and name
 - `Status` — what was produced or decided
 - `Progress` — visual progress bar + X/18
-- `HTML Companion` — generated path, skipped mode, or blocker when the phase produced a stage artifact
+- `HTML Companion` — generated path when the phase produced a stage artifact, or explicit Markdown-only skip
 - `Next` — what the next phase is and a plain-language description
 - `Prompt` — ask user to proceed, refine, or skip

@@ -100,12 +100,12 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 ## Human HTML Companion
 
 Markdown planning artifacts remain canonical for agents.
-When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion unless docs output mode resolves to Markdown-only.
+When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion. HTML sidecars are required stage outputs, not advisory metadata.
 
 Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
-`aw:echo` is not a slash command or direct tool. In `dual` or `html` mode, this stage contract authorizes a single `aw:echo` subagent; do not skip HTML only because no direct command is available.
-Spawn one background `aw:echo` subagent. Record `queued` or `generating` plus `run_ref` when available, then return the Markdown plan unless the user asks to wait.
-Resolve output mode in the order defined by that skill: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+`aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
+Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn using the `aw:echo` safety and design contract, record `generated_fallback` plus the blocker, and keep Markdown canonical.
+Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
 Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
 Choose the smallest correct profile for the dominant planning output:
@@ -115,7 +115,7 @@ Choose the smallest correct profile for the dominant planning output:
 - `implementation-plan` for `tasks.md` or full planning packets
 - `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
 
-Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
+Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
 
 ## Plan Document Template
 
@@ -368,7 +368,7 @@ Before ending the planning stage:
 6. check that file paths, type names, helper names, and commands stay consistent
 7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
 8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
-9. confirm the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
+9. confirm every written planning Markdown artifact has a colocated HTML sidecar, or the user explicitly requested Markdown-only
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
