@@ -5,13 +5,17 @@ description: Grilling session that challenges your plan against the existing dom
 
 ## When To Use
 
-Use this inside planning when the problem is fuzzy, domain language is overloaded, acceptance criteria are under-specified, or existing AW docs, repo docs, or code may contradict the user's mental model.
+Use this inside every `/aw:plan` as the Decision Confidence Gate.
+Its default job is to classify planning intake as `clear`, `confirm`, or `grill`, not to force a long interview every time.
+
+High-impact requests should be grilled even when they sound clear on the surface if they hide decisions about staging vs production, rollout scope, ownership, Auth/DNS/CI/CD/permissions, tenant isolation, rollback, deadlines, or what counts as "live" or "done".
+For low-risk, single-scope technical work, return `clear` with assumptions and proceed. If exactly one assumption controls the outcome, return `confirm` and ask one question with a recommended answer. If the problem is fuzzy, high-impact, domain language is overloaded, acceptance criteria are under-specified, or existing AW docs, repo docs, or code may contradict the user's mental model, return `grill` and run the full interview.
 
 <what-to-do>
 
 Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
 
-Ask the questions one at a time, waiting for feedback on each question before continuing.
+In `grill` depth, ask questions one at a time, waiting for feedback on each question before continuing.
 
 If a question can be answered by exploring the codebase, explore the codebase instead.
 

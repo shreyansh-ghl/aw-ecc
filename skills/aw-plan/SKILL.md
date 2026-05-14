@@ -42,7 +42,8 @@ This legacy heading maps to the detailed planning process below.
    In `product` mode, start by having a conversation with the user. Think of it like a PM sitting down with a stakeholder — ask about scope, target users, success criteria, edge cases, and constraints. Listen to the answers. Follow up on anything vague. Keep going until the problem is genuinely clear. Only then move to writing artifacts.
    In other modes, decide whether the request is already clear enough for direct planning or needs discovery first.
    For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
-   Use `grill-with-docs` when the request is fuzzy, domain-language-heavy, high-impact, or likely to hide edge cases. It is a precision tool, not a mandatory prelude for every plan.
+   Always route planning intake through `grill-with-docs` as the Decision Confidence Gate before writing artifacts.
+   Use adaptive depth: `clear` means state assumptions and proceed, `confirm` means ask one confirmation question, and `grill` means run the full one-question-at-a-time interview.
 4. Plan in dependency order.
    Perform an explicit architecture review before freezing the technical path.
    Name the key assumptions, constraints, risks, and mitigations instead of leaving them implied.
@@ -77,6 +78,27 @@ Use the smallest correct internal route:
 - already execution-ready tasks -> stop and recommend `aw-build`
 
 Do not collapse all of these responsibilities back into one vague planning pass.
+
+## Decision Confidence Gate
+
+Before writing planning artifacts, load `grill-with-docs` and use its returned depth to decide the next move.
+
+- If `grill-with-docs` returns `clear`, state the key assumptions it accepted and proceed.
+- If it returns `confirm`, ask its one recommended confirmation question and wait for the answer.
+- If it returns `grill`, continue its one-question-at-a-time interview before freezing the plan.
+
+Treat the request as full-interview depth when any trigger is present:
+
+- deadline, launch, production, customer-visible, or executive/high-impact wording
+- staging vs production, partial vs full rollout, rollback posture, or ownership is unclear
+- acceptance criteria are not measurable enough to prove the plan is done
+- terms are overloaded or likely to conflict with `CONTEXT.md`, ADRs, AW docs, repo docs, or code
+- the ask spans multiple repos, teams, services, environments, or external systems
+- Auth, DNS, CI/CD, permissions, tenant isolation, security, data migration, or public contract decisions are involved
+- existing AW docs or repo evidence can answer facts but not the user's intent, risk tolerance, or business priority
+
+Do not skip `grill-with-docs` only because code or PR evidence exists. Explore facts locally when possible, then ask the user only for the remaining decision.
+Do not let `/aw:plan` choose a shortcut before `grill-with-docs` runs.
 
 ## Planning Modes
 

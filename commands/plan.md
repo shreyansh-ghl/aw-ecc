@@ -66,18 +66,19 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 ## Execution Rules
 
 1. Classify the request into one primary mode first.
-2. Use `grill-with-docs` when the request is fuzzy, high-impact, domain-language-heavy, or likely to hide edge cases; do not make it a blanket blocker for small or already-clear plans.
-3. Use `to-prd` only when product scope must be frozen (`product` or `full` mode, or missing product assumptions); do not require a PRD for a technical request that is already well defined.
-4. Use `to-issues` before `tasks.md` when the work needs a vertical-slice breakdown; feed those slices into `aw-tasks` rather than publishing tracker issues by default.
-5. Operate in read-only planning mode until the artifacts are written.
-6. Default to single-scope planning.
-7. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
-8. Use existing artifacts as inputs when they are already sufficient.
-9. Route approved technical direction through `aw-spec` before task planning.
-10. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
-11. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
-12. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
-13. Generate or explicitly record the HTML companion status before handoff.
+2. Always invoke `grill-with-docs` as the Decision Confidence Gate before writing artifacts, then follow its returned depth: proceed, ask one confirmation question, or run the full one-question-at-a-time interview.
+3. Treat deadline, launch, production, customer-visible, multi-repo, Auth/DNS/CI/CD/permissions, tenant isolation, rollback, ownership, or non-measurable acceptance criteria as full-interview triggers unless repo evidence fully resolves them.
+4. Use `to-prd` only when product scope must be frozen (`product` or `full` mode, or missing product assumptions); do not require a PRD for a technical request that is already well defined.
+5. Use `to-issues` before `tasks.md` when the work needs a vertical-slice breakdown; feed those slices into `aw-tasks` rather than publishing tracker issues by default.
+6. Operate in read-only planning mode until the artifacts are written.
+7. Default to single-scope planning.
+8. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+9. Use existing artifacts as inputs when they are already sufficient.
+10. Route approved technical direction through `aw-spec` before task planning.
+11. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
+12. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
+13. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
+14. Generate or explicitly record the HTML companion status before handoff.
 
 ## Planning Depth
 
