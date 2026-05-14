@@ -99,6 +99,25 @@ function run() {
     }
   })) passed++; else failed++;
 
+  if (test('grill-with-docs keeps planning context feature-scoped with an HTML companion', () => {
+    const grillWithDocs = read('skills/grill-with-docs/SKILL.md');
+    for (const phrase of [
+      '.aw_docs/features/<feature_slug>/context.md',
+      '.aw_docs/features/<feature_slug>/context.html',
+      'write planning-specific language to the active feature folder first',
+      'Treat root or bounded-context `CONTEXT.md` as a promotion target',
+      'After the grill is complete',
+      'Invoking `/aw:plan` in default `dual` mode is already explicit authorization',
+      'keep `context.md` canonical for agents',
+    ]) {
+      assert.ok(grillWithDocs.includes(phrase), `grill-with-docs is missing ${phrase}`);
+    }
+
+    const contextFormat = read('skills/grill-with-docs/context-format.md');
+    assert.ok(contextFormat.includes('During AW planning, feature `context.md` is the default write target'));
+    assert.ok(contextFormat.includes('.aw_docs/features/<feature_slug>/context.html'));
+  })) passed++; else failed++;
+
   if (test('router advertises cross-cutting skills without making them blanket mandates', () => {
     const router = read('skills/using-aw-skills/SKILL.md');
     for (const skill of [
