@@ -441,6 +441,12 @@ When `tasks.md` is ready:
 - `html_companion_artifacts`
 - recommended next commands
 
+## Echo Human Docs Handoff
+
+After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+
+Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 Always end with:
@@ -453,5 +459,6 @@ Always end with:
 - `Execution Readiness`
 - `Execution Mode`
 - `HTML Companion`
+- `Remote Docs`
 - `Missing`
 - `Next`

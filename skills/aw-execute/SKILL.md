@@ -28,6 +28,10 @@ Do not create a separate execute-specific workflow.
    - complete the current build scope or block it explicitly
    - `aw-test`
    - `aw-review`
+4. Preserve generated-doc publishing behavior from `aw-build`:
+   - delegate human docs generation and remote sharing to `aw:echo`
+   - do not run docs publish commands inside this compatibility wrapper
+   - include Echo's `Remote Docs` links or concrete blocker in the handoff
 
 ## Common Rationalizations
 
@@ -44,4 +48,5 @@ Do not create a separate execute-specific workflow.
 
 - [ ] the request was routed to `aw-build`
 - [ ] the current build scope was completed or blocked explicitly
+- [ ] remote AW docs links were reported when docs were generated
 - [ ] artifact and handoff behavior stayed consistent with the canonical build stage

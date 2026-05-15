@@ -29,7 +29,9 @@ The canonical public verification model is now:
    Keep writing `verification.md` and `state.json`.
 3. Preserve stage continuation as well as stage boundaries.
    Do not stop after partial evidence if the selected test or review scope still remains.
-4. Do not preserve old ambiguity.
+4. Preserve generated-doc publishing behavior from the resolved canonical stage.
+   When verification artifacts are generated, delegate human docs generation and remote sharing to `aw:echo`, do not run docs publish commands in this compatibility wrapper, and report Echo's `Remote Docs` links or concrete blocker.
+5. Do not preserve old ambiguity.
    Prefer the narrowest modern stage once the intent is clear.
 
 ## Common Rationalizations
@@ -47,5 +49,6 @@ The canonical public verification model is now:
 
 - [ ] the request resolved to `aw-test`, `aw-review`, or both
 - [ ] the selected test or review scope was completed or blocked explicitly
+- [ ] remote AW docs links were reported when docs were generated
 - [ ] compatibility did not create a second verification workflow
 - [ ] `verification.md` and `state.json` stayed consistent with the resolved canonical flow

@@ -62,6 +62,12 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 - `/aw:review`
 - `/aw:build` if a failure requires repair
 
+## Echo Human Docs Handoff
+
+After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+
+Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 Always end with:
@@ -73,4 +79,5 @@ Always end with:
 - `Failures`
 - `Unavailable`
 - `HTML Companion`
+- `Remote Docs`
 - `Next`
