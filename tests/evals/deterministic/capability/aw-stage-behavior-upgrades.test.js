@@ -88,6 +88,13 @@ function assertOutputModeContract(content) {
   );
 }
 
+function assertRemoteDocsPublishContract(content) {
+  assert.ok(content.includes('aw push --aw-docs-only'), 'missing docs-only publish command');
+  assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
+  assert.ok(content.includes('last-publish.json'), 'missing last publish link summary');
+  assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
+}
+
 function run() {
   console.log(`\n=== AW Stage Behavior Upgrades (${REF}) ===\n`);
 
@@ -194,6 +201,7 @@ function run() {
 
   if (test('SDLC stages generate TeamOfOne HTML companions while keeping Markdown canonical', () => {
     assert.ok(commandContracts.includes('## Human HTML Companion Rule'));
+    assert.ok(commandContracts.includes('## Remote AW Docs Publish Rule'));
     assert.ok(commandContracts.includes('HTML companions are the TeamOfOne-readable surface'));
     assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
     assert.ok(commandContracts.includes('`aw:echo`'));
@@ -207,6 +215,10 @@ function run() {
     assert.ok(commandContracts.includes('`run_ref`'));
     assert.ok(commandContracts.includes('must not rewrite the canonical Markdown source'));
     assert.ok(commandContracts.includes('`html_companion_artifacts`'));
+    assertRemoteDocsPublishContract(commandContracts);
+    assert.ok(commandContracts.includes('`aw:echo` owns the human'));
+    assert.ok(commandContracts.includes('HTML companion only'));
+    assert.ok(commandContracts.includes('do not ask `aw:echo` to run registry pushes'));
     assert.ok(commandContracts.includes('.aw_docs/features/<feature_slug>/<artifact_basename>.html'));
     assert.ok(!commandContracts.includes('server-managed'));
     assert.ok(!commandContracts.includes('subagent id or run handle'));
@@ -240,6 +252,7 @@ function run() {
       assertOutputModeContract(content);
       assert.ok(content.includes('AW_DOCS_OUTPUT_MODE'));
       assert.ok(content.includes('html_companion_artifacts'));
+      assertRemoteDocsPublishContract(content);
       assert.ok(content.includes('Markdown'));
       assert.ok(content.includes('canonical for agents'));
       assert.ok(!content.includes('.aw_docs/html/'));
@@ -281,6 +294,7 @@ function run() {
       assert.ok(content.includes('aw:echo'));
       assert.ok(content.includes('subagent'));
       assertEchoSpawnContract(content);
+      assertRemoteDocsPublishContract(content);
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
       assert.ok(!content.includes('.aw_docs/html/'));
@@ -288,9 +302,11 @@ function run() {
 
     assert.ok(featureSkill.includes('aw:echo'));
     assert.ok(featureSkill.includes('HTML Companion'));
+    assertRemoteDocsPublishContract(featureSkill);
     assertEchoSpawnContract(featureSkill);
     assert.ok(yoloSkill.includes('HTML Companions'));
     assert.ok(yoloSkill.includes('aw:echo'));
+    assertRemoteDocsPublishContract(yoloSkill);
     assertEchoSpawnContract(yoloSkill);
     assertHtmlProgressContract(yoloSkill);
     assert.ok(yoloSkill.includes('run_ref'));

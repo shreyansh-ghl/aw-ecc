@@ -282,6 +282,12 @@ Each artifact-producing phase must produce the colocated `.html` sidecar before 
 - [ ] Plain-language descriptions are shown for every phase
 - [ ] HTML companion status is shown when a phase produced a stage artifact
 
+## Remote AW Docs Publish
+
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+
+Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 At each phase boundary, always include:
@@ -289,5 +295,6 @@ At each phase boundary, always include:
 - `Status` — what was produced or decided
 - `Progress` — visual progress bar + X/18
 - `HTML Companion` — generated path when the phase produced a stage artifact, or explicit Markdown-only skip
+- `Remote Docs`
 - `Next` — what the next phase is and a plain-language description
 - `Prompt` — ask user to proceed, refine, or skip

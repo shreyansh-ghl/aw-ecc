@@ -111,6 +111,12 @@ Before leaving investigate, confirm:
 - [ ] `investigation.md` and `state.json` are updated
 - [ ] the HTML companion file exists, or the user explicitly requested Markdown-only
 
+## Remote AW Docs Publish
+
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+
+Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 Always end with:
@@ -122,5 +128,6 @@ Always end with:
 - `Completed Probes`
 - `Likely Fault Surface`
 - `HTML Companion`
+- `Remote Docs`
 - `Open Questions`
 - `Next`

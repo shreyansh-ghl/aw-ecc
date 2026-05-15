@@ -129,6 +129,12 @@ This command may still use internal helpers where useful, but the public contrac
 - execution-recipe task writing should use `aw-tasks`
 - the primary stage skill remains `aw-plan`
 
+## Remote AW Docs Publish
+
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+
+Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 Always end with:
@@ -141,5 +147,6 @@ Always end with:
 - `Summary`
 - `Execution Readiness`
 - `HTML Companion`
+- `Remote Docs`
 - `Missing`
 - `Next`

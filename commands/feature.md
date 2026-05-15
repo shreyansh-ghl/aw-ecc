@@ -322,6 +322,12 @@ When user requests skip:
 - Must not run all phases in one shot like `aw-yolo` — this is guided, not autonomous
 - Must not show technical jargon without a plain-language explanation
 
+## Remote AW Docs Publish
+
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+
+Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 At each phase boundary:
@@ -329,5 +335,6 @@ At each phase boundary:
 - `Status`: what was produced or decided
 - `Progress`: X/18 phases complete
 - `HTML Companion`: generated path when the phase produced a stage artifact, or explicit Markdown-only skip
+- `Remote Docs`
 - `Next`: what the next phase is and what it does
 - `Prompt`: ask user to proceed, refine, or skip

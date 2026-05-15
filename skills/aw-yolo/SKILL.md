@@ -75,6 +75,12 @@ If the user asked for one stage, stay in that stage.
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
 
+## Remote AW Docs Publish
+
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+
+Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+
 ## Final Output Shape
 
 Always end with:
@@ -83,6 +89,7 @@ Always end with:
 - `Completed Stages`
 - `Artifacts Written`
 - `HTML Companions`
+- `Remote Docs`
 - `Blockers`
 - `Recommended Next`
 

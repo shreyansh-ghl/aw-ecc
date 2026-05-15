@@ -172,12 +172,25 @@ Resolve output mode in this order:
 Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
 Allowed companion statuses are `queued`, `generating`, `written`, `published`, `skipped`, `blocked`, and `stale`.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
-When the user or stage asks for remote sharing, pass the approved TeamOfOne docs
-target repo, branch, path, base URL, and publish authorization to the `aw:echo` subagent.
-Echo may publish only the generated human artifacts and safe state entries,
-then return repository links and TeamOfOne docs URLs. If the target,
-authorization, or safety checks are missing, record `publish_status: blocked`
-and the blocker instead of inventing a remote link.
+
+## Remote AW Docs Publish Rule
+
+After a public stage writes canonical Markdown, refreshes required HTML sidecars,
+and updates `state.json`, publish the feature-local `.aw_docs` artifacts with
+`aw push --aw-docs-only` unless the user explicitly requested local-only or
+Markdown-only docs for this run.
+
+The stage owns publishing and final link reporting. `aw:echo` owns the human
+HTML companion only; do not ask `aw:echo` to run registry pushes or normal
+`aw push` flows.
+
+`aw push --aw-docs-only` direct-pushes generated docs to the configured AW docs
+repo on the configured non-default branch, prints repository URLs, and writes
+`.aw_docs/last-publish.json`. Stages must include those printed URLs or
+`last-publish.json` links in a final `Remote Docs` section.
+
+If publishing fails, record `publish_status: blocked` and the concrete blocker
+in `state.json`, then report the blocker instead of inventing links.
 
 The default stage profile map is:
 
