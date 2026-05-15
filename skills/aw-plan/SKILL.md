@@ -85,9 +85,13 @@ Before writing planning artifacts, load `grill-with-docs` and use its returned d
 
 - If `grill-with-docs` returns `clear`, state the key assumptions it accepted and proceed.
 - If it returns `confirm`, ask its one recommended confirmation question and wait for the answer.
-- If it returns `grill`, continue its one-question-at-a-time interview before freezing the plan.
+- If it returns `grill`, show its numbered grill mode picker before freezing the plan:
+  1. Auto-answer with recommended defaults (Recommended)
+  2. Quick grill
+  3. Deep grill
+- Run the full one-question-at-a-time interview only when the user selects `3`, says "deep grill", or explicitly asks to be grilled deeply.
 
-Treat the request as full-interview depth when any trigger is present:
+Treat the request as grill-candidate depth when any trigger is present:
 
 - deadline, launch, production, customer-visible, or executive/high-impact wording
 - staging vs production, partial vs full rollout, rollback posture, or ownership is unclear
@@ -99,6 +103,7 @@ Treat the request as full-interview depth when any trigger is present:
 
 Do not skip `grill-with-docs` only because code or PR evidence exists. Explore facts locally when possible, then ask the user only for the remaining decision.
 Do not let `/aw:plan` choose a shortcut before `grill-with-docs` runs.
+Do not choose deep grill implicitly; the user must select `3` or explicitly ask for deep grill.
 
 ## Planning Modes
 

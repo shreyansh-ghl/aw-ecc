@@ -134,6 +134,9 @@ function run() {
     }
     assert.ok(router.includes('Decision Confidence Gate'));
     assert.ok(router.includes('mostly-clear plans ask one confirmation question'));
+    assert.ok(router.includes('`1` auto-answer recommended defaults'));
+    assert.ok(router.includes('`2` quick grill'));
+    assert.ok(router.includes('`3` deep grill'));
     assert.ok(router.includes('Inside every `/aw:plan` as the Decision Confidence Gate'));
     assert.ok(router.includes('do not require it for already-clear technical plans'));
     assert.ok(router.includes('remote issue publishing requires an explicit user request'));

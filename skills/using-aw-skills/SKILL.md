@@ -191,7 +191,7 @@ Load across stages when context applies: `incremental-implementation`, `context-
 
 | Skill | Load when |
 |---|---|
-| `grill-with-docs` | Inside every `/aw:plan` as the Decision Confidence Gate. It classifies planning intake as `clear`, `confirm`, or `grill`: clear low-risk plans state assumptions and proceed, mostly-clear plans ask one confirmation question, and high-impact/fuzzy/hidden-decision/contradictory-docs plans run the full one-question-at-a-time grill. |
+| `grill-with-docs` | Inside every `/aw:plan` as the Decision Confidence Gate. It classifies planning intake as `clear`, `confirm`, or `grill`: clear low-risk plans state assumptions and proceed, mostly-clear plans ask one confirmation question, and high-impact/fuzzy/hidden-decision/contradictory-docs plans show a numbered mode picker: `1` auto-answer recommended defaults, `2` quick grill, `3` deep grill. Deep grill runs the full one-question-at-a-time interview only when the user selects `3` or explicitly asks for it. |
 | `to-prd` | Inside `/aw:plan` for product/full mode or when missing product assumptions must be frozen into `prd.md`; do not require it for already-clear technical plans. |
 | `to-issues` | Inside `/aw:plan` before `tasks.md` when a PRD/spec needs vertical tracer-bullet slices; remote issue publishing requires an explicit user request. |
 | `tdd` | Inside `/aw:build` as a companion to `tdd-workflow` when behavior-test, mocking, or tracer-bullet judgement needs more depth. |
