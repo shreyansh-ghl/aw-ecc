@@ -146,7 +146,7 @@ When a public stage writes or materially updates its canonical Markdown artifact
 
 `aw-ecc` owns the SDLC trigger, output mode, profile, state, and deterministic path contract.
 The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, and `aw:echo` agent definition.
-`aw:echo` owns communication with humans, not changing the canonical agent source of truth.
+`aw:echo` owns communication with humans, including the shareable human docs package; it does not change the canonical agent source of truth.
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
 Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
@@ -159,7 +159,7 @@ HTML generation is async by default:
 4. Return the stage result.
 
 Wait for HTML only when the user explicitly asks to wait or the next action truly needs the rendered file.
-Echo may write only the colocated `.html` sidecar and its `state.json` companion entry; it must not rewrite the canonical Markdown source.
+Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata such as `.aw_docs/last-publish.json`; it must not rewrite the canonical Markdown source.
 
 Resolve output mode in this order:
 
@@ -176,21 +176,40 @@ TeamOfOne docs should discover companions from the feature-local `.html` sidecar
 ## Remote AW Docs Publish Rule
 
 After a public stage writes canonical Markdown, refreshes required HTML sidecars,
-and updates `state.json`, publish the feature-local `.aw_docs` artifacts with
-`aw push --aw-docs-only` unless the user explicitly requested local-only or
-Markdown-only docs for this run.
+and updates `state.json`, hand the complete feature docs folder to the same
+`aw:echo` companion job for publishing unless the user explicitly requested
+local-only or Markdown-only docs for this run.
 
-The stage owns publishing and final link reporting. `aw:echo` owns the human
-HTML companion only; do not ask `aw:echo` to run registry pushes or normal
-`aw push` flows.
+The stage owns the SDLC artifact and final handoff shape. `aw:echo` owns the
+human docs package: create or refresh the HTML sidecar, publish the complete
+`.aw_docs/features/<feature_slug>/` folder, and return repository plus
+TeamOfOne links.
 
-`aw push --aw-docs-only` direct-pushes generated docs to the configured AW docs
-repo on the configured non-default branch, prints repository URLs, and writes
-`.aw_docs/last-publish.json`. Stages must include those printed URLs or
-`last-publish.json` links in a final `Remote Docs` section.
+Stages must not run a stage-local docs push. Echo may call the approved AW docs
+publisher behind its boundary, but the SDLC commands and skills should only
+depend on Echo's publish result.
+
+Resolve publish configuration from `.aw_docs/config.json` `sync.github_docs`:
+
+- `enabled` controls remote publishing.
+- `repo` selects the docs repository or remote.
+- `dest` is the docs repo base path.
+- `branch` or the publisher default selects the non-default docs branch.
+- `teamofone_base_url`, when configured, is the TeamOfOne link base.
+
+The default destination convention is
+`<dest>/<source_repo>/<github_username>/features/<feature_slug>/` when the
+publisher has enough repo and user identity to resolve those segments. If the
+TeamOfOne base URL or destination cannot be resolved, Echo must mark the publish
+step blocked instead of inventing links.
+
+Echo writes `.aw_docs/last-publish.json` with the publish result. Stages must
+include the Echo-returned URLs or `last-publish.json` links in a final
+`Remote Docs` section.
 
 If publishing fails, record `publish_status: blocked` and the concrete blocker
-in `state.json`, then report the blocker instead of inventing links.
+in `state.json`, then report the blocker instead of inventing links. If the docs
+URL changes later, update `.aw_docs/config.json` rather than every SDLC command.
 
 The default stage profile map is:
 

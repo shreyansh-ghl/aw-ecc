@@ -89,10 +89,14 @@ function assertOutputModeContract(content) {
 }
 
 function assertRemoteDocsPublishContract(content) {
-  assert.ok(content.includes('aw push --aw-docs-only'), 'missing docs-only publish command');
+  assert.ok(content.includes('aw:echo'), 'missing Echo publish owner');
+  assert.ok(content.includes('complete feature docs folder'), 'missing complete feature docs folder contract');
+  assert.ok(content.includes('.aw_docs/config.json'), 'missing central docs config source');
+  assert.ok(content.includes('sync.github_docs'), 'missing github docs config key');
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
   assert.ok(content.includes('last-publish.json'), 'missing last publish link summary');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
+  assert.ok(!content.includes('aw push --aw-docs-only'), 'stage docs must not require direct docs push');
 }
 
 function run() {
@@ -216,9 +220,11 @@ function run() {
     assert.ok(commandContracts.includes('must not rewrite the canonical Markdown source'));
     assert.ok(commandContracts.includes('`html_companion_artifacts`'));
     assertRemoteDocsPublishContract(commandContracts);
-    assert.ok(commandContracts.includes('`aw:echo` owns the human'));
-    assert.ok(commandContracts.includes('HTML companion only'));
-    assert.ok(commandContracts.includes('do not ask `aw:echo` to run registry pushes'));
+    assert.ok(commandContracts.includes('`aw:echo` owns communication with humans'));
+    assert.ok(commandContracts.includes('human docs package'));
+    assert.ok(commandContracts.includes('Stages must not run a stage-local docs push'));
+    assert.ok(commandContracts.includes('`<dest>/<source_repo>/<github_username>/features/<feature_slug>/`'));
+    assert.ok(commandContracts.includes('`teamofone_base_url`'));
     assert.ok(commandContracts.includes('.aw_docs/features/<feature_slug>/<artifact_basename>.html'));
     assert.ok(!commandContracts.includes('server-managed'));
     assert.ok(!commandContracts.includes('subagent id or run handle'));

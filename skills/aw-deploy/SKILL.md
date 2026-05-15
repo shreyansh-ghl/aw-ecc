@@ -148,11 +148,11 @@ Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar 
 - [ ] handoff to `aw-ship` is clear when launch discipline is still needed
 - [ ] the HTML companion file exists, or the user explicitly requested Markdown-only
 
-## Remote AW Docs Publish
+## Echo Docs Publish Handoff
 
-After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, let the same `aw:echo` companion job publish the complete feature docs folder unless the user explicitly requested local-only or Markdown-only docs. `aw:echo` resolves the publish target from `.aw_docs/config.json` `sync.github_docs` and returns the generated repository and TeamOfOne links. Use those links, or `.aw_docs/last-publish.json`, as the source of truth for sharing.
 
-Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+Add those links to the final `Remote Docs` section. If Echo cannot publish, record `publish_status: blocked` and the blocker in `state.json`; do not run a stage-local push or invent links.
 
 ## Final Output Shape
 

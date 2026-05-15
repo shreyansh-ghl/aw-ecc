@@ -30,8 +30,8 @@ Do not create a separate execute-specific workflow.
    - `aw-review`
 4. Preserve generated-doc publishing behavior from `aw-build`:
    - produce required HTML sidecars through `aw:echo` or the approved fallback
-   - run `aw push --aw-docs-only` after docs are current unless the user requested local-only or Markdown-only docs
-   - include the resulting `Remote Docs` links or a concrete publish blocker in the handoff
+   - let the same `aw:echo` companion job publish the complete feature docs folder unless the user requested local-only or Markdown-only docs
+   - include the resulting `Remote Docs` links or a concrete Echo publish blocker in the handoff
 
 ## Common Rationalizations
 

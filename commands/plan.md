@@ -66,19 +66,20 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 ## Execution Rules
 
 1. Classify the request into one primary mode first.
-2. Always invoke `grill-with-docs` as the Decision Confidence Gate before writing artifacts, then follow its returned depth: proceed, ask one confirmation question, or run the full one-question-at-a-time interview.
-3. Treat deadline, launch, production, customer-visible, multi-repo, Auth/DNS/CI/CD/permissions, tenant isolation, rollback, ownership, or non-measurable acceptance criteria as full-interview triggers unless repo evidence fully resolves them.
-4. Use `to-prd` only when product scope must be frozen (`product` or `full` mode, or missing product assumptions); do not require a PRD for a technical request that is already well defined.
-5. Use `to-issues` before `tasks.md` when the work needs a vertical-slice breakdown; feed those slices into `aw-tasks` rather than publishing tracker issues by default.
-6. Operate in read-only planning mode until the artifacts are written.
-7. Default to single-scope planning.
-8. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
-9. Use existing artifacts as inputs when they are already sufficient.
-10. Route approved technical direction through `aw-spec` before task planning.
-11. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
-12. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
-13. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
-14. Generate or explicitly record the HTML companion status before handoff.
+2. Always invoke `grill-with-docs` as the Decision Confidence Gate before writing artifacts, then follow its returned depth: proceed, ask one confirmation question, or show the numbered grill mode picker.
+3. Treat deadline, launch, production, customer-visible, multi-repo, Auth/DNS/CI/CD/permissions, tenant isolation, rollback, ownership, or non-measurable acceptance criteria as grill-candidate triggers unless repo evidence fully resolves them.
+4. When grilling is needed, let the user choose depth by number: `1` auto-answer recommended defaults, `2` quick grill, or `3` deep grill. Run the full one-question-at-a-time interview only when the user selects `3` or explicitly says deep grill.
+5. Use `to-prd` only when product scope must be frozen (`product` or `full` mode, or missing product assumptions); do not require a PRD for a technical request that is already well defined.
+6. Use `to-issues` before `tasks.md` when the work needs a vertical-slice breakdown; feed those slices into `aw-tasks` rather than publishing tracker issues by default.
+7. Operate in read-only planning mode until the artifacts are written.
+8. Default to single-scope planning.
+9. If the request is fuzzy, discovery-heavy, or too large for one spec, route internally through `aw-brainstorm` before technical planning.
+10. Use existing artifacts as inputs when they are already sufficient.
+11. Route approved technical direction through `aw-spec` before task planning.
+12. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
+13. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
+14. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
+15. Generate or explicitly record the HTML companion status before handoff.
 
 ## Planning Depth
 
@@ -129,11 +130,11 @@ This command may still use internal helpers where useful, but the public contrac
 - execution-recipe task writing should use `aw-tasks`
 - the primary stage skill remains `aw-plan`
 
-## Remote AW Docs Publish
+## Echo Docs Publish Handoff
 
-After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, run `aw push --aw-docs-only` unless the user explicitly requested local-only or Markdown-only docs. Use the printed URLs, or `.aw_docs/last-publish.json`, as the source of truth for share links.
+After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, let the same `aw:echo` companion job publish the complete feature docs folder unless the user explicitly requested local-only or Markdown-only docs. `aw:echo` resolves the publish target from `.aw_docs/config.json` `sync.github_docs` and returns the generated repository and TeamOfOne links. Use those links, or `.aw_docs/last-publish.json`, as the source of truth for sharing.
 
-Add those links to the final `Remote Docs` section. If publishing fails, record `publish_status: blocked` and the blocker in `state.json`; do not invent links.
+Add those links to the final `Remote Docs` section. If Echo cannot publish, record `publish_status: blocked` and the blocker in `state.json`; do not run a stage-local push or invent links.
 
 ## Final Output Shape
 
