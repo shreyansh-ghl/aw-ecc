@@ -9,13 +9,46 @@ Use this inside every `/aw:plan` as the Decision Confidence Gate.
 Its default job is to classify planning intake as `clear`, `confirm`, or `grill`, not to force a long interview every time.
 
 High-impact requests should be grilled even when they sound clear on the surface if they hide decisions about staging vs production, rollout scope, ownership, Auth/DNS/CI/CD/permissions, tenant isolation, rollback, deadlines, or what counts as "live" or "done".
-For low-risk, single-scope technical work, return `clear` with assumptions and proceed. If exactly one assumption controls the outcome, return `confirm` and ask one question with a recommended answer. If the problem is fuzzy, high-impact, domain language is overloaded, acceptance criteria are under-specified, or existing AW docs, repo docs, or code may contradict the user's mental model, return `grill` and run the full interview.
+For low-risk, single-scope technical work, return `clear` with assumptions and proceed. If exactly one assumption controls the outcome, return `confirm` and ask one question with a recommended answer. If the problem is fuzzy, high-impact, domain language is overloaded, acceptance criteria are under-specified, or existing AW docs, repo docs, or code may contradict the user's mental model, return `grill` and show the numbered grill mode picker instead of immediately starting a long interview.
+
+## Grill Mode Picker
+
+When depth resolves to `grill`, first present this numbered menu and wait for the user's choice:
+
+```text
+I found decisions worth grilling. Choose depth:
+1. Auto-answer with recommended defaults (Recommended) — I fill the answers from my recommendations, record them as assumptions, and proceed.
+2. Quick grill — ask only the top 1-2 highest-leverage questions, each with a recommended answer.
+3. Deep grill — run the full one-question-at-a-time interview.
+```
+
+Selection rules:
+
+- `1`, `auto`, `recommended`, `accept recommended`, or `auto-answer remaining` means auto-answer all open grill questions from recommendations and continue.
+- `2`, `quick`, or `quick grill` means ask at most two questions unless the user explicitly asks for more.
+- `3`, `deep`, `deep grill`, or `grill me deeply` means run the full one-question-at-a-time interview.
+- If the user says "proceed", "yes", or gives no clear depth but accepts the recommendation, use option `1`.
+- Do not select option `3` implicitly just because the request is high-impact. High-impact work may require the picker, but the user must choose deep grill by number or explicit wording.
+
+In option `1`, write the auto-answered decisions into the planning assumptions or feature `context.md` with `source: agent_recommended_default` and flag only genuinely irreversible, security-sensitive, or contradictory decisions for user review.
+
+In option `2`, each question should be short and formatted as:
+
+```text
+Question N: <decision>
+Recommended: <answer>
+Reply with:
+1. Accept recommended
+2. Answer manually
+3. Auto-answer remaining
+4. Switch to deep grill
+```
 
 <what-to-do>
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+For option `3` only, interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
 
-In `grill` depth, ask questions one at a time, waiting for feedback on each question before continuing.
+In deep grill, ask questions one at a time, waiting for feedback on each question before continuing.
 
 If a question can be answered by exploring the codebase, explore the codebase instead.
 
