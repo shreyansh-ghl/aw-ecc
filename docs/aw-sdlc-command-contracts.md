@@ -144,9 +144,9 @@ HTML companions are the TeamOfOne-readable surface for humans, reviewers, and qu
 
 When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
 
-`aw-ecc` owns the SDLC trigger, output mode, profile, state, and deterministic path contract.
-The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, and `aw:echo` agent definition.
-`aw:echo` owns communication with humans, including the shareable human docs package; it does not change the canonical agent source of truth.
+`aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and Echo handoff contract.
+The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, `aw:echo` agent definition, and remote publish command behavior.
+`aw:echo` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth.
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
 Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
@@ -159,7 +159,7 @@ HTML generation is async by default:
 4. Return the stage result.
 
 Wait for HTML only when the user explicitly asks to wait or the next action truly needs the rendered file.
-Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata such as `.aw_docs/last-publish.json`; it must not rewrite the canonical Markdown source.
+Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata; it must not rewrite the canonical Markdown source.
 
 Resolve output mode in this order:
 
@@ -173,43 +173,27 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 Allowed companion statuses are `queued`, `generating`, `written`, `published`, `skipped`, `blocked`, and `stale`.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
-## Remote AW Docs Publish Rule
+## Echo Remote Docs Handoff Rule
 
-After a public stage writes canonical Markdown, refreshes required HTML sidecars,
-and updates `state.json`, hand the complete feature docs folder to the same
-`aw:echo` companion job for publishing unless the user explicitly requested
-local-only or Markdown-only docs for this run.
+After a public stage writes canonical Markdown and updates `state.json`,
+delegate human docs generation and remote sharing to the same `aw:echo`
+companion job unless the user explicitly requested local-only or Markdown-only
+docs for this run.
 
-The stage owns the SDLC artifact and final handoff shape. `aw:echo` owns the
-human docs package: create or refresh the HTML sidecar, publish the complete
-`.aw_docs/features/<feature_slug>/` folder, and return repository plus
-TeamOfOne links.
+The stage owns the SDLC artifact and final handoff shape. It passes only the
+feature slug, source paths, profile, output mode, colocated HTML path, state
+path, and publish intent. `aw:echo` owns the human docs package: create or
+refresh the HTML sidecar, update companion state, run the approved AW docs
+publisher, and return repository plus TeamOfOne links or a concrete blocker.
 
-Stages must not run a stage-local docs push. Echo may call the approved AW docs
-publisher behind its boundary, but the SDLC commands and skills should only
-depend on Echo's publish result.
+Stages must not run docs publish commands, derive remote URLs, or duplicate
+Echo's publish configuration. The platform docs registry is the source of truth
+for Echo's publish command, docs destination convention, and TeamOfOne URL
+derivation.
 
-Resolve publish configuration from `.aw_docs/config.json` `sync.github_docs`:
-
-- `enabled` controls remote publishing.
-- `repo` selects the docs repository or remote.
-- `dest` is the docs repo base path.
-- `branch` or the publisher default selects the non-default docs branch.
-- `teamofone_base_url`, when configured, is the TeamOfOne link base.
-
-The default destination convention is
-`<dest>/<source_repo>/<github_username>/features/<feature_slug>/` when the
-publisher has enough repo and user identity to resolve those segments. If the
-TeamOfOne base URL or destination cannot be resolved, Echo must mark the publish
-step blocked instead of inventing links.
-
-Echo writes `.aw_docs/last-publish.json` with the publish result. Stages must
-include the Echo-returned URLs or `last-publish.json` links in a final
-`Remote Docs` section.
-
-If publishing fails, record `publish_status: blocked` and the concrete blocker
-in `state.json`, then report the blocker instead of inventing links. If the docs
-URL changes later, update `.aw_docs/config.json` rather than every SDLC command.
+Stages must include Echo-returned URLs in a final `Remote Docs` section. If Echo
+cannot generate or publish, record `publish_status: blocked` and Echo's concrete
+blocker in `state.json`, then report the blocker instead of inventing links.
 
 The default stage profile map is:
 

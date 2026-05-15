@@ -29,9 +29,9 @@ Do not create a separate execute-specific workflow.
    - `aw-test`
    - `aw-review`
 4. Preserve generated-doc publishing behavior from `aw-build`:
-   - produce required HTML sidecars through `aw:echo` or the approved fallback
-   - let the same `aw:echo` companion job publish the complete feature docs folder unless the user requested local-only or Markdown-only docs
-   - include the resulting `Remote Docs` links or a concrete Echo publish blocker in the handoff
+   - delegate human docs generation and remote sharing to `aw:echo`
+   - do not run docs publish commands inside this compatibility wrapper
+   - include Echo's `Remote Docs` links or concrete blocker in the handoff
 
 ## Common Rationalizations
 

@@ -126,11 +126,11 @@ Fix issues inline instead of carrying them into task planning.
 - do not leave contradictory interfaces, names, or file boundaries unresolved
 - do not treat a multi-subsystem request as one spec when it should be decomposed
 
-## Echo Docs Publish Handoff
+## Echo Human Docs Handoff
 
-After the Markdown artifact, required HTML sidecar, and `state.json` companion entries are current, let the same `aw:echo` companion job publish the complete feature docs folder unless the user explicitly requested local-only or Markdown-only docs. `aw:echo` resolves the publish target from `.aw_docs/config.json` `sync.github_docs` and returns the generated repository and TeamOfOne links. Use those links, or `.aw_docs/last-publish.json`, as the source of truth for sharing.
+After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
 
-Add those links to the final `Remote Docs` section. If Echo cannot publish, record `publish_status: blocked` and the blocker in `state.json`; do not run a stage-local push or invent links.
+Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
 
 ## Final Output Shape
 

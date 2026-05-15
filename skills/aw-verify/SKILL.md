@@ -30,7 +30,7 @@ The canonical public verification model is now:
 3. Preserve stage continuation as well as stage boundaries.
    Do not stop after partial evidence if the selected test or review scope still remains.
 4. Preserve generated-doc publishing behavior from the resolved canonical stage.
-   When verification artifacts are generated, keep the HTML companion current, let the same `aw:echo` companion job publish the complete feature docs folder unless the user requested local-only or Markdown-only docs, and report the resulting `Remote Docs` links or a concrete Echo publish blocker.
+   When verification artifacts are generated, delegate human docs generation and remote sharing to `aw:echo`, do not run docs publish commands in this compatibility wrapper, and report Echo's `Remote Docs` links or concrete blocker.
 5. Do not preserve old ambiguity.
    Prefer the narrowest modern stage once the intent is clear.
 
