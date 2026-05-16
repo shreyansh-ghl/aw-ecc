@@ -10,6 +10,7 @@ CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 CONFIG_FILE="$CODEX_HOME/config.toml"
 AGENTS_FILE="$CODEX_HOME/AGENTS.md"
+CODEX_AGENTS_DIR="$CODEX_HOME/agents"
 PROMPTS_DIR="$CODEX_HOME/prompts"
 SKILLS_DIR="$CODEX_HOME/skills"
 HOOKS_DIR_EXPECT="${ECC_GLOBAL_HOOKS_DIR:-$CODEX_HOME/git-hooks}"
@@ -102,6 +103,8 @@ if [[ -f "$CONFIG_FILE" ]]; then
   check_config_pattern '^persistent_instructions\s*=' "persistent_instructions is configured"
   check_config_pattern '^\[profiles\.strict\]' "profiles.strict exists"
   check_config_pattern '^\[profiles\.yolo\]' "profiles.yolo exists"
+  check_config_pattern '^\[agents\.echo\]' "agents.echo exists"
+  check_config_absent '^\[agents\."aw:echo"\]' "invalid agents.aw:echo alias is absent"
 
   for section in \
     'mcp_servers.github' \
@@ -121,6 +124,12 @@ if [[ -f "$CONFIG_FILE" ]]; then
   else
     ok "No duplicate [mcp_servers.context7] section"
   fi
+fi
+
+if [[ -f "$CODEX_AGENTS_DIR/echo.toml" ]]; then
+  ok "Echo Codex agent config exists"
+else
+  fail "Echo Codex agent config missing ($CODEX_AGENTS_DIR/echo.toml)"
 fi
 
 declare -a required_skills=(
