@@ -65,6 +65,29 @@ if (
   passed++;
 else failed++;
 
+if (
+  test('reference config registers Echo with a Codex-valid role name', () => {
+    const echoPath = path.join(codexAgentsDir, 'echo.toml');
+
+    assert.ok(fs.existsSync(echoPath), 'Expected `.codex/agents/echo.toml` to exist');
+    assert.ok(config.includes('[agents.echo]'), 'Expected `[agents.echo]` in `.codex/config.toml`');
+    assert.ok(!config.includes('[agents."aw:echo"]'), 'Expected no invalid `[agents."aw:echo"]` alias');
+    assert.ok(
+      config.includes('config_file = "agents/echo.toml"'),
+      'Expected Echo role to point at `agents/echo.toml`',
+    );
+
+    const echoConfig = fs.readFileSync(echoPath, 'utf8');
+    assert.ok(echoConfig.includes('You are aw:echo'), 'Expected Echo config to identify the aw:echo role');
+    assert.ok(
+      !/\/Users\/[^/\s]+/.test(echoConfig),
+      'Expected Echo config to avoid user-specific absolute paths',
+    );
+  })
+)
+  passed++;
+else failed++;
+
 console.log(`\nPassed: ${passed}`);
 console.log(`Failed: ${failed}`);
 process.exit(failed > 0 ? 1 : 0);

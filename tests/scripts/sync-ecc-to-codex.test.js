@@ -32,7 +32,7 @@ function test(name, fn) {
   }
 }
 
-function runSync(homeDir, extraEnv = {}) {
+function runSync(homeDir, extraEnv = {}, options = {}) {
   const env = {
     ...process.env,
     HOME: homeDir,
@@ -43,7 +43,7 @@ function runSync(homeDir, extraEnv = {}) {
   fs.mkdirSync(path.join(homeDir, '.codex'), { recursive: true });
   fs.writeFileSync(
     path.join(homeDir, '.codex', 'config.toml'),
-    fs.readFileSync(path.join(REPO_ROOT, '.codex', 'config.toml'), 'utf8')
+    options.initialConfig || fs.readFileSync(path.join(REPO_ROOT, '.codex', 'config.toml'), 'utf8')
   );
 
   execFileSync('bash', [SCRIPT], {
@@ -95,6 +95,58 @@ function runTests() {
       for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
         assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
       }
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('installs Echo agent config and cleans invalid legacy aliases', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      const initialConfig = [
+        'persistent_instructions = true',
+        '',
+        '[features]',
+        'codex_hooks = true',
+        '',
+        '[profiles.strict]',
+        'approval_policy = "on-request"',
+        'sandbox_mode = "read-only"',
+        'web_search = "cached"',
+        '',
+        '[profiles.yolo]',
+        'approval_policy = "never"',
+        'sandbox_mode = "workspace-write"',
+        'web_search = "live"',
+        '',
+        '[agents]',
+        'max_threads = 2',
+        '',
+        '[agents.explorer]',
+        'description = "Existing explorer"',
+        'config_file = "agents/explorer.toml"',
+        '',
+        '[agents."aw:echo"]',
+        'description = "Legacy invalid alias"',
+        'config_file = "agents/echo.toml"',
+        '',
+      ].join('\n');
+
+      runSync(homeDir, {}, { initialConfig });
+
+      const codexHome = path.join(homeDir, '.codex');
+      const config = fs.readFileSync(path.join(codexHome, 'config.toml'), 'utf8');
+      const echoConfigPath = path.join(codexHome, 'agents', 'echo.toml');
+
+      assert.ok(fs.existsSync(echoConfigPath), 'Expected echo.toml to be synced');
+      assert.ok(config.includes('multi_agent = true'), 'Expected multi_agent to be enabled');
+      assert.ok(config.includes('max_threads = 2'), 'Expected existing agent root config to be preserved');
+      assert.ok(config.includes('description = "Existing explorer"'), 'Expected existing agent sections to be preserved');
+      assert.strictEqual((config.match(/\[agents\.explorer\]/g) || []).length, 1, 'Expected no duplicate explorer agent');
+      assert.ok(config.includes('[agents.echo]'), 'Expected `[agents.echo]` to be merged');
+      assert.ok(!config.includes('[agents."aw:echo"]'), 'Expected invalid `[agents."aw:echo"]` alias to be removed');
+      assert.ok(config.includes('config_file = "agents/echo.toml"'), 'Expected Echo role to point to echo.toml');
     } finally {
       cleanup(homeDir);
     }

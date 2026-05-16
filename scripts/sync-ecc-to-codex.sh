@@ -28,6 +28,8 @@ CONFIG_FILE="$CODEX_HOME/config.toml"
 AGENTS_FILE="$CODEX_HOME/AGENTS.md"
 AGENTS_ROOT_SRC="$REPO_ROOT/AGENTS.md"
 AGENTS_CODEX_SUPP_SRC="$REPO_ROOT/.codex/AGENTS.md"
+CODEX_AGENTS_SRC="$REPO_ROOT/.codex/agents"
+CODEX_AGENTS_DEST="$CODEX_HOME/agents"
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
 AW_SKILLS_SRC="$REPO_ROOT/skills"
 SKILLS_DEST="$CODEX_HOME/skills"
@@ -199,9 +201,11 @@ resolve_prompt_name() {
 }
 
 MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
+AGENT_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-agent-config.js"
 
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
 require_path "$AGENTS_CODEX_SUPP_SRC" "ECC Codex AGENTS supplement"
+require_path "$CODEX_AGENTS_SRC" "ECC Codex agents directory"
 require_path "$SKILLS_SRC" "ECC skills directory"
 require_path "$AW_SKILLS_SRC" "ECC AW skills directory"
 require_path "$PROMPTS_SRC" "ECC commands directory"
@@ -210,6 +214,7 @@ require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
+require_path "$AGENT_MERGE_SCRIPT" "ECC Codex agent merge script"
 require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
 require_path "$HOOKS_DIR_SRC" "ECC Codex hooks directory"
 
@@ -233,6 +238,9 @@ if [[ -f "$HOOKS_JSON_DEST" ]]; then
 fi
 if [[ -d "$HOOKS_DIR_DEST" ]]; then
   run_or_echo "cp -R \"$HOOKS_DIR_DEST\" \"$BACKUP_DIR/hooks\""
+fi
+if [[ -d "$CODEX_AGENTS_DEST" ]]; then
+  run_or_echo "cp -R \"$CODEX_AGENTS_DEST\" \"$BACKUP_DIR/agents\""
 fi
 
 ECC_BEGIN_MARKER="<!-- BEGIN ECC -->"
@@ -312,6 +320,16 @@ else
     } >> "$AGENTS_FILE"
   fi
 fi
+
+log "Installing Codex multi-agent role configs"
+run_or_echo "mkdir -p \"$CODEX_AGENTS_DEST\""
+codex_agent_count=0
+for agent_config in "$CODEX_AGENTS_SRC"/*.toml; do
+  [[ -f "$agent_config" ]] || continue
+  agent_file="$(basename "$agent_config")"
+  run_or_echo "cp \"$agent_config\" \"$CODEX_AGENTS_DEST/$agent_file\""
+  codex_agent_count=$((codex_agent_count + 1))
+done
 
 log "Syncing ECC Codex skills"
 run_or_echo "mkdir -p \"$SKILLS_DEST\""
@@ -559,6 +577,13 @@ else
   node "$MCP_MERGE_SCRIPT" "$CONFIG_FILE" $UPDATE_MCP
 fi
 
+log "Merging ECC Codex agent roles into $CONFIG_FILE"
+if [[ "$MODE" == "dry-run" ]]; then
+  node "$AGENT_MERGE_SCRIPT" "$CONFIG_FILE" "$REPO_ROOT/.codex/config.toml" --dry-run
+else
+  node "$AGENT_MERGE_SCRIPT" "$CONFIG_FILE" "$REPO_ROOT/.codex/config.toml"
+fi
+
 log "Installing global git safety hooks"
 if [[ "$MODE" == "dry-run" ]]; then
   "$HOOKS_INSTALLER" --dry-run
@@ -594,6 +619,7 @@ fi
 log "Sync complete"
 log "Backup saved at: $BACKUP_DIR"
 log "Skills synced: $skills_count"
+log "Codex agent role configs synced: $codex_agent_count"
 log "Prompts generated: $((prompt_count + extension_count)) (commands: $prompt_count, extensions: $extension_count)"
 
 if [[ "$MODE" == "apply" ]]; then

@@ -1,6 +1,6 @@
 {
   "name": "aw-ecc",
-  "version": "1.4.55",
+  "version": "1.4.56",
   "description": "GoHighLevel Agentic Workspace Engine — forked from Everything Claude Code (ecc-universal)",
   "keywords": [
     "claude-code",
@@ -83,6 +83,7 @@
     "scripts/setup-package-manager.js",
     "scripts/generate-aw-hooks.js",
     "scripts/skill-create-output.js",
+    "scripts/codex/merge-agent-config.js",
     "scripts/codex/merge-mcp-config.js",
     "scripts/repair.js",
     "scripts/harness-audit.js",

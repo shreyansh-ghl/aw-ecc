@@ -106,3 +106,7 @@ config_file = "agents/reviewer.toml"
 [agents.docs_researcher]
 description = "Documentation specialist that verifies APIs, framework behavior, and release notes."
 config_file = "agents/docs-researcher.toml"
+
+[agents.echo]
+description = "aw:echo human communication agent for TeamOfOne-readable HTML collaboration artifacts."
+config_file = "agents/echo.toml"
