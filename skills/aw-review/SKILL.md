@@ -20,6 +20,19 @@ It turns evidence into findings, release decisions, and clear next actions.
 
 Do not use as a hidden helper that replaces explicit review intent.
 
+## Scope Gate
+
+Before running review engines, check `state.json` complexity field (set by complexity pre-check in `using-aw-skills`):
+
+| Complexity | Review mode |
+|------------|-------------|
+| `low` (1 file, 1 concern, mechanical) | `lite`: single-reviewer only + governance checklist |
+| `medium` (2–3 files, known change type) | `standard`: Engine B parallel reviewers only (skip Engine A worksheet) |
+| `high` or unset | `full`: both Engine A + Engine B, all applicable waves |
+
+`lite` skips: Engine A worksheet, `verification.md`, wave 2+3. Writes `state.json` only.
+`lite` is NOT allowed when: auth/payment/schema/public-API surface touched, or complexity is unset/high.
+
 ## Workflow
 
 1. Review the evidence first.
