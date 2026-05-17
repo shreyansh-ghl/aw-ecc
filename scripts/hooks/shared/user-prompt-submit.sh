@@ -46,6 +46,5 @@ if [ -z "$RULES_ROOT" ]; then
 fi
 
 cat <<EOF
-[AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
-[Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
+[AW] Route: new/unclear→/aw:plan | bug/failure→/aw:investigate | approved+impl→/aw:build | needs test/review→/aw:test or /aw:review | deploy→/aw:deploy. Read rules: ${RULES_ROOT}/universal/AGENTS.md + security/AGENTS.md before acting.
 EOF
