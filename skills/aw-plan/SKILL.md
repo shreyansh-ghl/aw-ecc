@@ -138,7 +138,7 @@ When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or 
 
 Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
 `aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
-Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn using the `aw:echo` safety and design contract, record `generated_fallback` plus the blocker, and keep Markdown canonical.
+Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and generate the colocated `.html` sidecar in the same turn as a controlled HCA fallback. Do not freehand or command-template HTML outside that skill contract. Record the companion as `generated_hca_fallback` with the exact Echo availability blocker, keep Markdown canonical, and include the fallback note in the final handoff.
 Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
 Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
@@ -149,7 +149,7 @@ Choose the smallest correct profile for the dominant planning output:
 - `implementation-plan` for `tasks.md` or full planning packets
 - `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
 
-Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
+Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip, HCA fallback reason, or blocked reason.
 
 ## Plan Document Template
 

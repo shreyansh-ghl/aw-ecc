@@ -150,6 +150,7 @@ The platform docs registry owns the reusable design system, visual component rul
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
 Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
+Do not freehand or command-template fallback HTML. Echo is the preferred owner, but if Echo is unavailable the stage must load `platform-core:human-collaboration-artifacts` and generate a controlled HCA fallback so the human companion still exists.
 
 HTML generation is async by default:
 
@@ -170,7 +171,7 @@ Resolve output mode in this order:
 5. default `dual`
 
 Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Allowed companion statuses are `queued`, `generating`, `written`, `published`, `skipped`, `blocked`, and `stale`.
+Allowed companion statuses are `queued`, `generating`, `written`, `generated_hca_fallback`, `published`, `skipped`, `blocked`, and `stale`.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
 ## Echo Remote Docs Handoff Rule

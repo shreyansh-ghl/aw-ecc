@@ -74,9 +74,10 @@ function assertEchoSpawnContract(content) {
 function assertHtmlProgressContract(content) {
   assert.ok(
     (content.includes('queued') && content.includes('generating'))
-      || content.includes('generated_fallback'),
-    'missing HTML progress or fallback status contract'
+      || content.includes('generated_hca_fallback'),
+    'missing HTML progress or HCA fallback status contract'
   );
+  assert.ok(!content.includes('generated_fallback'), 'must not allow generated_fallback HTML');
 }
 
 function assertOutputModeContract(content) {
@@ -228,7 +229,7 @@ function run() {
     assert.ok(!commandContracts.includes('server-managed'));
     assert.ok(!commandContracts.includes('subagent id or run handle'));
     assert.ok(!commandContracts.includes('.aw_docs/html/'));
-    assert.ok(!commandContracts.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(commandContracts.includes('platform-core:human-collaboration-artifacts'));
     assert.ok(!snapshot.fileExists('skills/aw-html-artifact-designer/SKILL.md'));
     assert.ok(!snapshot.fileExists('skills/aw-excalidraw-diagram-designer/SKILL.md'));
     assert.ok(!snapshot.fileExists('agents/html-artifact-designer.md'));
@@ -253,7 +254,7 @@ function run() {
       assert.ok(content.includes('run_ref'));
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('subagent id or run handle'));
-      assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
+      assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
       assertOutputModeContract(content);
       assert.ok(content.includes('AW_DOCS_OUTPUT_MODE'));
       assert.ok(content.includes('html_companion_artifacts'));
@@ -301,7 +302,7 @@ function run() {
       assertEchoSpawnContract(content);
       assertRemoteDocsPublishContract(content);
       assert.ok(!content.includes('server-managed'));
-      assert.ok(!content.includes('platform-core:human-collaboration-artifacts'));
+      assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
       assert.ok(!content.includes('.aw_docs/html/'));
     }
 
@@ -317,8 +318,8 @@ function run() {
     assert.ok(yoloSkill.includes('run_ref'));
     assert.ok(!featureSkill.includes('.aw_docs/html/'));
     assert.ok(!yoloSkill.includes('.aw_docs/html/'));
-    assert.ok(!featureSkill.includes('platform-core:human-collaboration-artifacts'));
-    assert.ok(!yoloSkill.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(featureSkill.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(yoloSkill.includes('platform-core:human-collaboration-artifacts'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);
