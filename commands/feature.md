@@ -288,7 +288,7 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 `/aw:feature` delegates HTML generation to the backing stage skills.
 Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by the `aw:echo` subagent for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
 Subagent authorization: invoking `/aw:feature` in `dual` or `html` output mode is an explicit user request to delegate each human-facing HTML companion to exactly one background `aw:echo` subagent per artifact-producing phase. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
-HTML sidecars are required before each artifact-producing phase handoff. Spawn exactly one `aw:echo` subagent for the phase companion and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
+HTML sidecars are required before each artifact-producing phase handoff. Spawn exactly one `aw:echo` subagent for the phase companion and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, do not hand-roll or command-generate HTML. Record the companion as `blocked` with the exact Echo availability blocker, keep Markdown canonical, and stop the stage handoff with `HTML Companion: blocked`.
 
 ## Skipping Rules
 

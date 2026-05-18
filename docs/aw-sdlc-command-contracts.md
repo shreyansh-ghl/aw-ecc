@@ -150,6 +150,7 @@ The platform docs registry owns the reusable design system, visual component rul
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
 Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
+Do not hand-roll or command-generate fallback HTML. Echo is the only owner allowed to create the human HTML companion; if Echo is unavailable, record the companion as blocked with the exact availability reason.
 
 HTML generation is async by default:
 

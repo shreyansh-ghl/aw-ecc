@@ -40,7 +40,7 @@ The agent should:
 - Inspect `.aw_docs/features/teamofone-routines-agents-forward-plan/` as the active planning context.
 - Use `state.json`, `spec.md`, and `tasks.md` to identify likely target repos before declaring docs absent.
 - Create or update `.aw_docs/features/teamofone-routines-agents-forward-plan/context.md` once the Routine term is resolved.
-- Create or refresh `.aw_docs/features/teamofone-routines-agents-forward-plan/context.html` after the grill completes, using `aw:echo` when available or a conservative fallback if delegation is blocked.
+- Create or refresh `.aw_docs/features/teamofone-routines-agents-forward-plan/context.html` after the grill completes through `aw:echo`; if Echo cannot be spawned, record the context HTML companion as blocked instead of creating fallback HTML.
 - Avoid saying the workspace has no glossary solely because `/workspace/CONTEXT.md` and `/workspace/docs/adr/` are absent.
 - Avoid creating `/workspace/CONTEXT.md` or `/workspace/docs/adr/`.
 - Say that durable root or bounded-context `CONTEXT.md` updates are promotion targets only when terms apply beyond the current feature.

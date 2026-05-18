@@ -36,7 +36,7 @@ This entrypoint inherits the same rule that build should finish the approved bui
 `/aw:execute` inherits the `/aw:build` HTML companion contract.
 Markdown remains canonical for agents, and the `aw:echo` subagent produces the human review companion when output mode is `dual` or `html`.
 Subagent authorization: invoking `/aw:execute` in `dual` or `html` output mode is an explicit user request to delegate the human-facing HTML companion to exactly one background `aw:echo` subagent. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
-HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
+HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, do not hand-roll or command-generate HTML. Record the companion as `blocked` with the exact Echo availability blocker, keep Markdown canonical, and stop the stage handoff with `HTML Companion: blocked`.
 
 ## Must Not Do
 

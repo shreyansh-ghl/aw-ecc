@@ -74,9 +74,10 @@ function assertEchoSpawnContract(content) {
 function assertHtmlProgressContract(content) {
   assert.ok(
     (content.includes('queued') && content.includes('generating'))
-      || content.includes('generated_fallback'),
-    'missing HTML progress or fallback status contract'
+      || content.includes('HTML Companion: blocked'),
+    'missing HTML progress or blocked status contract'
   );
+  assert.ok(!content.includes('generated_fallback'), 'must not allow generated_fallback HTML');
 }
 
 function assertOutputModeContract(content) {
