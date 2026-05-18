@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { isHookEnabled } = require('../lib/hook-flags');
+const { writeToolHookStdout } = require('../lib/hook-stdout');
 
 const MAX_STDIN = 1024 * 1024;
 
@@ -42,12 +43,12 @@ async function main() {
   const raw = await readStdinRaw();
 
   if (!hookId || !relScriptPath) {
-    process.stdout.write(raw);
+    writeToolHookStdout(raw);
     process.exit(0);
   }
 
   if (!isHookEnabled(hookId, { profiles: profilesCsv })) {
-    process.stdout.write(raw);
+    writeToolHookStdout(raw);
     process.exit(0);
   }
 
@@ -58,13 +59,13 @@ async function main() {
   // Prevent path traversal outside the plugin root
   if (!scriptPath.startsWith(resolvedRoot + path.sep)) {
     process.stderr.write(`[Hook] Path traversal rejected for ${hookId}: ${scriptPath}\n`);
-    process.stdout.write(raw);
+    writeToolHookStdout(raw);
     process.exit(0);
   }
 
   if (!fs.existsSync(scriptPath)) {
     process.stderr.write(`[Hook] Script not found for ${hookId}: ${scriptPath}\n`);
-    process.stdout.write(raw);
+    writeToolHookStdout(raw);
     process.exit(0);
   }
 
@@ -90,10 +91,10 @@ async function main() {
   if (hookModule && typeof hookModule.run === 'function') {
     try {
       const output = hookModule.run(raw);
-      if (output !== null && output !== undefined) process.stdout.write(output);
+      writeToolHookStdout(output !== null && output !== undefined ? output : raw);
     } catch (runErr) {
       process.stderr.write(`[Hook] run() error for ${hookId}: ${runErr.message}\n`);
-      process.stdout.write(raw);
+      writeToolHookStdout(raw);
     }
     process.exit(0);
   }
@@ -107,7 +108,7 @@ async function main() {
     timeout: 30000
   });
 
-  if (result.stdout) process.stdout.write(result.stdout);
+  writeToolHookStdout(result.stdout || raw);
   if (result.stderr) process.stderr.write(result.stderr);
 
   const code = Number.isInteger(result.status) ? result.status : 0;
@@ -116,5 +117,6 @@ async function main() {
 
 main().catch(err => {
   process.stderr.write(`[Hook] run-with-flags error: ${err.message}\n`);
+  writeToolHookStdout('{}');
   process.exit(0);
 });
