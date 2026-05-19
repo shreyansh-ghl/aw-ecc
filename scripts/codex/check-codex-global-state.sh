@@ -98,13 +98,15 @@ if [[ -f "$AGENTS_FILE" ]]; then
 fi
 
 if [[ -f "$CONFIG_FILE" ]]; then
+  check_config_pattern '^hooks\s*=\s*true' "hooks feature is enabled"
+  check_config_absent '^codex_hooks\s*=' "deprecated codex_hooks flag is absent"
   check_config_pattern '^multi_agent\s*=\s*true' "multi_agent is enabled"
   check_config_absent '^\s*collab\s*=' "deprecated collab flag is absent"
   check_config_pattern '^persistent_instructions\s*=' "persistent_instructions is configured"
   check_config_pattern '^\[profiles\.strict\]' "profiles.strict exists"
   check_config_pattern '^\[profiles\.yolo\]' "profiles.yolo exists"
-  check_config_pattern '^\[agents\.echo\]' "agents.echo exists"
-  check_config_absent '^\[agents\."aw:echo"\]' "invalid agents.aw:echo alias is absent"
+  check_config_pattern '^\s*\[agents\.echo\]' "agents.echo exists"
+  check_config_absent '^\s*\[agents\."aw:echo"\]' "invalid agents.aw:echo alias is absent"
 
   for section in \
     'mcp_servers.github' \

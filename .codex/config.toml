@@ -77,6 +77,8 @@ args = ["-y", "@modelcontextprotocol/server-sequential-thinking"]
 # args = ["-y", "@cloudflare/mcp-server-cloudflare"]
 
 [features]
+# Codex hooks power AW router reminders and Echo handoff gates.
+hooks = true
 # Codex multi-agent support is experimental as of March 2026.
 multi_agent = true
 

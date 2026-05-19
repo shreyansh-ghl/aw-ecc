@@ -92,10 +92,13 @@ function assertOutputModeContract(content) {
 function assertRemoteDocsPublishContract(content) {
   assert.ok(content.includes('aw:echo'), 'missing Echo handoff owner');
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
+  assert.ok(content.includes('visible absolute URLs'), 'remote docs must require visible absolute URLs');
+  assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), 'missing visible TeamOfOne URL format');
+  assert.ok(content.includes('GitHub: <absolute repository URL>'), 'missing visible GitHub URL format');
+  assert.ok(content.includes('without visible URL strings'), 'missing label-only remote docs guard');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
   assert.ok(!content.includes('aw push --aw-docs-only'), 'SDLC stages must not run docs publish commands');
   assert.ok(!content.includes('sync.github_docs'), 'SDLC stages must not duplicate Echo publish config');
-  assert.ok(!content.includes('last-publish.json'), 'SDLC stages must not depend on Echo publish internals');
   assert.ok(!content.includes('complete feature docs folder'), 'SDLC stages must not own docs package publishing details');
 }
 

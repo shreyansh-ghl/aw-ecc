@@ -144,6 +144,8 @@ HTML companions are the TeamOfOne-readable surface for humans, reviewers, and qu
 
 When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
 
+This requirement also applies when a stage reuses an existing artifact folder. A stage must not finish with stale, fallback, blocked, local-only, or unpublished human companions. Before a final "already exists" or "ready" response, inspect `state.json` plus the colocated sidecars and repair any missing, stale, legacy uncontrolled fallback, `generated_hca_fallback`, blocked, local-only, or linkless companion through the Echo handoff.
+
 `aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and Echo handoff contract.
 The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, `aw:echo` agent definition, and remote publish command behavior.
 `aw:echo` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth.
@@ -181,6 +183,11 @@ delegate human docs generation and remote sharing to the same `aw:echo`
 companion job unless the user explicitly requested local-only or Markdown-only
 docs for this run.
 
+The same handoff is required as a repair path when canonical Markdown already
+exists but the human companion package is incomplete. Existing `ready_for_build`
+or equivalent stage status does not override missing Echo HTML, publish status,
+or remote links.
+
 The stage owns the SDLC artifact and final handoff shape. It passes only the
 feature slug, source paths, profile, output mode, colocated HTML path, state
 path, and publish intent. `aw:echo` owns the human docs package: create or
@@ -192,9 +199,22 @@ Echo's publish configuration. The platform docs registry is the source of truth
 for Echo's publish command, docs destination convention, and TeamOfOne URL
 derivation.
 
-Stages must include Echo-returned URLs in a final `Remote Docs` section. If Echo
-cannot generate or publish, record `publish_status: blocked` and Echo's concrete
-blocker in `state.json`, then report the blocker instead of inventing links.
+Stages must include Echo-returned URLs in a final `Remote Docs` section as
+visible absolute URLs, not label-only text. Each artifact entry must show
+`TeamOfOne: <absolute remote URL>` and
+`GitHub: <absolute repository URL>` when Echo returns both:
+
+```text
+Context:
+  TeamOfOne: https://...
+  GitHub: https://...
+```
+
+Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels,
+Markdown-only hidden links, or any other shorthand without visible URL strings
+in the chat transcript. If Echo cannot generate or publish, record
+`publish_status: blocked` and Echo's concrete blocker in `state.json`, then
+report the blocker instead of inventing links.
 
 The default stage profile map is:
 
