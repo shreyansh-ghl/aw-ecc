@@ -136,9 +136,9 @@ Do not choose deep grill implicitly; the user must select `3` or explicitly ask 
 Markdown planning artifacts remain canonical for agents.
 When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion. HTML sidecars are required stage outputs, not advisory metadata.
 
-Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
-`aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
-Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and generate the colocated `.html` sidecar in the same turn as a controlled HCA fallback. Do not freehand or command-template HTML outside that skill contract. Record the companion as `generated_hca_fallback` with the exact Echo availability blocker, keep Markdown canonical, and include the fallback note in the final handoff.
+Invoke `platform-core:human-collaboration-artifacts` for the companion instead of hand-rolling stage-local HTML.
+`aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to run `platform-core:human-collaboration-artifacts` for HTML companion generation. When the harness can spawn subagents, the skill may delegate to exactly one `aw:echo` subagent; do not skip HTML only because no direct command is available.
+Run `platform-core:human-collaboration-artifacts` and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. Record the companion as `queued` or `generating` while an optional Echo subagent runs. If the tool layer cannot spawn `aw:echo`, continue in-process with the HCA skill; do not create stage-local fallback HTML. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and the Echo availability reason when HCA generates directly. If HCA itself cannot safely generate, record `status: blocked`, `publish_status: blocked`, and the exact blocker in `state.json`.
 Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
 Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
@@ -149,7 +149,7 @@ Choose the smallest correct profile for the dominant planning output:
 - `implementation-plan` for `tasks.md` or full planning packets
 - `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
 
-Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip, HCA fallback reason, or blocked reason.
+Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `owner`, `execution_mode`, `run_ref` when available, publish status, any Echo availability reason, explicit Markdown-only skip, or blocked reason.
 
 ## Plan Document Template
 
@@ -441,11 +441,11 @@ When `tasks.md` is ready:
 - `html_companion_artifacts`
 - recommended next commands
 
-## Echo Human Docs Handoff
+## HCA Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, invoke `platform-core:human-collaboration-artifacts` for human docs generation and remote sharing unless the user explicitly requested local-only or Markdown-only docs. When the harness can spawn subagents, the skill may delegate to exactly one `aw:echo` companion job. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
 
-Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+Do not duplicate docs publish config or publisher internals in this stage. Add HCA/Echo returned links to the final `Remote Docs` section. If HCA/Echo cannot generate or publish, record `publish_status: blocked` and the concrete blocker in `state.json`; do not invent links.
 
 ## Final Output Shape
 

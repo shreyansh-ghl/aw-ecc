@@ -286,9 +286,9 @@ Phase values: `"done"`, `"in_progress"`, `"skipped"`, `"pending"`
 ## Human HTML Companion
 
 `/aw:feature` delegates HTML generation to the backing stage skills.
-Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by the `aw:echo` subagent for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
-Subagent authorization: invoking `/aw:feature` in `dual` or `html` output mode is an explicit user request to delegate each human-facing HTML companion to exactly one background `aw:echo` subagent per artifact-producing phase. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
-HTML sidecars are required before each artifact-producing phase handoff. Spawn exactly one `aw:echo` subagent for the phase companion and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and generate the colocated `.html` sidecar in the same turn as a controlled HCA fallback. Do not freehand or command-template HTML outside that skill contract. Record the companion as `generated_hca_fallback` with the exact Echo availability blocker, keep Markdown canonical, and include the fallback note in the final handoff.
+Markdown remains canonical for agents, while TeamOfOne-readable HTML companions are produced by the `platform-core:human-collaboration-artifacts` skill for planning, build, test, review, deploy, and ship artifacts when output mode is `dual` or `html`.
+Skill authorization: invoking `/aw:feature` in `dual` or `html` output mode is an explicit user request to run `platform-core:human-collaboration-artifacts` for each human-facing HTML companion. When the harness can spawn subagents, this also authorizes exactly one background `aw:echo` subagent per artifact-producing phase, scoped only to HTML companion generation; do not spawn unrelated subagents.
+HTML sidecars are required before each artifact-producing phase handoff. Run `platform-core:human-collaboration-artifacts` for the phase companion and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. Record the companion as `queued` or `generating` while an optional Echo subagent runs. If the tool layer cannot spawn `aw:echo`, continue in-process with the HCA skill; do not create stage-local fallback HTML. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and the Echo availability reason when HCA generates directly. If HCA itself cannot safely generate, record `status: blocked`, `publish_status: blocked`, and the exact blocker in `state.json`.
 
 ## Skipping Rules
 
@@ -322,11 +322,11 @@ When user requests skip:
 - Must not run all phases in one shot like `aw-yolo` — this is guided, not autonomous
 - Must not show technical jargon without a plain-language explanation
 
-## Echo Human Docs Handoff
+## HCA Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, invoke `platform-core:human-collaboration-artifacts` for human docs generation and remote sharing unless the user explicitly requested local-only or Markdown-only docs. When the harness can spawn subagents, the skill may delegate to exactly one `aw:echo` companion job. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
 
-Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+Do not duplicate docs publish config or publisher internals in this stage. Add HCA/Echo returned links to the final `Remote Docs` section. If HCA/Echo cannot generate or publish, record `publish_status: blocked` and the concrete blocker in `state.json`; do not invent links.
 
 ## Final Output Shape
 

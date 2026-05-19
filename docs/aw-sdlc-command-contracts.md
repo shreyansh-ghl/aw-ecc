@@ -142,25 +142,26 @@ When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candida
 Markdown artifacts remain canonical for agents and downstream AW stages.
 HTML companions are the TeamOfOne-readable surface for humans, reviewers, and quick share links.
 
-When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
+When a public stage writes or materially updates its canonical Markdown artifact, it should invoke `platform-core:human-collaboration-artifacts` to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
 
-`aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and Echo handoff contract.
-The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, `aw:echo` agent definition, and remote publish command behavior.
-`aw:echo` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth.
-`aw:echo` is an agent delegation, not a public slash command or direct tool.
-When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
-Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
-Do not freehand or command-template fallback HTML. Echo is the preferred owner, but if Echo is unavailable the stage must load `platform-core:human-collaboration-artifacts` and generate a controlled HCA fallback so the human companion still exists.
-
-HTML generation is async by default:
+`aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and HCA/Echo handoff contract.
+The platform docs registry owns the reusable HCA skill, design system, visual component rules, diagram sidecar standard, optional `aw:echo` agent wrapper, and remote publish command behavior.
+`platform-core:human-collaboration-artifacts` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth. `aw:echo` may execute that skill as a background specialist when available.
+`aw:echo` is an optional agent delegation, not a public slash command or required direct tool.
+When output mode resolves to `dual` or `html`, the stage contract authorizes the HCA skill for the human companion. If the harness supports subagents, the HCA skill may delegate to exactly one `aw:echo` subagent.
+Do not mark HTML blocked merely because no direct `aw:echo` command, callable tool, or subagent is available; run the HCA skill in-process.
+Treat missing direct commands, missing slash commands, and extra per-turn subagent-authorization prompts as reasons to use direct HCA skill execution, not as permission to hand-roll stage-local HTML.
+Mark blocked only when the HCA skill cannot safely generate or the required source artifacts are unavailable. If the harness cannot run subagents, continue in-process with HCA instead of blocking. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, and `execution_mode: skill` when HCA generates directly; record `status: blocked`, `publish_status: blocked`, and the exact blocker when HCA cannot safely generate.
+HTML generation is skill-owned by default:
 
 1. Write canonical Markdown and `state.json`.
-2. Spawn one background `aw:echo` subagent.
-3. Record the companion as `queued` or `generating`.
-4. Return the stage result.
+2. Run `platform-core:human-collaboration-artifacts` for the colocated sidecar.
+3. If the harness supports subagents, HCA may run asynchronously through one background `aw:echo` subagent and record the companion as `queued` or `generating`.
+4. If Echo is unavailable, HCA runs in-process and records `status: generated`, `owner: platform-core:human-collaboration-artifacts`, and `execution_mode: skill`.
+5. Return the stage result with local and remote docs status.
 
-Wait for HTML only when the user explicitly asks to wait or the next action truly needs the rendered file.
-Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata; it must not rewrite the canonical Markdown source.
+Wait for HTML when the stage handoff or next action needs the rendered file; otherwise report `queued` or `generating` with the run reference.
+HCA/Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata; it must not rewrite the canonical Markdown source.
 
 Resolve output mode in this order:
 
@@ -170,30 +171,32 @@ Resolve output mode in this order:
 4. `AW_DOCS_OUTPUT_MODE`
 5. default `dual`
 
-Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Allowed companion statuses are `queued`, `generating`, `written`, `generated_hca_fallback`, `published`, `skipped`, `blocked`, and `stale`.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `owner`, `execution_mode`, `run_ref` when available, publish status, any Echo availability reason, and any skipped or blocked reason.
+Allowed companion statuses are `queued`, `generating`, `generated`, `published`, `skipped`, `blocked`, and `stale`.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
-## Echo Remote Docs Handoff Rule
+## HCA Remote Docs Handoff Rule
 
 After a public stage writes canonical Markdown and updates `state.json`,
-delegate human docs generation and remote sharing to the same `aw:echo`
+invoke `platform-core:human-collaboration-artifacts` for human docs generation and remote sharing through the same HCA/Echo
 companion job unless the user explicitly requested local-only or Markdown-only
 docs for this run.
 
 The stage owns the SDLC artifact and final handoff shape. It passes only the
 feature slug, source paths, profile, output mode, colocated HTML path, state
-path, and publish intent. `aw:echo` owns the human docs package: create or
+path, and publish intent. HCA owns the human docs package: create or
 refresh the HTML sidecar, update companion state, run the approved AW docs
 publisher, and return repository plus TeamOfOne links or a concrete blocker.
+When delegated, `aw:echo` executes that same HCA package handoff as a background
+specialist.
 
-Stages must not run docs publish commands, derive remote URLs, or duplicate
-Echo's publish configuration. The platform docs registry is the source of truth
-for Echo's publish command, docs destination convention, and TeamOfOne URL
+Stages must not run docs publish commands outside the HCA handoff, derive remote URLs, or duplicate
+HCA/Echo publish configuration. The platform docs registry is the source of truth
+for the HCA/Echo publish command, docs destination convention, and TeamOfOne URL
 derivation.
 
-Stages must include Echo-returned URLs in a final `Remote Docs` section. If Echo
-cannot generate or publish, record `publish_status: blocked` and Echo's concrete
+Stages must include HCA/Echo-returned URLs in a final `Remote Docs` section. If HCA/Echo
+cannot generate or publish, record `publish_status: blocked` and the concrete
 blocker in `state.json`, then report the blocker instead of inventing links.
 
 The default stage profile map is:

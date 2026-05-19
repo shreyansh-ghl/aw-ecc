@@ -63,6 +63,7 @@ AW_CODEX_SKILLS=(
   "aw-prepare"
   "aw-spec"
   "aw-tasks"
+  "grill-with-docs"
 )
 
 STAMP="$(date +%Y%m%d-%H%M%S)"

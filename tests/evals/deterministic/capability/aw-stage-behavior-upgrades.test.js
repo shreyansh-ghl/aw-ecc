@@ -60,23 +60,33 @@ function test(name, fn) {
   }
 }
 
-function assertEchoSpawnContract(content) {
+function assertHumanDocsContract(content) {
   const normalized = content.toLowerCase();
   assert.ok(
-    content.includes('Spawn exactly one `aw:echo` subagent')
-      || content.includes('Spawn one background `aw:echo` subagent')
+    content.includes('platform-core:human-collaboration-artifacts'),
+    'missing HCA skill execution contract'
+  );
+  assert.ok(
+    content.includes('exactly one `aw:echo` subagent')
+      || content.includes('optional Echo subagent')
       || content.includes('background `aw:echo` subagent')
-      || normalized.includes('spawn exactly one `aw:echo` subagent'),
-    'missing aw:echo spawn contract'
+      || normalized.includes('exactly one `aw:echo` subagent'),
+    'missing optional aw:echo delegation contract'
   );
 }
 
 function assertHtmlProgressContract(content) {
   assert.ok(
     (content.includes('queued') && content.includes('generating'))
-      || content.includes('generated_hca_fallback'),
-    'missing HTML progress or HCA fallback status contract'
+      || content.includes('status: blocked'),
+    'missing HTML progress or Echo blocker status contract'
   );
+  assert.ok(
+    content.includes('do not create stage-local fallback HTML'),
+    'missing no hand-rolled stage-local HTML contract'
+  );
+  assert.ok(content.includes('owner'), 'missing owner provenance contract');
+  assert.ok(content.includes('execution_mode'), 'missing execution mode provenance contract');
   assert.ok(!content.includes('generated_fallback'), 'must not allow generated_fallback HTML');
 }
 
@@ -90,12 +100,13 @@ function assertOutputModeContract(content) {
 }
 
 function assertRemoteDocsPublishContract(content) {
-  assert.ok(content.includes('aw:echo'), 'missing Echo handoff owner');
+  assert.ok(content.includes('platform-core:human-collaboration-artifacts'), 'missing HCA handoff owner');
+  assert.ok(content.includes('aw:echo'), 'missing optional Echo handoff owner');
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
   assert.ok(!content.includes('aw push --aw-docs-only'), 'SDLC stages must not run docs publish commands');
-  assert.ok(!content.includes('sync.github_docs'), 'SDLC stages must not duplicate Echo publish config');
-  assert.ok(!content.includes('last-publish.json'), 'SDLC stages must not depend on Echo publish internals');
+  assert.ok(!content.includes('sync.github_docs'), 'SDLC stages must not duplicate HCA/Echo publish config');
+  assert.ok(!content.includes('last-publish.json'), 'SDLC stages must not depend on HCA/Echo publish internals');
   assert.ok(!content.includes('complete feature docs folder'), 'SDLC stages must not own docs package publishing details');
 }
 
@@ -205,23 +216,23 @@ function run() {
 
   if (test('SDLC stages generate TeamOfOne HTML companions while keeping Markdown canonical', () => {
     assert.ok(commandContracts.includes('## Human HTML Companion Rule'));
-    assert.ok(commandContracts.includes('## Echo Remote Docs Handoff Rule'));
+    assert.ok(commandContracts.includes('## HCA Remote Docs Handoff Rule'));
     assert.ok(commandContracts.includes('HTML companions are the TeamOfOne-readable surface'));
-    assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
+    assert.ok(commandContracts.includes('platform docs registry owns the reusable HCA skill'));
     assert.ok(commandContracts.includes('remote publish command behavior'));
     assert.ok(commandContracts.includes('`aw:echo`'));
-    assert.ok(commandContracts.includes('`aw:echo` is an agent delegation, not a public slash command or direct tool'));
-    assert.ok(commandContracts.includes('stage contract authorizes exactly one `aw:echo` subagent'));
-    assert.ok(commandContracts.includes('Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists'));
-    assert.ok(commandContracts.includes('HTML generation is async by default'));
-    assertEchoSpawnContract(commandContracts);
+    assert.ok(commandContracts.includes('`aw:echo` is an optional agent delegation, not a public slash command or required direct tool'));
+    assert.ok(commandContracts.includes('stage contract authorizes the HCA skill for the human companion'));
+    assert.ok(commandContracts.includes('Do not mark HTML blocked merely because no direct `aw:echo` command, callable tool, or subagent is available'));
+    assert.ok(commandContracts.includes('HTML generation is skill-owned by default'));
+    assertHumanDocsContract(commandContracts);
     assert.ok(commandContracts.includes('`queued`'));
     assert.ok(commandContracts.includes('`generating`'));
     assert.ok(commandContracts.includes('`run_ref`'));
     assert.ok(commandContracts.includes('must not rewrite the canonical Markdown source'));
     assert.ok(commandContracts.includes('`html_companion_artifacts`'));
     assertRemoteDocsPublishContract(commandContracts);
-    assert.ok(commandContracts.includes('`aw:echo` owns communication with humans'));
+    assert.ok(commandContracts.includes('`platform-core:human-collaboration-artifacts` owns communication with humans'));
     assert.ok(commandContracts.includes('human docs package'));
     assert.ok(commandContracts.includes('Stages must not run docs publish commands'));
     assert.ok(commandContracts.includes('platform docs registry is the source of truth'));
@@ -249,7 +260,7 @@ function run() {
     for (const content of stageSkills) {
       assert.ok(content.includes('aw:echo'));
       assert.ok(content.includes('subagent'));
-      assertEchoSpawnContract(content);
+      assertHumanDocsContract(content);
       assertHtmlProgressContract(content);
       assert.ok(content.includes('run_ref'));
       assert.ok(!content.includes('server-managed'));
@@ -299,7 +310,7 @@ function run() {
       assert.ok(content.includes('HTML Companion'));
       assert.ok(content.includes('aw:echo'));
       assert.ok(content.includes('subagent'));
-      assertEchoSpawnContract(content);
+      assertHumanDocsContract(content);
       assertRemoteDocsPublishContract(content);
       assert.ok(!content.includes('server-managed'));
       assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
@@ -309,11 +320,11 @@ function run() {
     assert.ok(featureSkill.includes('aw:echo'));
     assert.ok(featureSkill.includes('HTML Companion'));
     assertRemoteDocsPublishContract(featureSkill);
-    assertEchoSpawnContract(featureSkill);
+    assertHumanDocsContract(featureSkill);
     assert.ok(yoloSkill.includes('HTML Companions'));
     assert.ok(yoloSkill.includes('aw:echo'));
     assertRemoteDocsPublishContract(yoloSkill);
-    assertEchoSpawnContract(yoloSkill);
+    assertHumanDocsContract(yoloSkill);
     assertHtmlProgressContract(yoloSkill);
     assert.ok(yoloSkill.includes('run_ref'));
     assert.ok(!featureSkill.includes('.aw_docs/html/'));

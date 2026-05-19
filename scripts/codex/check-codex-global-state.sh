@@ -103,7 +103,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
   check_config_pattern '^persistent_instructions\s*=' "persistent_instructions is configured"
   check_config_pattern '^\[profiles\.strict\]' "profiles.strict exists"
   check_config_pattern '^\[profiles\.yolo\]' "profiles.yolo exists"
-  check_config_pattern '^\[agents\.echo\]' "agents.echo exists"
+  check_config_pattern '^\s*\[agents\.echo\]' "agents.echo exists"
   check_config_absent '^\[agents\."aw:echo"\]' "invalid agents.aw:echo alias is absent"
 
   for section in \

@@ -54,7 +54,7 @@ If the user asked for one stage, stay in that stage.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
    HTML sidecars are required whenever the delegated stage writes a canonical Markdown artifact.
-   When a delegated stage writes a canonical Markdown artifact, preserve that stage's `aw:echo` obligation too: produce the colocated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion before the stage handoff. Spawn exactly one `aw:echo` subagent in default `dual` mode; record `run_ref` when the harness exposes one. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and generate the colocated `.html` sidecar in the same turn as a controlled HCA fallback. Do not freehand or command-template HTML outside that skill contract. Record the companion as `generated_hca_fallback` with the exact Echo availability blocker, keep Markdown canonical, and include the fallback note in the final handoff. Markdown-only is allowed only when the user explicitly requests it for the run.
+   When a delegated stage writes a canonical Markdown artifact, preserve that stage's HCA obligation too: produce the colocated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion before the stage handoff. Run `platform-core:human-collaboration-artifacts` in default `dual` mode; when the harness can spawn subagents, the skill may delegate to exactly one `aw:echo` subagent. Record `queued`, `generating`, and `run_ref` when the harness exposes them. If the tool layer cannot spawn `aw:echo`, continue in-process with the HCA skill; do not create stage-local fallback HTML. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and the Echo availability reason when HCA generates directly. If HCA itself cannot safely generate, record `status: blocked`, `publish_status: blocked`, and the exact blocker in `state.json`. Markdown-only is allowed only when the user explicitly requests it for the run.
 5. Respect stage boundaries.
    `aw-yolo` coordinates stages, but it does not collapse them together.
    Build still cannot self-certify.
@@ -75,11 +75,11 @@ If the user asked for one stage, stay in that stage.
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
 
-## Echo Human Docs Handoff
+## HCA Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, invoke `platform-core:human-collaboration-artifacts` for human docs generation and remote sharing unless the user explicitly requested local-only or Markdown-only docs. When the harness can spawn subagents, the skill may delegate to exactly one `aw:echo` companion job. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
 
-Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+Do not duplicate docs publish config or publisher internals in this stage. Add HCA/Echo returned links to the final `Remote Docs` section. If HCA/Echo cannot generate or publish, record `publish_status: blocked` and the concrete blocker in `state.json`; do not invent links.
 
 ## Final Output Shape
 
