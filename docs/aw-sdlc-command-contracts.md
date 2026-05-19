@@ -203,21 +203,20 @@ derivation.
 
 Before every final response, stages must inspect the HCA/Echo handoff result,
 feature `state.json`, and `.aw_docs/last-publish.json`. Stages must include any
-returned or recorded `.html` URLs in a final `Remote Docs` section as visible absolute URLs, not label-only text.
+returned or recorded `.html` URLs in a final `Remote Docs` section as visible absolute TeamOfOne URLs with compact clickable GitHub labels, not label-only text.
 Prefer `.html` companion links over `.md` links.
 A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact entry must show
 `TeamOfOne: <absolute remote URL>` and
-`GitHub: <absolute repository URL>` when HCA/Echo returns or records both:
+`GitHub: [spec.html](<absolute repository URL>)` or another short artifact label
+when HCA/Echo returns or records both:
 
 ```text
 Context:
   TeamOfOne: https://...
-  GitHub: https://...
+  GitHub: [context.html](https://...)
 ```
 
-Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels,
-Markdown-only hidden links, or any other shorthand without visible URL strings
-in the chat transcript. If HCA/Echo cannot generate or publish, record
+Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels, hide the TeamOfOne URL behind Markdown-only links, or print long GitHub URLs inline when a compact label can point to the same URL. If HCA/Echo cannot generate or publish, record
 `publish_status: blocked` and the concrete blocker in `state.json`, then
 report the blocker instead of inventing links.
 
