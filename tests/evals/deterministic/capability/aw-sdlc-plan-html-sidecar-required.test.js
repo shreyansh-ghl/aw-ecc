@@ -24,6 +24,11 @@ function assertRequiredHtmlContract(content, label) {
   assert.ok(content.includes('status: generated'), `${label} must record successful direct HCA output as generated`);
   assert.ok(content.includes('execution_mode: skill'), `${label} must record direct HCA provenance`);
   assert.ok(content.includes('echo_agent_status: unavailable'), `${label} must record Echo availability provenance when direct HCA runs`);
+  assert.ok(content.includes('timed_out'), `${label} must record Echo timeout provenance when bounded Echo wait expires`);
+  assert.ok(
+    content.includes('bounded wait') && content.includes('wait budget'),
+    `${label} must require bounded Echo wait before direct HCA continuation`
+  );
   assert.ok(content.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`'), `${label} must forbid fallback statuses for successful HCA output`);
   assert.ok(!content.includes('Record the companion as `generated_hca_fallback`'), `${label} must not record new HCA output as generated_hca_fallback`);
   assert.ok(!content.includes('skipped by output mode'), `${label} must not silently skip HTML via output mode`);

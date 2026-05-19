@@ -78,6 +78,10 @@ function assertHtmlProgressContract(content) {
     'missing HTML progress or direct HCA status contract'
   );
   assert.ok(
+    content.includes('bounded wait') && content.includes('timed_out'),
+    'missing bounded Echo wait and timeout provenance contract'
+  );
+  assert.ok(
     content.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`')
       || !content.includes('generated_fallback'),
     'must forbid fallback statuses for successful HCA output'
