@@ -92,9 +92,9 @@ When `context.md` is created or materially updated, create or refresh the coloca
 .aw_docs/features/<feature_slug>/context.html
 ```
 
-Use `aw:echo` for the HTML companion when the harness can spawn it.
-Invoking `/aw:plan` in default `dual` mode is already explicit authorization to delegate this one human-facing companion to `aw:echo`; do not skip `context.html` only because `aw:echo` is not a slash command or direct tool.
-If the tool layer truly cannot spawn `aw:echo`, do not create a stage-local fallback `context.html`; record `status: blocked`, `publish_status: blocked`, and the exact Echo availability reason in the feature `state.json` when present, then tell the user the Echo companion was not generated. Create a non-Echo fallback only when the user explicitly requests a non-Echo backup, and keep `context.md` canonical for agents.
+Use `platform-core:human-collaboration-artifacts` for the HTML companion. When the harness can spawn it, the skill may delegate to `aw:echo`.
+Invoking `/aw:plan` in default `dual` mode is already explicit authorization to run `platform-core:human-collaboration-artifacts` for this human-facing companion. When the harness can spawn subagents, the skill may delegate to `aw:echo`; do not skip `context.html` only because `aw:echo` is not a slash command or direct tool.
+If the tool layer cannot spawn `aw:echo`, continue in-process with the HCA skill and keep `context.md` canonical for agents. Do not create stage-local fallback HTML. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and the Echo availability reason when HCA generates directly. If HCA itself cannot safely generate, record `status: blocked`, `publish_status: blocked`, and the exact blocker in the feature `state.json` when present.
 
 ### File structure
 
