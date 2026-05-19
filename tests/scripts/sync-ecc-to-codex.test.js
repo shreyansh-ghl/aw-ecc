@@ -95,6 +95,36 @@ function runTests() {
       for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
         assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
       }
+
+      assert.ok(
+        fs.existsSync(path.join(homeDir, '.aw-ecc', 'scripts', 'hooks', 'session-start-rules-context.sh')),
+        'Expected shared prompt entrypoint to be synced for Codex hook delegate'
+      );
+      assert.ok(
+        fs.existsSync(path.join(homeDir, '.aw-ecc', 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh')),
+        'Expected shared user-prompt-submit runtime to be synced for Codex hook delegate'
+      );
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('syncs AW planning helper skills used by Codex CLI', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      runSync(homeDir);
+
+      const codexSkillsDir = path.join(homeDir, '.codex', 'skills');
+      const grillSkillPath = path.join(codexSkillsDir, 'grill-with-docs', 'SKILL.md');
+      const grillSkill = fs.readFileSync(grillSkillPath, 'utf8');
+
+      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Expected aw-plan to be synced');
+      assert.ok(fs.existsSync(grillSkillPath), 'Expected grill-with-docs to be synced');
+      assert.ok(
+        grillSkill.includes('through direct HCA execution'),
+        'Expected installed grill-with-docs to include the direct HCA execution contract'
+      );
     } finally {
       cleanup(homeDir);
     }
@@ -140,6 +170,8 @@ function runTests() {
       const echoConfigPath = path.join(codexHome, 'agents', 'echo.toml');
 
       assert.ok(fs.existsSync(echoConfigPath), 'Expected echo.toml to be synced');
+      assert.ok(config.includes('hooks = true'), 'Expected current hooks feature flag to be enabled');
+      assert.ok(!config.includes('codex_hooks = true'), 'Expected deprecated codex_hooks flag to be removed');
       assert.ok(config.includes('multi_agent = true'), 'Expected multi_agent to be enabled');
       assert.ok(config.includes('max_threads = 2'), 'Expected existing agent root config to be preserved');
       assert.ok(config.includes('description = "Existing explorer"'), 'Expected existing agent sections to be preserved');

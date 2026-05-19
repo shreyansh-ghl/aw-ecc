@@ -42,6 +42,8 @@ HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks.json"
 HOOKS_DIR_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks"
 HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
 HOOKS_DIR_DEST="$CODEX_HOME/hooks"
+SHARED_HOOKS_SRC="$REPO_ROOT/scripts/hooks"
+AW_ECC_HOOKS_DEST="$HOME/.aw-ecc/scripts/hooks"
 AW_CODEX_SKILLS=(
   "using-aw-skills"
   "aw-plan"
@@ -55,6 +57,7 @@ AW_CODEX_SKILLS=(
   "aw-deploy"
   "aw-ship"
   "aw-brainstorm"
+  "grill-with-docs"
   "aw-adk"
   "aw-publish"
   "aw-debug"
@@ -607,6 +610,17 @@ else
   run_or_echo "mkdir -p \"$HOOKS_DIR_DEST\""
   run_or_echo "cp -R \"$HOOKS_DIR_SRC\"/. \"$HOOKS_DIR_DEST\"/"
   run_or_echo "chmod +x \"$HOOKS_DIR_DEST\"/*.sh"
+fi
+
+log "Installing shared AW prompt hook runtime"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] mkdir -p "%s/shared"\n' "$AW_ECC_HOOKS_DEST"
+  printf '[dry-run] cp "%s/session-start-rules-context.sh" "%s/session-start-rules-context.sh"\n' "$SHARED_HOOKS_SRC" "$AW_ECC_HOOKS_DEST"
+  printf '[dry-run] cp -R "%s/shared"/. "%s/shared"/\n' "$SHARED_HOOKS_SRC" "$AW_ECC_HOOKS_DEST"
+else
+  run_or_echo "mkdir -p \"$AW_ECC_HOOKS_DEST/shared\""
+  run_or_echo "cp \"$SHARED_HOOKS_SRC/session-start-rules-context.sh\" \"$AW_ECC_HOOKS_DEST/session-start-rules-context.sh\""
+  run_or_echo "cp -R \"$SHARED_HOOKS_SRC/shared\"/. \"$AW_ECC_HOOKS_DEST/shared\"/"
 fi
 
 log "Running global regression sanity check"

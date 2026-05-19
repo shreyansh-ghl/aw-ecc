@@ -31,7 +31,7 @@ Do not create a separate execute-specific workflow.
 4. Preserve generated-doc publishing behavior from `aw-build`:
    - delegate human docs generation and remote sharing to `aw:echo`
    - do not run docs publish commands inside this compatibility wrapper
-   - include Echo's `Remote Docs` links or concrete blocker in the handoff
+   - include HCA/Echo `Remote Docs` links or concrete blocker in the handoff
 
 ## Common Rationalizations
 

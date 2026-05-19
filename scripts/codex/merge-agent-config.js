@@ -5,6 +5,7 @@
  * Merge ECC-recommended Codex agent roles into an existing config.toml.
  *
  * Strategy:
+ *   - Enable features.hooks so AW router and Echo handoff reminders reach Codex CLI.
  *   - Enable features.multi_agent because AW SDLC delegates HTML work to Echo.
  *   - Add missing scalar defaults under [agents] without overriding user values.
  *   - Add missing [agents.<name>] sections from the reference config.
@@ -99,6 +100,25 @@ function upsertKey(raw, sectionHeader, key, valueText, options = {}) {
   return lines.join('\n');
 }
 
+function removeKey(raw, sectionHeader, key) {
+  const lines = raw.split('\n');
+  const range = findSectionRange(lines, sectionHeader);
+  const keyPattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=`);
+
+  if (!range) {
+    return raw;
+  }
+
+  for (let index = range.start + 1; index < range.end; index += 1) {
+    if (keyPattern.test(lines[index].replace(/\r$/, ''))) {
+      lines.splice(index, 1);
+      return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+    }
+  }
+
+  return raw;
+}
+
 function tomlKey(name) {
   if (/^[A-Za-z0-9_-]+$/.test(name)) {
     return name;
@@ -183,6 +203,17 @@ function main() {
       targetRaw = nextRaw;
       changes.push(`removed invalid ${sectionHeader}`);
     }
+  }
+
+  const withoutDeprecatedCodexHooks = removeKey(targetRaw, '[features]', 'codex_hooks');
+  if (withoutDeprecatedCodexHooks !== targetRaw) {
+    targetRaw = withoutDeprecatedCodexHooks;
+    changes.push('removed deprecated features.codex_hooks');
+  }
+
+  if (source.features && source.features.hooks === true && target.features?.hooks !== true) {
+    targetRaw = upsertKey(targetRaw, '[features]', 'hooks', 'true', { override: true });
+    changes.push('enabled features.hooks');
   }
 
   if (source.features && source.features.multi_agent === true && target.features?.multi_agent !== true) {

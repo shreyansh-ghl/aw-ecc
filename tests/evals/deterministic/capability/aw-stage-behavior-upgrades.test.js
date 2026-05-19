@@ -74,10 +74,14 @@ function assertEchoSpawnContract(content) {
 function assertHtmlProgressContract(content) {
   assert.ok(
     (content.includes('queued') && content.includes('generating'))
-      || content.includes('generated_hca_fallback'),
-    'missing HTML progress or HCA fallback status contract'
+      || (content.includes('status: generated') && content.includes('execution_mode: skill')),
+    'missing HTML progress or direct HCA status contract'
   );
-  assert.ok(!content.includes('generated_fallback'), 'must not allow generated_fallback HTML');
+  assert.ok(
+    content.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`')
+      || !content.includes('generated_fallback'),
+    'must forbid fallback statuses for successful HCA output'
+  );
 }
 
 function assertOutputModeContract(content) {
@@ -92,10 +96,17 @@ function assertOutputModeContract(content) {
 function assertRemoteDocsPublishContract(content) {
   assert.ok(content.includes('aw:echo'), 'missing Echo handoff owner');
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
+  assert.ok(content.includes('visible absolute URLs'), 'remote docs must require visible absolute URLs');
+  assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), 'missing visible TeamOfOne URL format');
+  assert.ok(content.includes('GitHub: <absolute repository URL>'), 'missing visible GitHub URL format');
+  assert.ok(content.includes('without visible URL strings'), 'missing label-only remote docs guard');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
-  assert.ok(!content.includes('aw push --aw-docs-only'), 'SDLC stages must not run docs publish commands');
+  assert.ok(content.includes('feature `state.json`'), 'missing state remote-link inspection contract');
+  assert.ok(content.includes('`.aw_docs/last-publish.json`'), 'missing last-publish remote-link inspection contract');
+  assert.ok(content.includes('Prefer `.html` companion links over `.md` links'), 'missing html-link preference');
+  assert.ok(content.includes('A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete'), 'missing markdown-only final handoff guard');
+  assert.ok(!content.includes('aw push --aw-docs-only'), 'SDLC stages must not hardcode docs publish commands');
   assert.ok(!content.includes('sync.github_docs'), 'SDLC stages must not duplicate Echo publish config');
-  assert.ok(!content.includes('last-publish.json'), 'SDLC stages must not depend on Echo publish internals');
   assert.ok(!content.includes('complete feature docs folder'), 'SDLC stages must not own docs package publishing details');
 }
 
@@ -205,7 +216,7 @@ function run() {
 
   if (test('SDLC stages generate TeamOfOne HTML companions while keeping Markdown canonical', () => {
     assert.ok(commandContracts.includes('## Human HTML Companion Rule'));
-    assert.ok(commandContracts.includes('## Echo Remote Docs Handoff Rule'));
+    assert.ok(commandContracts.includes('## HCA/Echo Remote Docs Handoff Rule'));
     assert.ok(commandContracts.includes('HTML companions are the TeamOfOne-readable surface'));
     assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
     assert.ok(commandContracts.includes('remote publish command behavior'));
@@ -223,7 +234,8 @@ function run() {
     assertRemoteDocsPublishContract(commandContracts);
     assert.ok(commandContracts.includes('`aw:echo` owns communication with humans'));
     assert.ok(commandContracts.includes('human docs package'));
-    assert.ok(commandContracts.includes('Stages must not run docs publish commands'));
+    assert.ok(commandContracts.includes('Direct HCA execution is a first-class path'));
+    assert.ok(commandContracts.includes('Stages must not duplicate docs publish commands'));
     assert.ok(commandContracts.includes('platform docs registry is the source of truth'));
     assert.ok(commandContracts.includes('.aw_docs/features/<feature_slug>/<artifact_basename>.html'));
     assert.ok(!commandContracts.includes('server-managed'));
