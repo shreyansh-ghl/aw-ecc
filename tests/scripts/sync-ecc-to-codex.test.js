@@ -109,6 +109,27 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('syncs AW planning helper skills used by Codex CLI', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      runSync(homeDir);
+
+      const codexSkillsDir = path.join(homeDir, '.codex', 'skills');
+      const grillSkillPath = path.join(codexSkillsDir, 'grill-with-docs', 'SKILL.md');
+      const grillSkill = fs.readFileSync(grillSkillPath, 'utf8');
+
+      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Expected aw-plan to be synced');
+      assert.ok(fs.existsSync(grillSkillPath), 'Expected grill-with-docs to be synced');
+      assert.ok(
+        grillSkill.includes('through direct HCA execution'),
+        'Expected installed grill-with-docs to include the direct HCA execution contract'
+      );
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
   if (test('installs Echo agent config and cleans invalid legacy aliases', () => {
     const homeDir = createTempDir('sync-codex-home-');
 

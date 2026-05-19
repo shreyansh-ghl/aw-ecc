@@ -57,6 +57,7 @@ AW_CODEX_SKILLS=(
   "aw-deploy"
   "aw-ship"
   "aw-brainstorm"
+  "grill-with-docs"
   "aw-adk"
   "aw-publish"
   "aw-debug"
