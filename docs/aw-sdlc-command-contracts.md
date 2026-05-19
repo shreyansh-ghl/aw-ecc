@@ -149,8 +149,10 @@ The platform docs registry owns the reusable design system, visual component rul
 `aw:echo` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth.
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
-Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
-Do not freehand or command-template fallback HTML. Echo is the preferred owner, but if Echo is unavailable the stage must load `platform-core:human-collaboration-artifacts` and generate a controlled HCA fallback so the human companion still exists.
+Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent.
+Treat missing direct commands, missing slash commands, and extra per-turn subagent-authorization prompts as harness blockers, not as permission to hand-roll HTML.
+Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable. In that case, do not create a stage-local fallback sidecar; record `status: blocked`, `publish_status: blocked`, and the exact Echo availability reason in `state.json`, then tell the user the Echo companion was not generated.
+Create a non-Echo fallback only when the user explicitly requests a non-Echo backup.
 
 HTML generation is async by default:
 
@@ -171,7 +173,7 @@ Resolve output mode in this order:
 5. default `dual`
 
 Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Allowed companion statuses are `queued`, `generating`, `written`, `generated_hca_fallback`, `published`, `skipped`, `blocked`, and `stale`.
+Allowed companion statuses are `queued`, `generating`, `written`, `published`, `skipped`, `blocked`, and `stale`.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
 ## Echo Remote Docs Handoff Rule

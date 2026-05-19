@@ -20,8 +20,9 @@ function test(name, fn) {
 function assertRequiredHtmlContract(content, label) {
   assert.ok(content.includes('HTML sidecars are required'), `${label} must make HTML required`);
   assert.ok(content.includes('exactly one `aw:echo` subagent'), `${label} must authorize one aw:echo subagent`);
-  assert.ok(content.includes('platform-core:human-collaboration-artifacts') && content.includes('generated_hca_fallback'), `${label} must require controlled HCA fallback generation`);
-  assert.ok(content.includes('generated_hca_fallback'), `${label} must require a recorded HCA fallback when Echo is unavailable`);
+  assert.ok(content.includes('status: blocked'), `${label} must block when Echo cannot run`);
+  assert.ok(content.includes('do not create a stage-local fallback sidecar'), `${label} must not hand-roll fallback HTML`);
+  assert.ok(!content.includes('generated_hca_fallback'), `${label} must not allow HCA fallback HTML by default`);
   assert.ok(!content.includes('generated_fallback'), `${label} must not allow generated_fallback HTML`);
   assert.ok(!content.includes('skipped by output mode'), `${label} must not silently skip HTML via output mode`);
 }
@@ -65,7 +66,7 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('stage skills require real HTML sidecars and controlled HCA fallback generation', () => {
+  if (test('stage skills require real HTML sidecars and block non-Echo fallback generation', () => {
     for (const file of stageSkills) {
       assertRequiredHtmlContract(snapshot.readFile(file), file);
     }

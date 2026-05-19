@@ -94,7 +94,7 @@ When `context.md` is created or materially updated, create or refresh the coloca
 
 Use `aw:echo` for the HTML companion when the harness can spawn it.
 Invoking `/aw:plan` in default `dual` mode is already explicit authorization to delegate this one human-facing companion to `aw:echo`; do not skip `context.html` only because `aw:echo` is not a slash command or direct tool.
-If the harness cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and create `context.html` in the same turn as a controlled HCA fallback. Record the context HTML companion as `generated_hca_fallback` with the exact Echo availability blocker in the feature `state.json` when present, and keep `context.md` canonical for agents.
+If the tool layer truly cannot spawn `aw:echo`, do not create a stage-local fallback `context.html`; record `status: blocked`, `publish_status: blocked`, and the exact Echo availability reason in the feature `state.json` when present, then tell the user the Echo companion was not generated. Create a non-Echo fallback only when the user explicitly requests a non-Echo backup, and keep `context.md` canonical for agents.
 
 ### File structure
 
