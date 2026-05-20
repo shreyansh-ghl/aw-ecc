@@ -66,6 +66,58 @@ This legacy heading maps to the detailed planning process below.
 8. Stop after planning.
    Recommend the next stage without drifting into build, test, or deploy only after the Markdown artifacts, HTML companions, and remote docs handoff are complete or a concrete blocker is recorded.
 
+## Performance-Bounded Planning Mode
+
+Use this mode when the user, benchmark harness, or SDLC caller gives an
+explicit time budget such as "under 3 minutes", asks to optimize Echo/HCA
+planning latency, or requests repeated Codex CLI plan generation with remote
+HTML links.
+
+In this mode, preserve quality but change the order of work:
+
+1. Freeze the feature slug, target repo, planning mode, and accepted assumptions
+   before any broad exploration.
+2. Use a bounded evidence packet instead of open-ended discovery:
+   - read existing state for the target feature if it exists
+   - read the smallest known target files or existing AWDocs plan files
+   - read at most one focused test file when tests shape the plan
+   - avoid broad `rg`, broad `find`, giant `git status`, `.aw_docs/back-tests`,
+     `.aw_docs/runs`, `.aw_tmp`, generated bundles, and unrelated repos
+   - run graph or repo-map queries only when the target surface is unknown
+   - do not try missing repo-local skill paths; when repo-local AW skill files
+     are absent, use the installed global skill path or the already-loaded skill
+     body instead of spending tool calls on failed local reads
+   - if a caller provides a preloaded evidence packet, treat it as sufficient
+     unless a single exact implementation line is needed
+3. For a full planning request, write the complete canonical packet first:
+   `prd.md`, `design.md`, `spec.md`, `tasks.md`, and `state.json`. Do not leave
+   the packet at only `spec.md`/`tasks.md` unless the user explicitly requested
+   technical-only mode.
+   Begin writing before the exploration budget expands: if the work is still
+   clear after the bounded evidence packet, create the feature directory and
+   canonical Markdown before reading more context.
+4. Immediately run the HCA/Echo packet handoff after Markdown is written.
+   Generate all required sidecars together from the same normalized source
+   bundle instead of reloading the design references for each file.
+   Create `state.json` as soon as the Markdown packet exists, before writing
+   HTML, with the expected `html_companion_artifacts` entries marked pending.
+   Then update those same entries after generation and publish. Never leave a
+   planned feature folder with Markdown/HTML but no `state.json`.
+5. Prefer direct HCA execution for the same-turn fast path. Treat direct HCA as
+   the in-process execution of the Echo communication contract, not as a
+   fallback. Record successful output as `status: generated`, `owner:
+   platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and
+   `echo_agent_status: in_process_fast_path`.
+6. Run one scoped publish command for the feature folder, then return the
+   absolute TeamOfOne links and compact GitHub references. Do not do a broad
+   post-publish diff or unrelated workspace review before returning links.
+   Once links are recorded, final immediately in a compact handoff instead of
+   continuing analysis.
+
+If this mode cannot publish within the time budget, it is still better to
+return generated colocated HTML plus a concrete publish blocker than to spend
+the whole turn on exploration and leave `html_companion_artifacts` pending.
+
 ## Internal Skill Graph
 
 Use the smallest correct internal route:
@@ -142,6 +194,7 @@ When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or 
 Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
 `aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
 Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and run direct HCA execution in the same turn. Do not freehand or command-template HTML outside that skill contract. Record successful direct HCA execution as `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and `echo_agent_status: unavailable` with the exact Echo availability reason; do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`. Keep Markdown canonical and include HCA/Echo provenance in the final handoff.
+In Performance-Bounded Planning Mode, direct HCA execution is the preferred same-turn path and should be recorded with `echo_agent_status: in_process_fast_path`; do not wait on a subagent before generating the required sidecars unless the user explicitly requested a separate Echo background agent.
 Codex spawn shape: when using Codex multi-agent tools, spawn the `echo` agent role without a full-history fork. If a full-history fork is required by the harness, omit `agent_type`, `model`, and `reasoning_effort` because forked agents inherit those fields.
 Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
