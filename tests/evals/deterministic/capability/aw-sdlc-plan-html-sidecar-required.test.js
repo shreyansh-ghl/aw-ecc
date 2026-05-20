@@ -21,6 +21,9 @@ function assertRequiredHtmlContract(content, label) {
   assert.ok(content.includes('HTML sidecars are required'), `${label} must make HTML required`);
   assert.ok(content.includes('exactly one `aw:echo` subagent'), `${label} must authorize one aw:echo subagent`);
   assert.ok(content.includes('platform-core:human-collaboration-artifacts') && content.includes('direct HCA execution'), `${label} must require direct HCA execution when Echo is unavailable`);
+  assert.ok(content.includes('platform-core:echo-direct'), `${label} must allow Echo Direct as the in-process skill runner`);
+  assert.ok(content.includes('runner: platform-core:echo-direct'), `${label} must record Echo Direct runner provenance`);
+  assert.ok(content.includes('echo_agent_status: in_process_fast_path'), `${label} must record Echo Direct fast-path provenance`);
   assert.ok(content.includes('status: generated'), `${label} must record successful direct HCA output as generated`);
   assert.ok(content.includes('execution_mode: skill'), `${label} must record direct HCA provenance`);
   assert.ok(content.includes('echo_agent_status: unavailable'), `${label} must record Echo availability provenance when direct HCA runs`);
@@ -92,11 +95,16 @@ function run() {
     assert.ok(planSkill.includes('must not silently suppress required SDLC HTML sidecars'));
   })) passed++; else failed++;
 
-  if (test('plan can use Echo Direct as the in-process skill runner', () => {
+  if (test('SDLC stages can use Echo Direct as the in-process skill runner', () => {
+    const files = [...stageCommands, ...stageSkills];
+    for (const file of files) {
+      const content = snapshot.readFile(file);
+      assert.ok(content.includes('platform-core:echo-direct'), `${file} must name the direct Echo skill`);
+      assert.ok(content.includes('skill-only/direct Echo'), `${file} must honor explicit direct-skill requests`);
+      assert.ok(content.includes('runner: platform-core:echo-direct'), `${file} must record direct runner provenance`);
+    }
+
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
-    assert.ok(planSkill.includes('platform-core:echo-direct'), 'aw-plan must name the direct Echo skill');
-    assert.ok(planSkill.includes('skill-only/direct Echo'), 'aw-plan must honor explicit direct-skill requests');
-    assert.ok(planSkill.includes('runner: platform-core:echo-direct'), 'aw-plan must record direct runner provenance');
     assert.ok(planSkill.includes('Performance-Bounded Planning Mode'), 'aw-plan must keep direct Echo wired to performance-bounded mode');
   })) passed++; else failed++;
 

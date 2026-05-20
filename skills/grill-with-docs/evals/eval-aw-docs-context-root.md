@@ -40,7 +40,7 @@ The agent should:
 - Inspect `.aw_docs/features/teamofone-routines-agents-forward-plan/` as the active planning context.
 - Use `state.json`, `spec.md`, and `tasks.md` to identify likely target repos before declaring docs absent.
 - Create or update `.aw_docs/features/teamofone-routines-agents-forward-plan/context.md` once the Routine term is resolved.
-- Create or refresh `.aw_docs/features/teamofone-routines-agents-forward-plan/context.html` after the grill completes through `aw:echo`; if Echo cannot be spawned, use direct HCA execution and record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and `echo_agent_status: unavailable` with the blocker.
+- Create or refresh `.aw_docs/features/teamofone-routines-agents-forward-plan/context.html` after the grill completes through `aw:echo`; if Echo cannot be spawned or the run is skill-only/direct Echo, use `platform-core:echo-direct` when available and otherwise use direct HCA execution. Record `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, optional `runner: platform-core:echo-direct`, and either `echo_agent_status: in_process_fast_path` for Echo Direct or `echo_agent_status: unavailable` with the blocker.
 - Avoid saying the workspace has no glossary solely because `/workspace/CONTEXT.md` and `/workspace/docs/adr/` are absent.
 - Avoid creating `/workspace/CONTEXT.md` or `/workspace/docs/adr/`.
 - Say that durable root or bounded-context `CONTEXT.md` updates are promotion targets only when terms apply beyond the current feature.

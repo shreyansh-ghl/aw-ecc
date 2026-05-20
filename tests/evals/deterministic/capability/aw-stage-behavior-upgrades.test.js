@@ -222,6 +222,7 @@ function run() {
     assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
     assert.ok(commandContracts.includes('remote publish command behavior'));
     assert.ok(commandContracts.includes('`aw:echo`'));
+    assert.ok(commandContracts.includes('platform-core:echo-direct'));
     assert.ok(commandContracts.includes('`aw:echo` is an agent delegation, not a public slash command or direct tool'));
     assert.ok(commandContracts.includes('stage contract authorizes exactly one `aw:echo` subagent'));
     assert.ok(commandContracts.includes('Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists'));
@@ -236,6 +237,7 @@ function run() {
     assert.ok(commandContracts.includes('`aw:echo` owns communication with humans'));
     assert.ok(commandContracts.includes('human docs package'));
     assert.ok(commandContracts.includes('Direct HCA execution is a first-class path'));
+    assert.ok(commandContracts.includes('preferred same-turn skill wrapper'));
     assert.ok(commandContracts.includes('Stages must not duplicate docs publish commands'));
     assert.ok(commandContracts.includes('platform docs registry is the source of truth'));
     assert.ok(commandContracts.includes('.aw_docs/features/<feature_slug>/<artifact_basename>.html'));
@@ -268,6 +270,9 @@ function run() {
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('subagent id or run handle'));
       assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
+      assert.ok(content.includes('platform-core:echo-direct'));
+      assert.ok(content.includes('runner: platform-core:echo-direct'));
+      assert.ok(content.includes('echo_agent_status: in_process_fast_path'));
       assertOutputModeContract(content);
       assert.ok(content.includes('AW_DOCS_OUTPUT_MODE'));
       assert.ok(content.includes('html_companion_artifacts'));
@@ -316,6 +321,9 @@ function run() {
       assertRemoteDocsPublishContract(content);
       assert.ok(!content.includes('server-managed'));
       assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
+      assert.ok(content.includes('platform-core:echo-direct'));
+      assert.ok(content.includes('runner: platform-core:echo-direct'));
+      assert.ok(content.includes('echo_agent_status: in_process_fast_path'));
       assert.ok(!content.includes('.aw_docs/html/'));
     }
 
@@ -333,6 +341,8 @@ function run() {
     assert.ok(!yoloSkill.includes('.aw_docs/html/'));
     assert.ok(featureSkill.includes('platform-core:human-collaboration-artifacts'));
     assert.ok(yoloSkill.includes('platform-core:human-collaboration-artifacts'));
+    assert.ok(featureSkill.includes('platform-core:echo-direct'));
+    assert.ok(yoloSkill.includes('platform-core:echo-direct'));
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

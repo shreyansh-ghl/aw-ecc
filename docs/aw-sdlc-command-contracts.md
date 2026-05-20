@@ -142,8 +142,8 @@ When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candida
 Markdown artifacts remain canonical for agents and downstream AW stages.
 HTML companions are the TeamOfOne-readable surface for humans, reviewers, and quick share links.
 
-When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
-If the harness cannot spawn Echo, the stage must load `platform-core:human-collaboration-artifacts` and run direct HCA execution in the same turn. Direct HCA execution is a first-class path with the same output quality and remote-link obligations as Echo; only provenance differs.
+When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only or the user explicitly asks for skill-only/direct Echo.
+For skill-only/direct Echo or performance-bounded runs, the stage should load `platform-core:echo-direct` when available and otherwise run `platform-core:human-collaboration-artifacts` direct execution in the same turn. If the harness cannot spawn Echo, the stage must also use this direct skill path instead of blocking HTML. Direct HCA execution is a first-class path with the same output quality and remote-link obligations as Echo; only provenance differs.
 
 This requirement also applies when a stage reuses an existing artifact folder. A stage must not finish with stale, fallback, blocked, local-only, or unpublished human companions. Before a final "already exists" or "ready" response, inspect `state.json` plus the colocated sidecars and repair any missing, stale, legacy uncontrolled fallback statuses such as `generated_hca_fallback`, blocked, local-only, or linkless companion through the HCA/Echo handoff.
 
@@ -153,7 +153,7 @@ The platform docs registry owns the reusable design system, visual component rul
 `aw:echo` is an agent delegation, not a public slash command or direct tool.
 When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
 Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
-Do not freehand or command-template HTML. Echo is the preferred wrapper, but if Echo is unavailable the stage must load `platform-core:human-collaboration-artifacts` and run direct HCA execution so the human companion still exists.
+Do not freehand or command-template HTML. Echo is the preferred background wrapper, `platform-core:echo-direct` is the preferred same-turn skill wrapper, and if neither wrapper is available the stage must load `platform-core:human-collaboration-artifacts` and run direct HCA execution so the human companion still exists.
 
 HTML generation is async by default:
 
