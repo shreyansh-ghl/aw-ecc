@@ -198,10 +198,10 @@ derivation.
 
 Before every final response, stages must inspect the Echo Direct handoff result,
 feature `state.json`, and `.aw_docs/last-publish.json`. Stages must include any
-returned or recorded `.html` URLs in a final `Remote Docs` section as visible absolute TeamOfOne URLs with compact clickable GitHub labels, not label-only text.
+returned or recorded `.html` URLs in a final `Remote Docs` section as plain-text absolute TeamOfOne URLs (no Markdown link syntax around the TeamOfOne URL) with compact clickable GitHub labels, not label-only text.
 Prefer `.html` companion links over `.md` links.
 A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact entry must show
-`TeamOfOne: <absolute remote URL>` and
+`TeamOfOne: <absolute remote URL>` as raw visible text and
 `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label
 when Echo Direct returns or records both:
 
@@ -211,7 +211,7 @@ Context:
   GitHub: [context.html](https://...)
 ```
 
-Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels, hide the TeamOfOne URL behind Markdown-only links, or print long GitHub URLs inline when a compact label can point to the same URL. If Echo Direct cannot generate or publish, record
+Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels. Never render TeamOfOne as `[TeamOfOne](...)`, `[Spec TeamOfOne](...)`, or any other Markdown link label; never hide the TeamOfOne URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If Echo Direct cannot generate or publish, record
 `publish_status: blocked` and the concrete blocker in `state.json`, then
 report the blocker instead of inventing links.
 

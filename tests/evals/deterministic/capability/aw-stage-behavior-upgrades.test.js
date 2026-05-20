@@ -105,9 +105,10 @@ function assertOutputModeContract(content) {
 
 function assertRemoteDocsPublishContract(content) {
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
-  assert.ok(content.includes('visible absolute TeamOfOne URLs'), 'remote docs must require visible absolute TeamOfOne URLs');
+  assert.ok(content.includes('plain-text absolute TeamOfOne URLs'), 'remote docs must require plain-text absolute TeamOfOne URLs');
   assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), 'missing visible TeamOfOne URL format');
   assert.ok(content.includes('GitHub: [spec.html](<absolute repository URL>)'), 'missing compact GitHub link format');
+  assert.ok(content.includes('Never render TeamOfOne as `[TeamOfOne](...)`'), 'missing TeamOfOne markdown-link guard');
   assert.ok(content.includes('hide the TeamOfOne URL behind Markdown-only links'), 'missing TeamOfOne visibility guard');
   assert.ok(content.includes('print long GitHub URLs inline'), 'missing compact GitHub guard');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
