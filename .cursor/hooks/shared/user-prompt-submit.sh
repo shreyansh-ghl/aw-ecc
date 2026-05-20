@@ -33,7 +33,7 @@ state_needs_echo_handoff() {
 
 state_has_published_echo_links() {
   local state="$1"
-  grep -q '"status"[[:space:]]*:[[:space:]]*"generated_echo"' "$state" \
+  grep -Eq '"status"[[:space:]]*:[[:space:]]*"(generated|generated_echo|html_generated_and_published|published)"' "$state" \
     && grep -q '"publish_status"[[:space:]]*:[[:space:]]*"published"' "$state" \
     && grep -q '"remote_url"[[:space:]]*:[[:space:]]*"https://github.com/' "$state" \
     && grep -q '"teamofone_url"[[:space:]]*:[[:space:]]*"' "$state"
@@ -42,7 +42,7 @@ state_has_published_echo_links() {
 print_echo_gate_header() {
   cat <<'EOF'
 [AW Echo gate] Existing AW docs have incomplete human handoff. Do not answer "plan already exists" until this is repaired.
-Required action: keep /aw:plan active, delegate to the Codex `echo` agent role for aw:echo HTML companion generation, refresh colocated .html sidecars, run `aw push --aw-docs-only`, update state.json, and return TeamOfOne + GitHub remote links.
+Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return TeamOfOne + GitHub remote links.
 Completion gate: no generated_fallback/generated_hca_fallback statuses, no local_only/blocked publish statuses, and visible absolute TeamOfOne + GitHub Remote Docs URLs present in the final handoff.
 EOF
 }
@@ -50,7 +50,7 @@ EOF
 print_remote_docs_reminder() {
   local state="$1"
   cat <<'EOF'
-[AW Remote Docs reminder] Matching AW plan already has Echo HTML companions published.
+[AW Remote Docs reminder] Matching AW plan already has Echo Direct HTML companions published.
 Required final handoff: include absolute TeamOfOne remote docs URLs from .aw_docs/last-publish.json `remoteUrl` when available, plus the GitHub folder/link as visible URL strings; do not only say "plan already exists" or return bare TeamOfOne/GitHub labels.
 Relative `/too/docs/...` paths are not enough for chat handoff when an absolute public base URL is configured.
 EOF
