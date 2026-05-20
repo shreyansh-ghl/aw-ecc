@@ -109,7 +109,9 @@ function runTests() {
 
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Remote Docs reminder]'));
-      assert.ok(result.stdout.includes('absolute TeamOfOne remote docs URLs'));
+      assert.ok(result.stdout.includes('plain-text absolute TeamOfOne remote docs URLs'));
+      assert.ok(result.stdout.includes('compact GitHub links'));
+      assert.ok(result.stdout.includes('do not hide TeamOfOne behind Markdown labels'));
       assert.ok(result.stdout.includes('Relative `/too/docs/...` paths are not enough'));
       assert.ok(result.stdout.includes('do not only say "plan already exists"'));
       assert.ok(result.stdout.includes('teamofone-awdocs-file-browser-side-drawer/state.json'));

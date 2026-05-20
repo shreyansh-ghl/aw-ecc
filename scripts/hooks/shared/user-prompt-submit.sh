@@ -43,7 +43,7 @@ print_echo_gate_header() {
   cat <<'EOF'
 [AW Echo gate] Existing AW docs have incomplete human handoff. Do not answer "plan already exists" until this is repaired.
 Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return TeamOfOne + GitHub remote links.
-Completion gate: no generated_fallback/generated_hca_fallback statuses, no local_only/blocked publish statuses, and visible absolute TeamOfOne + GitHub Remote Docs URLs present in the final handoff.
+Completion gate: no generated_fallback/generated_hca_fallback statuses, no local_only/blocked publish statuses, plain-text absolute TeamOfOne Remote Docs URLs present in the final handoff, and GitHub links present as compact links or visible URLs.
 EOF
 }
 
@@ -51,7 +51,7 @@ print_remote_docs_reminder() {
   local state="$1"
   cat <<'EOF'
 [AW Remote Docs reminder] Matching AW plan already has Echo Direct HTML companions published.
-Required final handoff: include absolute TeamOfOne remote docs URLs from .aw_docs/last-publish.json `remoteUrl` when available, plus the GitHub folder/link as visible URL strings; do not only say "plan already exists" or return bare TeamOfOne/GitHub labels.
+Required final handoff: include plain-text absolute TeamOfOne remote docs URLs from .aw_docs/last-publish.json `remoteUrl` when available, plus compact GitHub links or visible GitHub URLs; do not hide TeamOfOne behind Markdown labels, do not only say "plan already exists", or return bare TeamOfOne/GitHub labels.
 Relative `/too/docs/...` paths are not enough for chat handoff when an absolute public base URL is configured.
 EOF
   printf '[AW Remote Docs reminder] Complete state: %s\n' "$state"
