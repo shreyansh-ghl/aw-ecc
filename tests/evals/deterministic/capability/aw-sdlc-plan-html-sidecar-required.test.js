@@ -19,16 +19,16 @@ function test(name, fn) {
 
 function assertRequiredHtmlContract(content, label) {
   assert.ok(content.includes('HTML sidecars are required'), `${label} must make HTML required`);
-  assert.ok(content.includes('exactly one `aw:echo` subagent'), `${label} must authorize one aw:echo subagent`);
-  assert.ok(content.includes('platform-core:human-collaboration-artifacts') && content.includes('direct HCA execution'), `${label} must require direct HCA execution when Echo is unavailable`);
-  assert.ok(content.includes('platform-core:echo-direct'), `${label} must allow Echo Direct as the in-process skill runner`);
+  assert.ok(content.includes('platform-core:echo-direct'), `${label} must require Echo Direct`);
+  assert.ok(content.includes('Do not use a subagent for HTML generation'), `${label} must forbid HTML subagents`);
   assert.ok(content.includes('runner: platform-core:echo-direct'), `${label} must record Echo Direct runner provenance`);
-  assert.ok(content.includes('echo_agent_status: in_process_fast_path'), `${label} must record Echo Direct fast-path provenance`);
-  assert.ok(content.includes('status: generated'), `${label} must record successful direct HCA output as generated`);
-  assert.ok(content.includes('execution_mode: skill'), `${label} must record direct HCA provenance`);
-  assert.ok(content.includes('echo_agent_status: unavailable'), `${label} must record Echo availability provenance when direct HCA runs`);
-  assert.ok(content.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`'), `${label} must forbid fallback statuses for successful HCA output`);
-  assert.ok(!content.includes('Record the companion as `generated_hca_fallback`'), `${label} must not record new HCA output as generated_hca_fallback`);
+  assert.ok(content.includes('status: generated'), `${label} must record successful skill output as generated`);
+  assert.ok(content.includes('execution_mode: skill'), `${label} must record skill execution provenance`);
+  assert.ok(content.includes('explicit Markdown-only mode') && content.includes('skip'), `${label} must document explicit markdown-only skip`);
+  assert.ok(content.includes('`dual` and `html`'), `${label} must require HTML in dual and html modes`);
+  assert.ok(content.includes('generated_fallback') && content.includes('generated_hca_fallback'), `${label} must repair legacy fallback statuses`);
+  assert.ok(!content.includes('exactly one `aw:echo` subagent'), `${label} must not authorize aw:echo subagents`);
+  assert.ok(!content.includes('echo_agent_status'), `${label} must not require Echo agent provenance`);
   assert.ok(!content.includes('skipped by output mode'), `${label} must not silently skip HTML via output mode`);
 }
 
@@ -56,7 +56,9 @@ function run() {
     'skills/aw-spec/SKILL.md',
     'skills/aw-tasks/SKILL.md',
     'skills/aw-build/SKILL.md',
+    'skills/aw-execute/SKILL.md',
     'skills/aw-test/SKILL.md',
+    'skills/aw-verify/SKILL.md',
     'skills/aw-review/SKILL.md',
     'skills/aw-investigate/SKILL.md',
     'skills/aw-deploy/SKILL.md',
@@ -65,13 +67,13 @@ function run() {
     'skills/aw-yolo/SKILL.md',
   ];
 
-  if (test('public SDLC commands require real HTML sidecars', () => {
+  if (test('public SDLC commands require Echo Direct HTML sidecars in dual/html modes', () => {
     for (const file of stageCommands) {
       assertRequiredHtmlContract(snapshot.readFile(file), file);
     }
   })) passed++; else failed++;
 
-  if (test('stage skills require real HTML sidecars and direct HCA execution generation', () => {
+  if (test('stage skills require Echo Direct HTML sidecars in dual/html modes', () => {
     for (const file of stageSkills) {
       assertRequiredHtmlContract(snapshot.readFile(file), file);
     }
@@ -89,35 +91,23 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('Markdown-only cannot be inferred from config or environment', () => {
+  if (test('explicit Markdown-only mode skips HTML instead of silently suppressing it', () => {
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
-    assert.ok(planSkill.includes('explicit user request for Markdown-only'));
-    assert.ok(planSkill.includes('must not silently suppress required SDLC HTML sidecars'));
+    assert.ok(planSkill.includes('explicit Markdown-only mode skips HTML'));
+    assert.ok(planSkill.includes('skip_reason: explicit_markdown_only'));
+    assert.ok(planSkill.includes('In explicit Markdown-only mode, do not generate HTML.'));
+    assert.ok(!planSkill.includes('must not silently suppress required SDLC HTML sidecars'));
   })) passed++; else failed++;
 
-  if (test('SDLC stages can use Echo Direct as the in-process skill runner', () => {
+  if (test('SDLC stages use one direct skill path and no aw:echo spawn path', () => {
     const files = [...stageCommands, ...stageSkills];
     for (const file of files) {
       const content = snapshot.readFile(file);
-      assert.ok(content.includes('platform-core:echo-direct'), `${file} must name the direct Echo skill`);
-      assert.ok(content.includes('skill-only/direct Echo'), `${file} must honor explicit direct-skill requests`);
+      assert.ok(content.includes('platform-core:echo-direct'), `${file} must name Echo Direct`);
+      assert.ok(content.includes('Do not use a subagent for HTML generation'), `${file} must forbid HTML subagents`);
       assert.ok(content.includes('runner: platform-core:echo-direct'), `${file} must record direct runner provenance`);
-    }
-
-    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
-    assert.ok(planSkill.includes('Performance-Bounded Planning Mode'), 'aw-plan must keep direct Echo wired to performance-bounded mode');
-  })) passed++; else failed++;
-
-  if (test('plan gives Codex a valid Echo subagent spawn shape', () => {
-    const planCommand = snapshot.readFile('commands/plan.md');
-    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
-
-    for (const [label, content] of [
-      ['commands/plan.md', planCommand],
-      ['skills/aw-plan/SKILL.md', planSkill],
-    ]) {
-      assert.ok(content.includes('spawn the `echo` agent role without a full-history fork'), `${label} must avoid invalid forked Echo spawn shape`);
-      assert.ok(content.includes('omit `agent_type`, `model`, and `reasoning_effort`'), `${label} must document inherited fields for full-history fork fallback`);
+      assert.ok(!content.includes('spawn the `echo` agent role'), `${file} must not document Codex spawn shape`);
+      assert.ok(!content.includes('omit `agent_type`, `model`, and `reasoning_effort`'), `${file} must not document subagent inherited fields`);
     }
   })) passed++; else failed++;
 
@@ -142,14 +132,10 @@ function run() {
     assert.ok(planCommand.includes('ready_for_build'), 'commands/plan.md must reject ready_for_build-only short-circuiting');
     assert.ok(planSkill.includes('ready_for_build'), 'skills/aw-plan/SKILL.md must reject ready_for_build-only short-circuiting');
     assert.ok(contracts.includes('ready_for_build'), 'contracts must reject ready_for_build-only short-circuiting');
-    assert.ok(planCommand.includes('HCA/Echo handoff'), 'commands/plan.md must route repair through HCA/Echo');
-    assert.ok(planSkill.includes('HCA/Echo handoff'), 'skills/aw-plan/SKILL.md must route repair through HCA/Echo');
-    assert.ok(contracts.includes('HCA/Echo handoff'), 'contracts must route repair through HCA/Echo');
-    assert.ok(planCommand.includes('legacy `generated_hca_fallback`') || planCommand.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`'), 'commands/plan.md must repair legacy HCA fallback sidecars without creating new fallback output');
-    assert.ok(planSkill.includes('legacy `generated_hca_fallback`') || planSkill.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`'), 'skills/aw-plan/SKILL.md must repair legacy HCA fallback sidecars without creating new fallback output');
-    assert.ok(contracts.includes('legacy uncontrolled fallback statuses such as `generated_hca_fallback`'), 'contracts must repair legacy HCA fallback sidecars');
-    assert.ok(planCommand.includes('relative `/too/docs/...` paths are not enough'), 'commands/plan.md must require absolute TeamOfOne URLs when configured');
-    assert.ok(planSkill.includes('relative `/too/docs/...` paths are not enough'), 'skills/aw-plan/SKILL.md must require absolute TeamOfOne URLs when configured');
+    assert.ok(planCommand.includes('Echo Direct Human Docs Handoff'), 'commands/plan.md must route repair through Echo Direct');
+    assert.ok(planSkill.includes('Echo Direct Human Docs Handoff'), 'skills/aw-plan/SKILL.md must route repair through Echo Direct');
+    assert.ok(contracts.includes('Echo Direct Remote Docs Handoff Rule'), 'contracts must route repair through Echo Direct');
+    assert.ok(contracts.includes('legacy statuses that must be repaired'), 'contracts must repair legacy fallback sidecars');
     assert.ok(router.includes('repair human docs handoff'), 'router must route incomplete human docs to aw-plan repair');
   })) passed++; else failed++;
 

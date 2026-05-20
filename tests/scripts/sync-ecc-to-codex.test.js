@@ -122,8 +122,8 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Expected aw-plan to be synced');
       assert.ok(fs.existsSync(grillSkillPath), 'Expected grill-with-docs to be synced');
       assert.ok(
-        grillSkill.includes('through direct HCA execution'),
-        'Expected installed grill-with-docs to include the direct HCA execution contract'
+        grillSkill.includes('Use `platform-core:echo-direct` directly for the HTML companion'),
+        'Expected installed grill-with-docs to include the Echo Direct contract'
       );
     } finally {
       cleanup(homeDir);

@@ -92,9 +92,7 @@ When `context.md` is created or materially updated, create or refresh the coloca
 .aw_docs/features/<feature_slug>/context.html
 ```
 
-Use `aw:echo` for the HTML companion when the harness can spawn it.
-Invoking `/aw:plan` in default `dual` mode is already explicit authorization to delegate this one human-facing companion to `aw:echo`; do not skip `context.html` only because `aw:echo` is not a slash command or direct tool.
-If the harness cannot spawn `aw:echo`, or if the user asks for skill-only/direct Echo, load `platform-core:echo-direct` when available and otherwise load `platform-core:human-collaboration-artifacts`; create `context.html` in the same turn through direct HCA execution. Record the context HTML companion as `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, optional `runner: platform-core:echo-direct`, and `echo_agent_status: unavailable` with the exact Echo availability reason; when `platform-core:echo-direct` runs as the same-turn fast path, record `echo_agent_status: in_process_fast_path` in the feature `state.json` when present; do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`, and keep `context.md` canonical for agents.
+Use `platform-core:echo-direct` directly for the HTML companion. In `dual` or `html` mode, create `context.html` in the same turn through that skill; in explicit Markdown-only mode, skip HTML and record the skip. Do not use a subagent for context HTML generation, and do not hand-roll HTML outside the skill contract. Record the context HTML companion as `status: generated`, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, and remote links when available, and keep `context.md` canonical for agents.
 
 ### File structure
 

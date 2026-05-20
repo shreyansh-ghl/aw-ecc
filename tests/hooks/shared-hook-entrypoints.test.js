@@ -86,7 +86,10 @@ function runTests() {
         JSON.stringify({
           html_companion_artifacts: [
             {
-              status: 'generated_echo',
+              status: 'generated',
+              owner: 'platform-core:echo-direct',
+              execution_mode: 'skill',
+              runner: 'platform-core:echo-direct',
               publish_status: 'published',
               remote_url: 'https://github.com/GoHighLevel/ghl-aw-docs/blob/master-sync/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
               teamofone_url: '/too/docs/GoHighLevel/ghl-aw-docs/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
