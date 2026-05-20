@@ -92,6 +92,14 @@ function run() {
     assert.ok(planSkill.includes('must not silently suppress required SDLC HTML sidecars'));
   })) passed++; else failed++;
 
+  if (test('plan can use Echo Direct as the in-process skill runner', () => {
+    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
+    assert.ok(planSkill.includes('platform-core:echo-direct'), 'aw-plan must name the direct Echo skill');
+    assert.ok(planSkill.includes('skill-only/direct Echo'), 'aw-plan must honor explicit direct-skill requests');
+    assert.ok(planSkill.includes('runner: platform-core:echo-direct'), 'aw-plan must record direct runner provenance');
+    assert.ok(planSkill.includes('Performance-Bounded Planning Mode'), 'aw-plan must keep direct Echo wired to performance-bounded mode');
+  })) passed++; else failed++;
+
   if (test('plan gives Codex a valid Echo subagent spawn shape', () => {
     const planCommand = snapshot.readFile('commands/plan.md');
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');

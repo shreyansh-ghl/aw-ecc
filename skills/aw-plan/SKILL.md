@@ -103,11 +103,13 @@ In this mode, preserve quality but change the order of work:
    HTML, with the expected `html_companion_artifacts` entries marked pending.
    Then update those same entries after generation and publish. Never leave a
    planned feature folder with Markdown/HTML but no `state.json`.
-5. Prefer direct HCA execution for the same-turn fast path. Treat direct HCA as
-   the in-process execution of the Echo communication contract, not as a
-   fallback. Record successful output as `status: generated`, `owner:
-   platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and
-   `echo_agent_status: in_process_fast_path`.
+5. Prefer `platform-core:echo-direct` when available for the same-turn fast
+   path; otherwise run `platform-core:human-collaboration-artifacts` directly.
+   Treat this as the in-process execution of the Echo communication contract,
+   not as a fallback. Record successful output as `status: generated`, `owner:
+   platform-core:human-collaboration-artifacts`, `execution_mode: skill`,
+   optional `runner: platform-core:echo-direct`, and `echo_agent_status:
+   in_process_fast_path`.
 6. Run one scoped publish command for the feature folder, then return the
    absolute TeamOfOne links and compact GitHub references. Do not do a broad
    post-publish diff or unrelated workspace review before returning links.
@@ -193,8 +195,8 @@ When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or 
 
 Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
 `aw:echo` is not a slash command or direct tool. Invoking `/aw:plan` in default `dual` mode is explicit authorization to spawn exactly one `aw:echo` subagent for HTML companion generation; do not skip HTML only because no direct command is available.
-Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, load `platform-core:human-collaboration-artifacts` and run direct HCA execution in the same turn. Do not freehand or command-template HTML outside that skill contract. Record successful direct HCA execution as `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, and `echo_agent_status: unavailable` with the exact Echo availability reason; do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`. Keep Markdown canonical and include HCA/Echo provenance in the final handoff.
-In Performance-Bounded Planning Mode, direct HCA execution is the preferred same-turn path and should be recorded with `echo_agent_status: in_process_fast_path`; do not wait on a subagent before generating the required sidecars unless the user explicitly requested a separate Echo background agent.
+Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar before the final handoff unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, or if the user asks for skill-only/direct Echo, load `platform-core:echo-direct` when available and otherwise load `platform-core:human-collaboration-artifacts`; run direct HCA execution in the same turn. Do not freehand or command-template HTML outside that skill contract. Record successful direct HCA execution as `status: generated`, `owner: platform-core:human-collaboration-artifacts`, `execution_mode: skill`, optional `runner: platform-core:echo-direct`, and `echo_agent_status: unavailable` with the exact Echo availability reason; do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`. Keep Markdown canonical and include HCA/Echo provenance in the final handoff.
+In Performance-Bounded Planning Mode, `platform-core:echo-direct` is the preferred same-turn path when installed and should be recorded with `echo_agent_status: in_process_fast_path`; do not wait on a subagent before generating the required sidecars unless the user explicitly requested a separate Echo background agent.
 Codex spawn shape: when using Codex multi-agent tools, spawn the `echo` agent role without a full-history fork. If a full-history fork is required by the harness, omit `agent_type`, `model`, and `reasoning_effort` because forked agents inherit those fields.
 Resolve output mode as: explicit user request for Markdown-only -> otherwise `dual`. `.aw_docs/config.json` and `AW_DOCS_OUTPUT_MODE` may request `dual` or `html`, but must not silently suppress required SDLC HTML sidecars.
 
@@ -506,7 +508,7 @@ When `tasks.md` is ready:
 
 ## HCA/Echo Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. This handoff is also required as a repair step for existing plan folders with stale, fallback, blocked, local-only, or unpublished companions. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only, Markdown-only, skill-only/direct Echo, or Performance-Bounded Planning Mode. For skill-only/direct Echo or performance-bounded runs, use `platform-core:echo-direct` when available and otherwise run direct HCA. This handoff is also required as a repair step for existing plan folders with stale, fallback, blocked, local-only, or unpublished companions. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
 For Codex, use the valid Echo spawn shape: `agent_type: "echo"` without a full-history fork. If the harness requires a full-history fork, omit `agent_type`, `model`, and `reasoning_effort`.
 
 Do not duplicate docs publish commands or publish configuration in this stage. The HCA/Echo handoff owns HTML generation and remote sharing. Before the final response, inspect the HCA/Echo handoff result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as visible absolute TeamOfOne URLs with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `TeamOfOne: <absolute remote URL>` and `GitHub: [spec.html](<absolute repository URL>)` (or another short artifact label) when HCA/Echo returns or records both; never collapse them to bare `TeamOfOne` and `GitHub` labels, hide the TeamOfOne URL behind Markdown-only links, or print long GitHub URLs inline when a compact label can point to the same URL. If HCA/Echo cannot generate or publish, record `publish_status: blocked` and the concrete blocker in `state.json`; do not invent links.
