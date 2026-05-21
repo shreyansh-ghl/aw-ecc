@@ -8,6 +8,8 @@ const assert = require('assert');
 
 const {
   collectPostToolUseEvents,
+  detectSdlcArtifact,
+  detectTestFramework,
   inferShellFailureFromMessage,
   normalizeToolResult,
   shouldEmitSkillName,
@@ -161,6 +163,90 @@ function runTests() {
 
     assert.strictEqual(result.exitCode, 2);
     assert.match(result.errorMessage, /permission denied/);
+  }) ? passed++ : failed++);
+
+  (test('detectTestFramework matches jest/vitest spec/test files', () => {
+    assert.strictEqual(detectTestFramework('src/foo.spec.ts'), 'jest-vitest');
+    assert.strictEqual(detectTestFramework('src/foo.test.js'), 'jest-vitest');
+    assert.strictEqual(detectTestFramework('app/__tests__/bar.tsx'), 'jest-like');
+    assert.strictEqual(detectTestFramework('src/main.ts'), null);
+  }) ? passed++ : failed++);
+
+  (test('detectTestFramework matches pytest, go-test, rust-test', () => {
+    assert.strictEqual(detectTestFramework('app/tests/test_user.py'), 'pytest');
+    assert.strictEqual(detectTestFramework('pkg/foo_test.go'), 'go-test');
+    assert.strictEqual(detectTestFramework('tests/integration.rs'), 'rust-test');
+  }) ? passed++ : failed++);
+
+  (test('detectTestFramework normalizes Windows backslashes', () => {
+    assert.strictEqual(detectTestFramework('src\\components\\Button.spec.ts'), 'jest-vitest');
+  }) ? passed++ : failed++);
+
+  (test('detectSdlcArtifact matches plan/prd/spec/tasks/design/ADR docs', () => {
+    assert.deepStrictEqual(detectSdlcArtifact('plan.md'),       { artifact_type: 'plan',       sdlc_stage: 'plan' });
+    assert.deepStrictEqual(detectSdlcArtifact('docs/prd.md'),   { artifact_type: 'prd',        sdlc_stage: 'plan' });
+    assert.deepStrictEqual(detectSdlcArtifact('docs/spec.md'),  { artifact_type: 'spec',       sdlc_stage: 'plan' });
+    assert.deepStrictEqual(detectSdlcArtifact('docs/tasks.md'), { artifact_type: 'tasks',      sdlc_stage: 'plan' });
+    assert.deepStrictEqual(detectSdlcArtifact('docs/design.md'),{ artifact_type: 'design',     sdlc_stage: 'plan' });
+    assert.deepStrictEqual(detectSdlcArtifact('docs/adr-001-foo.md'),
+                                                                { artifact_type: 'adr',        sdlc_stage: 'plan' });
+    assert.strictEqual(detectSdlcArtifact('README.md'), null);
+    assert.strictEqual(detectSdlcArtifact('package.json'), null);
+  }) ? passed++ : failed++);
+
+  (test('detectSdlcArtifact matches .aw_docs runs/features/learnings paths', () => {
+    assert.deepStrictEqual(
+      detectSdlcArtifact('/repo/.aw_docs/runs/abc123/plan.md'),
+      { artifact_type: 'plan', sdlc_stage: 'plan' },
+    );
+    assert.deepStrictEqual(
+      detectSdlcArtifact('/repo/.aw_docs/learnings/sarah-dev.md'),
+      { artifact_type: 'learning', sdlc_stage: 'learn' },
+    );
+  }) ? passed++ : failed++);
+
+  (test('test_file_written event fires on Write to *.spec.ts', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Write',
+      tool_input: { file_path: 'src/foo.spec.ts' },
+    });
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent, 'Expected test_file_written event');
+    assert.strictEqual(testEvent.payload.test_framework_guess, 'jest-vitest');
+    assert.strictEqual(testEvent.payload.file_path, 'src/foo.spec.ts');
+    assert.strictEqual(testEvent.payload.tool_name, 'Write');
+    assert.strictEqual(testEvent.payload.sdlc_correlated_command, null);
+  }) ? passed++ : failed++);
+
+  (test('test_file_written includes sdlc_correlated_command when session is in SDLC stage', () => {
+    const events = collectPostToolUseEvents(
+      { tool_name: 'Edit', tool_input: { file_path: 'src/bar.test.js' } },
+      { sessionSlashCommand: { command_namespace: 'aw', command_name: 'aw:test', is_sdlc_stage: true } },
+    );
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_command, 'aw:test');
+    assert.strictEqual(testEvent.payload.sdlc_correlated_namespace, 'aw');
+  }) ? passed++ : failed++);
+
+  (test('sdlc_artifact_created fires on Write to plan.md', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Write',
+      tool_input: { file_path: 'plan.md' },
+    });
+    const artifactEvent = events.find(e => e.eventType === 'sdlc_artifact_created');
+    assert.ok(artifactEvent, 'Expected sdlc_artifact_created event');
+    assert.strictEqual(artifactEvent.payload.artifact_type, 'plan');
+    assert.strictEqual(artifactEvent.payload.sdlc_stage, 'plan');
+  }) ? passed++ : failed++);
+
+  (test('sdlc_artifact_created does NOT fire on Edit (only on Write/creation)', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Edit',
+      tool_input: { file_path: 'plan.md' },
+    });
+    const artifactEvent = events.find(e => e.eventType === 'sdlc_artifact_created');
+    assert.strictEqual(artifactEvent, undefined, 'Edit should not create an sdlc_artifact_created event');
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

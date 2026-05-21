@@ -99,6 +99,65 @@ function runTests() {
     assert.strictEqual(shouldSkip, true);
   }) ? passed++ : failed++);
 
+  (test('extractAwSlashCommand sets command_namespace and is_sdlc_stage for /aw:plan', () => {
+    const cmd = extractAwSlashCommand({ prompt: '/aw:plan implement cost dashboard' });
+    assert.ok(cmd);
+    assert.strictEqual(cmd.command_namespace, 'aw');
+    assert.strictEqual(cmd.command_name, 'aw:plan');
+    assert.strictEqual(cmd.command_args, 'implement cost dashboard');
+    assert.strictEqual(cmd.is_sdlc_stage, true);
+  }) ? passed++ : failed++);
+
+  (test('extractAwSlashCommand matches /caveman:lite as caveman namespace, not SDLC', () => {
+    const cmd = extractAwSlashCommand({ prompt: '/caveman:lite' });
+    assert.ok(cmd);
+    assert.strictEqual(cmd.command_namespace, 'caveman');
+    assert.strictEqual(cmd.command_name, 'caveman:lite');
+    assert.strictEqual(cmd.is_sdlc_stage, false);
+  }) ? passed++ : failed++);
+
+  (test('extractAwSlashCommand matches bare-name skills like /tdd', () => {
+    const cmd = extractAwSlashCommand({ prompt: '/tdd add unit tests for the cost service' });
+    assert.ok(cmd);
+    assert.strictEqual(cmd.command_namespace, null);
+    assert.strictEqual(cmd.command_name, 'tdd');
+    assert.strictEqual(cmd.command_args, 'add unit tests for the cost service');
+    assert.strictEqual(cmd.is_sdlc_stage, false);
+  }) ? passed++ : failed++);
+
+  (test('extractAwSlashCommand returns null for unknown bare slash commands', () => {
+    assert.strictEqual(extractAwSlashCommand({ prompt: '/notarealcommand' }), null);
+    assert.strictEqual(extractAwSlashCommand({ prompt: '/help' }), null);
+  }) ? passed++ : failed++);
+
+  (test('extractAwSlashCommand matches /aw:notastage but flags is_sdlc_stage=false', () => {
+    const cmd = extractAwSlashCommand({ prompt: '/aw:notastage args' });
+    assert.ok(cmd);
+    assert.strictEqual(cmd.command_namespace, 'aw');
+    assert.strictEqual(cmd.is_sdlc_stage, false);
+  }) ? passed++ : failed++);
+
+  (test('processPromptSubmitInput persists slash command and enriches prompt_submitted payload', () => {
+    const emitted = [];
+    const persistedSlash = [];
+    processPromptSubmitInput({
+      session_id: 'session-4',
+      prompt: '/aw:test run the suite',
+    }, {
+      emit(eventType, payload) { emitted.push({ eventType, payload }); },
+      persistSlashCmd(sessionId, slash) { persistedSlash.push({ sessionId, slash }); },
+    });
+
+    const submitted = emitted.find(e => e.eventType === 'prompt_submitted');
+    assert.ok(submitted, 'Expected prompt_submitted event');
+    assert.strictEqual(submitted.payload.command_namespace, 'aw');
+    assert.strictEqual(submitted.payload.command_name, 'aw:test');
+    assert.strictEqual(submitted.payload.is_sdlc_stage, true);
+    assert.strictEqual(persistedSlash.length, 1);
+    assert.strictEqual(persistedSlash[0].sessionId, 'session-4');
+    assert.strictEqual(persistedSlash[0].slash.command_name, 'aw:test');
+  }) ? passed++ : failed++);
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }
