@@ -107,7 +107,7 @@ function run() {
       'write planning-specific language to the active feature folder first',
       'Treat root or bounded-context `CONTEXT.md` as a promotion target',
       'After the grill is complete',
-      'Invoking `/aw:plan` in default `dual` mode is already explicit authorization',
+      'Invoking `/aw:plan` in default `dual` mode requires this one human-facing companion through direct HCA execution via `platform-core:echo-direct`',
       'keep `context.md` canonical for agents',
     ]) {
       assert.ok(grillWithDocs.includes(phrase), `grill-with-docs is missing ${phrase}`);

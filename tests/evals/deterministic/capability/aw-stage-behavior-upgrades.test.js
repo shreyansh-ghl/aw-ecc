@@ -60,27 +60,23 @@ function test(name, fn) {
   }
 }
 
-function assertEchoSpawnContract(content) {
-  const normalized = content.toLowerCase();
-  assert.ok(
-    content.includes('Spawn exactly one `aw:echo` subagent')
-      || content.includes('Spawn one background `aw:echo` subagent')
-      || content.includes('background `aw:echo` subagent')
-      || normalized.includes('spawn exactly one `aw:echo` subagent'),
-    'missing aw:echo spawn contract'
-  );
+function assertEchoDirectContract(content) {
+  assert.ok(content.includes('platform-core:echo-direct'), 'missing Echo Direct runner');
+  assert.ok(content.includes('platform-core:human-collaboration-artifacts'), 'missing HCA owner contract');
+  assert.ok(content.includes('runner: platform-core:echo-direct'), 'missing Echo Direct state provenance');
+  assert.ok(content.includes('echo_agent_status: in_process_fast_path'), 'missing in-process Echo Direct provenance');
+  assert.ok(!content.includes('Spawn exactly one `aw:echo` subagent'), 'must not require aw:echo subagent spawning');
 }
 
 function assertHtmlProgressContract(content) {
   assert.ok(
-    (content.includes('queued') && content.includes('generating'))
-      || (content.includes('status: generated') && content.includes('execution_mode: skill')),
-    'missing HTML progress or direct HCA status contract'
+    content.includes('status: generated') && content.includes('execution_mode: skill'),
+    'missing Echo Direct generated status contract'
   );
   assert.ok(
-    content.includes('do not record successful HCA output as `generated_fallback` or `generated_hca_fallback`')
+    content.includes('do not record successful Echo Direct output as `generated_fallback` or `generated_hca_fallback`')
       || !content.includes('generated_fallback'),
-    'must forbid fallback statuses for successful HCA output'
+    'must forbid fallback statuses for successful Echo Direct output'
   );
 }
 
@@ -94,7 +90,7 @@ function assertOutputModeContract(content) {
 }
 
 function assertRemoteDocsPublishContract(content) {
-  assert.ok(content.includes('aw:echo'), 'missing Echo handoff owner');
+  assert.ok(content.includes('platform-core:echo-direct'), 'missing Echo Direct handoff owner');
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
   assert.ok(content.includes('visible absolute TeamOfOne URLs'), 'remote docs must require visible absolute TeamOfOne URLs');
   assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), 'missing visible TeamOfOne URL format');
@@ -217,25 +213,21 @@ function run() {
 
   if (test('SDLC stages generate TeamOfOne HTML companions while keeping Markdown canonical', () => {
     assert.ok(commandContracts.includes('## Human HTML Companion Rule'));
-    assert.ok(commandContracts.includes('## HCA/Echo Remote Docs Handoff Rule'));
+    assert.ok(commandContracts.includes('## Echo Direct/HCA Remote Docs Handoff Rule'));
     assert.ok(commandContracts.includes('HTML companions are the TeamOfOne-readable surface'));
     assert.ok(commandContracts.includes('platform docs registry owns the reusable design system'));
-    assert.ok(commandContracts.includes('remote publish command behavior'));
-    assert.ok(commandContracts.includes('`aw:echo`'));
-    assert.ok(commandContracts.includes('`aw:echo` is an agent delegation, not a public slash command or direct tool'));
-    assert.ok(commandContracts.includes('stage contract authorizes exactly one `aw:echo` subagent'));
-    assert.ok(commandContracts.includes('Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists'));
-    assert.ok(commandContracts.includes('HTML generation is async by default'));
-    assertEchoSpawnContract(commandContracts);
-    assert.ok(commandContracts.includes('`queued`'));
-    assert.ok(commandContracts.includes('`generating`'));
-    assert.ok(commandContracts.includes('`run_ref`'));
+    assert.ok(commandContracts.includes('remote publish behavior'));
+    assert.ok(commandContracts.includes('`platform-core:echo-direct`'));
+    assert.ok(commandContracts.includes('Do not spawn `aw:echo` for SDLC HTML generation unless the user explicitly asks'));
+    assert.ok(commandContracts.includes('HTML generation is synchronous for SDLC final handoffs by default'));
+    assertEchoDirectContract(commandContracts);
+    assert.ok(commandContracts.includes('`runner`'));
+    assert.ok(commandContracts.includes('`echo_agent_status`'));
     assert.ok(commandContracts.includes('must not rewrite the canonical Markdown source'));
     assert.ok(commandContracts.includes('`html_companion_artifacts`'));
     assertRemoteDocsPublishContract(commandContracts);
-    assert.ok(commandContracts.includes('`aw:echo` owns communication with humans'));
+    assert.ok(commandContracts.includes('Echo Direct owns communication with humans'));
     assert.ok(commandContracts.includes('human docs package'));
-    assert.ok(commandContracts.includes('Direct HCA execution is a first-class path'));
     assert.ok(commandContracts.includes('Stages must not duplicate docs publish commands'));
     assert.ok(commandContracts.includes('platform docs registry is the source of truth'));
     assert.ok(commandContracts.includes('.aw_docs/features/<feature_slug>/<artifact_basename>.html'));
@@ -260,11 +252,8 @@ function run() {
     ];
 
     for (const content of stageSkills) {
-      assert.ok(content.includes('aw:echo'));
-      assert.ok(content.includes('subagent'));
-      assertEchoSpawnContract(content);
+      assertEchoDirectContract(content);
       assertHtmlProgressContract(content);
-      assert.ok(content.includes('run_ref'));
       assert.ok(!content.includes('server-managed'));
       assert.ok(!content.includes('subagent id or run handle'));
       assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
@@ -310,25 +299,20 @@ function run() {
     for (const content of publicCommands) {
       assert.ok(content.includes('## Human HTML Companion'));
       assert.ok(content.includes('HTML Companion'));
-      assert.ok(content.includes('aw:echo'));
-      assert.ok(content.includes('subagent'));
-      assertEchoSpawnContract(content);
+      assertEchoDirectContract(content);
       assertRemoteDocsPublishContract(content);
       assert.ok(!content.includes('server-managed'));
       assert.ok(content.includes('platform-core:human-collaboration-artifacts'));
       assert.ok(!content.includes('.aw_docs/html/'));
     }
 
-    assert.ok(featureSkill.includes('aw:echo'));
     assert.ok(featureSkill.includes('HTML Companion'));
     assertRemoteDocsPublishContract(featureSkill);
-    assertEchoSpawnContract(featureSkill);
+    assertEchoDirectContract(featureSkill);
     assert.ok(yoloSkill.includes('HTML Companions'));
-    assert.ok(yoloSkill.includes('aw:echo'));
     assertRemoteDocsPublishContract(yoloSkill);
-    assertEchoSpawnContract(yoloSkill);
+    assertEchoDirectContract(yoloSkill);
     assertHtmlProgressContract(yoloSkill);
-    assert.ok(yoloSkill.includes('run_ref'));
     assert.ok(!featureSkill.includes('.aw_docs/html/'));
     assert.ok(!yoloSkill.includes('.aw_docs/html/'));
     assert.ok(featureSkill.includes('platform-core:human-collaboration-artifacts'));
