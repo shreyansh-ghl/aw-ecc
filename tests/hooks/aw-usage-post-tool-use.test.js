@@ -249,6 +249,67 @@ function runTests() {
     assert.strictEqual(artifactEvent, undefined, 'Edit should not create an sdlc_artifact_created event');
   }) ? passed++ : failed++);
 
+  // ── sdlc_correlated_is_sdlc_stage payload field (cross-PR fix) ──────
+  // Consumer dashboard filters tests as "via SDLC" using this boolean, so
+  // it must reflect the originating slash command's is_sdlc_stage flag,
+  // NOT just "any slash command was recently seen."
+
+  (test('test_file_written carries sdlc_correlated_is_sdlc_stage=true when /aw:test was the slash command', () => {
+    const events = collectPostToolUseEvents(
+      { tool_name: 'Write', tool_input: { file_path: 'src/foo.spec.ts' } },
+      { sessionSlashCommand: { command_namespace: 'aw', command_name: 'aw:test', is_sdlc_stage: true } },
+    );
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_is_sdlc_stage, true);
+  }) ? passed++ : failed++);
+
+  (test('test_file_written carries sdlc_correlated_is_sdlc_stage=false when slash command was /caveman:lite', () => {
+    const events = collectPostToolUseEvents(
+      { tool_name: 'Write', tool_input: { file_path: 'src/bar.spec.ts' } },
+      { sessionSlashCommand: { command_namespace: 'caveman', command_name: 'caveman:lite', is_sdlc_stage: false } },
+    );
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_command, 'caveman:lite');
+    assert.strictEqual(testEvent.payload.sdlc_correlated_is_sdlc_stage, false);
+  }) ? passed++ : failed++);
+
+  (test('test_file_written still carries sdlc_correlated_is_sdlc_stage=true after stale carry-over from /aw:plan', () => {
+    // Simulates the documented behaviour: session-state preserves the last
+    // SDLC slash command across non-slash prompts. Until the producer adds
+    // an explicit "clear" step, a test written later in the same session
+    // continues to be tagged with the /aw:plan correlation.
+    const events = collectPostToolUseEvents(
+      { tool_name: 'Write', tool_input: { file_path: 'src/baz.spec.ts' } },
+      { sessionSlashCommand: { command_namespace: 'aw', command_name: 'aw:plan', is_sdlc_stage: true } },
+    );
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_is_sdlc_stage, true);
+  }) ? passed++ : failed++);
+
+  (test('test_file_written carries sdlc_correlated_is_sdlc_stage=false when no slash command was seen', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Write',
+      tool_input: { file_path: 'src/qux.spec.ts' },
+    });
+    const testEvent = events.find(e => e.eventType === 'test_file_written');
+    assert.ok(testEvent);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_command, null);
+    assert.strictEqual(testEvent.payload.sdlc_correlated_is_sdlc_stage, false);
+  }) ? passed++ : failed++);
+
+  (test('sdlc_artifact_created carries sdlc_correlated_is_sdlc_stage from slash command', () => {
+    const events = collectPostToolUseEvents(
+      { tool_name: 'Write', tool_input: { file_path: 'prd.md' } },
+      { sessionSlashCommand: { command_namespace: 'aw', command_name: 'aw:plan', is_sdlc_stage: true } },
+    );
+    const artifactEvent = events.find(e => e.eventType === 'sdlc_artifact_created');
+    assert.ok(artifactEvent);
+    assert.strictEqual(artifactEvent.payload.sdlc_correlated_is_sdlc_stage, true);
+  }) ? passed++ : failed++);
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }

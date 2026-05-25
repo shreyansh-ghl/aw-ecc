@@ -260,6 +260,7 @@ function collectPostToolUseEvents(input, options = {}) {
           tool_name: toolName,
           sdlc_correlated_command: slashCmd ? slashCmd.command_name : null,
           sdlc_correlated_namespace: slashCmd ? slashCmd.command_namespace : null,
+          sdlc_correlated_is_sdlc_stage: slashCmd ? Boolean(slashCmd.is_sdlc_stage) : false,
         },
       });
     }
@@ -277,6 +278,7 @@ function collectPostToolUseEvents(input, options = {}) {
             sdlc_stage: artifact.sdlc_stage,
             sdlc_correlated_command: slashCmd ? slashCmd.command_name : null,
             sdlc_correlated_namespace: slashCmd ? slashCmd.command_namespace : null,
+            sdlc_correlated_is_sdlc_stage: slashCmd ? Boolean(slashCmd.is_sdlc_stage) : false,
           },
         });
       }
