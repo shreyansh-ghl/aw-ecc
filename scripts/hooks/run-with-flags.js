@@ -12,7 +12,11 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { isHookEnabled } = require('../lib/hook-flags');
-const { writeToolHookStdout } = require('../lib/hook-stdout');
+const {
+  isToolHookInputEventStdout,
+  normalizeToolHookStdout,
+  writeToolHookStdout,
+} = require('../lib/hook-stdout');
 
 const MAX_STDIN = 1024 * 1024;
 
@@ -36,6 +40,34 @@ function getPluginRoot() {
     return process.env.CLAUDE_PLUGIN_ROOT;
   }
   return path.resolve(__dirname, '..', '..');
+}
+
+function appendLine(value) {
+  const text = String(value || '');
+  if (!text) return;
+  process.stderr.write(text.endsWith('\n') ? text : `${text}\n`);
+}
+
+function writeRunResult(output, fallbackRaw) {
+  if (output && typeof output === 'object' && !Buffer.isBuffer(output)) {
+    if (output.stderr) appendLine(output.stderr);
+    if (Array.isArray(output.logs)) output.logs.forEach(appendLine);
+
+    const stdout = output.stdout ?? output.output ?? output.response;
+    writeToolHookStdout(stdout !== undefined ? stdout : output);
+    return Number.isInteger(output.exitCode) ? output.exitCode : 0;
+  }
+
+  writeToolHookStdout(output !== null && output !== undefined ? output : fallbackRaw);
+  return 0;
+}
+
+function writeChildResultStdout(stdout, fallbackRaw, exitCode) {
+  const normalized = normalizeToolHookStdout(stdout || fallbackRaw);
+  if (exitCode !== 0 && stdout && normalized === '{}' && !isToolHookInputEventStdout(stdout)) {
+    appendLine(stdout);
+  }
+  process.stdout.write(normalized);
 }
 
 async function main() {
@@ -89,14 +121,15 @@ async function main() {
   }
 
   if (hookModule && typeof hookModule.run === 'function') {
+    let code = 0;
     try {
       const output = hookModule.run(raw);
-      writeToolHookStdout(output !== null && output !== undefined ? output : raw);
+      code = writeRunResult(output, raw);
     } catch (runErr) {
       process.stderr.write(`[Hook] run() error for ${hookId}: ${runErr.message}\n`);
       writeToolHookStdout(raw);
     }
-    process.exit(0);
+    process.exit(code);
   }
 
   // Legacy path: spawn a child Node process for hooks without run() export
@@ -108,10 +141,9 @@ async function main() {
     timeout: 30000
   });
 
-  writeToolHookStdout(result.stdout || raw);
-  if (result.stderr) process.stderr.write(result.stderr);
-
   const code = Number.isInteger(result.status) ? result.status : 0;
+  writeChildResultStdout(result.stdout, raw, code);
+  if (result.stderr) process.stderr.write(result.stderr);
   process.exit(code);
 }
 

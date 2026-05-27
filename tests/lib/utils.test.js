@@ -11,6 +11,16 @@ const fs = require('fs');
 // Import the module
 const utils = require('../../scripts/lib/utils');
 
+function withoutInheritedGitEnv(env = process.env) {
+  const next = { ...env };
+  for (const key of Object.keys(next)) {
+    if (key.startsWith('GIT_')) {
+      delete next[key];
+    }
+  }
+  return next;
+}
+
 // Test helper
 function test(name, fn) {
   try {
@@ -1298,7 +1308,7 @@ function runTests() {
     const result = spawnSync('node', ['-e', script], {
       encoding: 'utf8',
       cwd: '/',
-      env: { ...process.env, CLAUDE_SESSION_ID: '' },
+      env: withoutInheritedGitEnv({ ...process.env, CLAUDE_SESSION_ID: '' }),
       timeout: 10000
     });
     assert.strictEqual(result.status, 0, `Should exit 0, got status ${result.status}. stderr: ${result.stderr}`);

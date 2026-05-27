@@ -61,6 +61,19 @@ function runBash(command, options = {}) {
   return execFileSync('bash', ['-lc', command], options).toString().trim();
 }
 
+function withoutInheritedGitEnv(env = process.env) {
+  const next = { ...env };
+  for (const key of Object.keys(next)) {
+    if (key === 'GIT_AUTHOR_NAME' || key === 'GIT_AUTHOR_EMAIL' || key === 'GIT_COMMITTER_NAME' || key === 'GIT_COMMITTER_EMAIL') {
+      continue;
+    }
+    if (key.startsWith('GIT_')) {
+      delete next[key];
+    }
+  }
+  return next;
+}
+
 const repoRoot = path.resolve(__dirname, '..', '..');
 const detectProjectPath = path.join(
   repoRoot,
@@ -168,17 +181,18 @@ test('detect-project.sh sets PROJECT_NAME and non-global PROJECT_ID for worktree
     // Create a "main" repo with git init so we have real git structures
     const mainRepo = path.join(testDir, 'main-repo');
     fs.mkdirSync(mainRepo, { recursive: true });
-    execSync('git init', { cwd: mainRepo, stdio: 'pipe' });
+    const gitEnv = withoutInheritedGitEnv();
+    execSync('git init', { cwd: mainRepo, stdio: 'pipe', env: gitEnv });
     execSync('git commit --allow-empty -m "init"', {
       cwd: mainRepo,
       stdio: 'pipe',
-      env: {
-        ...process.env,
+      env: withoutInheritedGitEnv({
+        ...gitEnv,
         GIT_AUTHOR_NAME: 'Test',
         GIT_AUTHOR_EMAIL: 'test@test.com',
         GIT_COMMITTER_NAME: 'Test',
         GIT_COMMITTER_EMAIL: 'test@test.com'
-      }
+      })
     });
 
     // Create a worktree-like directory with .git as a file
@@ -218,12 +232,12 @@ test('detect-project.sh sets PROJECT_NAME and non-global PROJECT_ID for worktree
     const result = execFileSync('bash', ['-lc', script], {
       cwd: worktreeDir,
       timeout: 10000,
-      env: {
-        ...process.env,
+      env: withoutInheritedGitEnv({
+        ...gitEnv,
         HOME: toBashPath(testDir),
         USERPROFILE: testDir,
         CLAUDE_PROJECT_DIR: toBashPath(worktreeDir)
-      }
+      })
     }).toString();
 
     const lines = result.trim().split('\n');

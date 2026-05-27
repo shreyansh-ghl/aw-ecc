@@ -38,8 +38,13 @@ function runTests() {
     assert.strictEqual(normalizeToolHookStdout(undefined), '{}');
   })) passed++; else failed++;
 
-  if (test('valid JSON passes through unchanged', () => {
+  if (test('hook input event JSON becomes {}', () => {
     const input = '{"tool_name":"Read","tool_input":{"path":"a.ts"}}';
+    assert.strictEqual(normalizeToolHookStdout(input), '{}');
+  })) passed++; else failed++;
+
+  if (test('hook response JSON passes through unchanged', () => {
+    const input = '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny"}}';
     assert.strictEqual(normalizeToolHookStdout(input), input);
   })) passed++; else failed++;
 

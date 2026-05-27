@@ -49,6 +49,18 @@ export CLV2_PYTHON_CMD
 CLV2_OBSERVER_PROMPT_PATTERN='Can you confirm|requires permission|Awaiting (user confirmation|confirmation|approval|permission)|confirm I should proceed|once granted access|grant.*access'
 export CLV2_OBSERVER_PROMPT_PATTERN
 
+_clv2_git() {
+  env \
+    -u GIT_DIR \
+    -u GIT_WORK_TREE \
+    -u GIT_INDEX_FILE \
+    -u GIT_PREFIX \
+    -u GIT_COMMON_DIR \
+    -u GIT_OBJECT_DIRECTORY \
+    -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+    git "$@"
+}
+
 _clv2_detect_project() {
   local project_root=""
   local project_name=""
@@ -63,7 +75,7 @@ _clv2_detect_project() {
 
   # 2. Try git repo root from CWD (only if git is available)
   if [ -z "$project_root" ] && command -v git &>/dev/null; then
-    project_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    project_root=$(_clv2_git rev-parse --show-toplevel 2>/dev/null || true)
     if [ -n "$project_root" ]; then
       source_hint="git"
     fi
@@ -86,7 +98,7 @@ _clv2_detect_project() {
   local remote_url=""
   if command -v git &>/dev/null; then
     if [ "$source_hint" = "git" ] || [ -e "${project_root}/.git" ]; then
-      remote_url=$(git -C "$project_root" remote get-url origin 2>/dev/null || true)
+      remote_url=$(_clv2_git -C "$project_root" remote get-url origin 2>/dev/null || true)
     fi
   fi
 

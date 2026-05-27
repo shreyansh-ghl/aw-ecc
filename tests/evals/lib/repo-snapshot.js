@@ -2,7 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+function withoutInheritedGitEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith('GIT_')) {
+      delete env[key];
+    }
+  }
+  return env;
+}
+
 function createRepoSnapshot(repoRoot, ref) {
+  const gitEnv = withoutInheritedGitEnv();
+
   function isWorktree() {
     return ref === 'WORKTREE';
   }
@@ -10,6 +22,7 @@ function createRepoSnapshot(repoRoot, ref) {
   function gitFileExists(filePath) {
     try {
       execFileSync('git', ['-C', repoRoot, 'cat-file', '-e', `${ref}:${filePath}`], {
+        env: gitEnv,
         stdio: 'ignore',
       });
       return true;
@@ -21,6 +34,7 @@ function createRepoSnapshot(repoRoot, ref) {
   function readGitFile(filePath) {
     return execFileSync('git', ['-C', repoRoot, 'show', `${ref}:${filePath}`], {
       encoding: 'utf8',
+      env: gitEnv,
     });
   }
 

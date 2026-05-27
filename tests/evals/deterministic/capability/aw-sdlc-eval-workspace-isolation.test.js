@@ -13,7 +13,13 @@ function writeFile(root, relativePath, content) {
 }
 
 function git(repoRoot, args) {
-  return execFileSync('git', ['-C', repoRoot, ...args], { encoding: 'utf8' }).trim();
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith('GIT_')) {
+      delete env[key];
+    }
+  }
+  return execFileSync('git', ['-C', repoRoot, ...args], { encoding: 'utf8', env }).trim();
 }
 
 function test(name, fn) {

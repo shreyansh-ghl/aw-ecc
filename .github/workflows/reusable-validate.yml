@@ -33,6 +33,9 @@ jobs:
       - name: Validate hooks
         run: node scripts/ci/validate-hooks.js
 
+      - name: Validate version sync
+        run: node scripts/ci/validate-version-sync.js
+
       - name: Validate commands
         run: node scripts/ci/validate-commands.js
 

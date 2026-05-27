@@ -8,5 +8,5 @@ readStdin().then(raw => {
     });
     runExistingHook('post-edit-format.js', JSON.stringify(claudeInput));
   } catch {}
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

@@ -65,8 +65,20 @@ const PROTECTED_FILES = new Set([
  * Exportable run() for in-process execution via run-with-flags.js.
  * Avoids the ~50-100ms spawnSync overhead when available.
  */
+function parseHookInput(input) {
+  if (input && typeof input === 'object') return input;
+  if (typeof input !== 'string' || !input.trim()) return {};
+
+  try {
+    return JSON.parse(input);
+  } catch {
+    return {};
+  }
+}
+
 function run(input) {
-  const filePath = input?.tool_input?.file_path || input?.tool_input?.file || '';
+  const parsedInput = parseHookInput(input);
+  const filePath = parsedInput?.tool_input?.file_path || parsedInput?.tool_input?.file || '';
   if (!filePath) return { exitCode: 0 };
 
   const basename = path.basename(filePath);

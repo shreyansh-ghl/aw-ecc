@@ -86,7 +86,7 @@ async function runTests() {
     ]);
   })) passed++; else failed++;
 
-  if (await asyncTest('skips disabled steps but still passes raw input through', async () => {
+  if (await asyncTest('skips disabled steps and returns no-op JSON', async () => {
     const calls = [];
     const raw = JSON.stringify({ prompt: 'hello' });
     const result = await runCursorAwPhase({
@@ -118,7 +118,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
     assert.deepStrictEqual(calls, [
       {
         type: 'transform',
@@ -171,7 +171,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { prompt: 'hello' } },
       { type: 'enabled', hookId: 'stop:check-console-log' },
@@ -181,7 +181,7 @@ async function runTests() {
     ]);
   })) passed++; else failed++;
 
-  if (await asyncTest('returns the original raw input when JSON parsing fails', async () => {
+  if (await asyncTest('returns no-op JSON when JSON parsing fails', async () => {
     const raw = '{not-json';
     const result = await runCursorAwPhase({
       raw,
@@ -199,7 +199,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
   })) passed++; else failed++;
 
   if (await asyncTest('runs named Cursor AW phases through shared step definitions', async () => {
@@ -226,7 +226,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { prompt: 'hello' } },
       { type: 'enabled', hookId: 'stop:check-console-log' },
@@ -273,7 +273,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { command: 'npm run dev' } },
       { type: 'enabled', hookId: 'pre:bash:dev-server-block' },
@@ -306,7 +306,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
     assert.deepStrictEqual(calls, [
       { type: 'transform', input: { path: 'src/demo.ts' } },
       { type: 'enabled', hookId: 'post:quality-gate' },
