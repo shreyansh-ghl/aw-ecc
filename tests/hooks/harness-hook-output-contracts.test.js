@@ -11,6 +11,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
+const { normalizeToolHookStdout } = require(path.join(REPO_ROOT, 'scripts', 'lib', 'hook-stdout'));
 
 function test(name, fn) {
   try {
@@ -26,6 +27,15 @@ function test(name, fn) {
 
 function runBash(scriptPath, input = '', env = {}, cwd = REPO_ROOT) {
   return spawnSync('bash', [scriptPath], {
+    cwd,
+    input,
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  });
+}
+
+function runNode(scriptPath, args = [], input = '', env = {}, cwd = REPO_ROOT) {
+  return spawnSync('node', [scriptPath, ...args], {
     cwd,
     input,
     encoding: 'utf8',
@@ -269,6 +279,85 @@ process.stdin.on('end', () => {
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
+  })) passed++; else failed++;
+
+  if (test('run-with-flags suppresses pass-through hook input events', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'run-with-flags.js');
+    const raw = JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/users.service.ts' },
+    });
+
+    const result = runNode(
+      scriptPath,
+      ['pre:write:doc-file-warning', 'scripts/hooks/doc-file-warning.js', 'standard,strict'],
+      raw,
+      { CLAUDE_PLUGIN_ROOT: REPO_ROOT }
+    );
+
+    assert.strictEqual(result.status, 0, result.stderr);
+    assert.deepStrictEqual(parseJson(result.stdout), {});
+  })) passed++; else failed++;
+
+  if (test('run-with-flags emits no-op JSON for disabled hooks', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'run-with-flags.js');
+    const raw = JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/users.service.ts' },
+    });
+
+    const result = runNode(
+      scriptPath,
+      ['pre:governance-capture', 'scripts/hooks/governance-capture.js', 'standard,strict'],
+      raw,
+      {
+        CLAUDE_PLUGIN_ROOT: REPO_ROOT,
+        ECC_DISABLED_HOOKS: 'pre:governance-capture',
+      }
+    );
+
+    assert.strictEqual(result.status, 0, result.stderr);
+    assert.deepStrictEqual(parseJson(result.stdout), {});
+  })) passed++; else failed++;
+
+  if (test('run-with-flags preserves config-protection block exit code', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'run-with-flags.js');
+    const raw = JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/eslint.config.js' },
+    });
+
+    const result = runNode(
+      scriptPath,
+      ['pre:config-protection', 'scripts/hooks/config-protection.js', 'standard,strict'],
+      raw,
+      { CLAUDE_PLUGIN_ROOT: REPO_ROOT }
+    );
+
+    assert.strictEqual(result.status, 2);
+    assert.deepStrictEqual(parseJson(result.stdout), {});
+    assert.match(result.stderr, /BLOCKED: Modifying eslint\.config\.js is not allowed/);
+  })) passed++; else failed++;
+
+  if (test('hook stdout normalizer preserves real hook decisions only', () => {
+    const inputEvent = JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Write',
+      tool_input: { file_path: '/tmp/users.service.ts' },
+    });
+    const decision = JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: 'blocked by regression test',
+      },
+    });
+
+    assert.deepStrictEqual(parseJson(normalizeToolHookStdout(inputEvent)), {});
+    assert.deepStrictEqual(parseJson(normalizeToolHookStdout(decision)), parseJson(decision));
   })) passed++; else failed++;
 
   console.log('\nResults:');

@@ -53,11 +53,11 @@ function runTests() {
     assert.deepStrictEqual(JSON.parse(result.stdout.trim()), {});
   })) passed++; else failed++;
 
-  if (test('valid stdin is passed through as JSON', () => {
+  if (test('hook input event stdin emits no-op JSON', () => {
     const input = { tool_name: 'Read', tool_input: { path: '/tmp/x' } };
     const result = runHook(JSON.stringify(input));
     assert.strictEqual(result.status, 0);
-    assert.deepStrictEqual(JSON.parse(result.stdout.trim()), input);
+    assert.deepStrictEqual(JSON.parse(result.stdout.trim()), {});
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
