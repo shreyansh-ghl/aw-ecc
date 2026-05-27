@@ -7,6 +7,16 @@ function sanitizeId(value) {
   return value.replace(/[^a-zA-Z0-9_-]+/g, '-');
 }
 
+function withoutInheritedGitEnv() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.startsWith('GIT_')) {
+      delete env[key];
+    }
+  }
+  return env;
+}
+
 function pruneWorkspaceToGitRoot(workspaceDir) {
   for (const entry of fs.readdirSync(workspaceDir)) {
     if (entry === '.git') {
@@ -18,19 +28,24 @@ function pruneWorkspaceToGitRoot(workspaceDir) {
 }
 
 function checkoutSparseClone({ repoRoot, workspaceDir, overlayPaths }) {
+  const gitEnv = withoutInheritedGitEnv();
   execFileSync('git', ['clone', '--local', '--quiet', '--no-checkout', repoRoot, workspaceDir], {
+    env: gitEnv,
     stdio: 'ignore',
   });
 
   execFileSync('git', ['-C', workspaceDir, 'sparse-checkout', 'init', '--no-cone'], {
+    env: gitEnv,
     stdio: 'ignore',
   });
 
   execFileSync('git', ['-C', workspaceDir, 'sparse-checkout', 'set', '--no-cone', ...overlayPaths], {
+    env: gitEnv,
     stdio: 'ignore',
   });
 
   execFileSync('git', ['-C', workspaceDir, 'checkout', '--quiet', 'HEAD'], {
+    env: gitEnv,
     stdio: 'ignore',
   });
 }
@@ -47,8 +62,10 @@ function createEvalWorkspace({ repoRoot, snapshot, caseId, overlayPaths, workspa
   let cleanup = () => fs.rmSync(workspaceDir, { recursive: true, force: true });
 
   if (effectiveMode === 'git-worktree') {
+    const gitEnv = withoutInheritedGitEnv();
     const worktreeRef = snapshot.isWorktree() ? 'HEAD' : snapshot.ref;
     execFileSync('git', ['-C', repoRoot, 'worktree', 'add', '--detach', workspaceDir, worktreeRef], {
+      env: gitEnv,
       stdio: 'ignore',
     });
 
@@ -59,6 +76,7 @@ function createEvalWorkspace({ repoRoot, snapshot, caseId, overlayPaths, workspa
     cleanup = () => {
       try {
         execFileSync('git', ['-C', repoRoot, 'worktree', 'remove', '--force', workspaceDir], {
+          env: gitEnv,
           stdio: 'ignore',
         });
       } catch {
@@ -72,6 +90,7 @@ function createEvalWorkspace({ repoRoot, snapshot, caseId, overlayPaths, workspa
     cleanup = () => fs.rmSync(workspaceDir, { recursive: true, force: true });
   } else if (effectiveMode === 'git-init') {
     execFileSync('git', ['-c', 'init.defaultBranch=main', 'init', '--quiet', workspaceDir], {
+      env: withoutInheritedGitEnv(),
       stdio: 'ignore',
     });
 
