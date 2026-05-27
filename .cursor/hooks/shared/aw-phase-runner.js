@@ -39,7 +39,9 @@ function formatCursorSessionStartOutput(stdout, fallbackRaw) {
     if (typeof additionalContext === 'string' && additionalContext.trim() !== '') {
       return `${JSON.stringify({ additional_context: additionalContext }, null, 2)}\n`;
     }
-  } catch {}
+  } catch (_error) {
+    return fallbackRaw;
+  }
 
   return fallbackRaw;
 }

@@ -21,10 +21,11 @@ For non-trivial work, `aw-plan` should behave like a small internal planning gra
 
 - the user needs a PRD, design, spec, or task breakdown
 - approved work is missing a planning artifact needed by build
+- approved planning Markdown exists, but required Echo Direct HTML companions or remote links are missing, stale, local-only, blocked, or fallback-only
 - a request is too large, too fuzzy, or too risky to execute directly
 - `aw-yolo` needs to move work into a build-ready state
 
-**When NOT to use:** when the request is already build-ready, when the issue is really investigation rather than planning, or when the user is only asking for test, review, deploy, or ship work.
+**When NOT to use:** when the request is already build-ready and the Echo Direct HTML plus remote docs gate is complete, when the issue is really investigation rather than planning, or when the user is only asking for test, review, deploy, or ship work.
 
 ## Workflow
 
@@ -38,10 +39,13 @@ This legacy heading maps to the detailed planning process below.
 2. Identify the feature and current artifact state.
    Infer or honor the feature slug.
    Detect which planning artifacts already exist and which are actually missing.
+   Detect whether expected `.html` companions and Echo Direct-returned remote links are complete; if not, keep `/aw:plan` active for repair even when Markdown is `ready_for_build`.
 3. Understand the problem before planning it.
    In `product` mode, start by having a conversation with the user. Think of it like a PM sitting down with a stakeholder — ask about scope, target users, success criteria, edge cases, and constraints. Listen to the answers. Follow up on anything vague. Keep going until the problem is genuinely clear. Only then move to writing artifacts.
    In other modes, decide whether the request is already clear enough for direct planning or needs discovery first.
    For raw concepts or product-shaping work, load `idea-refine` before freezing the direction.
+   Always route planning intake through `grill-with-docs` as the Decision Confidence Gate before writing artifacts.
+   Use adaptive depth: `clear` means state assumptions and proceed, `confirm` means ask one confirmation question, and `grill` means run the full one-question-at-a-time interview.
 4. Plan in dependency order.
    Perform an explicit architecture review before freezing the technical path.
    Name the key assumptions, constraints, risks, and mitigations instead of leaving them implied.
@@ -51,6 +55,7 @@ This legacy heading maps to the detailed planning process below.
    For major architectural or public-behavior decisions, load `documentation-and-adrs`.
 5. Slice vertically where possible.
    Prefer end-to-end feature slices and concrete checkpoints over horizontal batch plans.
+   When a task plan needs a slice model before `tasks.md`, load `to-issues` and feed its vertical slices into `aw-tasks`; do not publish remote tracker issues unless the user explicitly requests that.
 6. Write only the missing artifacts.
    When technical uncertainty exists, route through `aw-spec` before `aw-tasks`.
    Do not let task planning invent or silently repair an unresolved contract.
@@ -59,7 +64,59 @@ This legacy heading maps to the detailed planning process below.
    Run the full planning self-review: spec coverage, placeholder scan, naming and type consistency, assumptions and constraints, and execution handoff quality.
    Then update `.aw_docs/features/<feature_slug>/state.json`.
 8. Stop after planning.
-   Recommend the next stage without drifting into build, test, or deploy.
+   Recommend the next stage without drifting into build, test, or deploy only after the Markdown artifacts, HTML companions, and remote docs handoff are complete or a concrete blocker is recorded.
+
+## Performance-Bounded Planning Mode
+
+Use this mode when the user, benchmark harness, or SDLC caller gives an
+explicit time budget such as "under 3 minutes", asks to optimize Echo Direct
+planning latency, or requests repeated Codex CLI plan generation with remote
+HTML links.
+
+In this mode, preserve quality but change the order of work:
+
+1. Freeze the feature slug, target repo, planning mode, and accepted assumptions
+   before any broad exploration.
+2. Use a bounded evidence packet instead of open-ended discovery:
+   - read existing state for the target feature if it exists
+   - read the smallest known target files or existing AWDocs plan files
+   - read at most one focused test file when tests shape the plan
+   - avoid broad `rg`, broad `find`, giant `git status`, `.aw_docs/back-tests`,
+     `.aw_docs/runs`, `.aw_tmp`, generated bundles, and unrelated repos
+   - run graph or repo-map queries only when the target surface is unknown
+   - do not try missing repo-local skill paths; when repo-local AW skill files
+     are absent, use the installed global skill path or the already-loaded skill
+     body instead of spending tool calls on failed local reads
+   - if a caller provides a preloaded evidence packet, treat it as sufficient
+     unless a single exact implementation line is needed
+3. For a full planning request, write the complete canonical packet first:
+   `prd.md`, `design.md`, `spec.md`, `tasks.md`, and `state.json`. Do not leave
+   the packet at only `spec.md`/`tasks.md` unless the user explicitly requested
+   technical-only mode.
+   Begin writing before the exploration budget expands: if the work is still
+   clear after the bounded evidence packet, create the feature directory and
+   canonical Markdown before reading more context.
+4. Immediately run the Echo Direct packet handoff after Markdown is written.
+   Generate all required sidecars together from the same normalized source
+   bundle instead of reloading the design references for each file.
+   Create `state.json` as soon as the Markdown packet exists, before writing
+   HTML, with the expected `html_companion_artifacts` entries marked pending.
+   Then update those same entries after generation and publish. Never leave a
+   planned feature folder with Markdown/HTML but no `state.json`.
+5. Run `platform-core:echo-direct` as the same-turn HTML generation path.
+   Treat this as the in-process execution of the Echo communication contract,
+   not as a fallback. Record successful output as `status: generated`, `owner:
+   platform-core:echo-direct`, `execution_mode: skill`,
+   and `runner: platform-core:echo-direct`.
+6. Run one scoped publish command for the feature folder, then return the
+   absolute TeamOfOne links and compact GitHub references. Do not do a broad
+   post-publish diff or unrelated workspace review before returning links.
+   Once links are recorded, final immediately in a compact handoff instead of
+   continuing analysis.
+
+If this mode cannot publish within the time budget, it is still better to
+return generated colocated HTML plus a concrete publish blocker than to spend
+the whole turn on exploration and leave `html_companion_artifacts` pending.
 
 ## Internal Skill Graph
 
@@ -67,11 +124,41 @@ Use the smallest correct internal route:
 
 - raw idea or under-shaped concept -> `idea-refine`, then `aw-brainstorm` when deeper repo-aware exploration is still needed
 - fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`
+- domain-language-heavy or edge-case-heavy planning -> `grill-with-docs`
+- product/full mode or missing product assumptions -> `to-prd`
 - approved direction but missing technical contract -> `aw-spec`
+- PRD/spec needs implementation-ready vertical slices -> `to-issues`, then `aw-tasks`
 - approved spec but missing execution recipe -> `aw-tasks`
-- already execution-ready tasks -> stop and recommend `aw-build`
+- already execution-ready tasks -> stop and recommend `aw-build` when Echo Direct HTML and remote links are complete
+- already execution-ready tasks with missing, stale, fallback-only, local-only, or unpublished HTML -> run the Echo repair handoff before recommending `aw-build`
 
 Do not collapse all of these responsibilities back into one vague planning pass.
+
+## Decision Confidence Gate
+
+Before writing planning artifacts, load `grill-with-docs` and use its returned depth to decide the next move.
+
+- If `grill-with-docs` returns `clear`, state the key assumptions it accepted and proceed.
+- If it returns `confirm`, ask its one recommended confirmation question and wait for the answer.
+- If it returns `grill`, show its numbered grill mode picker before freezing the plan:
+  1. Auto-answer with recommended defaults (Recommended)
+  2. Quick grill
+  3. Deep grill
+- Run the full one-question-at-a-time interview only when the user selects `3`, says "deep grill", or explicitly asks to be grilled deeply.
+
+Treat the request as grill-candidate depth when any trigger is present:
+
+- deadline, launch, production, customer-visible, or executive/high-impact wording
+- staging vs production, partial vs full rollout, rollback posture, or ownership is unclear
+- acceptance criteria are not measurable enough to prove the plan is done
+- terms are overloaded or likely to conflict with `CONTEXT.md`, ADRs, AW docs, repo docs, or code
+- the ask spans multiple repos, teams, services, environments, or external systems
+- Auth, DNS, CI/CD, permissions, tenant isolation, security, data migration, or public contract decisions are involved
+- existing AW docs or repo evidence can answer facts but not the user's intent, risk tolerance, or business priority
+
+Do not skip `grill-with-docs` only because code or PR evidence exists. Explore facts locally when possible, then ask the user only for the remaining decision.
+Do not let `/aw:plan` choose a shortcut before `grill-with-docs` runs.
+Do not choose deep grill implicitly; the user must select `3` or explicitly ask for deep grill.
 
 ## Planning Modes
 
@@ -96,26 +183,25 @@ Do not collapse all of these responsibilities back into one vague planning pass.
 - do not write planning artifacts to `docs/plans/`
 - do not create random filenames
 - do not write implementation code
+- do not require `prd.md` for a technical request that is already clear enough for `spec.md`
+- do not publish tracker issues from `to-issues` unless explicitly requested
 
 ## Human HTML Companion
 
-Markdown planning artifacts remain canonical for agents.
-When planning writes or materially updates `prd.md`, `design.md`, `spec.md`, or `tasks.md`, also create or refresh a human-readable HTML companion unless docs output mode resolves to Markdown-only.
+Markdown `prd.md`, `design.md`, `spec.md`, or `tasks.md` remains canonical for agents.
+When `aw-plan` writes or materially updates planning Markdown, HTML sidecars are required in `dual` and `html` output modes, not advisory metadata. Use `platform-core:echo-direct` directly to generate or refresh `prd.html`, `design.html`, `spec.html`, or `tasks.html` beside the matching source with the `prd`, `technical-spec`, `implementation-plan`, or `impact-analysis-report` based on the dominant artifact profile.
 
-Delegate to the `aw:echo` subagent for the companion instead of hand-rolling stage-local HTML.
-`aw:echo` is not a slash command or direct tool. In `dual` or `html` mode, this stage contract authorizes a single `aw:echo` subagent; do not skip HTML only because no direct command is available.
-Spawn one background `aw:echo` subagent. Record `queued` or `generating` plus `run_ref` when available, then return the Markdown plan unless the user asks to wait.
-Resolve output mode in the order defined by that skill: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+Resolve docs output mode in this order: explicit user or session request, stage-local request, `.aw_docs/config.json` `docs.outputMode`, `AW_DOCS_OUTPUT_MODE`, then default `dual`.
+- `dual` mode keeps Markdown canonical and requires the HTML companion.
+- `html` mode requires the HTML companion and still preserves any canonical Markdown the stage must write.
+- explicit Markdown-only mode skips HTML and records `status: skipped` with `skip_reason: explicit_markdown_only`.
+
+Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`. In `dual` or `html` mode, the stage is not complete until the skill has generated the sidecar or recorded a concrete blocker. In explicit Markdown-only mode, do not generate HTML.
+
+Pass every canonical source path that shaped each companion, plus the feature slug, output mode, profile, colocated HTML path, state path, and publish intent.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.
 
 Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
-Choose the smallest correct profile for the dominant planning output:
-
-- `prd` for product requirements
-- `technical-spec` for technical `spec.md` or architecture-heavy `design.md`
-- `implementation-plan` for `tasks.md` or full planning packets
-- `impact-analysis-report` when the plan is primarily blast radius, impact, or tradeoff analysis
-
-Pass every canonical source path that shaped each companion, then record colocated sidecars in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
 
 ## Plan Document Template
 
@@ -343,6 +429,7 @@ When in doubt, sequence the work and leave `parallel_candidate` off.
 | "The tasks are obvious, so I don’t need to write them down." | Written plans expose hidden dependencies and missing checks. |
 | "A big batch plan is faster." | Thin vertical slices are easier to verify, review, and roll back. |
 | "Planning should stay abstract." | Abstract plans force the next stage to re-plan the work. |
+| "The plan exists, so I can skip Echo." | A plan is not handoff-ready until the human HTML companion and remote links are complete or explicitly blocked. |
 
 ## Red Flags
 
@@ -351,6 +438,7 @@ When in doubt, sequence the work and leave `parallel_candidate` off.
 - no checkpoints exist between meaningful phases
 - multiple independent subsystems are bundled into one undifferentiated task list
 - placeholders like `TODO`, `TBD`, or "handle edge cases" remain in the artifacts
+- the final response says the plan already exists while `state.json` still records fallback, local-only, stale, blocked, or unpublished HTML companions
 
 ## Verification
 
@@ -367,8 +455,9 @@ Before ending the planning stage:
 5. scan for placeholders and vague steps
 6. check that file paths, type names, helper names, and commands stay consistent
 7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
+8. confirm `html_companion_artifacts` are not fallback/local-only/stale when output mode is `dual` or `html`, and confirm Echo Direct-returned remote links are present or a concrete blocker is recorded
 8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
-9. confirm the HTML companion was generated, skipped by output mode, or blocked with a recorded reason
+9. confirm every written planning Markdown artifact has a colocated HTML sidecar, or the user explicitly requested Markdown-only
 
 Treat this as the planning verification pass.
 If the plan cannot survive this self-review, it is not ready for execution handoff.
@@ -407,6 +496,12 @@ When `tasks.md` is ready:
 - `html_companion_artifacts`
 - recommended next commands
 
+## Echo Direct Human Docs Handoff
+
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions.
+
+Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned TeamOfOne/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute TeamOfOne URLs (no Markdown link syntax around the TeamOfOne URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `TeamOfOne: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render TeamOfOne as `[TeamOfOne](...)`, `[Spec TeamOfOne](...)`, or any other Markdown link label; never hide the TeamOfOne URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
+
 ## Final Output Shape
 
 Always end with:
@@ -419,5 +514,6 @@ Always end with:
 - `Execution Readiness`
 - `Execution Mode`
 - `HTML Companion`
+- `Remote Docs`
 - `Missing`
 - `Next`

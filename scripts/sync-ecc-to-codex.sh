@@ -28,6 +28,8 @@ CONFIG_FILE="$CODEX_HOME/config.toml"
 AGENTS_FILE="$CODEX_HOME/AGENTS.md"
 AGENTS_ROOT_SRC="$REPO_ROOT/AGENTS.md"
 AGENTS_CODEX_SUPP_SRC="$REPO_ROOT/.codex/AGENTS.md"
+CODEX_AGENTS_SRC="$REPO_ROOT/.codex/agents"
+CODEX_AGENTS_DEST="$CODEX_HOME/agents"
 SKILLS_SRC="$REPO_ROOT/.agents/skills"
 AW_SKILLS_SRC="$REPO_ROOT/skills"
 SKILLS_DEST="$CODEX_HOME/skills"
@@ -40,6 +42,8 @@ HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks.json"
 HOOKS_DIR_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks"
 HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
 HOOKS_DIR_DEST="$CODEX_HOME/hooks"
+SHARED_HOOKS_SRC="$REPO_ROOT/scripts/hooks"
+AW_ECC_HOOKS_DEST="$HOME/.aw-ecc/scripts/hooks"
 AW_CODEX_SKILLS=(
   "using-aw-skills"
   "aw-plan"
@@ -53,6 +57,7 @@ AW_CODEX_SKILLS=(
   "aw-deploy"
   "aw-ship"
   "aw-brainstorm"
+  "grill-with-docs"
   "aw-adk"
   "aw-publish"
   "aw-debug"
@@ -199,9 +204,11 @@ resolve_prompt_name() {
 }
 
 MCP_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-mcp-config.js"
+AGENT_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-agent-config.js"
 
 require_path "$REPO_ROOT/AGENTS.md" "ECC AGENTS.md"
 require_path "$AGENTS_CODEX_SUPP_SRC" "ECC Codex AGENTS supplement"
+require_path "$CODEX_AGENTS_SRC" "ECC Codex agents directory"
 require_path "$SKILLS_SRC" "ECC skills directory"
 require_path "$AW_SKILLS_SRC" "ECC AW skills directory"
 require_path "$PROMPTS_SRC" "ECC commands directory"
@@ -210,6 +217,7 @@ require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
+require_path "$AGENT_MERGE_SCRIPT" "ECC Codex agent merge script"
 require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
 require_path "$HOOKS_DIR_SRC" "ECC Codex hooks directory"
 
@@ -233,6 +241,9 @@ if [[ -f "$HOOKS_JSON_DEST" ]]; then
 fi
 if [[ -d "$HOOKS_DIR_DEST" ]]; then
   run_or_echo "cp -R \"$HOOKS_DIR_DEST\" \"$BACKUP_DIR/hooks\""
+fi
+if [[ -d "$CODEX_AGENTS_DEST" ]]; then
+  run_or_echo "cp -R \"$CODEX_AGENTS_DEST\" \"$BACKUP_DIR/agents\""
 fi
 
 ECC_BEGIN_MARKER="<!-- BEGIN ECC -->"
@@ -312,6 +323,16 @@ else
     } >> "$AGENTS_FILE"
   fi
 fi
+
+log "Installing Codex multi-agent role configs"
+run_or_echo "mkdir -p \"$CODEX_AGENTS_DEST\""
+codex_agent_count=0
+for agent_config in "$CODEX_AGENTS_SRC"/*.toml; do
+  [[ -f "$agent_config" ]] || continue
+  agent_file="$(basename "$agent_config")"
+  run_or_echo "cp \"$agent_config\" \"$CODEX_AGENTS_DEST/$agent_file\""
+  codex_agent_count=$((codex_agent_count + 1))
+done
 
 log "Syncing ECC Codex skills"
 run_or_echo "mkdir -p \"$SKILLS_DEST\""
@@ -559,6 +580,13 @@ else
   node "$MCP_MERGE_SCRIPT" "$CONFIG_FILE" $UPDATE_MCP
 fi
 
+log "Merging ECC Codex agent roles into $CONFIG_FILE"
+if [[ "$MODE" == "dry-run" ]]; then
+  node "$AGENT_MERGE_SCRIPT" "$CONFIG_FILE" "$REPO_ROOT/.codex/config.toml" --dry-run
+else
+  node "$AGENT_MERGE_SCRIPT" "$CONFIG_FILE" "$REPO_ROOT/.codex/config.toml"
+fi
+
 log "Installing global git safety hooks"
 if [[ "$MODE" == "dry-run" ]]; then
   "$HOOKS_INSTALLER" --dry-run
@@ -584,6 +612,17 @@ else
   run_or_echo "chmod +x \"$HOOKS_DIR_DEST\"/*.sh"
 fi
 
+log "Installing shared AW prompt hook runtime"
+if [[ "$MODE" == "dry-run" ]]; then
+  printf '[dry-run] mkdir -p "%s/shared"\n' "$AW_ECC_HOOKS_DEST"
+  printf '[dry-run] cp "%s/session-start-rules-context.sh" "%s/session-start-rules-context.sh"\n' "$SHARED_HOOKS_SRC" "$AW_ECC_HOOKS_DEST"
+  printf '[dry-run] cp -R "%s/shared"/. "%s/shared"/\n' "$SHARED_HOOKS_SRC" "$AW_ECC_HOOKS_DEST"
+else
+  run_or_echo "mkdir -p \"$AW_ECC_HOOKS_DEST/shared\""
+  run_or_echo "cp \"$SHARED_HOOKS_SRC/session-start-rules-context.sh\" \"$AW_ECC_HOOKS_DEST/session-start-rules-context.sh\""
+  run_or_echo "cp -R \"$SHARED_HOOKS_SRC/shared\"/. \"$AW_ECC_HOOKS_DEST/shared\"/"
+fi
+
 log "Running global regression sanity check"
 if [[ "$MODE" == "dry-run" ]]; then
   printf '[dry-run] %s\n' "$SANITY_CHECKER"
@@ -594,6 +633,7 @@ fi
 log "Sync complete"
 log "Backup saved at: $BACKUP_DIR"
 log "Skills synced: $skills_count"
+log "Codex agent role configs synced: $codex_agent_count"
 log "Prompts generated: $((prompt_count + extension_count)) (commands: $prompt_count, extensions: $extension_count)"
 
 if [[ "$MODE" == "apply" ]]; then

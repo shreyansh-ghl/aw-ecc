@@ -53,7 +53,8 @@ If the user asked for one stage, stay in that stage.
 4. Preserve stage artifacts.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
-   When a delegated stage writes a canonical Markdown artifact, preserve that stage's `aw:echo` obligation too: spawn one background `aw:echo` subagent for the `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion in `dual` or `html` mode, record `queued` or `generating` with `run_ref` when available, or record the Markdown-only/blocker reason in `state.json`.
+   HTML sidecars are required whenever the delegated stage writes a canonical Markdown artifact.
+   When a delegated stage writes a canonical Markdown artifact, preserve that stage's Echo Direct obligation too: in `dual` and `html` modes, run `platform-core:echo-direct` directly to produce the colocated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion before the stage handoff. Do not use a subagent for HTML generation, and do not hand-roll HTML outside the skill contract. Record successful output as `status: generated`, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, and remote links when available. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair. In explicit Markdown-only mode, skip HTML and record the skip.
 5. Respect stage boundaries.
    `aw-yolo` coordinates stages, but it does not collapse them together.
    Build still cannot self-certify.
@@ -74,6 +75,12 @@ If the user asked for one stage, stay in that stage.
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
 
+## Echo Direct Human Docs Handoff
+
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions.
+
+Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned TeamOfOne/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute TeamOfOne URLs (no Markdown link syntax around the TeamOfOne URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `TeamOfOne: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render TeamOfOne as `[TeamOfOne](...)`, `[Spec TeamOfOne](...)`, or any other Markdown link label; never hide the TeamOfOne URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
+
 ## Final Output Shape
 
 Always end with:
@@ -82,6 +89,7 @@ Always end with:
 - `Completed Stages`
 - `Artifacts Written`
 - `HTML Companions`
+- `Remote Docs`
 - `Blockers`
 - `Recommended Next`
 

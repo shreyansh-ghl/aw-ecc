@@ -75,14 +75,17 @@ Capture at least:
 ## Human HTML Companion
 
 Markdown `spec.md` remains canonical for agents.
-When this helper writes or materially updates `spec.md`, also create or refresh `.aw_docs/features/<feature_slug>/spec.html` unless docs output mode resolves to Markdown-only.
+When `aw-spec` writes or materially updates `spec.md`, HTML sidecars are required in `dual` and `html` output modes, not advisory metadata. Use `platform-core:echo-direct` directly to generate or refresh `.aw_docs/features/<feature_slug>/spec.html` with the `technical-spec` profile.
 
-Delegate to the `aw:echo` subagent with the `technical-spec` profile.
-Resolve output mode as: explicit user or session request -> stage-local request -> `.aw_docs/config.json` `docs.outputMode` -> `AW_DOCS_OUTPUT_MODE` -> default `dual`.
+Resolve docs output mode in this order: explicit user or session request, stage-local request, `.aw_docs/config.json` `docs.outputMode`, `AW_DOCS_OUTPUT_MODE`, then default `dual`.
+- `dual` mode keeps Markdown canonical and requires the HTML companion.
+- `html` mode requires the HTML companion and still preserves any canonical Markdown the stage must write.
+- explicit Markdown-only mode skips HTML and records `status: skipped` with `skip_reason: explicit_markdown_only`.
 
-Pass the approved direction, `spec.md`, relevant source paths, risks, alternatives, interfaces, rollout constraints, and validation strategy as the source bundle.
-Record the colocated sidecar in `state.json` `html_companion_artifacts` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Spawn one background `aw:echo` subagent, record `queued` or `generating`, and return the canonical spec unless the user asks to wait.
+Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`. In `dual` or `html` mode, the stage is not complete until the skill has generated the sidecar or recorded a concrete blocker. In explicit Markdown-only mode, do not generate HTML.
+
+Pass the problem statement, existing patterns, interfaces, decisions, risks, verification targets, and file scope as the source bundle.
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.
 
 ## Common Rationalizations
 
@@ -113,7 +116,7 @@ Before handoff, run this inline review:
 6. alternatives and decision-rationale check
 7. testing and operations completeness check
 8. ambiguity check
-9. HTML companion generated, skipped by output mode, or blocked with a recorded reason
+9. HTML companion file exists, or the user explicitly requested Markdown-only
 
 Fix issues inline instead of carrying them into task planning.
 
@@ -124,6 +127,12 @@ Fix issues inline instead of carrying them into task planning.
 - do not create `tasks.md`
 - do not leave contradictory interfaces, names, or file boundaries unresolved
 - do not treat a multi-subsystem request as one spec when it should be decomposed
+
+## Echo Direct Human Docs Handoff
+
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions.
+
+Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned TeamOfOne/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute TeamOfOne URLs (no Markdown link syntax around the TeamOfOne URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `TeamOfOne: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render TeamOfOne as `[TeamOfOne](...)`, `[Spec TeamOfOne](...)`, or any other Markdown link label; never hide the TeamOfOne URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
 
 ## Final Output Shape
 
@@ -138,5 +147,6 @@ Always end with:
 - `Assumptions & Constraints`
 - `Acceptance Criteria`
 - `HTML Companion`
+- `Remote Docs`
 - `Open Approval Needs`
 - `Recommended Next`

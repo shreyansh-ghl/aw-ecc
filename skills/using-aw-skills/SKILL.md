@@ -12,6 +12,7 @@ Router for the AW SDLC. MANDATORY on every non-trivial request and re-applied on
 
 1. **Classify.** Answer out loud:
    - Approved plan exists at `.aw_docs/features/<slug>/`? (if no → likely plan-first)
+   - Approved plan has complete Echo Direct HTML companions and remote links when docs mode is `dual` or `html`? (if no -> `/aw:plan` repair before build)
    - Bug / alert / unclear failure? (→ `/aw:investigate`)
    - Change touches any plan-first trigger (see list below)? (→ `/aw:plan`, no exceptions)
    - Crosses >1 file AND >1 concern? (→ `/aw:plan`)
@@ -48,12 +49,14 @@ Approved plan for this exact work?
 ├── NO → Bug/alert/unclear failure?
 │         ├── YES → /aw:investigate
 │         └── NO  → /aw:plan   ← DEFAULT for anything new
-└── YES → Implemented & needs test/review?
-          ├── YES → /aw:test or /aw:review
-          └── NO  → Deploy/release action?
-                    ├── YES → Single release outcome? → /aw:deploy
-                    │         Launch readiness/rollout/rollback? → /aw:ship
-                    └── NO  → /aw:build
+└── YES → Echo Direct HTML companions and remote links complete?
+          ├── NO  → /aw:plan   ← repair human docs handoff
+          └── YES → Implemented & needs test/review?
+                    ├── YES → /aw:test or /aw:review
+                    └── NO  → Deploy/release action?
+                              ├── YES → Single release outcome? → /aw:deploy
+                              │         Launch readiness/rollout/rollback? → /aw:ship
+                              └── NO  → /aw:build
 ```
 
 ## Plan-First Triggers (exhaustive — ANY of these → `/aw:plan`)
@@ -64,6 +67,7 @@ Approved plan for this exact work?
 - **router / routing rules / skill orchestration** changes
 - **new/modified skills, agents, commands, rule-manifest entries** (exception: if the user wants to create or edit an agent, skill, command, rule, or eval — the files in `.aw/.aw_registry/` that define AI behavior — that's `/aw:adk`. The gate above catches this before you get here.)
 - **`state.json` / `verification.md` / review-or-build contract** changes
+- missing, stale, local-only, fallback-only (including legacy uncontrolled fallback status), blocked, or unpublished Echo Direct HTML companions or remote links for an existing AW artifact folder
 - **cross-registry propagation** (mirroring into platform-core, GitHub→local, etc.)
 - **model assignment changes across multiple agents**
 - security-sensitive work (auth, tokens, permissions, tenant scoping)
@@ -186,6 +190,19 @@ If there is even a small chance that an AW process skill, stage skill, or requir
 ## Cross-Cutting Engineering Skills
 
 Load across stages when context applies: `incremental-implementation`, `context-engineering`, `api-and-interface-design`, `git-workflow-and-versioning`, `ci-cd-and-automation`, `deprecation-and-migration`, `documentation-and-adrs`, `frontend-ui-engineering`, `browser-testing-with-devtools`, `idea-refine`, `aw-adk`
+
+## Cross-Cutting Deepening Skills
+
+| Skill | Load when |
+|---|---|
+| `grill-with-docs` | Inside every `/aw:plan` as the Decision Confidence Gate. It classifies planning intake as `clear`, `confirm`, or `grill`: clear low-risk plans state assumptions and proceed, mostly-clear plans ask one confirmation question, and high-impact/fuzzy/hidden-decision/contradictory-docs plans show a numbered mode picker: `1` auto-answer recommended defaults, `2` quick grill, `3` deep grill. Deep grill runs the full one-question-at-a-time interview only when the user selects `3` or explicitly asks for it. |
+| `to-prd` | Inside `/aw:plan` for product/full mode or when missing product assumptions must be frozen into `prd.md`; do not require it for already-clear technical plans. |
+| `to-issues` | Inside `/aw:plan` before `tasks.md` when a PRD/spec needs vertical tracer-bullet slices; remote issue publishing requires an explicit user request. |
+| `tdd` | Inside `/aw:build` as a companion to `tdd-workflow` when behavior-test, mocking, or tracer-bullet judgement needs more depth. |
+| `diagnose` | Inside `/aw:investigate` when the failure is unclear, hard to reproduce, performance-related, or vulnerable to speculative patching. |
+| `zoom-out` | Any stage when unfamiliar code needs a higher-level module map before local edits or review. |
+| `improve-codebase-architecture` | Standalone or before planning/building architecture-heavy changes where shallow modules, bad seams, or poor testability are the core concern. |
+| `grill-me` | Product, design, architecture, or decision review when the user explicitly wants to be questioned before committing to a path. |
 
 ## Internal Helpers (not public routes)
 
