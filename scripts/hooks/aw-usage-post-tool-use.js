@@ -124,7 +124,7 @@ function normalizeToolResult(input) {
     toolOutput.exit_code,
     toolOutput.exitCode,
   ].find(value => value !== undefined && value !== null && value !== '');
-  const messageParts = [
+  const rawMessage = [
     toolResponse.stderr,
     toolOutput.stderr,
     toolResponse.output,
@@ -133,12 +133,24 @@ function normalizeToolResult(input) {
     typeof rawToolOutput === 'string' ? rawToolOutput : '',
     input?.stderr,
     input?.output,
-  ].filter(value => typeof value === 'string' && value.trim());
+  ].filter(value => typeof value === 'string' && value.trim()).join('\n');
 
   return {
     exitCode: exitCode === undefined ? null : Number(exitCode),
-    errorMessage: messageParts.join('\n').slice(0, 500),
+    rawErrorMessage: rawMessage,
+    errorMessage: classifyFailureMessage(rawMessage),
   };
+}
+
+function classifyFailureMessage(errorMessage) {
+  if (typeof errorMessage !== 'string' || !errorMessage.trim()) return 'tool_failed';
+  if (/\bNo such file or directory\b/i.test(errorMessage)) return 'no_such_file_or_directory';
+  if (/\bPermission denied\b/i.test(errorMessage)) return 'permission_denied';
+  if (/\bOperation not permitted\b/i.test(errorMessage)) return 'operation_not_permitted';
+  if (/\bcommand not found\b/i.test(errorMessage)) return 'command_not_found';
+  if (/\bcannot access\b/i.test(errorMessage)) return 'cannot_access_path';
+  if (/\bis a directory\b/i.test(errorMessage)) return 'path_is_directory';
+  return 'tool_failed';
 }
 
 function isExplicitFailureExitCode(exitCode) {
@@ -203,7 +215,7 @@ function collectPostToolUseEvents(input, options = {}) {
 
   const toolResult = normalizeToolResult(input);
   if (isExplicitFailureExitCode(toolResult.exitCode)
-    || inferShellFailureFromMessage(toolName, toolResult.errorMessage)) {
+    || inferShellFailureFromMessage(toolName, toolResult.rawErrorMessage)) {
     const payload = {
       tool_name: toolName || 'unknown',
       error_message: toolResult.errorMessage,

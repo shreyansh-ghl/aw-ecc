@@ -74,7 +74,7 @@ function runTests() {
     assert.ok(toolError, 'Expected tool_error event');
     assert.strictEqual(toolError.payload.tool_name, 'Bash');
     assert.strictEqual(toolError.payload.failure_type, 'error');
-    assert.match(toolError.payload.error_message, /No such file or directory/);
+    assert.strictEqual(toolError.payload.error_message, 'no_such_file_or_directory');
   }) ? passed++ : failed++);
 
   (test('Codex Bash failure with JSON-string tool_response emits tool_error', () => {
@@ -87,7 +87,7 @@ function runTests() {
     const toolError = events.find(event => event.eventType === 'tool_error');
     assert.ok(toolError, 'Expected tool_error event');
     assert.strictEqual(toolError.payload.exit_code, 1);
-    assert.match(toolError.payload.error_message, /No such file or directory/);
+    assert.strictEqual(toolError.payload.error_message, 'no_such_file_or_directory');
   }) ? passed++ : failed++);
 
   (test('Codex Bash failure with plain-string tool_response emits tool_error', () => {
@@ -100,7 +100,7 @@ function runTests() {
     const toolError = events.find(event => event.eventType === 'tool_error');
     assert.ok(toolError, 'Expected tool_error event');
     assert.strictEqual(toolError.payload.exit_code, undefined);
-    assert.match(toolError.payload.error_message, /No such file or directory/);
+    assert.strictEqual(toolError.payload.error_message, 'no_such_file_or_directory');
   }) ? passed++ : failed++);
 
   (test('Codex Bash SKILL.md fallback is suppressed when prompt-submit already captured the slash command', () => {
@@ -156,13 +156,31 @@ function runTests() {
     );
   }) ? passed++ : failed++);
 
-  (test('normalizeToolResult preserves output from JSON-string tool_response', () => {
+  (test('normalizeToolResult keeps raw output internal and exposes a safe class', () => {
     const result = normalizeToolResult({
-      tool_response: '{"exitCode":2,"output":"permission denied"}',
+      tool_response: '{"exitCode":2,"output":"permission denied for sk-live-secret"}',
     });
 
     assert.strictEqual(result.exitCode, 2);
-    assert.match(result.errorMessage, /permission denied/);
+    assert.strictEqual(result.errorMessage, 'permission_denied');
+    assert.match(result.rawErrorMessage, /sk-live-secret/);
+  }) ? passed++ : failed++);
+
+  (test('tool_error payload redacts raw stderr and stdout before telemetry emit', () => {
+    const events = collectPostToolUseEvents({
+      tool_name: 'Bash',
+      tool_input: { command: 'cat ./secret.txt' },
+      tool_response: {
+        exit_code: 1,
+        stderr: 'Permission denied while reading sk-live-abc123 for customer@example.com',
+      },
+    });
+
+    const toolError = events.find(event => event.eventType === 'tool_error');
+    assert.ok(toolError, 'Expected tool_error event');
+    assert.strictEqual(toolError.payload.error_message, 'permission_denied');
+    assert.doesNotMatch(JSON.stringify(toolError.payload), /sk-live-abc123/);
+    assert.doesNotMatch(JSON.stringify(toolError.payload), /customer@example\.com/);
   }) ? passed++ : failed++);
 
   (test('detectTestFramework matches jest/vitest spec/test files', () => {
