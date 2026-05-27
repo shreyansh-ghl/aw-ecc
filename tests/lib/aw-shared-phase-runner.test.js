@@ -127,7 +127,7 @@ async function runTests() {
     ]);
   })) passed++; else failed++;
 
-  if (await asyncTest('returns the original input when the payload is not valid JSON', async () => {
+  if (await asyncTest('returns no-op JSON when the payload is not valid JSON', async () => {
     const raw = '{invalid';
     const result = await runSharedAwPhase({
       raw,
@@ -148,7 +148,7 @@ async function runTests() {
       },
     });
 
-    assert.strictEqual(result, raw);
+    assert.strictEqual(result, '{}');
   })) passed++; else failed++;
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

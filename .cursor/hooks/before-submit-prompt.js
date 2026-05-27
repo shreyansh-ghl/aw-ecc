@@ -11,6 +11,20 @@ function emitAwPromptReminder(raw) {
   }
 }
 
+function normalizeCursorPromptOutput(raw) {
+  try {
+    const payload = JSON.parse(raw);
+    delete payload.hook_event_name;
+    delete payload.tool_input;
+    delete payload.tool_name;
+    delete payload.tool_output;
+    delete payload.tool_response;
+    return JSON.stringify(payload);
+  } catch (_error) {
+    return '{}';
+  }
+}
+
 readStdin().then(raw => {
   try {
     const input = JSON.parse(raw);
@@ -43,5 +57,5 @@ readStdin().then(raw => {
   } catch (_error) {
     // Telemetry is best-effort and should not block prompt submission.
   }
-  process.stdout.write(raw);
+  process.stdout.write(normalizeCursorPromptOutput(raw));
 }).catch(() => process.exit(0));

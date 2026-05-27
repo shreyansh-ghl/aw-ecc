@@ -23,5 +23,5 @@ readStdin().then(raw => {
       // Telemetry is non-blocking.
     }
   } catch {}
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

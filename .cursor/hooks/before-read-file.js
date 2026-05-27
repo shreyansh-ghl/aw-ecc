@@ -9,5 +9,5 @@ readStdin().then(raw => {
       console.error('[ECC] Ensure this data is not exposed in outputs');
     }
   } catch {}
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

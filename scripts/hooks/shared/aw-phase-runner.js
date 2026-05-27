@@ -26,9 +26,9 @@ function executeStep(runtime, step, payload) {
   return runtime.runManagedNodeHook(step.relativeScriptPath, payload);
 }
 
-function formatCursorSessionStartOutput(stdout, fallbackRaw) {
+function formatCursorSessionStartOutput(stdout) {
   if (typeof stdout !== 'string' || stdout.trim() === '') {
-    return fallbackRaw;
+    return '{}';
   }
 
   try {
@@ -40,20 +40,20 @@ function formatCursorSessionStartOutput(stdout, fallbackRaw) {
       return `${JSON.stringify({ additional_context: additionalContext }, null, 2)}\n`;
     }
   } catch (_error) {
-    return fallbackRaw;
+    return '{}';
   }
 
-  return fallbackRaw;
+  return '{}';
 }
 
-function resolveStepOutput(step, execution, fallbackRaw) {
+function resolveStepOutput(step, execution) {
   if (!execution) {
     return null;
   }
 
   switch (step.outputMode) {
     case 'cursor-session-start':
-      return formatCursorSessionStartOutput(execution.stdout, fallbackRaw);
+      return formatCursorSessionStartOutput(execution.stdout);
     default:
       return null;
   }
@@ -71,12 +71,12 @@ async function runSharedAwPhase({ raw, steps, deps = {} }) {
   try {
     parsedInput = JSON.parse(raw || '{}');
   } catch {
-    return raw;
+    return '{}';
   }
 
   const needsClaudeInput = steps.some(step => (step.payloadMode || 'claude') === 'claude');
   const claudeInput = needsClaudeInput ? runtime.transformToClaude(parsedInput) : null;
-  let result = raw;
+  let result = '{}';
 
   for (const step of steps) {
     if (!shouldRunStep(step, runtime)) {
