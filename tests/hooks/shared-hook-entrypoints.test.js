@@ -91,8 +91,10 @@ function runTests() {
               execution_mode: 'skill',
               runner: 'platform-core:echo-direct',
               publish_status: 'published',
-              remote_url: 'https://github.com/GoHighLevel/ghl-aw-docs/blob/master-sync/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
-              teamofone_url: '/too/docs/GoHighLevel/ghl-aw-docs/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
+              remote_links: {
+                github: 'https://github.com/GoHighLevel/ghl-aw-docs/blob/master-sync/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
+                teamofone: 'https://teamofone.msgsndr.net/too/docs/GoHighLevel/ghl-aw-docs/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
+              },
             },
           ],
         }),
@@ -115,6 +117,77 @@ function runTests() {
       assert.ok(result.stdout.includes('Relative `/too/docs/...` paths are not enough'));
       assert.ok(result.stdout.includes('do not only say "plan already exists"'));
       assert.ok(result.stdout.includes('teamofone-awdocs-file-browser-side-drawer/state.json'));
+    });
+  })) passed++; else failed++;
+
+  if (test('shared user-prompt-submit gates generated Echo docs when publish was not requested', () => {
+    withTempRulesDir((cwd) => {
+      const featureDir = path.join(cwd, '.aw_docs', 'features', 'teamofone-awdocs-file-browser-side-drawer');
+      fs.mkdirSync(featureDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(featureDir, 'state.json'),
+        JSON.stringify({
+          html_companion_artifacts: [
+            {
+              status: 'generated',
+              owner: 'platform-core:echo-direct',
+              execution_mode: 'skill',
+              runner: 'platform-core:echo-direct',
+              publish_status: 'not_requested',
+              local_path: 'tasks.html',
+            },
+          ],
+        }),
+        'utf8'
+      );
+
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+      const raw = JSON.stringify({
+        cwd,
+        prompt: 'can we create plan for add functionality to open side drawer when click on file icon to browser files and folder',
+      });
+
+      const result = runBash(scriptPath, raw);
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.ok(result.stdout.includes('[AW Echo gate]'));
+      assert.ok(result.stdout.includes('Incomplete state'));
+      assert.ok(result.stdout.includes('teamofone-awdocs-file-browser-side-drawer/state.json'));
+      assert.ok(!result.stdout.includes('[AW Remote Docs reminder]'));
+    });
+  })) passed++; else failed++;
+
+  if (test('shared user-prompt-submit scans cwd docs when workspace root differs', () => {
+    withTempRulesDir((workspaceRoot) => {
+      const cwd = path.join(workspaceRoot, 'nested-project');
+      const featureDir = path.join(cwd, '.aw_docs', 'features', 'teamofone-awdocs-file-browser-side-drawer');
+      fs.mkdirSync(featureDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(featureDir, 'state.json'),
+        JSON.stringify({
+          html_companion_artifacts: [
+            {
+              status: 'generated',
+              owner: 'platform-core:echo-direct',
+              publish_status: 'not_requested',
+            },
+          ],
+        }),
+        'utf8'
+      );
+
+      const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+      const raw = JSON.stringify({
+        workspace_roots: [workspaceRoot],
+        cwd,
+        prompt: 'can we create plan for add functionality to open side drawer when click on file icon to browser files and folder',
+      });
+
+      const result = runBash(scriptPath, raw);
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.ok(result.stdout.includes('[AW Echo gate]'));
+      assert.ok(result.stdout.includes('.aw_docs/features/teamofone-awdocs-file-browser-side-drawer/state.json'));
     });
   })) passed++; else failed++;
 
