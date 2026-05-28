@@ -15,17 +15,27 @@ extract_prompt() {
   printf '%s' "$1" | sed -n 's/.*"prompt"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
 }
 
+state_has_github_link() {
+  local state="$1"
+  grep -Eq '"(remote_url|github_url|repository_url|github)"[[:space:]]*:[[:space:]]*"https://github.com/' "$state"
+}
+
+state_has_teamofone_link() {
+  local state="$1"
+  grep -Eq '"(teamofone_url|teamofone)"[[:space:]]*:[[:space:]]*"[^"]+"' "$state"
+}
+
 state_needs_echo_handoff() {
   local state="$1"
-  if grep -Eq '"status"[[:space:]]*:[[:space:]]*"generated_(hca_)?fallback"|"publish_status"[[:space:]]*:[[:space:]]*"(local_only|blocked)"' "$state"; then
+  if grep -Eq '"status"[[:space:]]*:[[:space:]]*"generated_(hca_)?fallback"|"publish_status"[[:space:]]*:[[:space:]]*"(local_only|blocked|not_requested)"' "$state"; then
     return 0
   fi
   if grep -q '"html_companion_artifacts"' "$state" \
-    && ! grep -q '"remote_url"[[:space:]]*:[[:space:]]*"https://github.com/' "$state"; then
+    && ! state_has_github_link "$state"; then
     return 0
   fi
   if grep -q '"html_companion_artifacts"' "$state" \
-    && ! grep -q '"teamofone_url"[[:space:]]*:[[:space:]]*"' "$state"; then
+    && ! state_has_teamofone_link "$state"; then
     return 0
   fi
   return 1
@@ -35,8 +45,8 @@ state_has_published_echo_links() {
   local state="$1"
   grep -Eq '"status"[[:space:]]*:[[:space:]]*"(generated|generated_echo|html_generated_and_published|published)"' "$state" \
     && grep -q '"publish_status"[[:space:]]*:[[:space:]]*"published"' "$state" \
-    && grep -q '"remote_url"[[:space:]]*:[[:space:]]*"https://github.com/' "$state" \
-    && grep -q '"teamofone_url"[[:space:]]*:[[:space:]]*"' "$state"
+    && state_has_github_link "$state" \
+    && state_has_teamofone_link "$state"
 }
 
 print_echo_gate_header() {
@@ -131,8 +141,9 @@ resolve_rules_root() {
 }
 
 WORKSPACE_ROOT="$(extract_workspace_root "$RAW")"
+CWD_ROOT="$(extract_cwd "$RAW")"
 if [ -z "$WORKSPACE_ROOT" ]; then
-  WORKSPACE_ROOT="$(extract_cwd "$RAW")"
+  WORKSPACE_ROOT="$CWD_ROOT"
 fi
 PROMPT="$(extract_prompt "$RAW")"
 
@@ -146,3 +157,6 @@ cat <<EOF
 [Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
 EOF
 detect_incomplete_echo_docs "$WORKSPACE_ROOT" "$PROMPT"
+if [ -n "$CWD_ROOT" ] && [ "$CWD_ROOT" != "$WORKSPACE_ROOT" ]; then
+  detect_incomplete_echo_docs "$CWD_ROOT" "$PROMPT"
+fi
