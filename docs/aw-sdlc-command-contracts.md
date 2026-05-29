@@ -189,29 +189,29 @@ The stage owns the SDLC artifact and final handoff shape. It passes only the
 feature slug, source paths, profile, output mode, colocated HTML path, state
 path, and publish intent. Echo Direct owns the human docs package: create or
 refresh the HTML sidecar, update companion state, run the approved AW docs
-publisher, and return repository plus TeamOfOne links or a concrete blocker.
+publisher, and return repository plus Devtools links or a concrete blocker.
 
 Stages must not duplicate docs publish commands, derive remote URLs by hand, or duplicate
 Echo Direct publish configuration. The platform docs registry is the source of truth
-for the publish command, docs destination convention, and TeamOfOne URL
+for the publish command, docs destination convention, and Devtools URL
 derivation.
 
 Before every final response, stages must inspect the Echo Direct handoff result,
 feature `state.json`, and `.aw_docs/last-publish.json`. Stages must include any
-returned or recorded `.html` URLs in a final `Remote Docs` section as plain-text absolute TeamOfOne URLs (no Markdown link syntax around the TeamOfOne URL) with compact clickable GitHub labels, not label-only text.
+returned or recorded `.html` URLs in a final `Remote Docs` section as plain-text absolute Devtools URLs rooted at `https://devtools.servers.stg.msgsndr.net/` (no Markdown link syntax around the Devtools URL) with compact clickable GitHub labels, not label-only text.
 Prefer `.html` companion links over `.md` links.
 A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact entry must show
-`TeamOfOne: <absolute remote URL>` as raw visible text and
+`Devtools: <absolute remote URL>` as raw visible text and
 `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label
 when Echo Direct returns or records both:
 
 ```text
 Context:
-  TeamOfOne: https://...
+  Devtools: https://...
   GitHub: [context.html](https://...)
 ```
 
-Do not collapse remote docs to bare `TeamOfOne` and `GitHub` labels. Never render TeamOfOne as `[TeamOfOne](...)`, `[Spec TeamOfOne](...)`, or any other Markdown link label; never hide the TeamOfOne URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If Echo Direct cannot generate or publish, record
+Do not collapse remote docs to bare `Devtools` and `GitHub` labels. Never render Devtools as `[Devtools](...)`, `[Spec Devtools](...)`, or any other Markdown link label; never hide the Devtools URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If Echo Direct cannot generate or publish, record
 `publish_status: blocked` and the concrete blocker in `state.json`, then
 report the blocker instead of inventing links.
 

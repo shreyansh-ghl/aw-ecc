@@ -93,7 +93,7 @@ function runTests() {
               publish_status: 'published',
               remote_links: {
                 github: 'https://github.com/GoHighLevel/ghl-aw-docs/blob/master-sync/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
-                teamofone: 'https://teamofone.msgsndr.net/too/docs/GoHighLevel/ghl-aw-docs/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
+                teamofone: 'https://devtools.servers.stg.msgsndr.net/too/docs/GoHighLevel/ghl-aw-docs/aw_docs/teamofone/user/features/teamofone-awdocs-file-browser-side-drawer/tasks.html',
               },
             },
           ],
@@ -111,9 +111,9 @@ function runTests() {
 
       assert.strictEqual(result.status, 0, result.stderr);
       assert.ok(result.stdout.includes('[AW Remote Docs reminder]'));
-      assert.ok(result.stdout.includes('plain-text absolute TeamOfOne remote docs URLs'));
+      assert.ok(result.stdout.includes('plain-text absolute Devtools remote docs URLs'));
       assert.ok(result.stdout.includes('compact GitHub links'));
-      assert.ok(result.stdout.includes('do not hide TeamOfOne behind Markdown labels'));
+      assert.ok(result.stdout.includes('do not hide Devtools behind Markdown labels'));
       assert.ok(result.stdout.includes('Relative `/too/docs/...` paths are not enough'));
       assert.ok(result.stdout.includes('do not only say "plan already exists"'));
       assert.ok(result.stdout.includes('teamofone-awdocs-file-browser-side-drawer/state.json'));
