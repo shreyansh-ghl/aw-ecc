@@ -12,7 +12,7 @@ Router for the AW SDLC. MANDATORY on every non-trivial request and re-applied on
 
 1. **Classify.** Answer out loud:
    - Approved plan exists at `.aw_docs/features/<slug>/`? (if no → likely plan-first)
-   - Approved plan has complete Echo Direct HTML companions and remote links when docs mode is `dual` or `html`? (if no -> `/aw:plan` repair before build)
+   - Approved plan has complete Echo Direct HTML companions and remote links when docs mode is `dual` or `html`? Run `aw docs validate --feature <slug> --full` when a feature folder exists; if it fails -> `/aw:plan` repair before build.
    - Bug / alert / unclear failure? (→ `/aw:investigate`)
    - Change touches any plan-first trigger (see list below)? (→ `/aw:plan`, no exceptions)
    - Crosses >1 file AND >1 concern? (→ `/aw:plan`)
@@ -49,7 +49,7 @@ Approved plan for this exact work?
 ├── NO → Bug/alert/unclear failure?
 │         ├── YES → /aw:investigate
 │         └── NO  → /aw:plan   ← DEFAULT for anything new
-└── YES → Echo Direct HTML companions and remote links complete?
+└── YES → `aw docs validate --feature <slug> --full` passes and Echo Direct remote links are complete?
           ├── NO  → /aw:plan   ← repair human docs handoff
           └── YES → Implemented & needs test/review?
                     ├── YES → /aw:test or /aw:review

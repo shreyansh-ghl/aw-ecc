@@ -139,6 +139,28 @@ function run() {
     assert.ok(router.includes('repair human docs handoff'), 'router must route incomplete human docs to aw-plan repair');
   })) passed++; else failed++;
 
+  if (test('plan handoff is gated by aw docs validate before build readiness', () => {
+    const planCommand = snapshot.readFile('commands/plan.md');
+    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
+    const contracts = snapshot.readFile('docs/aw-sdlc-command-contracts.md');
+    const router = snapshot.readFile('skills/using-aw-skills/SKILL.md');
+
+    for (const [label, content] of [
+      ['commands/plan.md', planCommand],
+      ['skills/aw-plan/SKILL.md', planSkill],
+      ['docs/aw-sdlc-command-contracts.md', contracts],
+      ['skills/using-aw-skills/SKILL.md', router],
+    ]) {
+      assert.ok(content.includes('aw docs validate --feature <feature_slug> --full') || content.includes('aw docs validate --feature <slug> --full'), `${label} must name the validator command`);
+    }
+
+    assert.ok(contracts.includes('## Plan Completion Validation Gate'), 'contracts must define the hard validation gate');
+    assert.ok(contracts.includes('hard gate for `ready_for_build`'), 'contracts must bind validation to ready_for_build');
+    assert.ok(planCommand.includes('Do not mark the plan `ready_for_build`'), 'plan command must block ready_for_build when validation fails');
+    assert.ok(planSkill.includes('Do not mark the plan `ready_for_build`'), 'plan skill must block ready_for_build when validation fails');
+    assert.ok(router.includes('if it fails -> `/aw:plan` repair before build'), 'router must send validation failures back to plan repair');
+  })) passed++; else failed++;
+
   if (test('final handoff must surface html remote links from state or last publish', () => {
     const planCommand = snapshot.readFile('commands/plan.md');
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
