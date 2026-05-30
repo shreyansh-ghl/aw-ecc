@@ -153,9 +153,10 @@ function run() {
       assert.ok(content.includes('`.aw_docs/last-publish.json`'), `${label} must inspect last publish metadata for remote links`);
       assert.ok(content.includes('Prefer `.html` companion links over `.md` links'), `${label} must prefer html remote links`);
       assert.ok(content.includes('A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete'), `${label} must reject md-only final handoffs when html links exist`);
-      assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), `${label} must require visible TeamOfOne URLs`);
-      assert.ok(content.includes('plain-text absolute TeamOfOne URLs'), `${label} must require raw TeamOfOne URLs`);
-      assert.ok(content.includes('Never render TeamOfOne as `[TeamOfOne](...)`'), `${label} must forbid hiding TeamOfOne URLs behind markdown labels`);
+      assert.ok(content.includes('Devtools: <absolute remote URL>'), `${label} must require visible Devtools URLs`);
+      assert.ok(content.includes('plain-text absolute Devtools URLs'), `${label} must require raw Devtools URLs`);
+      assert.ok(content.includes('https://devtools.servers.stg.msgsndr.net/'), `${label} must name the Devtools base URL`);
+      assert.ok(content.includes('Never render Devtools as `[Devtools](...)`'), `${label} must forbid hiding Devtools URLs behind markdown labels`);
       assert.ok(content.includes('GitHub: [spec.html](<absolute repository URL>)'), `${label} must require compact GitHub links`);
     }
   })) passed++; else failed++;

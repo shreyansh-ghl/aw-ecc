@@ -129,7 +129,7 @@ You have the AW Agentic Workspace engine.
 
 # AW Session Context
 
-**Below is the full content of your 'using-aw-skills' skill — your router for all AW workflows. For all other skills, use the Skill tool:**
+**Below is the full content of your 'using-aw-skills' skill - your router for all AW workflows. For all other skills, use the Skill tool:**
 
 ${ROUTER_CONTENT}
 </EXTREMELY_IMPORTANT>
@@ -151,8 +151,6 @@ if [[ -n "$REGISTRY_COMMANDS" ]]; then
 ${REGISTRY_COMMANDS}"
 fi
 
-# --- Output in Claude Code hookSpecificOutput format ---
-# Escape for JSON: newlines, quotes, backslashes
 JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c '
 import sys, json
 content = sys.stdin.read()

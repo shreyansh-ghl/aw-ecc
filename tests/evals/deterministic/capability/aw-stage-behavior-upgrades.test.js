@@ -105,11 +105,12 @@ function assertOutputModeContract(content) {
 
 function assertRemoteDocsPublishContract(content) {
   assert.ok(content.includes('Remote Docs'), 'missing remote docs final handoff');
-  assert.ok(content.includes('plain-text absolute TeamOfOne URLs'), 'remote docs must require plain-text absolute TeamOfOne URLs');
-  assert.ok(content.includes('TeamOfOne: <absolute remote URL>'), 'missing visible TeamOfOne URL format');
+  assert.ok(content.includes('plain-text absolute Devtools URLs'), 'remote docs must require plain-text absolute Devtools URLs');
+  assert.ok(content.includes('https://devtools.servers.stg.msgsndr.net/'), 'remote docs must name the Devtools base URL');
+  assert.ok(content.includes('Devtools: <absolute remote URL>'), 'missing visible Devtools URL format');
   assert.ok(content.includes('GitHub: [spec.html](<absolute repository URL>)'), 'missing compact GitHub link format');
-  assert.ok(content.includes('Never render TeamOfOne as `[TeamOfOne](...)`'), 'missing TeamOfOne markdown-link guard');
-  assert.ok(content.includes('hide the TeamOfOne URL behind Markdown-only links'), 'missing TeamOfOne visibility guard');
+  assert.ok(content.includes('Never render Devtools as `[Devtools](...)`'), 'missing Devtools markdown-link guard');
+  assert.ok(content.includes('hide the Devtools URL behind Markdown-only links'), 'missing Devtools visibility guard');
   assert.ok(content.includes('print long GitHub URLs inline'), 'missing compact GitHub guard');
   assert.ok(content.includes('publish_status: blocked'), 'missing publish blocker contract');
   assert.ok(content.includes('feature `state.json`'), 'missing state remote-link inspection contract');
