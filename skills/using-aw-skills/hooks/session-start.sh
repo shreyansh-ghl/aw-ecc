@@ -1,50 +1,160 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Drain stdin because session-start emits static AW routing context and does
+# not inspect the incoming payload.
 cat >/dev/null || true
 
-CONTEXT=$(cat <<'EOF'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_ROOT=""
+SEARCH_ROOT="$SCRIPT_DIR"
+while [[ "$SEARCH_ROOT" != "/" ]]; do
+  if [[ -f "$SEARCH_ROOT/skills/using-aw-skills/SKILL.md" ]]; then
+    LOCAL_ROOT="$SEARCH_ROOT"
+    break
+  fi
+  SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
+done
+
+AW_REGISTRY_ROOT=""
+SEARCH_ROOT="$SCRIPT_DIR"
+while [[ "$SEARCH_ROOT" != "/" ]]; do
+  if [[ -d "$SEARCH_ROOT/.aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT/.aw_registry"
+    break
+  fi
+  if [[ "$(basename "$SEARCH_ROOT")" == ".aw_registry" ]]; then
+    AW_REGISTRY_ROOT="$SEARCH_ROOT"
+    break
+  fi
+  SEARCH_ROOT="$(dirname "$SEARCH_ROOT")"
+done
+
+if [[ -z "$AW_REGISTRY_ROOT" ]]; then
+  for CANDIDATE_ROOT in "$HOME/.aw_registry" "$HOME/.aw/.aw_registry"; do
+    if [[ -d "$CANDIDATE_ROOT" ]]; then
+      AW_REGISTRY_ROOT="$CANDIDATE_ROOT"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$LOCAL_ROOT" && -z "$AW_REGISTRY_ROOT" ]]; then
+  echo '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "WARNING: .aw_registry not found. AW skills unavailable."}}'
+  exit 0
+fi
+
+read_frontmatter_name() {
+  local file_path="$1"
+  [[ -f "$file_path" ]] || return 0
+
+  awk '
+    NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+    in_frontmatter && $0 == "---" { exit }
+    in_frontmatter && /^name:[[:space:]]*/ {
+      sub(/^name:[[:space:]]*/, "", $0)
+      print
+      exit
+    }
+  ' "$file_path"
+}
+
+read_skill_content() {
+  local file_path="$1"
+  [[ -f "$file_path" ]] || return 0
+  cat "$file_path"
+}
+
+collect_registry_skills() {
+  local registry_root="$1"
+  local count=0
+  [[ -d "$registry_root/platform" ]] || return 0
+
+  while IFS= read -r skill_file; do
+    local skill_name=""
+    if [[ "$skill_file" == */using-aw-skills/SKILL.md ]]; then
+      continue
+    fi
+    skill_name="$(read_frontmatter_name "$skill_file")"
+    if [[ -z "$skill_name" ]]; then
+      skill_name="$(basename "$(dirname "$skill_file")")"
+    fi
+    printf -- "- %s\n" "$skill_name"
+    count=$((count + 1))
+    if [[ "$count" -ge 6 ]]; then
+      break
+    fi
+  done < <(find "$registry_root/platform" -path '*/skills/*/SKILL.md' | sort)
+}
+
+collect_registry_commands() {
+  local registry_root="$1"
+  local count=0
+  [[ -d "$registry_root/commands" ]] || return 0
+
+  while IFS= read -r command_file; do
+    local command_slug=""
+    local command_name=""
+    command_slug="$(basename "$command_file" .md)"
+    command_name="$(read_frontmatter_name "$command_file")"
+    if [[ -n "$command_name" ]]; then
+      printf -- "- %s: %s\n" "$command_slug" "$command_name"
+    else
+      printf -- "- %s\n" "$command_slug"
+    fi
+    count=$((count + 1))
+    if [[ "$count" -ge 6 ]]; then
+      break
+    fi
+  done < <(find "$registry_root/commands" -mindepth 1 -maxdepth 1 -name '*.md' | sort)
+}
+
+ROUTER_SKILL_PATH=""
+if [[ -n "$LOCAL_ROOT" && -f "$LOCAL_ROOT/skills/using-aw-skills/SKILL.md" ]]; then
+  ROUTER_SKILL_PATH="$LOCAL_ROOT/skills/using-aw-skills/SKILL.md"
+elif [[ -n "$AW_REGISTRY_ROOT" && -f "$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md" ]]; then
+  ROUTER_SKILL_PATH="$AW_REGISTRY_ROOT/platform/core/skills/using-aw-skills/SKILL.md"
+fi
+
+ROUTER_CONTENT="$(read_skill_content "$ROUTER_SKILL_PATH")"
+REGISTRY_SKILLS=""
+REGISTRY_COMMANDS=""
+if [[ -n "$AW_REGISTRY_ROOT" ]]; then
+  REGISTRY_SKILLS="$(collect_registry_skills "$AW_REGISTRY_ROOT")"
+  REGISTRY_COMMANDS="$(collect_registry_commands "$AW_REGISTRY_ROOT")"
+fi
+
+CONTEXT="<EXTREMELY_IMPORTANT>
+You have the AW Agentic Workspace engine.
+
 # AW Session Context
 
-using-aw-skills is active. Treat the AW router as already loaded before any substantive response.
+**Below is the full content of your 'using-aw-skills' skill - your router for all AW workflows. For all other skills, use the Skill tool:**
 
-## First Response Rule
-- Select the smallest correct AW skill stack before exploration, implementation, or clarifying questions.
-- Honor explicit `/aw:plan`, `/aw:execute`, `/aw:verify`, `/aw:deploy`, and `/aw:ship` commands first.
-- If no explicit command is present, choose one primary AW route by intent, then load deeper domain skills only as needed.
+${ROUTER_CONTENT}
+</EXTREMELY_IMPORTANT>
 
-## Public AW Surface
-- `/aw:plan` - planning artifacts, specs, architecture, and task breakdown
-- `/aw:execute` - implement approved work and continue active execution
-- `/aw:verify` - evidence, review, testing, readiness, and governance
-- `/aw:deploy` - one verified release outcome such as a PR, branch handoff, or deploy
-- `/aw:ship` - clearly end-to-end multi-stage delivery
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+This is not negotiable. This is not optional. You cannot rationalize your way out of this."
 
-## Routing Priority
-- Process skills first: `aw-brainstorm`, `aw-debug`, `aw-review`, `aw-prepare`
-- Stage skills second: `aw-plan`, `aw-execute`, `aw-verify`, `aw-deploy`
-- Domain skills third: frontend, backend, data, infra, review, and test skills
+if [[ -n "$REGISTRY_SKILLS" ]]; then
+  CONTEXT="${CONTEXT}
 
-## Intent Mapping
-- Fuzzy requests, PRDs, architecture, design, or task breakdown -> `/aw:plan`
-- Approved implementation, bug fixes, or continuing work -> `/aw:execute`
-- Review, validation, testing, readiness, or compliance -> `/aw:verify`
-- One release outcome -> `/aw:deploy`
-- PR plus deploy, or clearly end-to-end work -> `/aw:ship`
+## Registry Skills In Scope
+${REGISTRY_SKILLS}"
+fi
 
-## Skill loading
-- Read stage/domain SKILL.md via the Skill tool when routing requires it.
-- Do not enumerate the full registry at session start.
-EOF
-)
+if [[ -n "$REGISTRY_COMMANDS" ]]; then
+  CONTEXT="${CONTEXT}
+
+## Registry Commands In Scope
+${REGISTRY_COMMANDS}"
+fi
 
 JSON_CONTEXT=$(printf '%s' "$CONTEXT" | python3 -c '
 import sys, json
-print(json.dumps(sys.stdin.read()))
-' 2>/dev/null || printf '%s' "$CONTEXT" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}')
+content = sys.stdin.read()
+print(json.dumps(content))
+' 2>/dev/null || printf '%s' "$CONTEXT" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | awk '{printf "%s\\n", $0}')
 
-if [[ -n "${CURSOR_PLUGIN_ROOT:-}" ]]; then
-  echo "{\"additional_context\": ${JSON_CONTEXT}}"
-else
-  echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": ${JSON_CONTEXT}}}"
-fi
+echo "{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": ${JSON_CONTEXT}}}"
