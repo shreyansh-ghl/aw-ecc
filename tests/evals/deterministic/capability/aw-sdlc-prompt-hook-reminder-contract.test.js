@@ -23,6 +23,18 @@ function writeFile(root, relativePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
+function resolveBashHome(homeRoot) {
+  const result = spawnSync('bash', ['-lc', 'printf %s "$HOME"'], {
+    env: { ...process.env, HOME: homeRoot },
+    encoding: 'utf8',
+  });
+  return result.status === 0 && result.stdout ? result.stdout : homeRoot;
+}
+
+function shellJoin(root, suffix) {
+  return `${root.replace(/\/+$/, '')}/${suffix}`;
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -126,6 +138,7 @@ function run() {
       cwd: repoRoot,
       prompt: '/aw:plan generate HTML companion sidecars',
     });
+    const bashHomeRoot = resolveBashHome(homeRoot);
     const echoPromptResult = spawnSync('bash', [sharedHook], {
       cwd: repoRoot,
       input: echoPromptPayload,
@@ -137,8 +150,8 @@ function run() {
       assert.strictEqual(echoPromptResult.status, 0, echoPromptResult.stderr || echoPromptResult.stdout);
       const output = echoPromptResult.stdout;
       assert.ok(output.includes('[AW Echo Direct]'), 'Expected Echo Direct hint in output');
-      assert.ok(output.includes(path.join(homeRoot, '.aw', '.aw_registry', 'platform', 'core', 'skills', 'echo-direct', 'SKILL.md')), 'Expected canonical Echo Direct path');
-      assert.ok(output.includes(path.join(homeRoot, '.aw', '.aw_registry', 'platform', 'core', 'skills', 'human-collaboration-artifacts', 'SKILL.md')), 'Expected canonical HCA path');
+      assert.ok(output.includes(shellJoin(bashHomeRoot, '.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md')), 'Expected canonical Echo Direct path');
+      assert.ok(output.includes(shellJoin(bashHomeRoot, '.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md')), 'Expected canonical HCA path');
       assert.ok(output.includes('missing callable tool, MCP route, or subagent is not a blocker'), 'Expected callable-tool-not-blocker guidance');
       assert.ok(output.includes('Echo Direct skill is not installed at the canonical AW home path'), 'Expected typed missing-skill blocker');
       assert.ok(output.includes('aw init --silent'), 'Expected init repair command');
