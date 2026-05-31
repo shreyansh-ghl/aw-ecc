@@ -1071,6 +1071,22 @@ function runTests() {
     cleanupTestDir(testDir); cleanupTestDir(agentsDir); cleanupTestDir(skillsDir);
   })) passed++; else failed++;
 
+  if (test('does not warn for canonical installed AW registry skill paths', () => {
+    const testDir = createTestDir();
+    const agentsDir = createTestDir();
+    const skillsDir = createTestDir();
+    fs.writeFileSync(path.join(testDir, 'cmd.md'),
+      '# Command\nLoad `$HOME/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md` and `$HOME/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md`.');
+
+    const result = runValidatorWithDirs('validate-commands', {
+      COMMANDS_DIR: testDir, AGENTS_DIR: agentsDir, SKILLS_DIR: skillsDir
+    });
+    assert.strictEqual(result.code, 0, 'Installed AW registry skill paths should pass');
+    assert.ok(!result.stderr.includes('WARN:'), `Should not warn for installed AW registry paths. stderr: ${result.stderr}`);
+    assert.ok(!result.stdout.includes('warning'), `Should not count warnings. stdout: ${result.stdout}`);
+    cleanupTestDir(testDir); cleanupTestDir(agentsDir); cleanupTestDir(skillsDir);
+  })) passed++; else failed++;
+
   // ==========================================
   // Round 22: Hook schema edge cases & empty directory paths
   // ==========================================

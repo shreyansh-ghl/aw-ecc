@@ -49,12 +49,52 @@ state_has_published_echo_links() {
     && state_has_devtools_link "$state"
 }
 
+echo_direct_skill_path() {
+  printf '%s/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md' "${HOME:-}"
+}
+
+hca_skill_path() {
+  printf '%s/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md' "${HOME:-}"
+}
+
+ECHO_DIRECT_HOME_CONTRACT_PRINTED=""
+print_echo_direct_home_contract() {
+  if [ -n "$ECHO_DIRECT_HOME_CONTRACT_PRINTED" ]; then
+    return 0
+  fi
+  ECHO_DIRECT_HOME_CONTRACT_PRINTED="1"
+
+  local echo_path
+  local hca_path
+  echo_path="$(echo_direct_skill_path)"
+  hca_path="$(hca_skill_path)"
+
+  printf '[AW Echo Direct] Echo Direct SKILL.md: %s\n' "$echo_path"
+  printf '[AW Echo Direct] HCA SKILL.md: %s\n' "$hca_path"
+  printf '[AW Echo Direct] A missing callable tool, MCP route, or subagent is not a blocker; read these SKILL.md files directly.\n'
+
+  if [ ! -f "$echo_path" ] || [ ! -f "$hca_path" ]; then
+    printf '[AW Echo Direct blocker] Echo Direct skill is not installed at the canonical AW home path. Run: aw init --silent\n'
+  fi
+}
+
+prompt_needs_echo_direct_hint() {
+  local prompt_lc="$1"
+  case "$prompt_lc" in
+    *"/aw:plan"*|*"aw plan"*|*"aw docs"*|*"echo direct"*|*"echo-direct"*|*"html companion"*|*"html sidecar"*|*"sidecar"*|*"remote docs"*|*"devtools"*|*"state.json"*)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
 print_echo_gate_header() {
   cat <<'EOF'
 [AW Echo gate] Existing AW docs have incomplete human handoff. Do not answer "plan already exists" until this is repaired.
-Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return Devtools + GitHub remote links.
+Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return Devtools + GitHub remote links. In Codex/skill-native harnesses, running Echo Direct means loading and applying the installed skill body in the current session; do not block only because no separate callable Echo Direct tool is exposed.
 Completion gate: no generated_fallback/generated_hca_fallback statuses, no local_only/blocked publish statuses, plain-text absolute Devtools Remote Docs URLs present in the final handoff, and GitHub links present as compact links or visible URLs.
 EOF
+  print_echo_direct_home_contract
 }
 
 print_remote_docs_reminder() {
@@ -156,6 +196,10 @@ cat <<EOF
 [AW Router reminder] Re-apply using-aw-skills and select the smallest correct AW route before substantive work.
 [Rule reminder] Read ${RULES_ROOT}/universal/AGENTS.md and ${RULES_ROOT}/security/AGENTS.md, then the touched domain AGENTS.md plus references/ on demand.
 EOF
+PROMPT_LC="$(printf '%s' "$PROMPT" | tr '[:upper:]' '[:lower:]')"
+if prompt_needs_echo_direct_hint "$PROMPT_LC"; then
+  print_echo_direct_home_contract
+fi
 detect_incomplete_echo_docs "$WORKSPACE_ROOT" "$PROMPT"
 if [ -n "$CWD_ROOT" ] && [ "$CWD_ROOT" != "$WORKSPACE_ROOT" ]; then
   detect_incomplete_echo_docs "$CWD_ROOT" "$PROMPT"

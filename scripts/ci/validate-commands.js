@@ -12,6 +12,14 @@ const COMMANDS_DIR = path.join(ROOT_DIR, 'commands');
 const AGENTS_DIR = path.join(ROOT_DIR, 'agents');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
+function isInstalledAwRegistrySkillReference(content, matchIndex) {
+  const windowStart = Math.max(0, matchIndex - 80);
+  const windowEnd = Math.min(content.length, matchIndex + 140);
+  const refWindow = content.slice(windowStart, windowEnd);
+  return refWindow.includes('.aw/.aw_registry/platform/core/skills/')
+    || refWindow.includes('.aw_registry/platform/core/skills/');
+}
+
 function validateCommands() {
   if (!fs.existsSync(COMMANDS_DIR)) {
     console.log('No commands directory found, skipping validation');
@@ -105,6 +113,7 @@ function validateCommands() {
     for (const match of skillRefs) {
       const refName = match[1];
       if (reservedSkillRoots.has(refName) || validSkills.has(refName)) continue;
+      if (isInstalledAwRegistrySkillReference(contentNoCodeBlocks, match.index)) continue;
       console.warn(`WARN: ${file} - references skill directory skills/${refName}/ (not found locally)`);
       warnCount++;
     }

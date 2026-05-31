@@ -23,6 +23,18 @@ function writeFile(root, relativePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
+function resolveBashHome(homeRoot) {
+  const result = spawnSync('bash', ['-lc', 'printf %s "$HOME"'], {
+    env: { ...process.env, HOME: homeRoot },
+    encoding: 'utf8',
+  });
+  return result.status === 0 && result.stdout ? result.stdout : homeRoot;
+}
+
+function shellJoin(root, suffix) {
+  return `${root.replace(/\/+$/, '')}/${suffix}`;
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -38,7 +50,9 @@ function test(name, fn) {
 function createWorkspace() {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-sdlc-prompt-hook-'));
   const repoRoot = path.join(tempRoot, 'repo');
+  const homeRoot = path.join(tempRoot, 'home');
   snapshot.materializePaths(repoRoot, MATERIALIZED_PATHS);
+  fs.mkdirSync(homeRoot, { recursive: true });
 
   writeFile(repoRoot, 'AGENTS.md', '# Repo Instructions\n');
   writeFile(
@@ -53,13 +67,13 @@ function createWorkspace() {
   );
 
   fs.chmodSync(path.join(repoRoot, 'scripts/hooks/shared/user-prompt-submit.sh'), 0o755);
-  return { tempRoot, repoRoot };
+  return { tempRoot, repoRoot, homeRoot };
 }
 
 function run() {
   console.log(`\n=== AW SDLC Prompt Hook Reminder Contract (${REF}) ===\n`);
 
-  const { tempRoot, repoRoot } = createWorkspace();
+  const { tempRoot, repoRoot, homeRoot } = createWorkspace();
   let passed = 0;
   let failed = 0;
 
@@ -118,6 +132,29 @@ function run() {
       assert.ok(cursorResult.stderr.includes('.aw_rules/platform/security/AGENTS.md'), 'Expected security rules path on stderr');
       assert.ok(cursorResult.stderr.includes('references/ on demand'), 'Expected references guidance on stderr');
       assert.ok(!cursorResult.stderr.includes('.aw_registry/.aw_rules/platform'), 'Cursor reminder should not mention the removed legacy rules path');
+    })) passed++; else failed++;
+
+    const echoPromptPayload = JSON.stringify({
+      cwd: repoRoot,
+      prompt: '/aw:plan generate HTML companion sidecars',
+    });
+    const bashHomeRoot = resolveBashHome(homeRoot);
+    const echoPromptResult = spawnSync('bash', [sharedHook], {
+      cwd: repoRoot,
+      input: echoPromptPayload,
+      encoding: 'utf8',
+      env: { ...process.env, HOME: homeRoot },
+    });
+
+    if (test('shared prompt hook injects canonical Echo Direct paths and init blocker', () => {
+      assert.strictEqual(echoPromptResult.status, 0, echoPromptResult.stderr || echoPromptResult.stdout);
+      const output = echoPromptResult.stdout;
+      assert.ok(output.includes('[AW Echo Direct]'), 'Expected Echo Direct hint in output');
+      assert.ok(output.includes(shellJoin(bashHomeRoot, '.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md')), 'Expected canonical Echo Direct path');
+      assert.ok(output.includes(shellJoin(bashHomeRoot, '.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md')), 'Expected canonical HCA path');
+      assert.ok(output.includes('missing callable tool, MCP route, or subagent is not a blocker'), 'Expected callable-tool-not-blocker guidance');
+      assert.ok(output.includes('Echo Direct skill is not installed at the canonical AW home path'), 'Expected typed missing-skill blocker');
+      assert.ok(output.includes('aw init --silent'), 'Expected init repair command');
     })) passed++; else failed++;
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
