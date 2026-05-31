@@ -127,6 +127,23 @@ function run() {
     }
   })) passed++; else failed++;
 
+  if (test('skill-native harnesses resolve Echo Direct from canonical AW home paths', () => {
+    const planCommand = snapshot.readFile('commands/plan.md');
+    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
+    const contracts = snapshot.readFile('docs/aw-sdlc-command-contracts.md');
+
+    for (const [label, content] of [
+      ['commands/plan.md', planCommand],
+      ['skills/aw-plan/SKILL.md', planSkill],
+      ['docs/aw-sdlc-command-contracts.md', contracts],
+    ]) {
+      assert.ok(content.includes('$HOME/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md'), `${label} must give the canonical Echo Direct skill path`);
+      assert.ok(content.includes('$HOME/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md'), `${label} must give the canonical HCA skill path`);
+      assert.ok(content.includes('callable tool, MCP route, or subagent'), `${label} must distinguish missing tool surfaces from missing skill files`);
+      assert.ok(content.includes('Echo Direct skill is not installed at the canonical AW home path. Run: aw init --silent'), `${label} must give the typed init blocker`);
+    }
+  })) passed++; else failed++;
+
   if (test('existing build-ready plans still repair stale or unpublished HTML companions', () => {
     const planCommand = snapshot.readFile('commands/plan.md');
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');

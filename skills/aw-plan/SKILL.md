@@ -105,13 +105,16 @@ In this mode, preserve quality but change the order of work:
    planned feature folder with Markdown/HTML but no `state.json`.
 5. Run `platform-core:echo-direct` as the same-turn HTML generation path.
    Treat this as the in-process execution of the Echo communication contract,
-   not as a fallback. In Codex and other skill-native harnesses, this means
-   loading the `platform-core:echo-direct` skill body and applying its HCA
-   workflow in the current session; it does not require a separate callable
-   tool, MCP route, or subagent named Echo Direct. Do not block solely because
-   the tool surface has no callable Echo Direct runner when the skill file is
-   available. Record successful output as `status: generated`, `owner:
-   platform-core:echo-direct`, `execution_mode: skill`, and
+   not as a fallback. In Codex, Cursor, and other skill-native harnesses, this
+   means loading `$HOME/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md`
+   and `$HOME/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md`,
+   then applying the HCA workflow in the current session; it does not require a
+   separate callable tool, MCP route, or subagent named Echo Direct. Do not block
+   solely because the tool surface has no callable Echo Direct runner when the
+   skill files are available. If either file is missing, record the concrete
+   blocker: `Echo Direct skill is not installed at the canonical AW home path. Run: aw init --silent`.
+   Record successful output as `status: generated`,
+   `owner: platform-core:echo-direct`, `execution_mode: skill`, and
    `runner: platform-core:echo-direct`.
 6. Run one scoped publish command for the feature folder, then return the
    absolute Devtools links rooted at `https://devtools.servers.stg.msgsndr.net/` and compact GitHub references. Do not do a broad
@@ -205,7 +208,7 @@ Resolve docs output mode in this order: explicit user or session request, stage-
 - `html` mode requires the HTML companion and still preserves any canonical Markdown the stage must write.
 - explicit Markdown-only mode skips HTML and records `status: skipped` with `skip_reason: explicit_markdown_only`.
 
-Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`. In Codex and other skill-native harnesses, applying the installed `platform-core:echo-direct` skill body in the current session is the runner; a missing separate callable tool is not a concrete blocker. In `dual` or `html` mode, the stage is not complete until the skill has generated the sidecar or recorded a concrete blocker. In explicit Markdown-only mode, do not generate HTML.
+Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`. In Codex, Cursor, and other skill-native harnesses, load the installed Echo Direct and HCA skill bodies directly from the canonical AW home paths: `$HOME/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md` and `$HOME/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md`. Applying those skill bodies in the current session is the runner; a missing separate callable tool, MCP route, or subagent is not a concrete blocker when the files exist. If either file is missing, record the concrete blocker: `Echo Direct skill is not installed at the canonical AW home path. Run: aw init --silent`. In `dual` or `html` mode, the stage is not complete until the skill has generated the sidecar or recorded a concrete blocker. In explicit Markdown-only mode, do not generate HTML.
 
 Pass every canonical source path that shaped each companion, plus the feature slug, output mode, profile, colocated HTML path, state path, and publish intent.
 Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.

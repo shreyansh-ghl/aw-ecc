@@ -149,6 +149,12 @@ means load the installed skill body and apply the HCA workflow in the current
 session. It does not require a separate callable tool, MCP route, or subagent.
 Do not record "current tool surface does not expose a callable Echo Direct
 runner" as a blocker when the skill body is available.
+In Codex, Cursor, and other skill-native harnesses, the canonical installed
+files are `$HOME/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md`
+and `$HOME/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md`.
+If a callable tool, MCP route, or subagent is missing but those files exist,
+load the files directly and continue. If either file is missing, record the
+concrete blocker: `Echo Direct skill is not installed at the canonical AW home path. Run: aw init --silent`.
 
 This requirement also applies when a stage reuses an existing artifact folder. A stage must not finish with stale, fallback, blocked, local-only, or unpublished human companions. Before a final "already exists" or "ready" response, inspect `state.json` plus the colocated sidecars and repair any missing, stale, legacy uncontrolled fallback statuses such as `generated_hca_fallback`, blocked, local-only, or linkless companion through `platform-core:echo-direct`.
 

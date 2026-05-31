@@ -43,6 +43,23 @@ function withTempRulesDir(fn) {
   }
 }
 
+function withTempHome(fn) {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-home-'));
+  try {
+    return fn(tempDir);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function canonicalEchoDirectPath(homeDir) {
+  return path.join(homeDir, '.aw', '.aw_registry', 'platform', 'core', 'skills', 'echo-direct', 'SKILL.md');
+}
+
+function canonicalHcaPath(homeDir) {
+  return path.join(homeDir, '.aw', '.aw_registry', 'platform', 'core', 'skills', 'human-collaboration-artifacts', 'SKILL.md');
+}
+
 function runTests() {
   console.log('\n=== Testing shared AW hook entrypoints ===\n');
 
@@ -74,6 +91,55 @@ function runTests() {
       assert.ok(result.stdout.includes('.aw_rules/platform/universal/AGENTS.md'));
       assert.ok(result.stdout.includes('.aw_rules/platform/security/AGENTS.md'));
       assert.ok(result.stdout.includes('references/ on demand'));
+    });
+  })) passed++; else failed++;
+
+  if (test('shared user-prompt-submit injects canonical Echo Direct home paths for planning prompts', () => {
+    withTempRulesDir((cwd) => {
+      withTempHome((home) => {
+        const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+        const raw = JSON.stringify({
+          cwd,
+          prompt: '/aw:plan generate HTML companions for this feature',
+        });
+
+        const result = runBash(scriptPath, raw, { HOME: home });
+
+        assert.strictEqual(result.status, 0, result.stderr);
+        assert.ok(result.stdout.includes('[AW Echo Direct]'));
+        assert.ok(result.stdout.includes(canonicalEchoDirectPath(home)));
+        assert.ok(result.stdout.includes(canonicalHcaPath(home)));
+        assert.ok(result.stdout.includes('missing callable tool, MCP route, or subagent is not a blocker'));
+        assert.ok(result.stdout.includes('Echo Direct skill is not installed at the canonical AW home path'));
+        assert.ok(result.stdout.includes('aw init --silent'));
+      });
+    });
+  })) passed++; else failed++;
+
+  if (test('shared user-prompt-submit does not emit init blocker when canonical Echo Direct files exist', () => {
+    withTempRulesDir((cwd) => {
+      withTempHome((home) => {
+        const echoPath = canonicalEchoDirectPath(home);
+        const hcaPath = canonicalHcaPath(home);
+        fs.mkdirSync(path.dirname(echoPath), { recursive: true });
+        fs.mkdirSync(path.dirname(hcaPath), { recursive: true });
+        fs.writeFileSync(echoPath, '# Echo Direct\n', 'utf8');
+        fs.writeFileSync(hcaPath, '# Human Collaboration Artifacts\n', 'utf8');
+
+        const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
+        const raw = JSON.stringify({
+          cwd,
+          prompt: '/aw:plan generate HTML companions for this feature',
+        });
+
+        const result = runBash(scriptPath, raw, { HOME: home });
+
+        assert.strictEqual(result.status, 0, result.stderr);
+        assert.ok(result.stdout.includes(canonicalEchoDirectPath(home)));
+        assert.ok(result.stdout.includes(canonicalHcaPath(home)));
+        assert.ok(!result.stdout.includes('Echo Direct skill is not installed at the canonical AW home path'));
+        assert.ok(!result.stdout.includes('aw init --silent'));
+      });
     });
   })) passed++; else failed++;
 
