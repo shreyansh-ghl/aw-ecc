@@ -174,6 +174,22 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 Allowed companion statuses are `written`, `generated`, `html_generated_and_published`, `published`, `skipped`, `blocked`, and `stale`. `generated_hca_fallback` and `generated_fallback` are legacy statuses that must be repaired, not statuses for new successful output.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
+## Plan Completion Validation Gate
+
+For `/aw:plan`, Echo Direct completion must be verified by the AW CLI before
+the plan is allowed to become build-ready. After canonical Markdown,
+colocated HTML sidecars, and `state.json` are updated, run:
+
+```bash
+aw docs validate --feature <feature_slug> --full
+```
+
+The validator is the hard gate for `ready_for_build`: missing Markdown, missing
+HTML sidecars, missing `html_companion_artifacts`, incomplete Echo Direct
+provenance, or legacy fallback status means the stage remains `/aw:plan`
+repair. A stage may stop with a concrete blocker, but it must not recommend
+`/aw:build` or mark the feature `ready_for_build` while this command fails.
+
 ## Echo Direct Remote Docs Handoff Rule
 
 After a public stage writes canonical Markdown and updates `state.json`,

@@ -64,7 +64,7 @@ This legacy heading maps to the detailed planning process below.
    Run the full planning self-review: spec coverage, placeholder scan, naming and type consistency, assumptions and constraints, and execution handoff quality.
    Then update `.aw_docs/features/<feature_slug>/state.json`.
 8. Stop after planning.
-   Recommend the next stage without drifting into build, test, or deploy only after the Markdown artifacts, HTML companions, and remote docs handoff are complete or a concrete blocker is recorded.
+   Run `aw docs validate --feature <feature_slug> --full` after Echo Direct updates the sidecars and `state.json`. Recommend the next stage without drifting into build, test, or deploy only after the validator passes, or after a concrete blocker is recorded and the feature is not marked `ready_for_build`.
 
 ## Performance-Bounded Planning Mode
 
@@ -113,6 +113,10 @@ In this mode, preserve quality but change the order of work:
    post-publish diff or unrelated workspace review before returning links.
    Once links are recorded, final immediately in a compact handoff instead of
    continuing analysis.
+7. Before any `ready_for_build` handoff, run
+   `aw docs validate --feature <feature_slug> --full`. If it fails, repair the
+   missing Echo Direct companions/state or record a blocker instead of handing
+   off to build.
 
 If this mode cannot publish within the time budget, it is still better to
 return generated colocated HTML plus a concrete publish blocker than to spend
@@ -200,6 +204,7 @@ Do not use a subagent for HTML generation, and do not hand-roll or command-templ
 
 Pass every canonical source path that shaped each companion, plus the feature slug, output mode, profile, colocated HTML path, state path, and publish intent.
 Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.
+After Echo Direct writes the companion packet, run `aw docs validate --feature <feature_slug> --full`. Do not mark the plan `ready_for_build`, recommend `/aw:build`, or say the plan is complete while that validator reports missing Markdown, missing `.html` sidecars, missing `html_companion_artifacts`, or incomplete Echo Direct provenance.
 
 Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
 
@@ -455,7 +460,7 @@ Before ending the planning stage:
 5. scan for placeholders and vague steps
 6. check that file paths, type names, helper names, and commands stay consistent
 7. confirm behavior-changing slices use explicit `RED -> GREEN -> REFACTOR` wording or explicitly justify why test-first is not meaningful
-8. confirm `html_companion_artifacts` are not fallback/local-only/stale when output mode is `dual` or `html`, and confirm Echo Direct-returned remote links are present or a concrete blocker is recorded
+8. run `aw docs validate --feature <feature_slug> --full` and confirm `html_companion_artifacts` are not fallback/local-only/stale when output mode is `dual` or `html`, and confirm Echo Direct-returned remote links are present or a concrete blocker is recorded
 8. confirm the next stage can route directly to `/aw:build` and that execution mode plus review mode are clear when they can be known safely
 9. confirm every written planning Markdown artifact has a colocated HTML sidecar, or the user explicitly requested Markdown-only
 
@@ -498,7 +503,7 @@ When `tasks.md` is ready:
 
 ## Echo Direct Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions.
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions. Then run `aw docs validate --feature <feature_slug> --full`; validation failure means the handoff is still `/aw:plan` repair, not `/aw:build`.
 
 Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned Devtools/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute Devtools URLs rooted at `https://devtools.servers.stg.msgsndr.net/` (no Markdown link syntax around the Devtools URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `Devtools: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render Devtools as `[Devtools](...)`, `[Spec Devtools](...)`, or any other Markdown link label; never hide the Devtools URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
 
