@@ -31,6 +31,15 @@ function runBash(scriptPath, input = '', env = {}) {
   });
 }
 
+function resolveBashHome(homeDir) {
+  const result = spawnSync('bash', ['-lc', 'printf %s "$HOME"'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    env: { ...process.env, HOME: homeDir },
+  });
+  return result.status === 0 && result.stdout ? result.stdout : homeDir;
+}
+
 function withTempRulesDir(fn) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-hook-'));
   const rulesDir = path.join(tempDir, '.aw_rules', 'platform', 'backend');
@@ -58,6 +67,14 @@ function canonicalEchoDirectPath(homeDir) {
 
 function canonicalHcaPath(homeDir) {
   return path.join(homeDir, '.aw', '.aw_registry', 'platform', 'core', 'skills', 'human-collaboration-artifacts', 'SKILL.md');
+}
+
+function canonicalEchoDirectShellPath(homeDir) {
+  return `${resolveBashHome(homeDir).replace(/\/+$/, '')}/.aw/.aw_registry/platform/core/skills/echo-direct/SKILL.md`;
+}
+
+function canonicalHcaShellPath(homeDir) {
+  return `${resolveBashHome(homeDir).replace(/\/+$/, '')}/.aw/.aw_registry/platform/core/skills/human-collaboration-artifacts/SKILL.md`;
 }
 
 function runTests() {
@@ -107,8 +124,8 @@ function runTests() {
 
         assert.strictEqual(result.status, 0, result.stderr);
         assert.ok(result.stdout.includes('[AW Echo Direct]'));
-        assert.ok(result.stdout.includes(canonicalEchoDirectPath(home)));
-        assert.ok(result.stdout.includes(canonicalHcaPath(home)));
+        assert.ok(result.stdout.includes(canonicalEchoDirectShellPath(home)));
+        assert.ok(result.stdout.includes(canonicalHcaShellPath(home)));
         assert.ok(result.stdout.includes('missing callable tool, MCP route, or subagent is not a blocker'));
         assert.ok(result.stdout.includes('Echo Direct skill is not installed at the canonical AW home path'));
         assert.ok(result.stdout.includes('aw init --silent'));
@@ -135,8 +152,8 @@ function runTests() {
         const result = runBash(scriptPath, raw, { HOME: home });
 
         assert.strictEqual(result.status, 0, result.stderr);
-        assert.ok(result.stdout.includes(canonicalEchoDirectPath(home)));
-        assert.ok(result.stdout.includes(canonicalHcaPath(home)));
+        assert.ok(result.stdout.includes(canonicalEchoDirectShellPath(home)));
+        assert.ok(result.stdout.includes(canonicalHcaShellPath(home)));
         assert.ok(!result.stdout.includes('Echo Direct skill is not installed at the canonical AW home path'));
         assert.ok(!result.stdout.includes('aw init --silent'));
       });
