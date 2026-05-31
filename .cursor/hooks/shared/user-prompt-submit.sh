@@ -52,7 +52,7 @@ state_has_published_echo_links() {
 print_echo_gate_header() {
   cat <<'EOF'
 [AW Echo gate] Existing AW docs have incomplete human handoff. Do not answer "plan already exists" until this is repaired.
-Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return Devtools + GitHub remote links.
+Required action: keep /aw:plan active, run `platform-core:echo-direct` for HTML companion generation, refresh colocated .html sidecars, let Echo Direct handle the approved docs publish handoff, update state.json, and return Devtools + GitHub remote links. In Codex/skill-native harnesses, running Echo Direct means loading and applying the installed skill body in the current session; do not block only because no separate callable Echo Direct tool is exposed.
 Completion gate: no generated_fallback/generated_hca_fallback statuses, no local_only/blocked publish statuses, plain-text absolute Devtools Remote Docs URLs present in the final handoff, and GitHub links present as compact links or visible URLs.
 EOF
 }

@@ -144,6 +144,11 @@ HTML companions are the TeamOfOne-readable surface for humans, reviewers, and qu
 
 When a public stage writes or materially updates its canonical Markdown artifact, it must run `platform-core:echo-direct` directly to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` in `dual` or `html` output mode.
 `platform-core:echo-direct` is the single SDLC HTML generation path. Stages must not use a subagent for HTML generation and must not hand-roll or command-template HTML outside this skill.
+In Codex and other skill-native harnesses, "run `platform-core:echo-direct`"
+means load the installed skill body and apply the HCA workflow in the current
+session. It does not require a separate callable tool, MCP route, or subagent.
+Do not record "current tool surface does not expose a callable Echo Direct
+runner" as a blocker when the skill body is available.
 
 This requirement also applies when a stage reuses an existing artifact folder. A stage must not finish with stale, fallback, blocked, local-only, or unpublished human companions. Before a final "already exists" or "ready" response, inspect `state.json` plus the colocated sidecars and repair any missing, stale, legacy uncontrolled fallback statuses such as `generated_hca_fallback`, blocked, local-only, or linkless companion through `platform-core:echo-direct`.
 

@@ -111,6 +111,22 @@ function run() {
     }
   })) passed++; else failed++;
 
+  if (test('plan HTML generation does not require a separate callable Echo Direct tool', () => {
+    const planCommand = snapshot.readFile('commands/plan.md');
+    const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
+    const contracts = snapshot.readFile('docs/aw-sdlc-command-contracts.md');
+
+    for (const [label, content] of [
+      ['commands/plan.md', planCommand],
+      ['skills/aw-plan/SKILL.md', planSkill],
+      ['docs/aw-sdlc-command-contracts.md', contracts],
+    ]) {
+      assert.ok(content.includes('skill-native harnesses'), `${label} must describe skill-native harness behavior`);
+      assert.ok(content.includes('separate callable'), `${label} must say a separate callable tool is not required`);
+      assert.ok(content.includes('not a concrete blocker') || content.includes('Do not record "current tool surface does not expose a callable Echo Direct'), `${label} must reject callable-runner-only blockers`);
+    }
+  })) passed++; else failed++;
+
   if (test('existing build-ready plans still repair stale or unpublished HTML companions', () => {
     const planCommand = snapshot.readFile('commands/plan.md');
     const planSkill = snapshot.readFile('skills/aw-plan/SKILL.md');
