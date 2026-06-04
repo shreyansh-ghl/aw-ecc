@@ -66,7 +66,18 @@ const PROTECTED_FILES = new Set([
  * Avoids the ~50-100ms spawnSync overhead when available.
  */
 function run(input) {
-  const filePath = input?.tool_input?.file_path || input?.tool_input?.file || '';
+  // run-with-flags.js calls run() with the raw stdin string; direct callers may
+  // pass an already-parsed event object. Accept both and fail open on bad JSON.
+  let event = input;
+  if (typeof input === 'string') {
+    try {
+      event = input.trim() ? JSON.parse(input) : {};
+    } catch (_err) {
+      return { exitCode: 0 };
+    }
+  }
+
+  const filePath = event?.tool_input?.file_path || event?.tool_input?.file || '';
   if (!filePath) return { exitCode: 0 };
 
   const basename = path.basename(filePath);
@@ -86,40 +97,36 @@ function run(input) {
 
 module.exports = { run };
 
-// Stdin fallback for spawnSync execution
-let truncated = false;
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => {
-  if (raw.length < MAX_STDIN) {
-    const remaining = MAX_STDIN - raw.length;
-    raw += chunk.substring(0, remaining);
-    if (chunk.length > remaining) truncated = true;
-  } else {
-    truncated = true;
-  }
-});
+// Stdin fallback for direct spawnSync / CLI execution only. Guarded so that
+// require() from run-with-flags.js attaches no stdin listeners and triggers no
+// side effects (the wrapper drives run() directly).
+if (require.main === module) {
+  let truncated = false;
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', chunk => {
+    if (raw.length < MAX_STDIN) {
+      const remaining = MAX_STDIN - raw.length;
+      raw += chunk.substring(0, remaining);
+      if (chunk.length > remaining) truncated = true;
+    } else {
+      truncated = true;
+    }
+  });
 
-process.stdin.on('end', () => {
-  // If stdin was truncated, the JSON is likely malformed. Fail open but
-  // log a warning so the issue is visible. The run() path (used by
-  // run-with-flags.js in-process) is not affected by this.
-  if (truncated) {
-    process.stderr.write('[config-protection] Warning: stdin exceeded 1MB, skipping check\n');
-    process.stdout.write(raw);
-    return;
-  }
+  process.stdin.on('end', () => {
+    // If stdin was truncated, the JSON is likely malformed. Fail open but
+    // log a warning so the issue is visible. The run() path (used by
+    // run-with-flags.js in-process) is not affected by this.
+    if (truncated) {
+      process.stderr.write('[config-protection] Warning: stdin exceeded 1MB, skipping check\n');
+      return;
+    }
 
-  try {
-    const input = raw.trim() ? JSON.parse(raw) : {};
-    const result = run(input);
-
+    const result = run(raw);
     if (result.exitCode === 2) {
       process.stderr.write(result.stderr + '\n');
       process.exit(2);
     }
-  } catch {
-    // Keep hook non-blocking on parse errors.
-  }
-
-  process.stdout.write(raw);
-});
+    // allow: empty stdout + exit 0 (do not echo the event)
+  });
+}

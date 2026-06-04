@@ -4,6 +4,15 @@
  *
  * Usage:
  *   node run-with-flags.js <hookId> <scriptRelativePath> [profilesCsv]
+ *
+ * Output contract (both Cursor and Claude Code):
+ *   - allow / no opinion = empty stdout + exit 0
+ *   - block              = exit 2 (reason on stderr), empty stdout
+ *
+ * The raw input event is NEVER echoed to stdout. Cursor parses non-empty
+ * write-path stdout as a decision object; echoing the event (which is valid
+ * JSON but not a `{permission|decision|hookSpecificOutput}` shape) makes the
+ * harness report "returned invalid JSON" and block the tool call.
  */
 
 'use strict';
@@ -37,18 +46,68 @@ function getPluginRoot() {
   return path.resolve(__dirname, '..', '..');
 }
 
+/**
+ * Allow / no opinion: empty stdout + exit 0. Never echo the input event.
+ */
+function allow() {
+  process.exit(0);
+}
+
+/**
+ * Translate an in-process run() return value into the harness contract without
+ * ever writing the event or a raw object to stdout.
+ *   - object: emit optional logs[] then stderr to process.stderr, then exit with
+ *     exitCode (default 0). The decision is carried by the exit code, not stdout.
+ *   - string | null | undefined: legacy pass-through echo → dropped → allow.
+ */
+function finalizeRunResult(output) {
+  if (output && typeof output === 'object') {
+    if (Array.isArray(output.logs)) {
+      for (const line of output.logs) {
+        if (line !== null && line !== undefined) process.stderr.write(String(line) + '\n');
+      }
+    }
+    if (output.stderr) process.stderr.write(String(output.stderr) + '\n');
+    process.exit(Number.isInteger(output.exitCode) ? output.exitCode : 0);
+  }
+  // string / null / undefined → pass-through echo; never forward to stdout.
+  process.exit(0);
+}
+
+/**
+ * Detect a child's stdout that is merely the echoed input event so it can be
+ * suppressed. A genuine decision object (e.g. {"permission":"deny"}) does not
+ * contain these event keys and is preserved.
+ */
+function isPassthroughEcho(stdout, raw) {
+  const trimmed = (stdout || '').trim();
+  if (!trimmed) return true;
+  if (trimmed === (raw || '').trim()) return true;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      ('hook_event_name' in parsed || 'tool_name' in parsed || 'tool_input' in parsed)
+    ) {
+      return true;
+    }
+  } catch (_err) {
+    // Non-JSON stdout that does not match the raw event is treated as genuine.
+  }
+  return false;
+}
+
 async function main() {
   const [, , hookId, relScriptPath, profilesCsv] = process.argv;
   const raw = await readStdinRaw();
 
   if (!hookId || !relScriptPath) {
-    process.stdout.write(raw);
-    process.exit(0);
+    allow();
   }
 
   if (!isHookEnabled(hookId, { profiles: profilesCsv })) {
-    process.stdout.write(raw);
-    process.exit(0);
+    allow();
   }
 
   const pluginRoot = getPluginRoot();
@@ -58,14 +117,12 @@ async function main() {
   // Prevent path traversal outside the plugin root
   if (!scriptPath.startsWith(resolvedRoot + path.sep)) {
     process.stderr.write(`[Hook] Path traversal rejected for ${hookId}: ${scriptPath}\n`);
-    process.stdout.write(raw);
-    process.exit(0);
+    allow();
   }
 
   if (!fs.existsSync(scriptPath)) {
     process.stderr.write(`[Hook] Script not found for ${hookId}: ${scriptPath}\n`);
-    process.stdout.write(raw);
-    process.exit(0);
+    allow();
   }
 
   // Prefer direct require() when the hook exports a run(rawInput) function.
@@ -90,12 +147,12 @@ async function main() {
   if (hookModule && typeof hookModule.run === 'function') {
     try {
       const output = hookModule.run(raw);
-      if (output !== null && output !== undefined) process.stdout.write(output);
+      finalizeRunResult(output);
     } catch (runErr) {
       process.stderr.write(`[Hook] run() error for ${hookId}: ${runErr.message}\n`);
-      process.stdout.write(raw);
+      allow();
     }
-    process.exit(0);
+    return;
   }
 
   // Legacy path: spawn a child Node process for hooks without run() export
@@ -107,11 +164,14 @@ async function main() {
     timeout: 30000
   });
 
-  if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
+  // Forward only genuine stdout (a real decision object). Suppress the echoed
+  // input event, which would otherwise be misparsed as an invalid decision.
+  if (result.stdout && !isPassthroughEcho(result.stdout, raw)) {
+    process.stdout.write(result.stdout);
+  }
 
-  const code = Number.isInteger(result.status) ? result.status : 0;
-  process.exit(code);
+  process.exit(Number.isInteger(result.status) ? result.status : 0);
 }
 
 main().catch(err => {
