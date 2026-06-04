@@ -142,24 +142,23 @@ When planning safe fan-out, `tasks.md` should declare disjoint `parallel_candida
 Markdown artifacts remain canonical for agents and downstream AW stages.
 HTML companions are the TeamOfOne-readable surface for humans, reviewers, and quick share links.
 
-When a public stage writes or materially updates its canonical Markdown artifact, it should also delegate to the `aw:echo` subagent to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` unless docs output mode resolves to Markdown-only.
+When a public stage writes or materially updates its canonical Markdown artifact, it must run `platform-core:echo-direct` directly to create or refresh `.aw_docs/features/<feature_slug>/<artifact_basename>.html` in `dual` or `html` output mode.
+`platform-core:echo-direct` is the single SDLC HTML generation path. Stages must not use a subagent for HTML generation and must not hand-roll or command-template HTML outside this skill.
 
-`aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and Echo handoff contract.
-The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, `aw:echo` agent definition, and remote publish command behavior.
-`aw:echo` owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical agent source of truth.
-`aw:echo` is an agent delegation, not a public slash command or direct tool.
-When output mode resolves to `dual` or `html` and the harness supports subagents, the stage contract authorizes exactly one `aw:echo` subagent for the human companion.
-Do not mark HTML blocked merely because no direct `aw:echo` command or callable tool exists; delegate to the subagent. Mark blocked only when the harness truly cannot run subagents or the required source artifacts are unavailable.
+This requirement also applies when a stage reuses an existing artifact folder. A stage must not finish with stale, fallback, blocked, local-only, or unpublished human companions. Before a final "already exists" or "ready" response, inspect `state.json` plus the colocated sidecars and repair any missing, stale, legacy uncontrolled fallback statuses such as `generated_hca_fallback`, blocked, local-only, or linkless companion through `platform-core:echo-direct`.
 
-HTML generation is async by default:
+`aw-ecc` owns only the SDLC trigger, output mode, profile, state, deterministic path, and Echo Direct handoff contract.
+The platform docs registry owns the reusable design system, visual component rules, diagram sidecar standard, Echo Direct skill definition, and remote publish behavior.
+Echo Direct owns communication with humans, including HTML generation and the shareable human docs package; it does not change the canonical Markdown source of truth.
+
+HTML generation is same-turn by default:
 
 1. Write canonical Markdown and `state.json`.
-2. Spawn one background `aw:echo` subagent.
-3. Record the companion as `queued` or `generating`.
-4. Return the stage result.
+2. Run `platform-core:echo-direct`.
+3. Record the generated companion metadata and publish result.
+4. Return the stage result with remote links when available.
 
-Wait for HTML only when the user explicitly asks to wait or the next action truly needs the rendered file.
-Echo may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata; it must not rewrite the canonical Markdown source.
+Echo Direct may write the colocated `.html` sidecar, the `state.json` companion entry, and publish metadata; it must not rewrite the canonical Markdown source.
 
 Resolve output mode in this order:
 
@@ -169,31 +168,68 @@ Resolve output mode in this order:
 4. `AW_DOCS_OUTPUT_MODE`
 5. default `dual`
 
-Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any skipped or blocked reason.
-Allowed companion statuses are `queued`, `generating`, `written`, `published`, `skipped`, `blocked`, and `stale`.
+`dual` and `html` modes require the HTML companion. Explicit Markdown-only mode skips HTML and records `status: skipped` with `skip_reason: explicit_markdown_only`.
+
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any skipped or blocked reason.
+Allowed companion statuses are `written`, `generated`, `html_generated_and_published`, `published`, `skipped`, `blocked`, and `stale`. `generated_hca_fallback` and `generated_fallback` are legacy statuses that must be repaired, not statuses for new successful output.
 TeamOfOne docs should discover companions from the feature-local `.html` sidecars plus `state.json`; do not create a separate HTML folder for stage outputs.
 
-## Echo Remote Docs Handoff Rule
+## Plan Completion Validation Gate
+
+For `/aw:plan`, Echo Direct completion must be verified by the AW CLI before
+the plan is allowed to become build-ready. After canonical Markdown,
+colocated HTML sidecars, and `state.json` are updated, run:
+
+```bash
+aw docs validate --feature <feature_slug> --full
+```
+
+The validator is the hard gate for `ready_for_build`: missing Markdown, missing
+HTML sidecars, missing `html_companion_artifacts`, incomplete Echo Direct
+provenance, or legacy fallback status means the stage remains `/aw:plan`
+repair. A stage may stop with a concrete blocker, but it must not recommend
+`/aw:build` or mark the feature `ready_for_build` while this command fails.
+
+## Echo Direct Remote Docs Handoff Rule
 
 After a public stage writes canonical Markdown and updates `state.json`,
-delegate human docs generation and remote sharing to the same `aw:echo`
-companion job unless the user explicitly requested local-only or Markdown-only
-docs for this run.
+run `platform-core:echo-direct` unless the user explicitly requested local-only
+or Markdown-only docs for this run.
+
+The same handoff is required as a repair path when canonical Markdown already
+exists but the human companion package is incomplete. Existing `ready_for_build`
+or equivalent stage status does not override missing Echo Direct HTML, publish status,
+or remote links.
 
 The stage owns the SDLC artifact and final handoff shape. It passes only the
 feature slug, source paths, profile, output mode, colocated HTML path, state
-path, and publish intent. `aw:echo` owns the human docs package: create or
+path, and publish intent. Echo Direct owns the human docs package: create or
 refresh the HTML sidecar, update companion state, run the approved AW docs
-publisher, and return repository plus TeamOfOne links or a concrete blocker.
+publisher, and return repository plus Devtools links or a concrete blocker.
 
-Stages must not run docs publish commands, derive remote URLs, or duplicate
-Echo's publish configuration. The platform docs registry is the source of truth
-for Echo's publish command, docs destination convention, and TeamOfOne URL
+Stages must not duplicate docs publish commands, derive remote URLs by hand, or duplicate
+Echo Direct publish configuration. The platform docs registry is the source of truth
+for the publish command, docs destination convention, and Devtools URL
 derivation.
 
-Stages must include Echo-returned URLs in a final `Remote Docs` section. If Echo
-cannot generate or publish, record `publish_status: blocked` and Echo's concrete
-blocker in `state.json`, then report the blocker instead of inventing links.
+Before every final response, stages must inspect the Echo Direct handoff result,
+feature `state.json`, and `.aw_docs/last-publish.json`. Stages must include any
+returned or recorded `.html` URLs in a final `Remote Docs` section as plain-text absolute Devtools URLs rooted at `https://devtools.servers.stg.msgsndr.net/` (no Markdown link syntax around the Devtools URL) with compact clickable GitHub labels, not label-only text.
+Prefer `.html` companion links over `.md` links.
+A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact entry must show
+`Devtools: <absolute remote URL>` as raw visible text and
+`GitHub: [spec.html](<absolute repository URL>)` or another short artifact label
+when Echo Direct returns or records both:
+
+```text
+Context:
+  Devtools: https://...
+  GitHub: [context.html](https://...)
+```
+
+Do not collapse remote docs to bare `Devtools` and `GitHub` labels. Never render Devtools as `[Devtools](...)`, `[Spec Devtools](...)`, or any other Markdown link label; never hide the Devtools URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If Echo Direct cannot generate or publish, record
+`publish_status: blocked` and the concrete blocker in `state.json`, then
+report the blocker instead of inventing links.
 
 The default stage profile map is:
 

@@ -54,7 +54,7 @@ If the user asked for one stage, stay in that stage.
    Internal orchestration is not permission to skip `execution.md`, `verification.md`, `release.md`, or `state.json`.
    A stage is not done until its required artifacts are written.
    HTML sidecars are required whenever the delegated stage writes a canonical Markdown artifact.
-   When a delegated stage writes a canonical Markdown artifact, preserve that stage's `aw:echo` obligation too: produce the colocated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion before the stage handoff. Spawn exactly one `aw:echo` subagent in default `dual` mode; record `run_ref` when the harness exposes one. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` plus the blocker, and keep Markdown canonical. Markdown-only is allowed only when the user explicitly requests it for the run.
+   When a delegated stage writes a canonical Markdown artifact, preserve that stage's Echo Direct obligation too: in `dual` and `html` modes, run `platform-core:echo-direct` directly to produce the colocated `.aw_docs/features/<feature_slug>/<artifact_basename>.html` companion before the stage handoff. Do not use a subagent for HTML generation, and do not hand-roll HTML outside the skill contract. Record successful output as `status: generated`, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, and remote links when available. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair. In explicit Markdown-only mode, skip HTML and record the skip.
 5. Respect stage boundaries.
    `aw-yolo` coordinates stages, but it does not collapse them together.
    Build still cannot self-certify.
@@ -75,11 +75,11 @@ If the user asked for one stage, stay in that stage.
    - the final remaining stage is finished and its artifact exists, or
    - the workflow stops at a named blocker with a clear handoff
 
-## Echo Human Docs Handoff
+## Echo Direct Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions.
 
-Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned Devtools/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute Devtools URLs rooted at `https://devtools.servers.stg.msgsndr.net/` (no Markdown link syntax around the Devtools URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `Devtools: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render Devtools as `[Devtools](...)`, `[Spec Devtools](...)`, or any other Markdown link label; never hide the Devtools URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
 
 ## Final Output Shape
 

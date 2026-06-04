@@ -10,7 +10,7 @@ const { execFileSync } = require('child_process');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const SCRIPT = path.join(REPO_ROOT, 'scripts', 'sync-ecc-to-codex.sh');
-const SYNC_TIMEOUT_MS = process.platform === 'win32' ? 90000 : 30000;
+const SYNC_TIMEOUT_MS = 90000;
 
 function createTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -32,7 +32,7 @@ function test(name, fn) {
   }
 }
 
-function runSync(homeDir, extraEnv = {}) {
+function runSync(homeDir, extraEnv = {}, options = {}) {
   const env = {
     ...process.env,
     HOME: homeDir,
@@ -43,7 +43,7 @@ function runSync(homeDir, extraEnv = {}) {
   fs.mkdirSync(path.join(homeDir, '.codex'), { recursive: true });
   fs.writeFileSync(
     path.join(homeDir, '.codex', 'config.toml'),
-    fs.readFileSync(path.join(REPO_ROOT, '.codex', 'config.toml'), 'utf8')
+    options.initialConfig || fs.readFileSync(path.join(REPO_ROOT, '.codex', 'config.toml'), 'utf8')
   );
 
   execFileSync('bash', [SCRIPT], {
@@ -95,6 +95,90 @@ function runTests() {
       for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
         assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
       }
+
+      assert.ok(
+        fs.existsSync(path.join(homeDir, '.aw-ecc', 'scripts', 'hooks', 'session-start-rules-context.sh')),
+        'Expected shared prompt entrypoint to be synced for Codex hook delegate'
+      );
+      assert.ok(
+        fs.existsSync(path.join(homeDir, '.aw-ecc', 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh')),
+        'Expected shared user-prompt-submit runtime to be synced for Codex hook delegate'
+      );
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('syncs AW planning helper skills used by Codex CLI', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      runSync(homeDir);
+
+      const codexSkillsDir = path.join(homeDir, '.codex', 'skills');
+      const grillSkillPath = path.join(codexSkillsDir, 'grill-with-docs', 'SKILL.md');
+      const grillSkill = fs.readFileSync(grillSkillPath, 'utf8');
+
+      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Expected aw-plan to be synced');
+      assert.ok(fs.existsSync(grillSkillPath), 'Expected grill-with-docs to be synced');
+      assert.ok(
+        grillSkill.includes('Use `platform-core:echo-direct` directly for the HTML companion'),
+        'Expected installed grill-with-docs to include the Echo Direct contract'
+      );
+    } finally {
+      cleanup(homeDir);
+    }
+  })) passed++; else failed++;
+
+  if (test('installs Echo agent config and cleans invalid legacy aliases', () => {
+    const homeDir = createTempDir('sync-codex-home-');
+
+    try {
+      const initialConfig = [
+        'persistent_instructions = true',
+        '',
+        '[features]',
+        'codex_hooks = true',
+        '',
+        '[profiles.strict]',
+        'approval_policy = "on-request"',
+        'sandbox_mode = "read-only"',
+        'web_search = "cached"',
+        '',
+        '[profiles.yolo]',
+        'approval_policy = "never"',
+        'sandbox_mode = "workspace-write"',
+        'web_search = "live"',
+        '',
+        '[agents]',
+        'max_threads = 2',
+        '',
+        '[agents.explorer]',
+        'description = "Existing explorer"',
+        'config_file = "agents/explorer.toml"',
+        '',
+        '[agents."aw:echo"]',
+        'description = "Legacy invalid alias"',
+        'config_file = "agents/echo.toml"',
+        '',
+      ].join('\n');
+
+      runSync(homeDir, {}, { initialConfig });
+
+      const codexHome = path.join(homeDir, '.codex');
+      const config = fs.readFileSync(path.join(codexHome, 'config.toml'), 'utf8');
+      const echoConfigPath = path.join(codexHome, 'agents', 'echo.toml');
+
+      assert.ok(fs.existsSync(echoConfigPath), 'Expected echo.toml to be synced');
+      assert.ok(config.includes('hooks = true'), 'Expected current hooks feature flag to be enabled');
+      assert.ok(!config.includes('codex_hooks = true'), 'Expected deprecated codex_hooks flag to be removed');
+      assert.ok(config.includes('multi_agent = true'), 'Expected multi_agent to be enabled');
+      assert.ok(config.includes('max_threads = 2'), 'Expected existing agent root config to be preserved');
+      assert.ok(config.includes('description = "Existing explorer"'), 'Expected existing agent sections to be preserved');
+      assert.strictEqual((config.match(/\[agents\.explorer\]/g) || []).length, 1, 'Expected no duplicate explorer agent');
+      assert.ok(config.includes('[agents.echo]'), 'Expected `[agents.echo]` to be merged');
+      assert.ok(!config.includes('[agents."aw:echo"]'), 'Expected invalid `[agents."aw:echo"]` alias to be removed');
+      assert.ok(config.includes('config_file = "agents/echo.toml"'), 'Expected Echo role to point to echo.toml');
     } finally {
       cleanup(homeDir);
     }

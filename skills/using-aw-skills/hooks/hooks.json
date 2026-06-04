@@ -3,7 +3,7 @@
     {
       "type": "SessionStart",
       "script": "./session-start.sh",
-      "description": "Discovers all available AW skills and commands, loads the using-aw-skills routing skill, and injects context into the session."
+      "description": "Injects a concise AW routing summary at session start (does not inline the full using-aw-skills SKILL.md or registry catalog)."
     }
   ]
 }

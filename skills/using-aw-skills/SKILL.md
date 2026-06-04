@@ -12,6 +12,7 @@ Router for the AW SDLC. MANDATORY on every non-trivial request and re-applied on
 
 1. **Classify.** Answer out loud:
    - Approved plan exists at `.aw_docs/features/<slug>/`? (if no → likely plan-first)
+   - Approved plan has complete Echo Direct HTML companions and remote links when docs mode is `dual` or `html`? Run `aw docs validate --feature <slug> --full` when a feature folder exists; if it fails -> `/aw:plan` repair before build.
    - Bug / alert / unclear failure? (→ `/aw:investigate`)
    - Change touches any plan-first trigger (see list below)? (→ `/aw:plan`, no exceptions)
    - Crosses >1 file AND >1 concern? (→ `/aw:plan`)
@@ -48,12 +49,14 @@ Approved plan for this exact work?
 ├── NO → Bug/alert/unclear failure?
 │         ├── YES → /aw:investigate
 │         └── NO  → /aw:plan   ← DEFAULT for anything new
-└── YES → Implemented & needs test/review?
-          ├── YES → /aw:test or /aw:review
-          └── NO  → Deploy/release action?
-                    ├── YES → Single release outcome? → /aw:deploy
-                    │         Launch readiness/rollout/rollback? → /aw:ship
-                    └── NO  → /aw:build
+└── YES → `aw docs validate --feature <slug> --full` passes and Echo Direct remote links are complete?
+          ├── NO  → /aw:plan   ← repair human docs handoff
+          └── YES → Implemented & needs test/review?
+                    ├── YES → /aw:test or /aw:review
+                    └── NO  → Deploy/release action?
+                              ├── YES → Single release outcome? → /aw:deploy
+                              │         Launch readiness/rollout/rollback? → /aw:ship
+                              └── NO  → /aw:build
 ```
 
 ## Plan-First Triggers (exhaustive — ANY of these → `/aw:plan`)
@@ -64,6 +67,7 @@ Approved plan for this exact work?
 - **router / routing rules / skill orchestration** changes
 - **new/modified skills, agents, commands, rule-manifest entries** (exception: if the user wants to create or edit an agent, skill, command, rule, or eval — the files in `.aw/.aw_registry/` that define AI behavior — that's `/aw:adk`. The gate above catches this before you get here.)
 - **`state.json` / `verification.md` / review-or-build contract** changes
+- missing, stale, local-only, fallback-only (including legacy uncontrolled fallback status), blocked, or unpublished Echo Direct HTML companions or remote links for an existing AW artifact folder
 - **cross-registry propagation** (mirroring into platform-core, GitHub→local, etc.)
 - **model assignment changes across multiple agents**
 - security-sensitive work (auth, tokens, permissions, tenant scoping)

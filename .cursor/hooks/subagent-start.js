@@ -24,5 +24,5 @@ readStdin().then(raw => {
   } catch {
     // Telemetry is best-effort
   }
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

@@ -232,6 +232,16 @@ function withPrependedPath(binDir, env = {}) {
   };
 }
 
+function withoutInheritedGitEnv(env = process.env) {
+  const next = { ...env };
+  for (const key of Object.keys(next)) {
+    if (key.startsWith('GIT_')) {
+      delete next[key];
+    }
+  }
+  return next;
+}
+
 function assertNoProjectDetectionSideEffects(homeDir, testName) {
   const homunculusDir = path.join(homeDir, '.claude', 'homunculus');
   const registryPath = path.join(homunculusDir, 'projects.json');
@@ -2603,18 +2613,19 @@ async function runTests() {
       try {
         fs.mkdirSync(homeDir, { recursive: true });
         fs.mkdirSync(repoDir, { recursive: true });
-        spawnSync('git', ['init'], { cwd: repoDir, stdio: 'ignore' });
-        spawnSync('git', ['remote', 'add', 'origin', 'https://github.com/example/ecc-test.git'], { cwd: repoDir, stdio: 'ignore' });
+        const gitEnv = withoutInheritedGitEnv();
+        spawnSync('git', ['init'], { cwd: repoDir, stdio: 'ignore', env: gitEnv });
+        spawnSync('git', ['remote', 'add', 'origin', 'https://github.com/example/ecc-test.git'], { cwd: repoDir, stdio: 'ignore', env: gitEnv });
 
         const shellCommand = [`cd "${toBashPath(repoDir)}"`, `source "${toBashPath(detectProjectPath)}" >/dev/null 2>&1`, 'printf "%s\\n" "$PROJECT_ID"', 'printf "%s\\n" "$PROJECT_DIR"'].join('; ');
 
         const proc = spawn('bash', ['-lc', shellCommand], {
-          env: {
+          env: withoutInheritedGitEnv({
             ...process.env,
             HOME: homeDir,
             USERPROFILE: homeDir,
             CLAUDE_PROJECT_DIR: ''
-          },
+          }),
           stdio: ['ignore', 'pipe', 'pipe']
         });
 

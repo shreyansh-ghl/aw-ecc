@@ -4,15 +4,6 @@
  *
  * Usage:
  *   node run-with-flags.js <hookId> <scriptRelativePath> [profilesCsv]
- *
- * Output contract (both Cursor and Claude Code):
- *   - allow / no opinion = empty stdout + exit 0
- *   - block              = exit 2 (reason on stderr), empty stdout
- *
- * The raw input event is NEVER echoed to stdout. Cursor parses non-empty
- * write-path stdout as a decision object; echoing the event (which is valid
- * JSON but not a `{permission|decision|hookSpecificOutput}` shape) makes the
- * harness report "returned invalid JSON" and block the tool call.
  */
 
 'use strict';
@@ -21,6 +12,11 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { isHookEnabled } = require('../lib/hook-flags');
+const {
+  isToolHookInputEventStdout,
+  normalizeToolHookStdout,
+  writeToolHookStdout,
+} = require('../lib/hook-stdout');
 
 const MAX_STDIN = 1024 * 1024;
 
@@ -46,56 +42,32 @@ function getPluginRoot() {
   return path.resolve(__dirname, '..', '..');
 }
 
-/**
- * Allow / no opinion: empty stdout + exit 0. Never echo the input event.
- */
-function allow() {
-  process.exit(0);
+function appendLine(value) {
+  const text = String(value || '');
+  if (!text) return;
+  process.stderr.write(text.endsWith('\n') ? text : `${text}\n`);
 }
 
-/**
- * Translate an in-process run() return value into the harness contract without
- * ever writing the event or a raw object to stdout.
- *   - object: emit optional logs[] then stderr to process.stderr, then exit with
- *     exitCode (default 0). The decision is carried by the exit code, not stdout.
- *   - string | null | undefined: legacy pass-through echo → dropped → allow.
- */
-function finalizeRunResult(output) {
-  if (output && typeof output === 'object') {
-    if (Array.isArray(output.logs)) {
-      for (const line of output.logs) {
-        if (line !== null && line !== undefined) process.stderr.write(String(line) + '\n');
-      }
-    }
-    if (output.stderr) process.stderr.write(String(output.stderr) + '\n');
-    process.exit(Number.isInteger(output.exitCode) ? output.exitCode : 0);
+function writeRunResult(output, fallbackRaw) {
+  if (output && typeof output === 'object' && !Buffer.isBuffer(output)) {
+    if (output.stderr) appendLine(output.stderr);
+    if (Array.isArray(output.logs)) output.logs.forEach(appendLine);
+
+    const stdout = output.stdout ?? output.output ?? output.response;
+    writeToolHookStdout(stdout !== undefined ? stdout : output);
+    return Number.isInteger(output.exitCode) ? output.exitCode : 0;
   }
-  // string / null / undefined → pass-through echo; never forward to stdout.
-  process.exit(0);
+
+  writeToolHookStdout(output !== null && output !== undefined ? output : fallbackRaw);
+  return 0;
 }
 
-/**
- * Detect a child's stdout that is merely the echoed input event so it can be
- * suppressed. A genuine decision object (e.g. {"permission":"deny"}) does not
- * contain these event keys and is preserved.
- */
-function isPassthroughEcho(stdout, raw) {
-  const trimmed = (stdout || '').trim();
-  if (!trimmed) return true;
-  if (trimmed === (raw || '').trim()) return true;
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      ('hook_event_name' in parsed || 'tool_name' in parsed || 'tool_input' in parsed)
-    ) {
-      return true;
-    }
-  } catch (_err) {
-    // Non-JSON stdout that does not match the raw event is treated as genuine.
+function writeChildResultStdout(stdout, fallbackRaw, exitCode) {
+  const normalized = normalizeToolHookStdout(stdout || fallbackRaw);
+  if (exitCode !== 0 && stdout && normalized === '{}' && !isToolHookInputEventStdout(stdout)) {
+    appendLine(stdout);
   }
-  return false;
+  process.stdout.write(normalized);
 }
 
 async function main() {
@@ -103,11 +75,13 @@ async function main() {
   const raw = await readStdinRaw();
 
   if (!hookId || !relScriptPath) {
-    allow();
+    writeToolHookStdout(raw);
+    process.exit(0);
   }
 
   if (!isHookEnabled(hookId, { profiles: profilesCsv })) {
-    allow();
+    writeToolHookStdout(raw);
+    process.exit(0);
   }
 
   const pluginRoot = getPluginRoot();
@@ -117,12 +91,14 @@ async function main() {
   // Prevent path traversal outside the plugin root
   if (!scriptPath.startsWith(resolvedRoot + path.sep)) {
     process.stderr.write(`[Hook] Path traversal rejected for ${hookId}: ${scriptPath}\n`);
-    allow();
+    writeToolHookStdout(raw);
+    process.exit(0);
   }
 
   if (!fs.existsSync(scriptPath)) {
     process.stderr.write(`[Hook] Script not found for ${hookId}: ${scriptPath}\n`);
-    allow();
+    writeToolHookStdout(raw);
+    process.exit(0);
   }
 
   // Prefer direct require() when the hook exports a run(rawInput) function.
@@ -145,14 +121,15 @@ async function main() {
   }
 
   if (hookModule && typeof hookModule.run === 'function') {
+    let code = 0;
     try {
       const output = hookModule.run(raw);
-      finalizeRunResult(output);
+      code = writeRunResult(output, raw);
     } catch (runErr) {
       process.stderr.write(`[Hook] run() error for ${hookId}: ${runErr.message}\n`);
-      allow();
+      writeToolHookStdout(raw);
     }
-    return;
+    process.exit(code);
   }
 
   // Legacy path: spawn a child Node process for hooks without run() export
@@ -164,17 +141,14 @@ async function main() {
     timeout: 30000
   });
 
+  const code = Number.isInteger(result.status) ? result.status : 0;
+  writeChildResultStdout(result.stdout, raw, code);
   if (result.stderr) process.stderr.write(result.stderr);
-  // Forward only genuine stdout (a real decision object). Suppress the echoed
-  // input event, which would otherwise be misparsed as an invalid decision.
-  if (result.stdout && !isPassthroughEcho(result.stdout, raw)) {
-    process.stdout.write(result.stdout);
-  }
-
-  process.exit(Number.isInteger(result.status) ? result.status : 0);
+  process.exit(code);
 }
 
 main().catch(err => {
   process.stderr.write(`[Hook] run-with-flags error: ${err.message}\n`);
+  writeToolHookStdout('{}');
   process.exit(0);
 });

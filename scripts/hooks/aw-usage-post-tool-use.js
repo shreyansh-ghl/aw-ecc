@@ -14,10 +14,77 @@ const {
   detectHarness,
   sendAsync,
   readSessionSkill,
+  readSessionLastSlashCommand,
   tryAcquireDedupe,
 } = require('../lib/aw-usage-telemetry');
 
 const MAX_STDIN = 1024 * 1024;
+
+// ── Test-file detection ──────────────────────────────────────────────
+// Match common test conventions across JS/TS, Python, Go, Rust, Java, Kotlin.
+// Designed to be permissive: a hit means "this was probably a test file";
+// false positives are cheap (dashboard groups by guess) and false negatives
+// are worse (lost SDLC signal). Use forward slashes — normalize backslashes
+// before matching since Windows paths come through as \.
+function normalizePath(p) {
+  return typeof p === 'string' ? p.replace(/\\/g, '/') : '';
+}
+
+// Patterns are evaluated top-to-bottom; earlier matches win. Order from
+// most-specific to least so e.g. `tests/foo.rs` is `rust-test`, not pytest.
+const TEST_PATH_PATTERNS = [
+  // JS / TS (jest, vitest, mocha, jasmine)
+  { regex: /(?:^|\/)__tests__\/.+\.(?:ts|tsx|js|jsx|mjs|cjs)$/i,    framework: 'jest-like' },
+  { regex: /\.(?:spec|test)\.(?:ts|tsx|js|jsx|mjs|cjs)$/i,           framework: 'jest-vitest' },
+  // Go (`xxx_test.go`)
+  { regex: /_test\.go$/i,                                           framework: 'go-test' },
+  // Rust (`#[cfg(test)]` lives inline, but `tests/` dir is canonical)
+  { regex: /(?:^|\/)tests\/.+\.rs$/i,                               framework: 'rust-test' },
+  // Java / Kotlin
+  { regex: /(?:^|\/)src\/test\/.+\.(?:java|kt|kts)$/i,              framework: 'junit' },
+  { regex: /Test\.(?:java|kt)$/,                                    framework: 'junit' },
+  // Python (pytest / unittest) — keyed on .py to avoid claiming Rust/Go test dirs.
+  { regex: /(?:^|\/)tests?\/.+\.py$/i,                              framework: 'pytest' },
+  { regex: /\/test_[a-z0-9_-]+\.py$/i,                              framework: 'pytest' },
+  { regex: /_test\.py$/i,                                           framework: 'pytest' },
+];
+
+function detectTestFramework(filePath) {
+  const norm = normalizePath(filePath);
+  if (!norm) return null;
+  for (const { regex, framework } of TEST_PATH_PATTERNS) {
+    if (regex.test(norm)) return framework;
+  }
+  return null;
+}
+
+// ── SDLC artifact detection ──────────────────────────────────────────
+// Plans, PRDs, specs, tasks, design docs, ADRs, learnings — written by
+// the /aw:plan, /aw:ship, /aw:execute, etc. flows. Maps to an artifact_type
+// + a coarse sdlc_stage so the funnel query can group.
+const SDLC_ARTIFACT_PATTERNS = [
+  { regex: /(?:^|\/)plan\.md$/i,           artifact_type: 'plan',         sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)prd\.md$/i,            artifact_type: 'prd',          sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)spec\.md$/i,           artifact_type: 'spec',         sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)tasks\.md$/i,          artifact_type: 'tasks',        sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)design\.md$/i,         artifact_type: 'design',       sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)tech_doc\.md$/i,       artifact_type: 'tech_doc',     sdlc_stage: 'plan' },
+  { regex: /(?:^|\/)architecture\.md$/i,   artifact_type: 'architecture', sdlc_stage: 'plan' },
+  { regex: /\/\.aw_docs\/runs\/[^/]+\/plan\.md$/i,     artifact_type: 'run_plan',     sdlc_stage: 'plan' },
+  { regex: /\/\.aw_docs\/features\/[^/]+\/[^/]+\.md$/i, artifact_type: 'feature_doc', sdlc_stage: 'plan' },
+  { regex: /\/\.aw_docs\/learnings\/[^/]+\.md$/i,      artifact_type: 'learning',     sdlc_stage: 'learn' },
+  // ADR convention
+  { regex: /(?:^|\/)adr-\d+[a-z0-9-]*\.md$/i,           artifact_type: 'adr',          sdlc_stage: 'plan' },
+];
+
+function detectSdlcArtifact(filePath) {
+  const norm = normalizePath(filePath);
+  if (!norm) return null;
+  for (const { regex, artifact_type, sdlc_stage } of SDLC_ARTIFACT_PATTERNS) {
+    if (regex.test(norm)) return { artifact_type, sdlc_stage };
+  }
+  return null;
+}
 function parseMaybeJsonObject(value) {
   if (typeof value !== 'string') return value;
   const trimmed = value.trim();
@@ -57,7 +124,7 @@ function normalizeToolResult(input) {
     toolOutput.exit_code,
     toolOutput.exitCode,
   ].find(value => value !== undefined && value !== null && value !== '');
-  const messageParts = [
+  const rawMessage = [
     toolResponse.stderr,
     toolOutput.stderr,
     toolResponse.output,
@@ -66,12 +133,24 @@ function normalizeToolResult(input) {
     typeof rawToolOutput === 'string' ? rawToolOutput : '',
     input?.stderr,
     input?.output,
-  ].filter(value => typeof value === 'string' && value.trim());
+  ].filter(value => typeof value === 'string' && value.trim()).join('\n');
 
   return {
     exitCode: exitCode === undefined ? null : Number(exitCode),
-    errorMessage: messageParts.join('\n').slice(0, 500),
+    rawErrorMessage: rawMessage,
+    errorMessage: classifyFailureMessage(rawMessage),
   };
+}
+
+function classifyFailureMessage(errorMessage) {
+  if (typeof errorMessage !== 'string' || !errorMessage.trim()) return 'tool_failed';
+  if (/\bNo such file or directory\b/i.test(errorMessage)) return 'no_such_file_or_directory';
+  if (/\bPermission denied\b/i.test(errorMessage)) return 'permission_denied';
+  if (/\bOperation not permitted\b/i.test(errorMessage)) return 'operation_not_permitted';
+  if (/\bcommand not found\b/i.test(errorMessage)) return 'command_not_found';
+  if (/\bcannot access\b/i.test(errorMessage)) return 'cannot_access_path';
+  if (/\bis a directory\b/i.test(errorMessage)) return 'path_is_directory';
+  return 'tool_failed';
 }
 
 function isExplicitFailureExitCode(exitCode) {
@@ -100,6 +179,9 @@ function collectPostToolUseEvents(input, options = {}) {
   const events = [];
   const toolName = input?.tool_name || '';
   const promptSkillOverride = options.promptSkillOverride || null;
+  // Session-scoped slash command from the most recent /aw:*, /tdd, etc.
+  // Used to correlate test/artifact writes back to the originating SDLC stage.
+  const slashCmd = options.sessionSlashCommand || null;
 
   // Skill detection: Claude uses tool_name='Skill', Cursor reads SKILL.md via 'Read' tool.
   const filePath = input?.tool_input?.file_path || '';
@@ -133,7 +215,7 @@ function collectPostToolUseEvents(input, options = {}) {
 
   const toolResult = normalizeToolResult(input);
   if (isExplicitFailureExitCode(toolResult.exitCode)
-    || inferShellFailureFromMessage(toolName, toolResult.errorMessage)) {
+    || inferShellFailureFromMessage(toolName, toolResult.rawErrorMessage)) {
     const payload = {
       tool_name: toolName || 'unknown',
       error_message: toolResult.errorMessage,
@@ -174,16 +256,63 @@ function collectPostToolUseEvents(input, options = {}) {
     }
   }
 
+  // Test-file write detection — match Write/Edit/MultiEdit on common test paths.
+  // Emits once per matching write, with a framework guess and the originating
+  // slash command (e.g. /aw:test) if the session is in an SDLC stage. The
+  // dashboard funnel uses sdlc_correlated_command to compute "tests written
+  // via /aw:test" vs "tests written ad-hoc".
+  if (toolName === 'Write' || toolName === 'Edit' || toolName === 'MultiEdit') {
+    const framework = detectTestFramework(filePath);
+    if (framework) {
+      events.push({
+        eventType: 'test_file_written',
+        payload: {
+          file_path: filePath,
+          test_framework_guess: framework,
+          tool_name: toolName,
+          sdlc_correlated_command: slashCmd ? slashCmd.command_name : null,
+          sdlc_correlated_namespace: slashCmd ? slashCmd.command_namespace : null,
+          sdlc_correlated_is_sdlc_stage: slashCmd ? Boolean(slashCmd.is_sdlc_stage) : false,
+        },
+      });
+    }
+
+    // SDLC artifact creation — emit on Write only (creation, not Edit) so
+    // we don't double-count every save of an existing plan.md.
+    if (toolName === 'Write') {
+      const artifact = detectSdlcArtifact(filePath);
+      if (artifact) {
+        events.push({
+          eventType: 'sdlc_artifact_created',
+          payload: {
+            file_path: filePath,
+            artifact_type: artifact.artifact_type,
+            sdlc_stage: artifact.sdlc_stage,
+            sdlc_correlated_command: slashCmd ? slashCmd.command_name : null,
+            sdlc_correlated_namespace: slashCmd ? slashCmd.command_namespace : null,
+            sdlc_correlated_is_sdlc_stage: slashCmd ? Boolean(slashCmd.is_sdlc_stage) : false,
+          },
+        });
+      }
+    }
+  }
+
   return events;
 }
 
 function processPostToolUseInput(input, deps = {}) {
   const emit = typeof deps.emit === 'function' ? deps.emit : () => {};
+  const sessionId = getSessionId(input);
   const promptSkillOverride = deps.promptSkillOverride || readSessionSkill(
-    getSessionId(input),
+    sessionId,
     input?.turn_id || null,
   );
-  const events = collectPostToolUseEvents(input, { promptSkillOverride });
+  const sessionSlashCommand = deps.sessionSlashCommand
+    || readSessionLastSlashCommand(sessionId);
+  const events = collectPostToolUseEvents(input, {
+    promptSkillOverride,
+    sessionSlashCommand,
+  });
   for (const event of events) {
     emit(event.eventType, event.payload);
   }
@@ -233,6 +362,8 @@ if (require.main === module) {
 
 module.exports = {
   collectPostToolUseEvents,
+  detectSdlcArtifact,
+  detectTestFramework,
   inferShellFailureFromMessage,
   isExplicitFailureExitCode,
   normalizeToolResult,

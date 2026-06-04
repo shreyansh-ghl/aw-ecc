@@ -30,7 +30,12 @@ The canonical public verification model is now:
 3. Preserve stage continuation as well as stage boundaries.
    Do not stop after partial evidence if the selected test or review scope still remains.
 4. Preserve generated-doc publishing behavior from the resolved canonical stage.
-   When verification artifacts are generated, delegate human docs generation and remote sharing to `aw:echo`, do not run docs publish commands in this compatibility wrapper, and report Echo's `Remote Docs` links or concrete blocker.
+   HTML sidecars are required in `dual` and `html` output modes.
+   When verification artifacts are generated, use `platform-core:echo-direct` directly for human-readable HTML generation and remote sharing.
+   Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`.
+   In explicit Markdown-only mode, do not generate HTML and record the skip.
+   Record `html_companion_artifacts` in `state.json` with `status: generated`, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason.
+   Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.
 5. Do not preserve old ambiguity.
    Prefer the narrowest modern stage once the intent is clear.
 

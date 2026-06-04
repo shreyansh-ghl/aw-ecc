@@ -56,17 +56,20 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (test('passes raw stdin through while emitting AW prompt reminder to stderr', () => {
+  if (test('emits prompt JSON without hook event markers while sending reminders to stderr', () => {
     withTempRulesDir((cwd) => {
       const raw = JSON.stringify({
+        hook_event_name: 'beforeSubmitPrompt',
         cwd,
         prompt: 'update this backend service and fix the dto validation',
       });
 
       const result = runBeforeSubmit(raw);
+      const output = JSON.parse(result.stdout);
 
       assert.strictEqual(result.code, 0);
-      assert.strictEqual(result.stdout, raw);
+      assert.strictEqual(output.prompt, 'update this backend service and fix the dto validation');
+      assert.strictEqual(output.hook_event_name, undefined);
       assert.ok(result.stderr.includes('[AW Router reminder]'), 'Expected AW routing reminder on stderr');
       assert.ok(result.stderr.includes('[Rule reminder'), 'Expected rule reminder on stderr');
       assert.ok(result.stderr.includes('.aw_rules/platform/universal/AGENTS.md'), 'Expected canonical universal rules path in reminder');
@@ -75,17 +78,21 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('warns on potential secrets without changing stdout passthrough', () => {
+  if (test('warns on potential secrets without echoing hook event markers', () => {
     withTempRulesDir((cwd) => {
+      const fakeSecret = `sk-${'1234567890123456789012345'}`;
       const raw = JSON.stringify({
+        hook_event_name: 'beforeSubmitPrompt',
         cwd,
-        prompt: 'update this backend service and use sk-1234567890123456789012345 for testing',
+        prompt: `update this backend service and use ${fakeSecret} for testing`,
       });
 
       const result = runBeforeSubmit(raw);
+      const output = JSON.parse(result.stdout);
 
       assert.strictEqual(result.code, 0);
-      assert.strictEqual(result.stdout, raw);
+      assert.strictEqual(output.prompt, `update this backend service and use ${fakeSecret} for testing`);
+      assert.strictEqual(output.hook_event_name, undefined);
       assert.ok(result.stderr.includes('Potential secret detected in prompt'), 'Expected secret warning on stderr');
       assert.ok(result.stderr.includes('Remove secrets before submitting'), 'Expected secret remediation guidance');
     });

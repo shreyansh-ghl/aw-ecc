@@ -56,12 +56,20 @@ Turn an idea, requirement, approved design, or technical request into the minimu
 
 ## Human HTML Companion
 
-Markdown artifacts remain canonical for agents.
-When `/aw:plan` writes or materially updates planning artifacts, delegate to the `aw:echo` subagent to produce the TeamOfOne-readable companion. Markdown-only is allowed only when the user explicitly requests it for this run.
-Subagent authorization: invoking `/aw:plan` in `dual` or `html` output mode is an explicit user request to delegate the human-facing HTML companion to exactly one background `aw:echo` subagent. This authorization is scoped only to HTML companion generation; do not spawn unrelated subagents.
-HTML sidecars are required before the final handoff. Spawn exactly one `aw:echo` subagent and wait for the colocated `.html` sidecar unless the user explicitly asks not to wait. If the harness still cannot spawn `aw:echo`, create a conservative self-contained fallback HTML sidecar in the same turn, record `generated_fallback` with the blocker, and keep Markdown canonical.
+Markdown planning artifacts remain canonical for agents.
+When `/aw:plan` writes or materially updates planning artifacts, HTML sidecars are required in `dual` and `html` output modes. Use `platform-core:echo-direct` directly to generate or refresh the colocated planning `.html` companions such as `prd.html`, `design.html`, `spec.html`, and `tasks.html` with the profile selected by `platform-core:echo-direct` from the artifact type.
 
-Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, status, `run_ref` when available, publish status, and any explicit Markdown-only skip or fallback reason.
+Resolve docs output mode in this order: explicit user or session request, stage-local request, `.aw_docs/config.json` `docs.outputMode`, `AW_DOCS_OUTPUT_MODE`, then default `dual`.
+- `dual` mode keeps Markdown canonical and requires the HTML companion.
+- `html` mode requires the HTML companion and still preserves any canonical Markdown the stage must write.
+- explicit Markdown-only mode skips HTML and records `status: skipped` with `skip_reason: explicit_markdown_only`.
+
+Do not use a subagent for HTML generation, and do not hand-roll or command-template HTML outside `platform-core:echo-direct`. In `dual` or `html` mode, the stage is not complete until the skill has generated the sidecar or recorded a concrete blocker. In explicit Markdown-only mode, do not generate HTML.
+
+Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path`, profile, `status: generated` when successful, `owner: platform-core:echo-direct`, `execution_mode: skill`, `runner: platform-core:echo-direct`, publish status, remote links, and any explicit Markdown-only skip or blocked reason. Do not record successful skill output as `generated_fallback` or `generated_hca_fallback`; those are legacy statuses to repair.
+After Echo Direct writes the companion packet, run `aw docs validate --feature <feature_slug> --full`. Do not mark the plan `ready_for_build`, recommend `/aw:build`, or say the plan is complete while that validator reports missing Markdown, missing `.html` sidecars, missing `html_companion_artifacts`, or incomplete Echo Direct provenance.
+
+Write each planning companion beside its canonical source: `prd.md` -> `prd.html`, `design.md` -> `design.html`, `spec.md` -> `spec.html`, and `tasks.md` -> `tasks.html`.
 
 ## Execution Rules
 
@@ -79,7 +87,8 @@ Record `html_companion_artifacts` in `state.json` with `source_path`, `html_path
 12. Route approved specs through `aw-tasks` when execution-ready tasks are missing or stale.
 13. When writing technical or task artifacts, make them concrete enough for build to proceed without re-planning file scope, validation, and task order.
 14. When writing `tasks.md`, always include an explicit `## Spec Brief` section and organize the work into explicit phases.
-15. Generate or explicitly record the HTML companion status before handoff.
+15. Generate, repair, or explicitly record the HTML companion status before handoff; `ready_for_build` is not sufficient when human HTML or remote links are stale or absent.
+16. Run `aw docs validate --feature <feature_slug> --full` before marking the plan complete or recommending `/aw:build`; if it fails, keep the stage in `/aw:plan` repair or record a concrete blocker.
 
 ## Planning Depth
 
@@ -109,6 +118,7 @@ When `/aw:plan` writes `spec.md` or `tasks.md`, prefer:
 - do not run deploy steps
 - do not force unrelated artifacts
 - do not invent product or design work for a technical-only request
+- do not treat an existing `ready_for_build` plan as handoff-ready while Echo Direct HTML companions or remote links are missing, stale, fallback-only, blocked, local-only, or unpublished
 
 ## Must Not Do
 
@@ -130,11 +140,11 @@ This command may still use internal helpers where useful, but the public contrac
 - execution-recipe task writing should use `aw-tasks`
 - the primary stage skill remains `aw-plan`
 
-## Echo Human Docs Handoff
+## Echo Direct Human Docs Handoff
 
-After canonical Markdown and `state.json` are current, delegate human docs generation and remote sharing to exactly one `aw:echo` companion job unless the user explicitly requested local-only or Markdown-only docs. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent.
+After canonical Markdown and `state.json` are current, run `platform-core:echo-direct` for every required human companion in `dual` or `html` mode. Pass the feature slug, source paths, profile, output mode, colocated HTML path, state path, and publish intent. This same skill is also the repair path for existing folders with missing, stale, blocked, local-only, legacy uncontrolled fallback, unpublished, or linkless companions. Then run `aw docs validate --feature <feature_slug> --full`; validation failure means the handoff is still `/aw:plan` repair, not `/aw:build`.
 
-Do not run docs publish commands in this stage. Add Echo's returned links to the final `Remote Docs` section. If Echo cannot generate or publish, record `publish_status: blocked` and Echo's blocker in `state.json`; do not invent links.
+Do not duplicate docs publish commands or publish configuration in this stage. `platform-core:echo-direct` owns HTML generation, publish handoff, companion state updates, and returned Devtools/GitHub links. Before the final response, inspect the skill result, feature `state.json`, and `.aw_docs/last-publish.json`. Add any returned or recorded `.html` links to the final `Remote Docs` section as plain-text absolute Devtools URLs rooted at `https://devtools.servers.stg.msgsndr.net/` (no Markdown link syntax around the Devtools URL) with compact clickable GitHub labels, not label-only text. Prefer `.html` companion links over `.md` links. A final handoff that lists only Markdown artifacts while `.html` remote links exist is incomplete. Each artifact must show `Devtools: <absolute remote URL>` as raw visible text and `GitHub: [spec.html](<absolute repository URL>)` or another short artifact label when both URLs are available. Never render Devtools as `[Devtools](...)`, `[Spec Devtools](...)`, or any other Markdown link label; never hide the Devtools URL behind Markdown-only links, never print long GitHub URLs inline when a compact label can point to the same URL, and never invent links. If publishing cannot run, record `publish_status: blocked` and the concrete blocker in `state.json`.
 
 ## Final Output Shape
 

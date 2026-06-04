@@ -2,11 +2,19 @@
 /**
  * Output-contract tests for scripts/hooks/run-with-flags.js
  *
- * Regression guard for the Cursor "hook returned invalid JSON" bug:
- * the wrapper must NEVER echo the raw input event to stdout. Harness
- * contract for both Cursor and Claude Code:
- *   - allow / no opinion = empty stdout + exit 0
- *   - block             = exit 2 (reason on stderr), empty stdout
+ * Regression guard for the Cursor "hook returned invalid JSON" bug: the wrapper
+ * must NEVER echo the raw input event to stdout. Strict Cursor/Claude adapters
+ * parse non-empty write-path stdout as a hook *response*; the input event shape
+ * is not a response shape, so echoing it is rejected as invalid JSON and blocks
+ * the tool call.
+ *
+ * Contract (see scripts/lib/hook-stdout.js):
+ *   - allow / no opinion / pass-through event = stdout normalized to "{}" + exit 0
+ *   - block                                   = exit 2, reason on stderr, stdout "{}"
+ *   - the raw input event is never forwarded verbatim to stdout
+ *
+ * This complements tests/hooks/run-with-flags-stdout.test.js (empty/event stdin)
+ * by exercising the block, disabled, profile-gated, and missing-args paths.
  *
  * Run with: node tests/hooks/run-with-flags-output.test.js
  */
@@ -22,7 +30,7 @@ const WRAPPER = path.join(REPO_ROOT, 'scripts', 'hooks', 'run-with-flags.js');
 
 // PreToolUse hooks wired to Write/Edit/MultiEdit in hooks/hooks.json that pass
 // through run-with-flags.js. These are exactly the ids that surfaced in the
-// Cursor "returned invalid JSON" reports, plus suggest-compact.
+// Cursor "returned invalid JSON" reports.
 const PRE_WRITE_HOOKS = [
   ['pre:write:doc-file-warning', 'scripts/hooks/doc-file-warning.js'],
   ['pre:edit-write:suggest-compact', 'scripts/hooks/suggest-compact.js'],
@@ -52,6 +60,14 @@ function runWrapper(hookId, relScript, profiles, input, extraEnv = {}) {
   };
 }
 
+// stdout must be a hook response (here, the no-op "{}"), never the input event.
+function assertNoEventEcho(stdout) {
+  assert.ok(
+    !/hook_event_name|tool_input|"tool_name"/.test(stdout),
+    `stdout echoed the input event (regression): ${stdout.slice(0, 200)}`
+  );
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -69,12 +85,14 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  // 1. Allow path: every routed pre-write hook must emit zero stdout + exit 0.
+  // 1. Allow path: every routed pre-write hook emits the no-op "{}" + exit 0 and
+  //    never echoes the event or crashes on object stdout.
   for (const [hookId, relScript] of PRE_WRITE_HOOKS) {
-    (test(`${hookId}: allow path emits empty stdout + exit 0`, () => {
+    (test(`${hookId}: allow path emits "{}" + exit 0, no event echo`, () => {
       const { code, stdout, stderr } = runWrapper(hookId, relScript, 'standard,strict', WRITE_EVENT);
-      assert.strictEqual(stdout.length, 0, `expected empty stdout, got ${stdout.length} bytes: ${stdout.slice(0, 200)}`);
       assert.strictEqual(code, 0, `expected exit 0, got ${code} (stderr: ${stderr.slice(0, 200)})`);
+      assert.strictEqual(stdout.trim(), '{}', `expected "{}", got: ${stdout.slice(0, 200)}`);
+      assertNoEventEcho(stdout);
       assert.ok(
         !/chunk must be string\/Buffer/.test(stderr),
         `wrapper crashed on object stdout write: ${stderr.slice(0, 200)}`
@@ -82,9 +100,9 @@ function runTests() {
     }) ? passed++ : failed++);
   }
 
-  // 2. Block path: config-protection on a protected file must exit 2 with a
-  //    reason on stderr and still no event echo on stdout.
-  (test('config-protection: blocks protected config via exit 2 with empty stdout', () => {
+  // 2. Block path: config-protection on a protected file exits 2 with a reason on
+  //    stderr and still emits "{}" (no event echo) on stdout.
+  (test('config-protection: blocks protected config via exit 2, stdout "{}"', () => {
     const event = JSON.stringify({
       hook_event_name: 'PreToolUse',
       tool_name: 'Write',
@@ -97,12 +115,12 @@ function runTests() {
       event
     );
     assert.strictEqual(code, 2, `expected exit 2 (block), got ${code}`);
-    assert.strictEqual(stdout.length, 0, `expected empty stdout on block, got: ${stdout.slice(0, 200)}`);
+    assert.strictEqual(stdout.trim(), '{}', `expected "{}" on block, got: ${stdout.slice(0, 200)}`);
     assert.ok(/BLOCKED/.test(stderr), `expected block reason on stderr, got: ${stderr.slice(0, 200)}`);
   }) ? passed++ : failed++);
 
   // 3. config-protection allow path: a normal source file is not blocked.
-  (test('config-protection: allows non-config file (exit 0, empty stdout)', () => {
+  (test('config-protection: allows non-config file (exit 0, stdout "{}")', () => {
     const { code, stdout } = runWrapper(
       'pre:config-protection',
       'scripts/hooks/config-protection.js',
@@ -110,11 +128,11 @@ function runTests() {
       WRITE_EVENT
     );
     assert.strictEqual(code, 0, `expected exit 0, got ${code}`);
-    assert.strictEqual(stdout.length, 0, `expected empty stdout, got: ${stdout.slice(0, 200)}`);
+    assert.strictEqual(stdout.trim(), '{}', `expected "{}", got: ${stdout.slice(0, 200)}`);
   }) ? passed++ : failed++);
 
-  // 4. Disabled hook (ECC_DISABLED_HOOKS) must short-circuit with empty stdout.
-  (test('disabled hook emits empty stdout + exit 0 (no event echo)', () => {
+  // 4. Disabled hook (ECC_DISABLED_HOOKS) short-circuits with "{}" + exit 0.
+  (test('disabled hook emits "{}" + exit 0 (no event echo)', () => {
     const { code, stdout } = runWrapper(
       'pre:write:doc-file-warning',
       'scripts/hooks/doc-file-warning.js',
@@ -123,11 +141,12 @@ function runTests() {
       { ECC_DISABLED_HOOKS: 'pre:write:doc-file-warning' }
     );
     assert.strictEqual(code, 0, `expected exit 0, got ${code}`);
-    assert.strictEqual(stdout.length, 0, `expected empty stdout for disabled hook, got: ${stdout.slice(0, 200)}`);
+    assert.strictEqual(stdout.trim(), '{}', `expected "{}" for disabled hook, got: ${stdout.slice(0, 200)}`);
+    assertNoEventEcho(stdout);
   }) ? passed++ : failed++);
 
-  // 5. Profile gating off (hook not in active profile) also yields empty stdout.
-  (test('profile-gated-off hook emits empty stdout + exit 0', () => {
+  // 5. Profile gating off (hook not in active profile) also yields "{}".
+  (test('profile-gated-off hook emits "{}" + exit 0', () => {
     const { code, stdout } = runWrapper(
       'pre:bash:tmux-reminder',
       'scripts/hooks/pre-bash-tmux-reminder.js',
@@ -136,11 +155,12 @@ function runTests() {
       { ECC_HOOK_PROFILE: 'minimal' }
     );
     assert.strictEqual(code, 0, `expected exit 0, got ${code}`);
-    assert.strictEqual(stdout.length, 0, `expected empty stdout when profile-gated off, got: ${stdout.slice(0, 200)}`);
+    assert.strictEqual(stdout.trim(), '{}', `expected "{}" when profile-gated off, got: ${stdout.slice(0, 200)}`);
+    assertNoEventEcho(stdout);
   }) ? passed++ : failed++);
 
   // 6. Missing-args guard must not echo the event either.
-  (test('missing args emits empty stdout + exit 0', () => {
+  (test('missing args emits "{}" + exit 0', () => {
     const result = spawnSync('node', [WRAPPER], {
       input: WRITE_EVENT,
       encoding: 'utf8',
@@ -148,7 +168,8 @@ function runTests() {
       env: { ...process.env, CLAUDE_PLUGIN_ROOT: REPO_ROOT },
     });
     assert.strictEqual(result.status, 0, `expected exit 0, got ${result.status}`);
-    assert.strictEqual((result.stdout || '').length, 0, `expected empty stdout, got: ${(result.stdout || '').slice(0, 200)}`);
+    assert.strictEqual((result.stdout || '').trim(), '{}', `expected "{}", got: ${(result.stdout || '').slice(0, 200)}`);
+    assertNoEventEcho(result.stdout || '');
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);

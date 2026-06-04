@@ -17,5 +17,5 @@ readStdin().then(raw => {
     claudePayload.failure_type = input.failure_type || 'error';
     runExistingHook('aw-usage-post-tool-use-failure.js', JSON.stringify(claudePayload));
   } catch {}
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

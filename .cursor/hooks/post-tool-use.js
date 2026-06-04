@@ -22,7 +22,7 @@ readStdin().then(raw => {
 
     // Skip tools already covered by specific hooks
     if (COVERED_TOOLS.has(toolName)) {
-      process.stdout.write(raw);
+      process.stdout.write('{}');
       return;
     }
 
@@ -35,5 +35,5 @@ readStdin().then(raw => {
     };
     runExistingHook('aw-usage-post-tool-use.js', JSON.stringify(claudePayload));
   } catch {}
-  process.stdout.write(raw);
+  process.stdout.write('{}');
 }).catch(() => process.exit(0));

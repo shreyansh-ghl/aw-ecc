@@ -229,6 +229,35 @@ function readSessionSkill(sessionId, turnId) {
   return skill.turn_id ? null : skill;
 }
 
+// Persist the most recent slash command from UserPromptSubmit so that
+// later PostToolUse / Stop hooks can correlate test/artifact writes back
+// to the originating /aw:* invocation. Separate from `last_skill` because
+// the source is the prompt, not the tool, and the lifetime is the whole
+// session (not just one turn).
+function persistSessionSlashCommand(sessionId, slashCommand) {
+  if (!sessionId || !slashCommand?.command_name) return;
+  try {
+    fs.mkdirSync(SESSION_DIR, { recursive: true });
+    const state = readSessionState(sessionId);
+    fs.writeFileSync(path.join(SESSION_DIR, sessionId + '.json'), JSON.stringify({
+      ...state,
+      last_slash_command: {
+        command_namespace: slashCommand.command_namespace || null,
+        command_name: slashCommand.command_name,
+        command_args: slashCommand.command_args || '',
+        is_sdlc_stage: Boolean(slashCommand.is_sdlc_stage),
+        updated_at: new Date().toISOString(),
+      },
+    }));
+  } catch { /* ignore */ }
+}
+
+function readSessionLastSlashCommand(sessionId) {
+  const cmd = readSessionState(sessionId)?.last_slash_command;
+  if (!cmd?.command_name) return null;
+  return cmd;
+}
+
 // ── Short-TTL dedupe guards ──────────────────────────────────────────
 
 function normalizeDedupePart(value) {
@@ -464,6 +493,8 @@ module.exports = {
   readSessionModel,
   persistSessionSkill,
   readSessionSkill,
+  persistSessionSlashCommand,
+  readSessionLastSlashCommand,
   readLastAssistantFromTranscript,
   resolvePromptText,
   tryAcquireDedupe,
