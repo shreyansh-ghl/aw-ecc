@@ -6,27 +6,39 @@
  * Co-Authored-By trailer. Works for all harnesses (Claude, Cursor, Codex)
  * since it fires from a git-level hook, not a harness-specific one.
  *
- * Usage: node aw-usage-commit-created.js <commit_hash> <branch>
+ * Usage: node aw-usage-commit-created.js <commit_hash> <branch> [cwd]
  */
 
 'use strict';
 
 const { buildEvent, sendAsync, isDisabled } = require('../lib/aw-usage-telemetry');
 
-if (isDisabled()) process.exit(0);
+function buildCommitCreatedEvent({ commitHash = 'unknown', branch = 'unknown', cwd = process.cwd() } = {}) {
+  const event = buildEvent({ cwd }, 'commit_created', {
+    commit_hash: commitHash,
+    commit_sha: commitHash,
+    branch,
+  });
 
-const commitHash = process.argv[2] || 'unknown';
-const branch = process.argv[3] || 'unknown';
+  // Override harness to 'git' since this fires from a git hook, not a harness.
+  event.harness = 'git';
+  return event;
+}
 
-// Minimal input — no harness session context in a git hook.
-// detectHarness() will return 'claude' (default) but the event
-// payload makes it clear this is harness-agnostic.
-const event = buildEvent({}, 'commit_created', {
-  commit_hash: commitHash,
-  branch,
-});
+function main() {
+  if (isDisabled()) process.exit(0);
 
-// Override harness to 'git' since this fires from a git hook, not a harness
-event.harness = 'git';
+  const commitHash = process.argv[2] || 'unknown';
+  const branch = process.argv[3] || 'unknown';
+  const cwd = process.argv[4] || process.cwd();
 
-sendAsync(event);
+  sendAsync(buildCommitCreatedEvent({ commitHash, branch, cwd }));
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  buildCommitCreatedEvent,
+};
