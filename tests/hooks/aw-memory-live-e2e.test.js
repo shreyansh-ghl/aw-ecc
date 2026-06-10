@@ -264,7 +264,7 @@ async function runTests() {
       assert.doesNotMatch(payload.content, /sync-secret/);
       assert.strictEqual(payload.text, payload.content);
       assert.strictEqual(payload.type, 'learning');
-      assert.strictEqual(payload.source, 'aw-learnings');
+      assert.strictEqual(payload.source, 'hook');
       assert.deepStrictEqual(payload.tags, [
         'aw-memory-hooks',
         'curated-learning',

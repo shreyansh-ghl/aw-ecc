@@ -137,6 +137,25 @@ function memoryType(row, metadata) {
   return allowed.has(candidate) ? candidate : 'learning';
 }
 
+function memorySource(row, metadata) {
+  const candidate = firstString(
+    row?.source,
+    row?.memorySource,
+    metadata?.memory_source,
+    metadata?.memorySource
+  );
+  const allowed = new Set([
+    'system',
+    'agent',
+    'human',
+    'conversation',
+    'hook',
+    'alchemist',
+    'workflow-runner',
+  ]);
+  return allowed.has(candidate) ? candidate : 'hook';
+}
+
 function optionalNumber(...values) {
   for (const value of values) {
     if (value === undefined || value === null || value === '') continue;
@@ -162,7 +181,7 @@ function buildMemoryStorePayload(row, metadata = {}) {
   return {
     content: redacted.value,
     type: memoryType(row, mergedMetadata),
-    source: firstString(row?.source, mergedMetadata.source, 'aw-learnings'),
+    source: memorySource(row, mergedMetadata),
     tags,
     confidence: optionalNumber(row?.confidence, mergedMetadata.confidence),
     namespace: firstString(row?.namespace, mergedMetadata.namespace) || undefined,

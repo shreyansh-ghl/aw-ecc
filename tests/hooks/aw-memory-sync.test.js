@@ -110,7 +110,7 @@ async function runTests() {
     assert.doesNotMatch(payload.content, /secret-token/);
     assert.strictEqual(payload.text, payload.content);
     assert.strictEqual(payload.type, 'learning');
-    assert.strictEqual(payload.source, 'aw-learnings');
+    assert.strictEqual(payload.source, 'hook');
     assert.deepStrictEqual(payload.tags, ['dto', 'aw-memory-hooks', 'curated-learning', 'repo:api']);
     assert.strictEqual(payload.scope_level, 'repo');
     assert.strictEqual(payload.repo_slug, 'api');
@@ -121,6 +121,21 @@ async function runTests() {
     assert.strictEqual(payload.metadata.route, '/aw:test');
     assert.strictEqual(payload.metadata.repoName, 'api');
     assert.strictEqual(payload.metadata.branch, 'main');
+  }));
+
+  results.push(await test('uses only DB-accepted memory sources while preserving provenance metadata', () => {
+    const invalid = buildMemoryStorePayload(
+      { id: 'invalid-source', text: 'sync this', source: 'aw-learnings' },
+      { repoName: 'api' }
+    );
+    const explicit = buildMemoryStorePayload(
+      { id: 'explicit-source', text: 'sync this', memorySource: 'workflow-runner' },
+      { repoName: 'api' }
+    );
+
+    assert.strictEqual(invalid.source, 'hook');
+    assert.strictEqual(invalid.metadata.source, 'aw-learnings');
+    assert.strictEqual(explicit.source, 'workflow-runner');
   }));
 
   results.push(await test('dry-run plans writes without calling memory_store', async () => {
