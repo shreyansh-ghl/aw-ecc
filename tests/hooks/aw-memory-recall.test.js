@@ -89,7 +89,7 @@ async function runTests() {
         prompt: 'Fix locationId validation. GITHUB_TOKEN=ghp_secret1234567890',
       },
       {
-        config: config(),
+        config: config({ namespace: 'team-alpha' }),
         spawnSync: fakeGit(),
         memorySearch: async (_config, args) => {
           calls.push(args);
@@ -117,6 +117,7 @@ async function runTests() {
       branch: 'feature/memory-hooks',
     });
     assert.strictEqual(calls[0].limit, 2);
+    assert.strictEqual(calls[0].namespace, 'team-alpha');
     assert.match(output, /^AW Memory Recall\n- Always scope writes by locationId\.\n- Authorization: \[REDACTED_AUTH_HEADER\]$/);
     assert.doesNotMatch(output, /should-not-leak/);
     assert.doesNotMatch(output, /third result/);

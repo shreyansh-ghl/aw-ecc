@@ -218,6 +218,7 @@ async function runTests() {
       assert.strictEqual(searchCalls[0].headers.accept, 'application/json, text/event-stream');
       assert.strictEqual(searchCalls[0].headers['x-namespace'], 'local-e2e');
       assert.strictEqual(searchCalls[0].body.params.arguments.limit, 3);
+      assert.strictEqual(searchCalls[0].body.params.arguments.namespace, 'local-e2e');
       assert.match(searchCalls[0].body.params.arguments.query, /Use remembered backend guidance/);
       assert.match(searchCalls[0].body.params.arguments.query, new RegExp(`repo:${path.basename(workspace)}`));
       assert.doesNotMatch(searchCalls[0].body.params.arguments.query, /prompt-secret/);
@@ -273,7 +274,7 @@ async function runTests() {
       ]);
       assert.strictEqual(payload.scope_level, 'repo');
       assert.strictEqual(payload.repo_slug, path.basename(workspace));
-      assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'namespace'), false);
+      assert.strictEqual(payload.namespace, 'local-e2e');
       assert.strictEqual(payload.metadata.source, 'aw-learnings');
       assert.strictEqual(payload.metadata.namespace, 'local-e2e');
       assert.strictEqual(payload.metadata.route, '/aw:test');

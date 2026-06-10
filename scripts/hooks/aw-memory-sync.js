@@ -186,6 +186,7 @@ function buildMemoryStorePayload(row, metadata = {}) {
     source: memorySource(row, mergedMetadata),
     tags,
     confidence: optionalNumber(row?.confidence, memoryMetadata.confidence),
+    namespace: namespace || undefined,
     scope_level: scopeLevel,
     repo_slug: repoSlug || undefined,
     module_path: modulePath || undefined,

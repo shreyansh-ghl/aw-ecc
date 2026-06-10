@@ -178,11 +178,14 @@ async function buildAwMemoryRecallContext(input = {}, adapters = {}) {
   if (!query) return '';
 
   const search = adapters.memorySearch || memorySearch;
-  const response = await search(config, {
+  const searchArgs = {
     query,
     limit: asPositiveInt(config.maxResults, 3, 1, 10),
     metadata,
-  }, adapters.clientAdapters || {});
+  };
+  if (config.namespace) searchArgs.namespace = config.namespace;
+
+  const response = await search(config, searchArgs, adapters.clientAdapters || {});
 
   if (!response?.ok) return '';
 

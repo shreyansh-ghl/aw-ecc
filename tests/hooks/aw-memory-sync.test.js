@@ -138,13 +138,13 @@ async function runTests() {
     assert.strictEqual(explicit.source, 'workflow-runner');
   }));
 
-  results.push(await test('keeps namespace in metadata instead of memory_store arguments', () => {
+  results.push(await test('passes namespace through memory_store arguments and metadata', () => {
     const payload = buildMemoryStorePayload(
       { id: 'namespaced', text: 'sync this', namespace: 'team-alpha' },
       { repoName: 'api' }
     );
 
-    assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'namespace'), false);
+    assert.strictEqual(payload.namespace, 'team-alpha');
     assert.strictEqual(payload.metadata.namespace, 'team-alpha');
   }));
 
