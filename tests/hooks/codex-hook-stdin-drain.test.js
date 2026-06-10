@@ -137,15 +137,6 @@ async function runTests() {
     assert.ok(result.stdout.includes('EXTREMELY_IMPORTANT') || result.stdout.includes('AW Session Context'));
   })) passed++; else failed++;
 
-  if (await asyncTest('direct using-aw-skills session-start hook drains stdin before emitting context', async () => {
-    const scriptPath = path.join(REPO_ROOT, 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
-    const result = await runShellScript(scriptPath);
-
-    assertNoBrokenPipe(result);
-    assert.ok(result.stdout.includes('"hookSpecificOutput"'));
-    assert.ok(result.stdout.includes('EXTREMELY_IMPORTANT') || result.stdout.includes('AW Session Context'));
-  })) passed++; else failed++;
-
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }

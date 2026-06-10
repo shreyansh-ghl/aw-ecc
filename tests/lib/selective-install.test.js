@@ -373,7 +373,6 @@ function runTests() {
         excludeComponentIds: [
           'baseline:rules',
           'baseline:agents',
-          'baseline:aw-stages',
           'baseline:commands',
           'baseline:hooks',
           'baseline:platform',

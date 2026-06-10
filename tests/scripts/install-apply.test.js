@@ -103,7 +103,7 @@ function runTests() {
       const checks = [
         ['rules/common/coding-style.md'],
         ['rules/typescript/testing.md'],
-        ['commands/plan.md'],
+        ['commands/eval.md'],
         ['scripts/hooks/session-end.js'],
         ['skills/tdd-workflow/SKILL.md'],
         ['skills/coding-standards/SKILL.md'],
@@ -146,7 +146,8 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'common-coding-style.mdc')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'rules', 'typescript-testing.mdc')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'agents', 'architect.md')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'commands', 'plan.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'commands', 'eval.md')));
+      assert.ok(!fs.existsSync(path.join(projectDir, '.cursor', 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks.json')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks', 'session-start.js')));
       assert.ok(fs.existsSync(path.join(projectDir, '.cursor', 'hooks', 'shared', 'session-start.sh')));
@@ -163,7 +164,7 @@ function runTests() {
       assert.ok(state.resolution.selectedModules.includes('framework-language'));
       assert.ok(
         state.operations.some(operation => (
-          operation.destinationPath === path.join(normalizedProjectDir, '.cursor', 'commands', 'plan.md')
+          operation.destinationPath === path.join(normalizedProjectDir, '.cursor', 'commands', 'eval.md')
         )),
         'Should record manifest command file copy operation'
       );
@@ -218,7 +219,8 @@ function runTests() {
 
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'rules', 'common-coding-style.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'rules', 'typescript-testing.md')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'plan.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'eval.md')));
+      assert.ok(!fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'plan.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'skills', 'architect.md')));
 
       const statePath = path.join(projectDir, '.agent', 'ecc-install-state.json');
@@ -229,7 +231,7 @@ function runTests() {
       assert.deepStrictEqual(state.resolution.selectedModules, ['rules-core', 'agents-core', 'commands-core']);
       assert.ok(
         state.operations.some(operation => (
-          operation.destinationPath.endsWith(path.join('.agent', 'workflows', 'plan.md'))
+          operation.destinationPath.endsWith(path.join('.agent', 'workflows', 'eval.md'))
         )),
         'Should record manifest command file copy operation'
       );
@@ -270,7 +272,7 @@ function runTests() {
       assert.ok(result.stdout.includes('Mode: manifest'));
       assert.ok(result.stdout.includes('Profile: core'));
       assert.ok(result.stdout.includes('Included components: (none)'));
-      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, aw-stages, commands-core, hooks-runtime, platform-configs, workflow-quality'));
+      assert.ok(result.stdout.includes('Selected modules: rules-core, agents-core, commands-core, hooks-runtime, platform-configs, workflow-quality'));
       assert.ok(!fs.existsSync(path.join(homeDir, '.claude', 'ecc', 'install-state.json')));
     } finally {
       cleanup(homeDir);
@@ -289,7 +291,8 @@ function runTests() {
       const claudeRoot = path.join(homeDir, '.claude');
       assert.ok(fs.existsSync(path.join(claudeRoot, 'rules', 'common', 'coding-style.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'agents', 'architect.md')));
-      assert.ok(fs.existsSync(path.join(claudeRoot, 'commands', 'plan.md')));
+      assert.ok(fs.existsSync(path.join(claudeRoot, 'commands', 'eval.md')));
+      assert.ok(!fs.existsSync(path.join(claudeRoot, 'commands', 'plan.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'hooks', 'hooks.json')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'references', 'testing-patterns.md')));
       assert.ok(fs.existsSync(path.join(claudeRoot, 'references', 'route-selection-patterns.md')));
@@ -303,7 +306,7 @@ function runTests() {
       assert.ok(state.resolution.selectedModules.includes('platform-configs'));
       assert.ok(
         state.operations.some(operation => (
-          operation.destinationPath === path.join(claudeRoot, 'commands', 'plan.md')
+          operation.destinationPath === path.join(claudeRoot, 'commands', 'eval.md')
         )),
         'Should record manifest-driven command file copy'
       );
@@ -335,7 +338,8 @@ function runTests() {
 
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'rules', 'common-coding-style.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'skills', 'architect.md')));
-      assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'plan.md')));
+      assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'eval.md')));
+      assert.ok(!fs.existsSync(path.join(projectDir, '.agent', 'workflows', 'plan.md')));
       assert.ok(fs.existsSync(path.join(projectDir, '.agent', 'skills', 'tdd-workflow', 'SKILL.md')));
 
       const state = readJson(path.join(projectDir, '.agent', 'ecc-install-state.json'));
@@ -343,10 +347,9 @@ function runTests() {
       assert.strictEqual(state.request.legacyMode, false);
       assert.deepStrictEqual(
         state.resolution.selectedModules,
-        ['rules-core', 'agents-core', 'aw-stages', 'commands-core', 'platform-configs', 'workflow-quality']
+        ['rules-core', 'agents-core', 'commands-core', 'platform-configs', 'workflow-quality']
       );
       assert.ok(state.resolution.skippedModules.includes('hooks-runtime'));
-      assert.ok(!state.resolution.skippedModules.includes('aw-stages'));
       assert.ok(!state.resolution.skippedModules.includes('workflow-quality'));
       assert.ok(!state.resolution.skippedModules.includes('platform-configs'));
     } finally {

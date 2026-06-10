@@ -1,6 +1,6 @@
 {
   "name": "aw-ecc",
-  "version": "1.4.65",
+  "version": "1.4.67-beta.0",
   "description": "GoHighLevel Agentic Workspace Engine — forked from Everything Claude Code (ecc-universal)",
   "keywords": [
     "claude-code",
@@ -105,7 +105,7 @@
     "generate-hooks": "node scripts/generate-aw-hooks.js",
     "prepare": "npm run generate-hooks",
     "postinstall": "echo '\\n  ecc-universal installed!\\n  Run: npx ecc typescript\\n  Compat: npx ecc-install typescript\\n  Docs: https://github.com/affaan-m/everything-claude-code\\n'",
-    "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules --ignore tests/results --ignore skills/using-aw-skills/evals/results --ignore docs/pt-BR --ignore docs/tr --ignore docs/zh-CN",
+    "lint": "eslint . && markdownlint '**/*.md' --ignore node_modules --ignore tests/results --ignore docs/pt-BR --ignore docs/tr --ignore docs/zh-CN",
     "harness:audit": "node scripts/harness-audit.js",
     "claw": "node scripts/claw.js",
     "orchestrate:status": "node scripts/orchestration-status.js",

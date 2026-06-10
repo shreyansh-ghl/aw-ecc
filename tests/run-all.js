@@ -16,7 +16,6 @@ const INCLUDE_SLOW_OUTCOMES = process.env.AW_TEST_INCLUDE_SLOW_OUTCOMES === '1';
 const INCLUDE_ROUTING_TESTS = process.env.AW_TEST_INCLUDE_ROUTING === '1';
 const SLOW_TESTS = new Set([
   'evals/outcomes/aw-revex-history-phase2.test.js',
-  'evals/outcomes/aw-sdlc-outcomes.test.js',
 ]);
 
 function matchesTestGlob(relativePath) {

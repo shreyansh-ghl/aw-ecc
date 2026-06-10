@@ -45,27 +45,8 @@ HOOKS_DIR_DEST="$CODEX_HOME/hooks"
 SHARED_HOOKS_SRC="$REPO_ROOT/scripts/hooks"
 AW_ECC_HOOKS_DEST="$HOME/.aw-ecc/scripts/hooks"
 AW_CODEX_SKILLS=(
-  "using-aw-skills"
-  "aw-plan"
-  "aw-build"
-  "aw-investigate"
-  "aw-test"
-  "aw-review"
-  "aw-yolo"
-  "aw-execute"
-  "aw-verify"
-  "aw-deploy"
-  "aw-ship"
-  "aw-brainstorm"
-  "grill-with-docs"
   "aw-adk"
   "aw-publish"
-  "aw-debug"
-  "aw-design"
-  "aw-feature"
-  "aw-prepare"
-  "aw-spec"
-  "aw-tasks"
 )
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
@@ -346,7 +327,7 @@ for skill_dir in "$SKILLS_SRC"/*; do
   skills_count=$((skills_count + 1))
 done
 
-log "Syncing AW stage and router skills for Codex"
+log "Syncing AW registry tooling skills for Codex"
 for skill_name in "${AW_CODEX_SKILLS[@]}"; do
   skill_dir="$AW_SKILLS_SRC/$skill_name"
   [[ -d "$skill_dir" ]] || continue

@@ -180,24 +180,6 @@
     }
   },
   "command": {
-    "plan": {
-      "description": "Create a detailed implementation plan for complex features",
-      "template": "{file:commands/plan.md}\n\n$ARGUMENTS",
-      "agent": "planner",
-      "subtask": true
-    },
-    "tdd": {
-      "description": "Enforce TDD workflow with 80%+ test coverage",
-      "template": "{file:commands/tdd.md}\n\n$ARGUMENTS",
-      "agent": "tdd-guide",
-      "subtask": true
-    },
-    "code-review": {
-      "description": "Review code for quality, security, and maintainability",
-      "template": "{file:commands/code-review.md}\n\n$ARGUMENTS",
-      "agent": "code-reviewer",
-      "subtask": true
-    },
     "security": {
       "description": "Run comprehensive security review",
       "template": "{file:commands/security.md}\n\n$ARGUMENTS",
@@ -235,10 +217,6 @@
     "checkpoint": {
       "description": "Save verification state and progress",
       "template": "{file:commands/checkpoint.md}\n\n$ARGUMENTS"
-    },
-    "verify": {
-      "description": "Run verification loop",
-      "template": "{file:commands/verify.md}\n\n$ARGUMENTS"
     },
     "eval": {
       "description": "Run evaluation against criteria",

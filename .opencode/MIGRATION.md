@@ -180,14 +180,13 @@ Create a detailed implementation plan for: {input}
 }
 ```
 
-**OpenCode (Markdown - .opencode/commands/plan.md):**
+**OpenCode (Markdown - .opencode/commands/checkpoint.md):**
 ```markdown
 ---
-description: Create implementation plan
-agent: planner
+description: Capture current progress and next actions
 ---
 
-Create a detailed implementation plan for: $ARGUMENTS
+Capture a concise checkpoint for: $ARGUMENTS
 ```
 
 ### Skills

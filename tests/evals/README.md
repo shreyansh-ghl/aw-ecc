@@ -43,7 +43,6 @@ These mode buckets are not the same thing as scenario layers. The higher-level t
 Runner scripts remain at the `tests/evals/` root:
 
 - `run-aw-sdlc-evals.sh`
-- `run-aw-sdlc-outcomes-parallel.sh`
 - `run-aw-sdlc-routing-golden-path.sh`
 - `run-aw-sdlc-ghl-ai-standalone-smoke.sh`
 - `run-aw-cross-harness-cli-smoke.js`
@@ -65,7 +64,7 @@ node tests/evals/run-aw-cross-harness-cli-smoke.js
 Default `npm test` / `node tests/run-all.js` behavior is intentionally narrower than the full benchmark stack:
 
 - live routing tests under `evals/routing/` are opt-in via `AW_TEST_INCLUDE_ROUTING=1`
-- slower outcome benchmarks like `outcomes/aw-sdlc-outcomes.test.js` and `outcomes/aw-revex-history-phase2.test.js` are opt-in via `AW_TEST_INCLUDE_SLOW_OUTCOMES=1`
+- slower outcome benchmarks like `outcomes/aw-revex-history-phase2.test.js` are opt-in via `AW_TEST_INCLUDE_SLOW_OUTCOMES=1`
 
 That keeps the normal push gate deterministic and fast while preserving the heavier benchmark layers for explicit runs.
 
@@ -96,10 +95,7 @@ Benchmark-oriented fixtures and docs now live here too:
 - Longer-run history benchmark tracing now lives in `tests/results/history-benchmark-run-ledger.jsonl`, `tests/results/history-benchmark-scoreboard.json`, and `tests/results/history-benchmark-scoreboard.md`
 - `fixtures/aw-live-craft-skill-cases.json` — focused live routing prompts for the new craft-skill layer
 - `fixtures/aw-eval-benchmark-scorecard.json` — benchmark thresholds for deterministic and live accuracy
-- `skills/using-aw-skills/evals/skill-trigger-cases.tsv` — owner-local routing prompt matrix for the AW router
 - `skills/using-platform-skills/evals/platform-selection-cases.json` — owner-local platform-family routing cases
-- `skills/aw-build/evals/build-stage-cases.json` — owner-local build-stage scenario definitions
-- `skills/aw-deploy/evals/deploy-stage-cases.json` — owner-local deploy-stage scenario definitions
 - `agents/evals/code-reviewer-scenarios.json` — owner-local code-review agent scenarios
 - `suites.json` — root index for the suite catalog
 - `suites/` — per-suite manifests grouped by capability, scenarios, and history

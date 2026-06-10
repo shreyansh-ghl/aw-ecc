@@ -61,7 +61,7 @@ function runTests() {
   let passed = 0;
   let failed = 0;
 
-  if (test('generates AW-namespaced prompts for /aw: commands', () => {
+  if (test('does not generate retired AW SDLC command prompts', () => {
     const homeDir = createTempDir('sync-codex-home-');
 
     try {
@@ -71,9 +71,12 @@ function runTests() {
       const manifest = fs.readFileSync(path.join(promptsDir, 'ecc-prompts-manifest.txt'), 'utf8');
 
       for (const fileName of ['aw-plan.md', 'aw-build.md', 'aw-investigate.md', 'aw-test.md', 'aw-review.md', 'aw-deploy.md', 'aw-ship.md']) {
-        assert.ok(fs.existsSync(path.join(promptsDir, fileName)), `Expected ${fileName} to be generated`);
-        assert.ok(manifest.includes(fileName), `Manifest should include ${fileName}`);
+        assert.ok(!fs.existsSync(path.join(promptsDir, fileName)), `Did not expect retired ${fileName} to be generated`);
+        assert.ok(!manifest.includes(fileName), `Manifest should not include retired ${fileName}`);
       }
+
+      assert.ok(fs.existsSync(path.join(promptsDir, 'aw-adk.md')), 'Expected non-SDLC aw-adk prompt to be generated');
+      assert.ok(fs.existsSync(path.join(promptsDir, 'aw-publish.md')), 'Expected non-SDLC aw-publish prompt to be generated');
     } finally {
       cleanup(homeDir);
     }
@@ -109,22 +112,19 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('syncs AW planning helper skills used by Codex CLI', () => {
+  if (test('syncs only AW registry tooling skills owned by aw-ecc', () => {
     const homeDir = createTempDir('sync-codex-home-');
 
     try {
       runSync(homeDir);
 
       const codexSkillsDir = path.join(homeDir, '.codex', 'skills');
-      const grillSkillPath = path.join(codexSkillsDir, 'grill-with-docs', 'SKILL.md');
-      const grillSkill = fs.readFileSync(grillSkillPath, 'utf8');
 
-      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Expected aw-plan to be synced');
-      assert.ok(fs.existsSync(grillSkillPath), 'Expected grill-with-docs to be synced');
-      assert.ok(
-        grillSkill.includes('Use `platform-core:echo-direct` directly for the HTML companion'),
-        'Expected installed grill-with-docs to include the Echo Direct contract'
-      );
+      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-adk', 'SKILL.md')), 'Expected aw-adk to be synced');
+      assert.ok(fs.existsSync(path.join(codexSkillsDir, 'aw-publish', 'SKILL.md')), 'Expected aw-publish to be synced');
+      assert.ok(!fs.existsSync(path.join(codexSkillsDir, 'using-aw-skills', 'SKILL.md')), 'Did not expect router skill to be synced from aw-ecc');
+      assert.ok(!fs.existsSync(path.join(codexSkillsDir, 'aw-plan', 'SKILL.md')), 'Did not expect retired aw-plan to be synced from aw-ecc');
+      assert.ok(!fs.existsSync(path.join(codexSkillsDir, 'grill-with-docs', 'SKILL.md')), 'Did not expect retired grill-with-docs to be synced from aw-ecc');
     } finally {
       cleanup(homeDir);
     }

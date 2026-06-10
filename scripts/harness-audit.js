@@ -300,9 +300,9 @@ function getChecks() {
       points: 4,
       scopes: ['repo', 'commands'],
       path: 'commands/eval.md',
-      description: 'Eval and verification commands exist',
-      pass: fileExists('commands/eval.md') && fileExists('commands/verify.md') && fileExists('commands/checkpoint.md'),
-      fix: 'Add eval/checkpoint/verify commands to standardize verification loops.',
+      description: 'Eval and checkpoint commands exist',
+      pass: fileExists('commands/eval.md') && fileExists('commands/checkpoint.md'),
+      fix: 'Add eval/checkpoint commands to standardize verification evidence capture.',
     },
     {
       id: 'eval-tests-presence',

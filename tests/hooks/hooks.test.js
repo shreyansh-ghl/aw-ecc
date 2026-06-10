@@ -2025,8 +2025,8 @@ async function runTests() {
         'hooks/session-start should delegate to the shared session-start wrapper'
       );
       assert.ok(
-        sharedSessionStart.includes('skills/using-aw-skills/hooks/session-start.sh'),
-        'shared session-start wrapper should delegate to the AW session-start hook'
+        !sharedSessionStart.includes('$ROOT_DIR/skills/using-aw-skills/hooks/session-start.sh'),
+        'shared session-start wrapper should not load the retired repo-local router hook'
       );
       assert.ok(
         sharedSessionStart.includes('.aw_registry/platform/core/skills/using-aw-skills/hooks/session-start.sh'),
@@ -2071,33 +2071,6 @@ async function runTests() {
   else failed++;
 
   if (
-    await asyncTest('session-start hook emits full SKILL.md routing context', async () => {
-      if (SKIP_BASH) return;
-
-      const scriptPath = path.join(__dirname, '..', '..', 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
-      const result = await runShellScript(scriptPath, [], '', {}, path.join(__dirname, '..', '..'));
-
-      assert.strictEqual(result.code, 0, 'session-start should exit 0');
-
-      const payload = JSON.parse(result.stdout);
-      assert.strictEqual(
-        payload?.hookSpecificOutput?.hookEventName,
-        'SessionStart',
-        'session-start should identify the SessionStart hook event'
-      );
-      const context = payload?.hookSpecificOutput?.additionalContext || '';
-
-      assert.ok(context.includes('<EXTREMELY_IMPORTANT>'), 'session-start should wrap context in EXTREMELY_IMPORTANT tags');
-      assert.ok(context.includes('using-aw-skills'), 'session-start should reference the router skill');
-      assert.ok(context.includes('YOU MUST USE IT'), 'session-start should include the mandatory activation directive');
-      assert.ok(!context.includes('## Available Skills'), 'session-start should not inline the full skills catalog');
-      assert.ok(!context.includes('## Available Commands'), 'session-start should not inline the full commands catalog');
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
     await asyncTest('session-start-rules-context emits compact AW prompt reminders', async () => {
       if (SKIP_BASH) return;
 
@@ -2130,32 +2103,6 @@ async function runTests() {
     passed++;
   else failed++;
 
-  if (
-    await asyncTest('session-start hook emits full SKILL.md routing context', async () => {
-      if (SKIP_BASH) return;
-
-      const scriptPath = path.join(__dirname, '..', '..', 'skills', 'using-aw-skills', 'hooks', 'session-start.sh');
-      const result = await runShellScript(scriptPath, [], '', {}, path.join(__dirname, '..', '..'));
-
-      assert.strictEqual(result.code, 0, 'session-start should exit 0');
-
-      const payload = JSON.parse(result.stdout);
-      assert.strictEqual(
-        payload?.hookSpecificOutput?.hookEventName,
-        'SessionStart',
-        'session-start should identify the SessionStart hook event'
-      );
-      const context = payload?.hookSpecificOutput?.additionalContext || '';
-
-      assert.ok(context.includes('<EXTREMELY_IMPORTANT>'), 'session-start should wrap context in EXTREMELY_IMPORTANT tags');
-      assert.ok(context.includes('using-aw-skills'), 'session-start should reference the router skill');
-      assert.ok(context.includes('YOU MUST USE IT'), 'session-start should include the mandatory activation directive');
-      assert.ok(!context.includes('## Available Skills'), 'session-start should not inline the full skills catalog');
-      assert.ok(!context.includes('## Available Commands'), 'session-start should not inline the full commands catalog');
-    })
-  )
-    passed++;
-  else failed++;
   // ─── evaluate-session.js tests ───
   console.log('\nevaluate-session.js:');
 

@@ -41,7 +41,7 @@ function run() {
   if (test('suite manifest exists and declares eval ownership suites', () => {
     assert.strictEqual(manifest.version, 2);
     assert.ok(Array.isArray(suiteFiles), 'suites.json should contain a suiteFiles array');
-    assert.ok(suiteFiles.length >= 5, 'expected at least five suite entries');
+    assert.ok(suiteFiles.length >= 1, 'expected at least one active suite entry');
     for (const filePath of suiteFiles) {
       assert.ok(filePath.startsWith('suites/'), `suite manifest should live under tests/evals/suites/: ${filePath}`);
       assertPathExists(`tests/evals/${filePath}`, 'suite manifest file');
@@ -77,12 +77,19 @@ function run() {
     }
   })) passed++; else failed++;
 
-  if (test('manifest keeps ownership-first coverage for routing and history benchmarks', () => {
+  if (test('manifest keeps active suites and does not advertise retired SDLC suites', () => {
     const ids = new Set(suites.map(entry => entry.id));
-    assert.ok(ids.has('core-routing-surface'), 'missing core-routing-surface suite');
-    assert.ok(ids.has('router-and-shared-references'), 'missing router-and-shared-references suite');
-    assert.ok(ids.has('owner-local-skill-and-agent-assets'), 'missing owner-local-skill-and-agent-assets suite');
-    assert.ok(ids.has('revex-history-benchmark'), 'missing revex-history-benchmark suite');
+    assert.ok(ids.has('addy-parity-and-benchmark-contracts'), 'missing addy parity and benchmark suite');
+    for (const retiredId of [
+      'core-routing-surface',
+      'router-and-shared-references',
+      'owner-local-skill-and-agent-assets',
+      'stage-behavior-and-stage-contracts',
+      'archetype-and-product-scenarios',
+      'revex-history-benchmark',
+    ]) {
+      assert.ok(!ids.has(retiredId), `retired suite should not be advertised: ${retiredId}`);
+    }
   })) passed++; else failed++;
 
   console.log(`\nPassed: ${passed}`);

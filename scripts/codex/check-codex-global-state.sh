@@ -151,7 +151,6 @@ declare -a required_skills=(
   strategic-compact
   tdd-workflow
   verification-loop
-  aw-debug
 )
 
 if [[ -d "$SKILLS_DIR" ]]; then
@@ -166,7 +165,7 @@ if [[ -d "$SKILLS_DIR" ]]; then
   done
 
   if [[ "$missing_skills" -eq 0 ]]; then
-    ok "All 17 ECC Codex skills are present"
+    ok "All 16 ECC Codex skills are present"
   else
     fail "$missing_skills required skills are missing"
   fi

@@ -40,30 +40,12 @@
       "stability": "stable"
     },
     {
-      "id": "aw-stages",
+      "id": "aw-adk",
       "kind": "skills",
-      "description": "Canonical AW SDLC stage skills (aw-plan, aw-build, aw-investigate, aw-test, aw-review, aw-deploy, aw-ship, aw-feature) and supporting internal helpers. Shipped from the single canonical skills/ source; install pipeline transforms /aw: \u2192 /aw- for Cursor targets.",
+      "description": "Agent Development Kit — centralized CASRE (Command, Agent, Skill, Rule, Eval) authoring with lint, scoring, eval creation, and cross-IDE sync.",
       "paths": [
-        "skills/aw-brainstorm",
-        "skills/aw-build",
-        "skills/aw-debug",
-        "skills/aw-deploy",
-        "skills/aw-design",
-        "skills/aw-execute",
-        "skills/aw-feature",
-        "skills/aw-finish",
-        "skills/aw-investigate",
-        "skills/aw-plan",
-        "skills/aw-prepare",
-        "skills/aw-review",
-        "skills/aw-rules",
-        "skills/aw-ship",
-        "skills/aw-spec",
-        "skills/aw-tasks",
-        "skills/aw-test",
-        "skills/aw-verify",
-        "skills/aw-yolo",
-        "skills/using-aw-skills"
+        "skills/aw-adk",
+        "commands/adk.md"
       ],
       "targets": [
         "claude",
@@ -78,31 +60,9 @@
       "stability": "stable"
     },
     {
-      "id": "aw-adk",
-      "kind": "skills",
-      "description": "Agent Development Kit \u2014 centralized CASRE (Command, Agent, Skill, Rule, Eval) authoring with lint, scoring, eval creation, and cross-IDE sync.",
-      "paths": [
-        "skills/aw-adk",
-        "commands/adk.md"
-      ],
-      "targets": [
-        "claude",
-        "cursor",
-        "antigravity",
-        "codex",
-        "opencode"
-      ],
-      "dependencies": [
-        "aw-stages"
-      ],
-      "defaultInstall": true,
-      "cost": "light",
-      "stability": "stable"
-    },
-    {
       "id": "aw-publish",
       "kind": "skills",
-      "description": "Registry publish skill \u2014 guides pushing locally created/modified CASRE artifacts to the remote platform-docs registry via PR. Intent-based with mandatory confirmation gate.",
+      "description": "Registry publish skill — guides pushing locally created/modified CASRE artifacts to the remote platform-docs registry via PR. Intent-based with mandatory confirmation gate.",
       "paths": [
         "skills/aw-publish",
         "commands/publish.md"
@@ -114,9 +74,7 @@
         "codex",
         "opencode"
       ],
-      "dependencies": [
-        "aw-stages"
-      ],
+      "dependencies": [],
       "defaultInstall": true,
       "cost": "light",
       "stability": "stable"
@@ -274,8 +232,6 @@
         "skills/e2e-testing",
         "skills/eval-harness",
         "skills/finish-only-when-green",
-        "skills/grill-me",
-        "skills/grill-with-docs",
         "skills/iterative-retrieval",
         "skills/plankton-code-quality",
         "skills/project-guidelines-example",

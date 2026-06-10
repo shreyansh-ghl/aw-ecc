@@ -1,23 +1,20 @@
-# AW SDLC Install for OpenCode
+# OpenCode Install Notes
 
 ## Goal
 
-Treat OpenCode as the runtime harness and AW SDLC as the repo-local workflow contract layer.
+Treat OpenCode as a runtime harness for the remaining ECC assets. AW SDLC stage routing is no longer owned or shipped by aw-ecc.
 
 ## Required Repo Paths
 
-OpenCode should have repo-local access to:
+OpenCode should have repo-local access to the active aw-ecc paths:
 
 - `AGENTS.md`
 - `commands/`
 - `skills/`
-- `defaults/aw-sdlc/`
-- `docs/aw-sdlc-command-contracts.md`
-- `docs/aw-sdlc-command-skill-architecture.md`
 
 ## Public Commands
 
-Preserve the same public stage surface:
+Do not install or recreate the retired AW SDLC public stage surface from aw-ecc:
 
 - `/aw:plan`
 - `/aw:execute`
@@ -27,7 +24,7 @@ Preserve the same public stage surface:
 
 ## Routing Rule
 
-Use the repo-local AW router and keep internal helpers such as `aw-prepare`, `aw-review-loop`, and `aw-systematic-debugging` behind the public stage boundary.
+Use platform docs / the AW registry for AW SDLC routing. aw-ecc keeps only non-SDLC command prompts and registry tooling skills such as `aw-adk` and `aw-publish`.
 
 ## Artifact Rule
 
@@ -37,4 +34,4 @@ Deterministic stage outputs remain under:
 
 ## Smoke Bar
 
-The install is healthy when OpenCode can follow the AW SDLC stage model without inventing a separate public workflow or bypassing the verify/deploy split.
+The install is healthy when OpenCode does not expose retired AW SDLC stage commands from aw-ecc and can still load the remaining ECC prompts, hooks, and registry tooling.

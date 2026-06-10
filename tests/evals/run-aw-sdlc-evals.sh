@@ -65,37 +65,7 @@ run_deterministic_test() {
 }
 
 run_deterministic() {
-  run_deterministic_test "Addy validation matrix" "aw-addy-validation-matrix.test.js"
-  run_deterministic_test "Archetype scenarios" "aw-archetype-scenarios.test.js"
-  run_deterministic_test "Product scenarios" "aw-product-scenarios.test.js"
-  run_deterministic_test "RevEx history benchmark" "aw-revex-history-benchmark.test.js"
-  run_deterministic_test "RevEx history phase 2 contract" "aw-revex-history-phase2-contract.test.js"
-  run_deterministic_test "Eval benchmark scorecard" "aw-eval-benchmark-scorecard.test.js"
-  run_deterministic_test "Goal gates" "aw-sdlc-goal-gates.test.js"
-  run_deterministic_test "Command contract completeness" "aw-sdlc-command-contract-completeness.test.js"
-  run_deterministic_test "Command/skill mapping" "aw-sdlc-command-skill-mapping.test.js"
-  run_deterministic_test "Command quality" "aw-sdlc-command-quality.test.js"
-  run_deterministic_test "Command boundaries" "aw-sdlc-command-boundaries.test.js"
-  run_deterministic_test "Ship command" "aw-sdlc-ship-command.test.js"
-  run_deterministic_test "Customer coverage" "aw-sdlc-customer-coverage.test.js"
-  run_deterministic_test "Default session coverage" "aw-sdlc-default-session-coverage.test.js"
-  run_deterministic_test "Session hook precedence" "aw-sdlc-session-hook-precedence.test.js"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-activation-*.test.js" "Activation"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-worktree-*.test.js" "Worktree"
-  run_deterministic_test "GHL staging baselines" "aw-sdlc-ghl-staging-baselines.test.js"
-  run_deterministic_test "Eval workspace isolation" "aw-sdlc-eval-workspace-isolation.test.js"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-plan-*.test.js" "Plan"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-brainstorm-*.test.js" "Brainstorm"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-prepare-*.test.js" "Preparation"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-execute-*.test.js" "Execution"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-verify-*.test.js" "Verification"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-finish-*.test.js" "Finish"
-  run_optional_test_group "$DETERMINISTIC_DIR" "aw-sdlc-install*.test.js" "Installability"
-  run "Outcomes coverage" node "$OUTCOMES_DIR/aw-sdlc-outcomes-coverage.test.js"
-  run_deterministic_test "Skill trigger coverage" "aw-sdlc-skill-trigger-coverage.test.js"
-  run "Outcome artifact contract" node "$OUTCOMES_DIR/aw-sdlc-outcome-artifact-contract.test.js"
-  run "Outcome release generator" node "$OUTCOMES_DIR/aw-sdlc-outcome-release-generator.test.js"
-  run_deterministic_test "BDD coverage" "aw-sdlc-bdd-coverage.test.js"
+  run_optional_test_group "$DETERMINISTIC_DIR" "*.test.js" "Deterministic"
 }
 
 run_routing() {
@@ -111,7 +81,7 @@ run_routing_full() {
 
 run_outcomes() {
   ensure_real_workspace_base
-  run "Outcomes suite (Codex)" node "$OUTCOMES_DIR/aw-sdlc-outcomes.test.js"
+  run_revex_history
 }
 
 run_revex_history() {
@@ -125,8 +95,7 @@ run_revex_history_smoke() {
 }
 
 run_outcomes_parallel() {
-  ensure_real_workspace_base
-  run "Outcomes suite parallel (Codex)" bash "$ROOT_DIR/tests/evals/run-aw-sdlc-outcomes-parallel.sh"
+  echo "AW SDLC outcomes suite is retired from aw-ecc; use platform docs / ghl-agentic-workspace for active SDLC outcomes."
 }
 
 run_standalone_smoke() {
@@ -134,7 +103,7 @@ run_standalone_smoke() {
 }
 
 run_outcome_artifacts() {
-  run "Outcome artifact validation" node "$OUTCOMES_DIR/aw-sdlc-outcome-artifacts.test.js"
+  echo "AW SDLC outcome artifact validation is retired from aw-ecc."
 }
 
 run_routing_golden_path() {

@@ -22,9 +22,6 @@
     "agents": []
   },
   "tests": [
-    "tests/evals/deterministic/capability/aw-addy-parity-p1.test.js",
-    "tests/evals/deterministic/capability/aw-addy-parity-p2.test.js",
-    "tests/evals/deterministic/capability/aw-addy-validation-matrix.test.js",
     "tests/evals/deterministic/capability/aw-eval-benchmark-scorecard.test.js"
   ],
   "fixtures": [

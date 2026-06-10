@@ -1,9 +1,0 @@
-{
-  "hooks": [
-    {
-      "type": "SessionStart",
-      "script": "./session-start.sh",
-      "description": "Injects a concise AW routing summary at session start (does not inline the full using-aw-skills SKILL.md or registry catalog)."
-    }
-  ]
-}

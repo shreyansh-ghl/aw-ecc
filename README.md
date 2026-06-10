@@ -4,31 +4,33 @@
 
 ## What is this?
 
-`aw-ecc` is GoHighLevel's private fork of ECC. It keeps the upstream ECC engine, then layers in AW SDLC routing, GHL platform integration, repo-local defaults, and eval coverage for GoHighLevel workflows.
+`aw-ecc` is GoHighLevel's private fork of ECC. It keeps the upstream ECC engine, general command library, hooks, agents, rules, and non-SDLC skills used by GoHighLevel workflows.
+
+As of `1.4.67-beta.0`, AW SDLC commands and skills are intentionally no longer shipped from this repo. The active AW SDLC surface now lives in the AW registry maintained by platform docs and consumed by `ghl-agentic-workspace`.
 
 The current catalog exposed by this repo is:
 
 - 28 agents
-- 173 skills
-- 72 commands
+- 145 skills
+- 58 commands
 
 ## Quick Start Snapshot
 
-Installing `aw-ecc` gives your workspace access to 28 agents, 173 skills, and 72 commands through the repo-local AW command surface plus GHL-specific skill and policy layers.
+Installing `aw-ecc` gives your workspace access to 28 agents, 145 skills, and 58 commands through the remaining ECC-compatible command, hook, agent, rule, and skill layers.
 
 | Surface | Availability |
 | --- | --- |
 | Agents | ✅ 28 agents |
-| Skills | ✅ 173 skills |
-| Commands | ✅ 72 commands |
+| Skills | ✅ 145 skills |
+| Commands | ✅ 58 commands |
 
 These catalog counts are validated in CI so the published docs stay aligned with the repo contents.
 
 ## How it works
 
 ```text
-aw-ecc (this repo)  = the engine  - ECC baseline + AW SDLC routing + GHL platform integration
-platform/           = the brain   - GHL domain knowledge (NestJS, Vue, HighRise, multi-tenancy, events)
+aw-ecc (this repo)  = the engine  - ECC baseline + non-SDLC commands/skills/hooks/agents/rules
+platform/           = the brain   - GHL domain knowledge and AW SDLC registry content
 aw init             = the glue    - shallow-clone aw-ecc -> run installer -> aw link for platform/
 ```
 
@@ -40,33 +42,15 @@ When a developer runs `aw init`, the CLI:
 4. Cleans up the clone
 5. Symlinks platform content into the active editor workspace
 
-Result: the workspace gets the repo-local AW command surface plus linked GHL platform content.
+Result: the workspace gets the remaining ECC-compatible runtime assets from this repo plus linked GHL platform/AW registry content.
 
-## AW Stage Model
+## AW SDLC Surface
 
-The default AW delivery flow is:
+AW SDLC is retired from `aw-ecc`.
+Do not add or restore repo-local stage commands such as `/aw:plan`, `/aw:build`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`, `/aw:investigate`, or compatibility aliases such as `/aw:execute` and `/aw:verify`.
 
-- `/aw:plan` -> define the approved technical path
-- `/aw:build` -> implement approved work in thin, reversible slices
-- `/aw:test` -> prove the requested QA scope with fresh evidence
-- `/aw:review` -> findings, governance, and readiness decisions
-- `/aw:deploy` -> perform one release action
-- `/aw:ship` -> launch, rollout, rollback readiness, and release closeout
-
-There is also one conditional diagnostic route:
-
-- `/aw:investigate` -> reproduce, localize, and confirm bugs or alerts before broad fixes
-
-`/aw:investigate` is intentionally not part of every happy-path request.
-Use it when the problem is real but the cause is still unclear, then return to `/aw:build`, `/aw:test`, or `/aw:review` as needed.
-
-Compatibility entrypoints remain available during migration:
-
-- `/aw:execute` -> `/aw:build`
-- `/aw:verify` -> `/aw:test`, `/aw:review`, or the smallest correct combined verification flow
-
-For explicit end-to-end automation, the repo uses the internal `aw-yolo` orchestration skill instead of overloading `ship`.
-`aw-yolo` starts from the first unsatisfied stage and runs only the smallest correct remaining sequence.
+The active AW SDLC skills and slash access come from the AW registry, not from this package.
+Use platform-docs as the registry source and `ghl-agentic-workspace` as the consumer/integration layer.
 
 For the smallest newcomer-friendly path through the repo, see [docs/aw-ecc-core-bundle.md](./docs/aw-ecc-core-bundle.md).
 
@@ -74,13 +58,12 @@ For the smallest newcomer-friendly path through the repo, see [docs/aw-ecc-core-
 
 | Change | Scope |
 |--------|-------|
-| AW SDLC public-stage routing (`/aw:plan`, `/aw:build`, `/aw:test`, `/aw:review`, `/aw:deploy`, `/aw:ship`, plus conditional `/aw:investigate`) | commands, skills, defaults, docs |
-| Compatibility routing for legacy `/aw:execute` and `/aw:verify` entrypoints | commands, skills, router docs |
-| GHL baseline operating standards for review, QA, frontend quality, governance, and rollout safety | defaults, references, stage skills |
-| Repo-local staging and verification confidence artifacts | docs, defaults, evals |
+| AW SDLC commands and skills removed from aw-ecc | commands, skills, manifests, evals |
+| AW registry remains the active SDLC source | platform-docs, ghl-agentic-workspace |
+| GHL baseline operating standards remain available outside this retired SDLC surface | platform registry, linked workspace content |
 | Rebrand and package metadata | package.json, README.md |
 
-The repo still tracks upstream ECC, but it now carries meaningful repo-local AW SDLC behavior on top of the upstream baseline.
+The repo still tracks upstream ECC, but it no longer carries repo-local AW SDLC behavior on top of the upstream baseline.
 
 ## GHL Platform Integration
 

@@ -5,7 +5,7 @@ This directory now groups static repo-contract tests by family instead of keepin
 Current layout:
 
 - `capability/` — command surface, router behavior, stage contracts, parity checks, installability, and shared-reference checks
-- `scenarios/` — archetype, product, BDD, and customer-coverage checks
+- `scenarios/` — retired AW SDLC scenario tests are no longer active in aw-ecc
 - `history/` — git-history benchmark contracts such as RevEx reconstruction
 
 Use the suite catalog for the shortest path to a named family:
@@ -19,6 +19,4 @@ Use the deterministic runner when you want the whole contract layer:
 
 Use the suite runner when you want one deterministic family:
 
-- `node tests/evals/run-aw-suite.js core-routing-surface deterministic`
-- `node tests/evals/run-aw-suite.js archetype-and-product-scenarios deterministic`
-- `node tests/evals/run-aw-suite.js revex-history-benchmark deterministic`
+- `node tests/evals/run-aw-suite.js addy-parity-and-benchmark-contracts deterministic`
