@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added default-off AW Memory hook bridge helpers for config, redaction, MCP client calls, prompt recall, Cursor advisory recall, and curated learning sync.
+- Added `AW_MEMORY_*` flags plus `~/.aw/memory-hooks-preferences.json` support for non-secret memory hook preferences.
+
 ## 1.9.0 - 2026-03-20
 
 ### Highlights

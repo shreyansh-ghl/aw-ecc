@@ -9,23 +9,46 @@ function emitAwPromptReminder(raw) {
   if (result.stdout) {
     process.stderr.write(result.stdout.endsWith('\n') ? result.stdout : `${result.stdout}\n`);
   }
+  return result.stdout || '';
 }
 
-function normalizeCursorPromptOutput(raw) {
+function truthy(value) {
+  return ['1', 'true', 'yes', 'on', 'enabled'].includes(String(value || '').trim().toLowerCase());
+}
+
+function extractAwMemoryRecall(advisoryText) {
+  const text = String(advisoryText || '');
+  const marker = 'AW Memory Recall';
+  const index = text.indexOf(marker);
+  if (index === -1) return '';
+  return text.slice(index).trim();
+}
+
+function shouldInjectMemoryRecall(env, memoryRecall) {
+  return Boolean(memoryRecall) && truthy(env?.AW_MEMORY_CURSOR_PROMPT_INJECTION);
+}
+
+function normalizeCursorPromptOutput(raw, options = {}) {
   try {
     const payload = JSON.parse(raw);
+    const memoryRecall = options.memoryRecall || '';
+    const env = options.env || process.env;
     delete payload.hook_event_name;
     delete payload.tool_input;
     delete payload.tool_name;
     delete payload.tool_output;
     delete payload.tool_response;
+    if (shouldInjectMemoryRecall(env, memoryRecall)) {
+      const prompt = payload.prompt || payload.content || payload.message || '';
+      payload.prompt = prompt ? `${prompt}\n\n${memoryRecall}` : memoryRecall;
+    }
     return JSON.stringify(payload);
   } catch (_error) {
     return '{}';
   }
 }
 
-readStdin().then(raw => {
+function scanPromptForSecrets(raw) {
   try {
     const input = JSON.parse(raw);
     const prompt = input.prompt || input.content || input.message || '';
@@ -46,16 +69,41 @@ readStdin().then(raw => {
   } catch (_error) {
     // Best-effort prompt scanning should never block prompt submission.
   }
-  try {
-    emitAwPromptReminder(raw);
-  } catch (_error) {
-    // Reminder emission is advisory and should not break the prompt flow.
-  }
+}
+
+function sendUsageTelemetry(raw) {
   try {
     const claudePayload = transformToClaude(JSON.parse(raw));
     runExistingHook('aw-usage-prompt-submit.js', JSON.stringify(claudePayload));
   } catch (_error) {
     // Telemetry is best-effort and should not block prompt submission.
   }
-  process.stdout.write(normalizeCursorPromptOutput(raw));
-}).catch(() => process.exit(0));
+}
+
+function main() {
+  readStdin().then(raw => {
+    scanPromptForSecrets(raw);
+    let advisoryText = '';
+    try {
+      advisoryText = emitAwPromptReminder(raw);
+    } catch (_error) {
+      // Reminder emission is advisory and should not break the prompt flow.
+    }
+    sendUsageTelemetry(raw);
+    process.stdout.write(normalizeCursorPromptOutput(raw, {
+      memoryRecall: extractAwMemoryRecall(advisoryText),
+      env: process.env,
+    }));
+  }).catch(() => process.exit(0));
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  extractAwMemoryRecall,
+  normalizeCursorPromptOutput,
+  scanPromptForSecrets,
+  shouldInjectMemoryRecall,
+};

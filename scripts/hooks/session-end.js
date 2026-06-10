@@ -260,7 +260,18 @@ async function main() {
     log(`[SessionEnd] Created session file: ${sessionFile}`);
   }
 
+  await runAwMemorySync();
   process.exit(0);
+}
+
+async function runAwMemorySync() {
+  try {
+    const { syncAwLearningsToMemory } = require('./aw-memory-sync');
+    const input = stdinData.trim() ? JSON.parse(stdinData) : {};
+    await syncAwLearningsToMemory(input);
+  } catch {
+    // Memory sync is optional and must never break Stop hooks.
+  }
 }
 
 function buildSummarySection(summary) {
