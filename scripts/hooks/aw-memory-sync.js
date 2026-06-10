@@ -118,13 +118,62 @@ function buildMetadata(row, metadata = {}) {
   };
 }
 
+function stringList(...values) {
+  const result = [];
+  for (const value of values) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const text = firstString(item);
+        if (text && !result.includes(text)) result.push(text);
+      }
+    }
+  }
+  return result;
+}
+
+function memoryType(row, metadata) {
+  const candidate = firstString(row?.type, row?.memoryType, metadata?.type);
+  const allowed = new Set(['learning', 'observation', 'decision', 'solution', 'anti-pattern']);
+  return allowed.has(candidate) ? candidate : 'learning';
+}
+
+function optionalNumber(...values) {
+  for (const value of values) {
+    if (value === undefined || value === null || value === '') continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return undefined;
+}
+
 function buildMemoryStorePayload(row, metadata = {}) {
   const key = stableLearningKey(row);
   const redacted = redactForMemory(learningText(row), { maxChars: 4000 });
+  const mergedMetadata = buildMetadata(row, { ...metadata, key });
+  const repoSlug = firstString(row?.repo_slug, row?.repoSlug, mergedMetadata.repo_slug, mergedMetadata.repoSlug, mergedMetadata.repoName);
+  const modulePath = firstString(row?.module_path, row?.modulePath, mergedMetadata.module_path, mergedMetadata.modulePath, mergedMetadata.path);
+  const scopeLevel = firstString(row?.scope_level, row?.scopeLevel, mergedMetadata.scope_level, mergedMetadata.scopeLevel, modulePath ? 'module' : repoSlug ? 'repo' : 'global');
+  const tags = stringList(
+    row?.tags,
+    mergedMetadata.tags,
+    ['aw-memory-hooks', 'curated-learning', repoSlug ? `repo:${repoSlug}` : 'scope:global']
+  );
+
   return {
+    content: redacted.value,
+    type: memoryType(row, mergedMetadata),
+    source: firstString(row?.source, mergedMetadata.source, 'aw-learnings'),
+    tags,
+    confidence: optionalNumber(row?.confidence, mergedMetadata.confidence),
+    namespace: firstString(row?.namespace, mergedMetadata.namespace) || undefined,
+    scope_level: scopeLevel,
+    repo_slug: repoSlug || undefined,
+    module_path: modulePath || undefined,
+    entity_id: firstString(row?.entity_id, row?.entityId, mergedMetadata.entity_id, mergedMetadata.entityId) || undefined,
+    entity_type: firstString(row?.entity_type, row?.entityType, mergedMetadata.entity_type, mergedMetadata.entityType) || undefined,
     key,
     text: redacted.value,
-    metadata: buildMetadata(row, { ...metadata, key }),
+    metadata: mergedMetadata,
   };
 }
 
@@ -197,7 +246,7 @@ async function syncAwLearningsToMemory(input = {}, adapters = {}) {
     }
 
     const payload = buildMemoryStorePayload(row, metadata);
-    if (!payload.text.trim()) {
+    if (!payload.content.trim()) {
       summary.skippedEmpty += 1;
       continue;
     }

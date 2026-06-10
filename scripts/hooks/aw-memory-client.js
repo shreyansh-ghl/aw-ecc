@@ -37,15 +37,49 @@ function getFetch(adapters = {}) {
 function buildHeaders(config) {
   return {
     'content-type': 'application/json',
-    accept: 'application/json',
+    accept: 'application/json, text/event-stream',
     ...(config?.mcp?.authHeaders || {}),
     ...(config?.namespace ? { 'X-Namespace': config.namespace } : {}),
   };
 }
 
-function isUnknownToolError(json) {
-  const message = String(json?.error?.message || '');
-  return /unknown tool|tool.*not found|no such tool/i.test(message);
+function responseHeader(response, name) {
+  if (typeof response?.headers?.get === 'function') {
+    return response.headers.get(name) || response.headers.get(name.toLowerCase()) || '';
+  }
+  return '';
+}
+
+function isUnknownToolMessage(message) {
+  return /unknown.*tool|tool.*not found|no such tool/i.test(String(message || ''));
+}
+
+function resultText(result) {
+  if (!Array.isArray(result?.content)) return '';
+  return result.content
+    .map((entry) => (typeof entry?.text === 'string' ? entry.text : ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+async function parseResponseJson(response) {
+  const contentType = responseHeader(response, 'content-type').toLowerCase();
+  if (!contentType.includes('text/event-stream')) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  const payload = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('data:'))
+    .map((line) => line.slice('data:'.length).trim())
+    .find((line) => line && line !== '[DONE]');
+
+  if (!payload) {
+    throw new Error('empty SSE response');
+  }
+  return JSON.parse(payload);
 }
 
 async function callMemoryTool(config, toolName, args = {}, adapters = {}) {
@@ -90,15 +124,20 @@ async function callMemoryTool(config, toolName, args = {}, adapters = {}) {
 
     let json;
     try {
-      json = await response.json();
+      json = await parseResponseJson(response);
     } catch (error) {
       return failure('invalid_response', startedAt, error.message);
     }
 
     if (json?.error) {
-      return failure(isUnknownToolError(json) ? 'unknown_tool' : 'mcp_error', startedAt, json.error.message, {
+      return failure(isUnknownToolMessage(json.error.message) ? 'unknown_tool' : 'mcp_error', startedAt, json.error.message, {
         code: json.error.code ?? null,
       });
+    }
+
+    if (json?.result?.isError) {
+      const message = resultText(json.result) || 'MCP tool error';
+      return failure(isUnknownToolMessage(message) ? 'unknown_tool' : 'mcp_error', startedAt, message);
     }
 
     return {
@@ -130,4 +169,3 @@ module.exports = {
   memorySearch,
   memoryStore,
 };
-

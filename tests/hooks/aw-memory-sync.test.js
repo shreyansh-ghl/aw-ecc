@@ -101,14 +101,24 @@ async function runTests() {
 
   results.push(await test('builds redacted memory_store payloads with repo metadata', () => {
     const payload = buildMemoryStorePayload(
-      { id: 'safe', text: 'Use DTOs. Authorization: Bearer secret-token' },
+      { id: 'safe', text: 'Use DTOs. Authorization: Bearer secret-token', tags: ['dto'], metadata: { route: '/aw:test' } },
       { repoName: 'api', branch: 'main' }
     );
 
     assert.strictEqual(payload.key, 'safe');
+    assert.match(payload.content, /Use DTOs/);
+    assert.doesNotMatch(payload.content, /secret-token/);
+    assert.strictEqual(payload.text, payload.content);
+    assert.strictEqual(payload.type, 'learning');
+    assert.strictEqual(payload.source, 'aw-learnings');
+    assert.deepStrictEqual(payload.tags, ['dto', 'aw-memory-hooks', 'curated-learning', 'repo:api']);
+    assert.strictEqual(payload.scope_level, 'repo');
+    assert.strictEqual(payload.repo_slug, 'api');
+    assert.strictEqual(payload.confidence, undefined);
     assert.match(payload.text, /Use DTOs/);
     assert.doesNotMatch(payload.text, /secret-token/);
     assert.strictEqual(payload.metadata.source, 'aw-learnings');
+    assert.strictEqual(payload.metadata.route, '/aw:test');
     assert.strictEqual(payload.metadata.repoName, 'api');
     assert.strictEqual(payload.metadata.branch, 'main');
   }));
@@ -173,6 +183,9 @@ async function runTests() {
 
       assert.strictEqual(calls.length, 1);
       assert.strictEqual(calls[0].key, 'a');
+      assert.strictEqual(calls[0].content, 'store me');
+      assert.strictEqual(calls[0].type, 'learning');
+      assert.strictEqual(calls[0].repo_slug, path.basename(root));
       assert.strictEqual(result.stored, 1);
       assert.strictEqual(result.duplicates, 1);
       assert.strictEqual(result.alreadySynced, 1);

@@ -78,6 +78,7 @@ async function runTests() {
     assert.strictEqual(captured.url, 'https://services.example.test/agentic-workspace/mcp');
     assert.strictEqual(captured.options.method, 'POST');
     assert.strictEqual(captured.options.headers.Authorization, 'Bearer secret-token');
+    assert.strictEqual(captured.options.headers.accept, 'application/json, text/event-stream');
     assert.strictEqual(body.method, 'tools/call');
     assert.strictEqual(body.params.name, 'memory_search');
     assert.deepStrictEqual(body.params.arguments, { query: 'hooks', limit: 3 });
@@ -159,9 +160,52 @@ async function runTests() {
     assert.strictEqual(result.status, 'unknown_tool');
   })) passed++; else failed++;
 
+  if (await test('parses streamable HTTP SSE JSON-RPC responses', async () => {
+    const fetchImpl = async (_url, options) => ({
+      ok: true,
+      status: 200,
+      headers: {
+        get: (name) => (name.toLowerCase() === 'content-type' ? 'text/event-stream' : ''),
+      },
+      text: async () => [
+        'event: message',
+        `data: ${JSON.stringify({
+          jsonrpc: '2.0',
+          id: JSON.parse(options.body).id,
+          result: { stored: true },
+        })}`,
+        '',
+      ].join('\n'),
+    });
+
+    const result = await memoryStore(baseConfig(), { content: 'learning' }, { fetch: fetchImpl });
+
+    assert.strictEqual(result.ok, true);
+    assert.deepStrictEqual(result.result, { stored: true });
+  })) passed++; else failed++;
+
+  if (await test('maps MCP isError results to unknown_tool without false success', async () => {
+    const fetchImpl = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+          isError: true,
+          content: [{ type: 'text', text: 'Error: Unknown or disabled tool: memory_store' }],
+        },
+      }),
+    });
+
+    const result = await callMemoryTool(baseConfig(), 'memory_store', { content: 'learning' }, { fetch: fetchImpl });
+
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.status, 'unknown_tool');
+  })) passed++; else failed++;
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }
 
 runTests();
-

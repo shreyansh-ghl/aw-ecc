@@ -215,6 +215,7 @@ async function runTests() {
       assert.strictEqual(searchCalls[0].method, 'POST');
       assert.strictEqual(searchCalls[0].url, '/mcp');
       assert.strictEqual(searchCalls[0].headers.authorization, 'Bearer local-e2e-token');
+      assert.strictEqual(searchCalls[0].headers.accept, 'application/json, text/event-stream');
       assert.strictEqual(searchCalls[0].headers['x-namespace'], 'local-e2e');
       assert.strictEqual(searchCalls[0].body.params.arguments.limit, 3);
       assert.match(searchCalls[0].body.params.arguments.query, /Use remembered backend guidance/);
@@ -259,12 +260,23 @@ async function runTests() {
       assert.strictEqual(storeCalls.length, 1);
       const payload = storeCalls[0].body.params.arguments;
       assert.strictEqual(payload.key, 'live-e2e-learning');
-      assert.match(payload.text, /Prefer curated memory sync/);
-      assert.doesNotMatch(payload.text, /sync-secret/);
+      assert.match(payload.content, /Prefer curated memory sync/);
+      assert.doesNotMatch(payload.content, /sync-secret/);
+      assert.strictEqual(payload.text, payload.content);
+      assert.strictEqual(payload.type, 'learning');
+      assert.strictEqual(payload.source, 'aw-learnings');
+      assert.deepStrictEqual(payload.tags, [
+        'aw-memory-hooks',
+        'curated-learning',
+        `repo:${path.basename(workspace)}`,
+      ]);
+      assert.strictEqual(payload.scope_level, 'repo');
+      assert.strictEqual(payload.repo_slug, path.basename(workspace));
       assert.strictEqual(payload.metadata.source, 'aw-learnings');
       assert.strictEqual(payload.metadata.route, '/aw:test');
       assert.strictEqual(payload.metadata.repoName, path.basename(workspace));
       assert.strictEqual(storeCalls[0].headers.authorization, 'Bearer local-e2e-token');
+      assert.strictEqual(storeCalls[0].headers.accept, 'application/json, text/event-stream');
       assert.strictEqual(storeCalls[0].headers['x-namespace'], 'local-e2e');
 
       const receiptPath = path.join(workspace, '.aw_docs', 'cache', 'aw-memory-sync-state.json');

@@ -1,0 +1,102 @@
+{
+  "feature_slug": "aw-memory-real-session",
+  "stage": "test",
+  "mode": "/aw:test",
+  "status": "blocked-by-deployed-mcp-catalog",
+  "artifacts": [
+    ".aw_docs/features/aw-memory-real-session/verification.md",
+    ".aw_docs/features/aw-memory-real-session/state.json"
+  ],
+  "commands_run": [
+    {
+      "command": "node tests/hooks/aw-memory-client.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-sync.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-recall.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-live-e2e.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-config.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-redaction.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/aw-memory-cursor.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/harness-hook-output-contracts.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "node tests/hooks/shared-hook-entrypoints.test.js",
+      "status": "passed"
+    },
+    {
+      "command": "live MCP tools/list probe",
+      "status": "passed",
+      "evidence": "HTTP 200; 124 tools; memory_search=false; memory_store=false"
+    },
+    {
+      "command": "live MCP memory_search call",
+      "status": "failed",
+      "evidence": "unknown_tool"
+    },
+    {
+      "command": "real Claude CLI print session with branch hook settings",
+      "status": "partial",
+      "evidence": "UserPromptSubmit hook executed; Claude auth 401 blocked model completion and Stop"
+    },
+    {
+      "command": "real Codex CLI exec session with generated hook home",
+      "status": "partial",
+      "evidence": "Codex model session succeeded; no hook output/effects observed in non-interactive exec"
+    },
+    {
+      "command": "which cursor",
+      "status": "unavailable",
+      "evidence": "cursor not found"
+    }
+  ],
+  "failures": [
+    "Deployed MCP catalog does not expose memory_search or memory_store.",
+    "Claude CLI authentication returns 401 before Stop hook proof.",
+    "Codex non-interactive exec did not show hook execution despite hooks enabled.",
+    "Cursor CLI is not installed."
+  ],
+  "unavailable_checks": [
+    "Live memory_store persistence",
+    "Second live recall from a stored memory",
+    "Full Claude Stop/sync proof",
+    "Cursor native real-session proof"
+  ],
+  "html_companion_artifacts": {
+    "status": "blocked",
+    "source_path": ".aw_docs/features/aw-memory-real-session/verification.md",
+    "html_path": ".aw_docs/features/aw-memory-real-session/verification.html",
+    "profile": "verification-report",
+    "owner": "platform-core:echo-direct",
+    "blocked_reason": "No Echo Direct runner was available in this local proof path; canonical Markdown evidence is written."
+  },
+  "blockers": [
+    "Deploy ghl-agentic-workspace PR exposing memory_search and memory_store to the configured MCP endpoint.",
+    "Fix Claude CLI authentication for full Claude lifecycle proof.",
+    "Use an environment with Cursor CLI installed for Cursor native proof."
+  ],
+  "recommended_next_commands": [
+    "Run the live MCP tools/list probe after MCP deployment.",
+    "Run a real Claude/Codex/Cursor harness session after memory tools appear in tools/list."
+  ]
+}
