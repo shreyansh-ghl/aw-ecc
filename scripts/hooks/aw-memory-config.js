@@ -217,7 +217,7 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
 
   const envEnabled = envFlag(env, 'AW_MEMORY_HOOKS');
   const prefEnabled = prefs.mode === 'enabled' ? true : prefs.mode === 'disabled' ? false : false;
-  const enabled = envEnabled == null ? prefEnabled : envEnabled;
+  const enabled = envEnabled === null ? prefEnabled : envEnabled;
 
   const recallFlag = envFlag(env, 'AW_MEMORY_RECALL');
   const syncFlag = envFlag(env, 'AW_MEMORY_SYNC');
@@ -245,10 +245,10 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
 
   return {
     enabled,
-    recallEnabled: enabled && (recallFlag == null ? prefBool(prefs.recall, false) : recallFlag),
-    syncEnabled: enabled && (syncFlag == null ? prefBool(prefs.sync, false) : syncFlag),
-    cursorPromptInjectionEnabled: enabled && (cursorFlag == null ? prefBool(prefs.cursorPromptInjection, false) : cursorFlag),
-    dryRun: dryRunFlag == null ? prefBool(prefs.dryRun, false) : dryRunFlag,
+    recallEnabled: enabled && (recallFlag === null ? prefBool(prefs.recall, false) : recallFlag),
+    syncEnabled: enabled && (syncFlag === null ? prefBool(prefs.sync, false) : syncFlag),
+    cursorPromptInjectionEnabled: enabled && (cursorFlag === null ? prefBool(prefs.cursorPromptInjection, false) : cursorFlag),
+    dryRun: dryRunFlag === null ? prefBool(prefs.dryRun, false) : dryRunFlag,
     timeoutMs,
     maxResults,
     syncMaxPerRun,
@@ -298,4 +298,3 @@ module.exports = {
   memoryPrefsPath,
   redactConfigForLog,
 };
-

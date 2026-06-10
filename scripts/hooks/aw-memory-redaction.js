@@ -16,10 +16,10 @@ const SECRET_KEYS = [
 
 function toText(value) {
   if (typeof value === 'string') return value;
-  if (value == null) return '';
+  if (value === null || value === undefined) return '';
   try {
     return JSON.stringify(value);
-  } catch (error) {
+  } catch (_error) {
     return String(value);
   }
 }
@@ -105,4 +105,3 @@ module.exports = {
   summarizeRedaction,
   truncateForMemory,
 };
-
