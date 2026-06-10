@@ -128,6 +128,38 @@ function runTests() {
     });
   })) passed++; else failed++;
 
+  if (test('Claude/Codex prompt reminder remains valid hook JSON when memory recall is enabled without MCP config', () => {
+    withTempWorkspace((cwd) => {
+      const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-no-mcp-'));
+      try {
+        const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'session-start-rules-context.sh');
+        const raw = JSON.stringify({
+          cwd,
+          prompt: 'Use remembered backend guidance',
+        });
+
+        const result = runBash(
+          scriptPath,
+          raw,
+          {
+            HOME: fakeHome,
+            AW_MEMORY_HOOKS: '1',
+            AW_MEMORY_RECALL: '1',
+          },
+          cwd
+        );
+
+        assert.strictEqual(result.status, 0, result.stderr);
+        const payload = parseJson(result.stdout);
+        assert.equal(payload.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
+        assert.match(payload.hookSpecificOutput.additionalContext, /\[AW Router reminder\]/);
+        assert.doesNotMatch(payload.hookSpecificOutput.additionalContext, /AW Memory Recall/);
+      } finally {
+        fs.rmSync(fakeHome, { recursive: true, force: true });
+      }
+    });
+  })) passed++; else failed++;
+
   if (test('Codex home prompt-submit wrapper preserves JSON contract from the managed hook target', () => {
     withTempWorkspace((cwd) => {
       const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-codex-home-'));
