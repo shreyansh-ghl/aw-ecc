@@ -138,6 +138,16 @@ async function runTests() {
     assert.strictEqual(explicit.source, 'workflow-runner');
   }));
 
+  results.push(await test('keeps namespace in metadata instead of memory_store arguments', () => {
+    const payload = buildMemoryStorePayload(
+      { id: 'namespaced', text: 'sync this', namespace: 'team-alpha' },
+      { repoName: 'api' }
+    );
+
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'namespace'), false);
+    assert.strictEqual(payload.metadata.namespace, 'team-alpha');
+  }));
+
   results.push(await test('dry-run plans writes without calling memory_store', async () => {
     const root = makeWorkspace();
     try {

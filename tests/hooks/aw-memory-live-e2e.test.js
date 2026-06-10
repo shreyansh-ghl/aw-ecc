@@ -239,6 +239,7 @@ async function runTests() {
         `${JSON.stringify({
           id: 'live-e2e-learning',
           text: 'Prefer curated memory sync. Authorization: Bearer sync-secret',
+          namespace: 'local-e2e',
           metadata: { route: '/aw:test' },
         })}\n`,
         'utf8'
@@ -272,7 +273,9 @@ async function runTests() {
       ]);
       assert.strictEqual(payload.scope_level, 'repo');
       assert.strictEqual(payload.repo_slug, path.basename(workspace));
+      assert.strictEqual(Object.prototype.hasOwnProperty.call(payload, 'namespace'), false);
       assert.strictEqual(payload.metadata.source, 'aw-learnings');
+      assert.strictEqual(payload.metadata.namespace, 'local-e2e');
       assert.strictEqual(payload.metadata.route, '/aw:test');
       assert.strictEqual(payload.metadata.repoName, path.basename(workspace));
       assert.strictEqual(storeCalls[0].headers.authorization, 'Bearer local-e2e-token');

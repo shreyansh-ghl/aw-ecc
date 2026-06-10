@@ -169,12 +169,14 @@ function buildMemoryStorePayload(row, metadata = {}) {
   const key = stableLearningKey(row);
   const redacted = redactForMemory(learningText(row), { maxChars: 4000 });
   const mergedMetadata = buildMetadata(row, { ...metadata, key });
-  const repoSlug = firstString(row?.repo_slug, row?.repoSlug, mergedMetadata.repo_slug, mergedMetadata.repoSlug, mergedMetadata.repoName);
-  const modulePath = firstString(row?.module_path, row?.modulePath, mergedMetadata.module_path, mergedMetadata.modulePath, mergedMetadata.path);
-  const scopeLevel = firstString(row?.scope_level, row?.scopeLevel, mergedMetadata.scope_level, mergedMetadata.scopeLevel, modulePath ? 'module' : repoSlug ? 'repo' : 'global');
+  const namespace = firstString(row?.namespace, mergedMetadata.namespace);
+  const memoryMetadata = namespace ? { ...mergedMetadata, namespace } : mergedMetadata;
+  const repoSlug = firstString(row?.repo_slug, row?.repoSlug, memoryMetadata.repo_slug, memoryMetadata.repoSlug, memoryMetadata.repoName);
+  const modulePath = firstString(row?.module_path, row?.modulePath, memoryMetadata.module_path, memoryMetadata.modulePath, memoryMetadata.path);
+  const scopeLevel = firstString(row?.scope_level, row?.scopeLevel, memoryMetadata.scope_level, memoryMetadata.scopeLevel, modulePath ? 'module' : repoSlug ? 'repo' : 'global');
   const tags = stringList(
     row?.tags,
-    mergedMetadata.tags,
+    memoryMetadata.tags,
     ['aw-memory-hooks', 'curated-learning', repoSlug ? `repo:${repoSlug}` : 'scope:global']
   );
 
@@ -183,16 +185,15 @@ function buildMemoryStorePayload(row, metadata = {}) {
     type: memoryType(row, mergedMetadata),
     source: memorySource(row, mergedMetadata),
     tags,
-    confidence: optionalNumber(row?.confidence, mergedMetadata.confidence),
-    namespace: firstString(row?.namespace, mergedMetadata.namespace) || undefined,
+    confidence: optionalNumber(row?.confidence, memoryMetadata.confidence),
     scope_level: scopeLevel,
     repo_slug: repoSlug || undefined,
     module_path: modulePath || undefined,
-    entity_id: firstString(row?.entity_id, row?.entityId, mergedMetadata.entity_id, mergedMetadata.entityId) || undefined,
-    entity_type: firstString(row?.entity_type, row?.entityType, mergedMetadata.entity_type, mergedMetadata.entityType) || undefined,
+    entity_id: firstString(row?.entity_id, row?.entityId, memoryMetadata.entity_id, memoryMetadata.entityId) || undefined,
+    entity_type: firstString(row?.entity_type, row?.entityType, memoryMetadata.entity_type, memoryMetadata.entityType) || undefined,
     key,
     text: redacted.value,
-    metadata: mergedMetadata,
+    metadata: memoryMetadata,
   };
 }
 
