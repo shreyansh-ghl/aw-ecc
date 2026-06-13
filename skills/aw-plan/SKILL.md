@@ -129,7 +129,7 @@ Use the smallest correct internal route:
 - raw idea or under-shaped concept -> `idea-refine`, then `aw-brainstorm` when deeper repo-aware exploration is still needed
 - fuzzy request, open design question, or overscoped feature -> `aw-brainstorm`
 - domain-language-heavy or edge-case-heavy planning -> `grill-with-docs`
-- product/full mode or missing product assumptions -> `to-prd`
+- any new feature (every mode) -> `to-prd` first, so a user-facing `prd.md` always exists
 - approved direction but missing technical contract -> `aw-spec`
 - PRD/spec needs implementation-ready vertical slices -> `to-issues`, then `aw-tasks`
 - approved spec but missing execution recipe -> `aw-tasks`
@@ -169,10 +169,12 @@ Do not choose deep grill implicitly; the user must select `3` or explicitly ask 
 | Mode | Use when | Primary outputs |
 |---|---|---|
 | `product` | problem, scope, or acceptance criteria are unclear — start with a conversation to understand the user's needs before writing anything | `requirements.md`, `prd.md`, `state.json` |
-| `design` | UX behavior or interface design must be defined | `design.md`, `designs/`, `state.json` |
-| `technical` | implementation approach or architecture must be defined | `spec.md`, `state.json` |
-| `tasks` | implementation work needs to be broken into steps | `tasks.md`, `state.json` |
+| `design` | UX behavior or interface design must be defined | `prd.md`, `design.md`, `designs/`, `state.json` |
+| `technical` | implementation approach or architecture must be defined | `prd.md`, `spec.md`, `state.json` |
+| `tasks` | implementation work needs to be broken into steps | `tasks.md`, `state.json` (requires an existing `prd.md`) |
 | `full` | multiple planning artifacts are missing | missing artifacts in order, plus `state.json` |
+
+`prd.md` is **always required**: every planning run that creates a new feature writes one via `to-prd` before (or alongside) the technical artifacts. For technical-mode requests it may be brief — problem, solution, acceptance criteria, out of scope — but it must exist so the user-facing intent is never implicit. `tasks` mode on an existing feature reuses the feature's existing `prd.md`.
 
 ## Artifact Rules
 
@@ -187,7 +189,7 @@ Do not choose deep grill implicitly; the user must select `3` or explicitly ask 
 - do not write planning artifacts to `docs/plans/`
 - do not create random filenames
 - do not write implementation code
-- do not require `prd.md` for a technical request that is already clear enough for `spec.md`
+- always write `prd.md` (via `to-prd`) for any new feature — a brief user-facing PRD is required even for technical-only requests
 - do not publish tracker issues from `to-issues` unless explicitly requested
 
 ## Human HTML Companion
@@ -479,7 +481,7 @@ When `tasks.md` is ready:
 ## Hard Gates
 
 - do not write code
-- do not require `prd.md` for a technical-only request that is already well-defined
+- always write `prd.md` for a new feature, even technical-only requests (brief is fine; absent is not)
 - do not force unrelated artifacts
 - do not silently broaden a narrow planning request into full planning
 - do not produce handoff tasks so vague that execution must re-plan the file scope
