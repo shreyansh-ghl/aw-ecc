@@ -1,6 +1,6 @@
 ---
 name: to-prd
-description: Synthesize existing conversation, repo context, and decisions into a local AW `prd.md`. Use when `/aw:plan` is in product/full mode, when product assumptions need to be frozen before spec/tasks, or when the user asks to turn discovery into a PRD.
+description: Synthesize existing conversation, repo context, and decisions into a local AW `prd.md`. Use whenever `/aw:plan` creates a new feature — every planning mode requires a user-facing PRD (brief for technical-only requests), when product assumptions need to be frozen before spec/tasks, or when the user asks to turn discovery into a PRD.
 ---
 
 # To PRD

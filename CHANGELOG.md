@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.68 - 2026-06-14
+
+### Fixed
+
+- `aw-plan`: PRD is now always required for new features in every planning mode. Removed the stale "skip `prd.md` for a well-defined technical request" gate from the routing graph, mode table, Artifact Rules, and Hard Gates; `to-prd` now triggers for any new feature (a brief PRD is fine for technical-only requests — problem, solution, acceptance criteria, scope). Ports registry fix `0591efe0` from `GoHighLevel/platform-docs` that never reached the published plugin, so every developer on v1.4.66/v1.4.67 was still being instructed to skip the PRD.
+
 ## 1.9.0 - 2026-03-20
 
 ### Highlights
