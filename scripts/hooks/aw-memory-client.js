@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const DEFAULT_TIMEOUT_MS = 800;
+const DEFAULT_TIMEOUT_MS = 10000;
 
 function nowMs() {
   return Date.now();

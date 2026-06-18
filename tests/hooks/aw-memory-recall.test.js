@@ -42,7 +42,7 @@ function config(overrides = {}) {
     enabled: true,
     recallEnabled: true,
     maxResults: 2,
-    timeoutMs: 800,
+    timeoutMs: 10000,
     mcp: { url: 'https://mcp.example.test', authHeaders: {} },
     ...overrides,
   };
