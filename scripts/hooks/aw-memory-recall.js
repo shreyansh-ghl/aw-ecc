@@ -162,18 +162,19 @@ function formatAwMemoryRecall(results, options = {}) {
 }
 
 async function buildAwMemoryRecallContext(input = {}, adapters = {}) {
-  const config = adapters.config || getAwMemoryHookConfig(
-    adapters.env || process.env,
-    adapters.fs,
-    adapters.homeDir
-  );
-
-  if (!config?.enabled || !config?.recallEnabled) return '';
-
   const prompt = promptFromInput(input);
   if (!prompt.trim()) return '';
 
   const metadata = resolveRepoMetadata(input, adapters);
+  const config = adapters.config || getAwMemoryHookConfig(
+    adapters.env || process.env,
+    adapters.fs,
+    adapters.homeDir,
+    firstString(metadata.repoPath, input.cwd, process.cwd())
+  );
+
+  if (!config?.enabled || !config?.recallEnabled) return '';
+
   const query = buildSearchQuery(prompt, metadata, adapters.maxQueryChars || DEFAULT_QUERY_CHARS);
   if (!query) return '';
 

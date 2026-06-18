@@ -7,6 +7,7 @@ const path = require('path');
 
 const SERVER_NAME = 'ghl-ai';
 const PREFS_FILE = 'memory-hooks-preferences.json';
+const DEFAULT_MCP_URL = 'https://services.leadconnectorhq.com/agentic-workspace/mcp';
 const DEFAULT_TIMEOUT_MS = 800;
 const DEFAULT_MAX_RESULTS = 3;
 const DEFAULT_SYNC_MAX_PER_RUN = 5;
@@ -200,10 +201,10 @@ function resolveMcpConfig(env, fsAdapter, homeDir, diagnostics) {
 
   return {
     serverName: SERVER_NAME,
-    source: null,
-    url: '',
-    authHeaders: {},
-    authEnvVar: null,
+    source: 'default',
+    url: DEFAULT_MCP_URL,
+    authHeaders: authHeadersFromEnv(env),
+    authEnvVar: env.GHL_AI_MCP_BEARER_TOKEN ? 'GHL_AI_MCP_BEARER_TOKEN' : (env.GITHUB_TOKEN ? 'GITHUB_TOKEN' : null),
   };
 }
 
@@ -211,12 +212,109 @@ function valueFromEnvOrPrefs(env, envName, prefs, prefName, fallback) {
   return hasOwn(env, envName) ? env[envName] : (hasOwn(prefs, prefName) ? prefs[prefName] : fallback);
 }
 
-function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.homedir()) {
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function syncConfigRelativePaths() {
+  return [
+    path.join('.aw', '.aw_registry', '.sync-config.json'),
+    path.join('.aw_registry', '.sync-config.json'),
+    '.sync-config.json',
+  ];
+}
+
+function addUniquePath(paths, filePath) {
+  if (filePath && !paths.includes(filePath)) paths.push(filePath);
+}
+
+function findUpSyncConfigPaths(startDir, fsAdapter) {
+  const paths = [];
+  let current = path.resolve(startDir || process.cwd());
+
+  while (current && current !== path.dirname(current)) {
+    for (const relativePath of syncConfigRelativePaths()) {
+      const candidate = path.join(current, relativePath);
+      if (fsAdapter.existsSync(candidate)) addUniquePath(paths, candidate);
+    }
+    current = path.dirname(current);
+  }
+
+  return paths;
+}
+
+function syncConfigCandidates(cwd, homeDir, fsAdapter) {
+  const paths = [];
+  for (const startDir of [cwd, process.cwd()]) {
+    if (!startDir) continue;
+    for (const candidate of findUpSyncConfigPaths(startDir, fsAdapter)) {
+      addUniquePath(paths, candidate);
+    }
+  }
+  for (const relativePath of [
+    path.join('.aw', '.aw_registry', '.sync-config.json'),
+    path.join('.aw_registry', '.sync-config.json'),
+  ]) {
+    addUniquePath(paths, path.join(homeDir, relativePath));
+  }
+  return paths;
+}
+
+function normalizeNamespaceCandidate(value) {
+  const text = firstString(value)
+    .replace(/\\/g, '/')
+    .replace(/^\.?aw_registry\//, '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/\/\*\*?$/g, '');
+  if (!text) return '';
+
+  const artifactIndex = text
+    .split('/')
+    .findIndex((segment) => ['agents', 'commands', 'contexts', 'docs', 'evals', 'rules', 'skills'].includes(segment));
+  if (artifactIndex > 0) {
+    return text.split('/').slice(0, artifactIndex).join('/');
+  }
+
+  return text;
+}
+
+function namespaceFromSyncConfig(data) {
+  const explicit = normalizeNamespaceCandidate(data?.namespace);
+  if (explicit && explicit !== 'platform') return explicit;
+
+  const included = Array.isArray(data?.include)
+    ? data.include.map(normalizeNamespaceCandidate).filter(Boolean)
+    : [];
+  const teamInclude = included.find((entry) => entry !== 'platform');
+  if (teamInclude) return teamInclude;
+  if (included.length > 0) return included[0];
+
+  return explicit || '';
+}
+
+function resolveNamespace(env, fsAdapter, homeDir, diagnostics, cwd) {
+  const envNamespace = firstString(env.AW_MEMORY_NAMESPACE, env.X_NAMESPACE);
+  if (envNamespace) return { namespace: envNamespace, source: 'env' };
+
+  for (const candidate of syncConfigCandidates(cwd, homeDir, fsAdapter)) {
+    const data = readJsonFile(fsAdapter, candidate, diagnostics);
+    const namespace = namespaceFromSyncConfig(data);
+    if (namespace) return { namespace, source: candidate };
+  }
+
+  return { namespace: null, source: null };
+}
+
+function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.homedir(), cwd = process.cwd()) {
   const diagnostics = [];
   const { prefs, prefsPath } = loadPreferences(env, fsAdapter, homeDir, diagnostics);
+  const namespace = resolveNamespace(env, fsAdapter, homeDir, diagnostics, cwd);
 
   const envEnabled = envFlag(env, 'AW_MEMORY_HOOKS');
-  const prefEnabled = prefs.mode === 'enabled' ? true : prefs.mode === 'disabled' ? false : false;
+  const prefEnabled = prefs.mode === 'enabled' ? true : prefs.mode === 'disabled' ? false : true;
   const enabled = envEnabled === null ? prefEnabled : envEnabled;
 
   const recallFlag = envFlag(env, 'AW_MEMORY_RECALL');
@@ -245,8 +343,8 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
 
   return {
     enabled,
-    recallEnabled: enabled && (recallFlag === null ? prefBool(prefs.recall, false) : recallFlag),
-    syncEnabled: enabled && (syncFlag === null ? prefBool(prefs.sync, false) : syncFlag),
+    recallEnabled: enabled && (recallFlag === null ? prefBool(prefs.recall, true) : recallFlag),
+    syncEnabled: enabled && (syncFlag === null ? prefBool(prefs.sync, true) : syncFlag),
     cursorPromptInjectionEnabled: enabled && (cursorFlag === null ? prefBool(prefs.cursorPromptInjection, false) : cursorFlag),
     dryRun: dryRunFlag === null ? prefBool(prefs.dryRun, false) : dryRunFlag,
     timeoutMs,
@@ -254,7 +352,8 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
     syncMaxPerRun,
     prefsPath,
     mcp: resolveMcpConfig(env, fsAdapter, homeDir, diagnostics),
-    namespace: env.AW_MEMORY_NAMESPACE || env.X_NAMESPACE || null,
+    namespace: namespace.namespace,
+    namespaceSource: namespace.source,
     diagnostics,
   };
 }
@@ -276,6 +375,7 @@ function redactConfigForLog(config) {
     syncMaxPerRun: config?.syncMaxPerRun,
     prefsPath: config?.prefsPath || null,
     namespace: config?.namespace || null,
+    namespaceSource: config?.namespaceSource || null,
     mcp: {
       serverName: config?.mcp?.serverName || SERVER_NAME,
       source: config?.mcp?.source || null,
@@ -288,6 +388,7 @@ function redactConfigForLog(config) {
 }
 
 module.exports = {
+  DEFAULT_MCP_URL,
   DEFAULT_MAX_RESULTS,
   DEFAULT_SYNC_MAX_PER_RUN,
   DEFAULT_TIMEOUT_MS,

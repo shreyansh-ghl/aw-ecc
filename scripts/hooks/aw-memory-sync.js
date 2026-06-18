@@ -218,17 +218,18 @@ function baseMetadata(workspaceRoot, input = {}) {
 
 async function syncAwLearningsToMemory(input = {}, adapters = {}) {
   const fsAdapter = adapters.fs || fs;
+  const workspaceRoot = adapters.workspaceRoot || resolveWorkspaceRoot(input, fsAdapter);
   const config = adapters.config || getAwMemoryHookConfig(
     adapters.env || process.env,
     fsAdapter,
-    adapters.homeDir
+    adapters.homeDir,
+    workspaceRoot
   );
 
   if (!config?.enabled || !config?.syncEnabled) {
     return { ok: true, status: 'disabled', planned: 0, stored: 0 };
   }
 
-  const workspaceRoot = adapters.workspaceRoot || resolveWorkspaceRoot(input, fsAdapter);
   const queuePath = adapters.queuePath || path.join(workspaceRoot, QUEUE_RELATIVE_PATH);
   const statePath = adapters.statePath || path.join(workspaceRoot, STATE_RELATIVE_PATH);
   const loaded = loadPendingLearningRows(queuePath, fsAdapter);
