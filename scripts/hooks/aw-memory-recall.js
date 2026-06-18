@@ -86,6 +86,14 @@ function parseJsonMaybe(text) {
   }
 }
 
+function parsedMemoryEntries(text) {
+  const parsed = parseJsonMaybe(text);
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed?.results)) return parsed.results;
+  if (Array.isArray(parsed?.memories)) return parsed.memories;
+  return null;
+}
+
 function contentArrayText(content) {
   if (!Array.isArray(content)) return '';
   return content
@@ -100,17 +108,15 @@ function contentArrayText(content) {
 
 function resultEntriesFromContent(content) {
   if (typeof content === 'string') {
-    const parsed = parseJsonMaybe(content);
-    if (Array.isArray(parsed?.results)) return parsed.results;
-    if (Array.isArray(parsed?.memories)) return parsed.memories;
+    const parsedEntries = parsedMemoryEntries(content);
+    if (parsedEntries) return parsedEntries;
     return [{ text: content }];
   }
 
   if (Array.isArray(content)) {
     const text = contentArrayText(content);
-    const parsed = parseJsonMaybe(text);
-    if (Array.isArray(parsed?.results)) return parsed.results;
-    if (Array.isArray(parsed?.memories)) return parsed.memories;
+    const parsedEntries = parsedMemoryEntries(text);
+    if (parsedEntries) return parsedEntries;
     return text ? [{ text }] : [];
   }
 

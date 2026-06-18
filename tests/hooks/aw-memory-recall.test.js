@@ -8,6 +8,7 @@ const assert = require('assert');
 
 const {
   buildAwMemoryRecallContext,
+  extractMemorySearchResults,
   formatAwMemoryRecall,
 } = require('../../scripts/hooks/aw-memory-recall');
 
@@ -141,6 +142,24 @@ async function runTests() {
 
     assert.strictEqual(noResults, '');
     assert.strictEqual(timeout, '');
+  }));
+
+  results.push(await test('extracts top-level JSON array content from MCP search responses', () => {
+    const extracted = extractMemorySearchResults({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify([
+            { content: 'fresh hook marker should appear' },
+            { memory: { text: 'nested memory text' } },
+          ]),
+        },
+      ],
+    });
+
+    const output = formatAwMemoryRecall(extracted, { maxResults: 2, maxItemChars: 100 });
+
+    assert.strictEqual(output, 'AW Memory Recall\n- fresh hook marker should appear\n- nested memory text');
   }));
 
   results.push(await test('formats bounded recall and ignores malformed entries', () => {
