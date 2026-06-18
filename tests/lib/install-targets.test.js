@@ -74,7 +74,7 @@ function runTests() {
       modules: [
         {
           id: 'hooks-runtime',
-          paths: ['hooks'],
+          paths: ['hooks', 'scripts/lib'],
         },
       ],
     });
@@ -92,6 +92,13 @@ function runTests() {
         && operation.destinationPath === path.join(homeDir, '.claude', 'hooks', 'hooks.json')
       )),
       'Should overlay neutral Claude hooks.json into ~/.claude/hooks'
+    );
+    assert.ok(
+      plan.operations.some(operation => (
+        normalizedRelativePath(operation.sourceRelativePath) === 'scripts/lib'
+        && operation.destinationPath === path.join(homeDir, '.claude', 'scripts', 'lib')
+      )),
+      'Should copy shared hook libraries into ~/.claude/scripts/lib'
     );
   })) passed++; else failed++;
 
