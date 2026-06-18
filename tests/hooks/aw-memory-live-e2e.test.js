@@ -154,6 +154,16 @@ function makeWorkspace() {
     fs.mkdirSync(rulesDir, { recursive: true });
     fs.writeFileSync(path.join(rulesDir, 'AGENTS.md'), `# ${domain}\n`, 'utf8');
   }
+  fs.mkdirSync(path.join(root, '.aw', '.aw_registry'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, '.aw', '.aw_registry', '.sync-config.json'),
+    JSON.stringify({
+      namespace: 'local-e2e',
+      repo: 'GoHighLevel/platform-docs',
+      include: [],
+    }, null, 2),
+    'utf8'
+  );
   fs.mkdirSync(path.join(root, '.aw_docs', 'learnings'), { recursive: true });
   return root;
 }
@@ -162,12 +172,8 @@ function baseEnv(homeDir, serverUrl) {
   return {
     ...process.env,
     HOME: homeDir,
-    AW_MEMORY_HOOKS: '1',
-    AW_MEMORY_RECALL: '1',
-    AW_MEMORY_SYNC: '1',
     AW_MEMORY_MCP_URL: serverUrl,
     AW_MEMORY_HOOK_TIMEOUT_MS: '2500',
-    AW_MEMORY_NAMESPACE: 'local-e2e',
     GHL_AI_MCP_BEARER_TOKEN: 'local-e2e-token',
   };
 }

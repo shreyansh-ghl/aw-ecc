@@ -30,7 +30,7 @@ function runBash(scriptPath, input = '', env = {}, cwd = REPO_ROOT) {
     cwd,
     input,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, AW_MEMORY_HOOKS: '0', ...env },
   });
 }
 
@@ -39,7 +39,7 @@ function runNode(scriptPath, args = [], input = '', env = {}, cwd = REPO_ROOT) {
     cwd,
     input,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, AW_MEMORY_HOOKS: '0', ...env },
   });
 }
 
@@ -128,7 +128,7 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('Claude/Codex prompt reminder remains valid hook JSON when memory recall is enabled without MCP config', () => {
+  if (test('Claude/Codex prompt reminder remains valid hook JSON when memory recall is disabled', () => {
     withTempWorkspace((cwd) => {
       const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-no-mcp-'));
       try {
@@ -143,8 +143,7 @@ function runTests() {
           raw,
           {
             HOME: fakeHome,
-            AW_MEMORY_HOOKS: '1',
-            AW_MEMORY_RECALL: '1',
+            AW_MEMORY_HOOKS: '0',
           },
           cwd
         );

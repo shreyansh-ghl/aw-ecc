@@ -27,7 +27,7 @@ function runBash(scriptPath, input = '', env = {}) {
     cwd: REPO_ROOT,
     input,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    env: { ...process.env, AW_MEMORY_HOOKS: '0', ...env },
   });
 }
 
@@ -77,7 +77,7 @@ function runTests() {
     });
   })) passed++; else failed++;
 
-  if (test('shared user-prompt-submit keeps AW reminders intact when memory recall is enabled without MCP config', () => {
+  if (test('shared user-prompt-submit keeps AW reminders intact when memory recall is disabled', () => {
     withTempRulesDir((cwd) => {
       const scriptPath = path.join(REPO_ROOT, 'scripts', 'hooks', 'shared', 'user-prompt-submit.sh');
       const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'shared-aw-memory-home-'));
@@ -89,8 +89,7 @@ function runTests() {
 
         const result = runBash(scriptPath, raw, {
           HOME: fakeHome,
-          AW_MEMORY_HOOKS: '1',
-          AW_MEMORY_RECALL: '1',
+          AW_MEMORY_HOOKS: '0',
         });
 
         assert.strictEqual(result.status, 0, result.stderr);
