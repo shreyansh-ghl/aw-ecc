@@ -2,6 +2,7 @@
 set -euo pipefail
 
 RAW="$(cat || true)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 extract_workspace_root() {
   printf '%s' "$1" | sed -n 's/.*"workspace_roots"[[:space:]]*:[[:space:]]*\[[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
@@ -159,4 +160,11 @@ EOF
 detect_incomplete_echo_docs "$WORKSPACE_ROOT" "$PROMPT"
 if [ -n "$CWD_ROOT" ] && [ "$CWD_ROOT" != "$WORKSPACE_ROOT" ]; then
   detect_incomplete_echo_docs "$CWD_ROOT" "$PROMPT"
+fi
+
+if command -v node >/dev/null 2>&1 && [ -f "$SCRIPT_DIR/../aw-memory-recall.js" ]; then
+  MEMORY_RECALL="$(printf '%s' "$RAW" | node "$SCRIPT_DIR/../aw-memory-recall.js" 2>/dev/null || true)"
+  if [ -n "$MEMORY_RECALL" ]; then
+    printf '\n%s\n' "$MEMORY_RECALL"
+  fi
 fi

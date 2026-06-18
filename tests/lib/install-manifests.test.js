@@ -137,6 +137,23 @@ function runTests() {
       'Should include nested dependency');
   })) passed++; else failed++;
 
+  if (test('hooks-runtime installs shared hook libraries for Claude home hooks', () => {
+    const homeDir = '/Users/example';
+    const plan = resolveInstallPlan({
+      moduleIds: ['hooks-runtime'],
+      target: 'claude',
+      homeDir,
+    });
+
+    assert.ok(
+      plan.operations.some(operation => (
+        operation.sourceRelativePath === 'scripts/lib'
+        && operation.destinationPath === path.join(homeDir, '.claude', 'scripts', 'lib')
+      )),
+      'Should copy scripts/lib so installed run-with-flags.js can require ../lib/*'
+    );
+  })) passed++; else failed++;
+
   if (test('validates explicit module IDs against the real manifest catalog', () => {
     const moduleIds = validateInstallModuleIds(['security', 'security', 'platform-configs']);
     assert.deepStrictEqual(moduleIds, ['security', 'platform-configs']);
