@@ -8,7 +8,8 @@ const path = require('path');
 const SERVER_NAME = 'ghl-ai';
 const PREFS_FILE = 'memory-hooks-preferences.json';
 const DEFAULT_MCP_URL = 'https://services.leadconnectorhq.com/agentic-workspace/mcp';
-const DEFAULT_TIMEOUT_MS = 800;
+const DEFAULT_TIMEOUT_MS = 10000;
+const MAX_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_RESULTS = 3;
 const DEFAULT_SYNC_MAX_PER_RUN = 5;
 
@@ -326,7 +327,7 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
     valueFromEnvOrPrefs(env, 'AW_MEMORY_HOOK_TIMEOUT_MS', prefs, 'timeoutMs', DEFAULT_TIMEOUT_MS),
     DEFAULT_TIMEOUT_MS,
     100,
-    3000
+    MAX_TIMEOUT_MS
   );
   const maxResults = clampNumber(
     valueFromEnvOrPrefs(env, 'AW_MEMORY_MAX_RESULTS', prefs, 'maxResults', DEFAULT_MAX_RESULTS),

@@ -55,7 +55,7 @@ function runTests() {
       assert.strictEqual(config.enabled, true);
       assert.strictEqual(config.recallEnabled, true);
       assert.strictEqual(config.syncEnabled, true);
-      assert.strictEqual(config.timeoutMs, 800);
+      assert.strictEqual(config.timeoutMs, 10000);
       assert.strictEqual(config.maxResults, 3);
       assert.strictEqual(config.syncMaxPerRun, 5);
       assert.strictEqual(config.mcp.url, DEFAULT_MCP_URL);
@@ -140,6 +140,19 @@ function runTests() {
       assert.strictEqual(config.timeoutMs, 100);
       assert.strictEqual(config.maxResults, 10);
       assert.strictEqual(config.syncMaxPerRun, 25);
+    } finally {
+      cleanup(home);
+    }
+  })) passed++; else failed++;
+
+  if (test('timeout override remains bounded above the default', () => {
+    const home = createTempHome();
+    try {
+      const config = getAwMemoryHookConfig({
+        AW_MEMORY_HOOK_TIMEOUT_MS: '60000',
+      }, fs, home);
+
+      assert.strictEqual(config.timeoutMs, 30000);
     } finally {
       cleanup(home);
     }

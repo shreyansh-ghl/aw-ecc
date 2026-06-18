@@ -39,7 +39,7 @@ function test(name, fn) {
 function baseConfig(overrides = {}) {
   return {
     enabled: true,
-    timeoutMs: 800,
+    timeoutMs: 10000,
     mcp: {
       url: 'https://services.example.test/agentic-workspace/mcp',
       authHeaders: {
