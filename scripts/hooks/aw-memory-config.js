@@ -283,17 +283,17 @@ function normalizeNamespaceCandidate(value) {
 }
 
 function namespaceFromSyncConfig(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return '';
+
   const explicit = normalizeNamespaceCandidate(data?.namespace);
-  if (explicit && explicit !== 'platform') return explicit;
+  if (explicit) return explicit;
 
   const included = Array.isArray(data?.include)
     ? data.include.map(normalizeNamespaceCandidate).filter(Boolean)
     : [];
-  const teamInclude = included.find((entry) => entry !== 'platform');
-  if (teamInclude) return teamInclude;
   if (included.length > 0) return included[0];
 
-  return explicit || '';
+  return 'platform';
 }
 
 function resolveNamespace(env, fsAdapter, homeDir, diagnostics, cwd) {
