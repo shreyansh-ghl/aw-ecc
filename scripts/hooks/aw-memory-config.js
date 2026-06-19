@@ -283,6 +283,8 @@ function normalizeNamespaceCandidate(value) {
 }
 
 function namespaceFromSyncConfig(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return '';
+
   const explicit = normalizeNamespaceCandidate(data?.namespace);
   if (explicit) return explicit;
 
@@ -291,7 +293,7 @@ function namespaceFromSyncConfig(data) {
     : [];
   if (included.length > 0) return included[0];
 
-  return '';
+  return 'platform';
 }
 
 function resolveNamespace(env, fsAdapter, homeDir, diagnostics, cwd) {

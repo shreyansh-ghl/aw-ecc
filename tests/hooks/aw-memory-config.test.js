@@ -225,6 +225,29 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('defaults to platform when sync config namespace and include are empty', () => {
+    const home = createTempHome();
+    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-config-workspace-'));
+    try {
+      writeJson(path.join(workspace, '.aw', '.aw_registry', '.sync-config.json'), {
+        namespace: null,
+        repo: 'GoHighLevel/platform-docs',
+        include: [],
+      });
+
+      const config = getAwMemoryHookConfig({}, fs, home, workspace);
+
+      assert.strictEqual(config.namespace, 'platform');
+      assert.strictEqual(
+        config.namespaceSource,
+        path.join(workspace, '.aw', '.aw_registry', '.sync-config.json')
+      );
+    } finally {
+      cleanup(home);
+      cleanup(workspace);
+    }
+  })) passed++; else failed++;
+
   if (test('environment namespace and MCP URL override defaults for staging', () => {
     const home = createTempHome();
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-config-workspace-'));
