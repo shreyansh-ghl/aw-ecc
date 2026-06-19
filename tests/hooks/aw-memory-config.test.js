@@ -180,7 +180,7 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('uses included team namespace when sync config namespace is platform', () => {
+  if (test('uses explicit sync config namespace even when include lists team namespaces', () => {
     const home = createTempHome();
     const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-config-workspace-'));
     try {
@@ -188,6 +188,28 @@ function runTests() {
         namespace: 'platform',
         repo: 'GoHighLevel/platform-docs',
         include: ['revex/courses'],
+      });
+
+      const config = getAwMemoryHookConfig({}, fs, home, workspace);
+
+      assert.strictEqual(config.namespace, 'platform');
+      assert.strictEqual(
+        config.namespaceSource,
+        path.join(workspace, '.aw', '.aw_registry', '.sync-config.json')
+      );
+    } finally {
+      cleanup(home);
+      cleanup(workspace);
+    }
+  })) passed++; else failed++;
+
+  if (test('falls back to first included namespace when sync config namespace is absent', () => {
+    const home = createTempHome();
+    const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-config-workspace-'));
+    try {
+      writeJson(path.join(workspace, '.aw', '.aw_registry', '.sync-config.json'), {
+        repo: 'GoHighLevel/platform-docs',
+        include: ['revex/courses', 'platform'],
       });
 
       const config = getAwMemoryHookConfig({}, fs, home, workspace);
