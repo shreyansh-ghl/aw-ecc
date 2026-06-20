@@ -88,6 +88,52 @@ async function runTests() {
     }
   }));
 
+  results.push(await test('extracts Codex response_item payload transcript messages', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-intent-capture-'));
+    try {
+      const transcriptPath = path.join(dir, 'codex-transcript.jsonl');
+      fs.writeFileSync(transcriptPath, [
+        JSON.stringify({
+          type: 'response_item',
+          payload: {
+            type: 'message',
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: 'Remember marker awcodexfixture123 means Codex transcript parsing works.',
+              },
+            ],
+          },
+        }),
+        JSON.stringify({
+          type: 'event_msg',
+          payload: { type: 'token_count', info: { total_token_usage: { input_tokens: 10 } } },
+        }),
+        JSON.stringify({
+          type: 'response_item',
+          payload: {
+            type: 'message',
+            role: 'assistant',
+            content: [
+              {
+                type: 'output_text',
+                text: 'Stored that marker.',
+              },
+            ],
+          },
+        }),
+      ].join('\n'));
+
+      const transcript = readClaudeJsonlTranscript(transcriptPath);
+      assert.match(transcript, /User: Remember marker awcodexfixture123 means Codex transcript parsing works/);
+      assert.match(transcript, /Assistant: Stored that marker/);
+      assert.doesNotMatch(transcript, /token_count/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }));
+
   results.push(await test('builds redacted memory_intent_capture payload with namespace and repo metadata', () => {
     const args = buildMemoryIntentCaptureArgs(
       { session_id: 'session-1' },

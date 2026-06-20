@@ -47,6 +47,20 @@ function messageLine(role, content) {
   return `${label}: ${text}`;
 }
 
+function transcriptMessageFromJsonlEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  if (entry.payload?.type === 'message') {
+    return entry.payload;
+  }
+  if (entry.message && typeof entry.message === 'object') {
+    return {
+      ...entry.message,
+      role: entry.message.role || entry.role || entry.type,
+    };
+  }
+  return entry;
+}
+
 function readClaudeJsonlTranscript(filePath, fsAdapter = fs) {
   if (!filePath || !fsAdapter.existsSync(filePath)) return '';
   const content = fsAdapter.readFileSync(filePath, 'utf8');
@@ -56,9 +70,10 @@ function readClaudeJsonlTranscript(filePath, fsAdapter = fs) {
     if (!rawLine.trim()) continue;
     const entry = parseJsonMaybe(rawLine);
     if (!entry || typeof entry !== 'object') continue;
-    const role = entry.message?.role || entry.role || entry.type;
+    const message = transcriptMessageFromJsonlEntry(entry);
+    const role = message?.role || entry.role || entry.type;
     if (role !== 'user' && role !== 'assistant') continue;
-    const line = messageLine(role, entry.message?.content ?? entry.content);
+    const line = messageLine(role, message?.content ?? entry.content);
     if (line) lines.push(line);
   }
 
