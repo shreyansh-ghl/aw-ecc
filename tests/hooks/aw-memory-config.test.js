@@ -53,9 +53,12 @@ function runTests() {
       const config = getAwMemoryHookConfig({}, fs, home);
 
       assert.strictEqual(config.enabled, true);
+      assert.strictEqual(config.intentEnabled, true);
       assert.strictEqual(config.recallEnabled, true);
+      assert.strictEqual(config.captureEnabled, true);
       assert.strictEqual(config.syncEnabled, true);
       assert.strictEqual(config.timeoutMs, 10000);
+      assert.strictEqual(config.captureMaxChars, 12000);
       assert.strictEqual(config.maxResults, 3);
       assert.strictEqual(config.syncMaxPerRun, 5);
       assert.strictEqual(config.mcp.url, DEFAULT_MCP_URL);
@@ -77,6 +80,7 @@ function runTests() {
 
       assert.strictEqual(config.enabled, false);
       assert.strictEqual(config.recallEnabled, false);
+      assert.strictEqual(config.captureEnabled, false);
       assert.strictEqual(config.syncEnabled, false);
       assert.strictEqual(isMemoryHooksEnabled(config), false);
     } finally {
@@ -90,22 +94,30 @@ function runTests() {
       writeJson(path.join(home, '.aw', 'memory-hooks-preferences.json'), {
         mode: 'enabled',
         recall: true,
+        intent: true,
+        capture: false,
         sync: false,
+        debug: true,
         cursorPromptInjection: true,
         timeoutMs: 1200,
         maxResults: 6,
         syncMaxPerRun: 9,
+        captureMaxChars: 14000,
       });
 
       const config = getAwMemoryHookConfig({}, fs, home);
 
       assert.strictEqual(config.enabled, true);
+      assert.strictEqual(config.intentEnabled, true);
       assert.strictEqual(config.recallEnabled, true);
+      assert.strictEqual(config.captureEnabled, false);
       assert.strictEqual(config.syncEnabled, false);
+      assert.strictEqual(config.debugEnabled, true);
       assert.strictEqual(config.cursorPromptInjectionEnabled, true);
       assert.strictEqual(config.timeoutMs, 1200);
       assert.strictEqual(config.maxResults, 6);
       assert.strictEqual(config.syncMaxPerRun, 9);
+      assert.strictEqual(config.captureMaxChars, 14000);
     } finally {
       cleanup(home);
     }
@@ -125,21 +137,29 @@ function runTests() {
 
       const config = getAwMemoryHookConfig({
         AW_MEMORY_HOOKS: '1',
+        AW_MEMORY_INTENT: '1',
         AW_MEMORY_RECALL: '1',
+        AW_MEMORY_CAPTURE: '1',
         AW_MEMORY_SYNC: '1',
+        AW_MEMORY_DEBUG: '1',
         AW_MEMORY_CURSOR_PROMPT_INJECTION: '1',
         AW_MEMORY_HOOK_TIMEOUT_MS: '50',
         AW_MEMORY_MAX_RESULTS: '500',
         AW_MEMORY_SYNC_MAX_PER_RUN: '500',
+        AW_MEMORY_CAPTURE_MAX_CHARS: '900000',
       }, fs, home);
 
       assert.strictEqual(config.enabled, true);
+      assert.strictEqual(config.intentEnabled, true);
       assert.strictEqual(config.recallEnabled, true);
+      assert.strictEqual(config.captureEnabled, true);
       assert.strictEqual(config.syncEnabled, true);
+      assert.strictEqual(config.debugEnabled, true);
       assert.strictEqual(config.cursorPromptInjectionEnabled, true);
       assert.strictEqual(config.timeoutMs, 100);
       assert.strictEqual(config.maxResults, 10);
       assert.strictEqual(config.syncMaxPerRun, 25);
+      assert.strictEqual(config.captureMaxChars, 50000);
     } finally {
       cleanup(home);
     }

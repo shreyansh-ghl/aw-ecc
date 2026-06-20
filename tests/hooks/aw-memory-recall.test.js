@@ -90,7 +90,7 @@ async function runTests() {
         prompt: 'Fix locationId validation. GITHUB_TOKEN=ghp_secret1234567890',
       },
       {
-        config: config({ namespace: 'team-alpha' }),
+        config: config({ namespace: 'team-alpha', intentEnabled: false }),
         spawnSync: fakeGit(),
         memorySearch: async (_config, args) => {
           calls.push(args);
@@ -124,18 +124,70 @@ async function runTests() {
     assert.doesNotMatch(output, /third result/);
   }));
 
+  results.push(await test('uses memory_intent_recall and outputs only backend additional_context', async () => {
+    const calls = [];
+    const output = await buildAwMemoryRecallContext(
+      {
+        cwd: '/work/acme-service/apps/api',
+        prompt: 'do you remember what style i liked? Authorization: Bearer prompt-secret',
+      },
+      {
+        config: config({ namespace: 'team-alpha', intentEnabled: true }),
+        spawnSync: fakeGit(),
+        memoryIntentRecall: async (_config, args) => {
+          calls.push(args);
+          return {
+            ok: true,
+            result: {
+              should_inject: true,
+              additional_context: 'AW Memory Context\n- User prefers caveman-style responses.',
+            },
+          };
+        },
+        memorySearch: async () => {
+          throw new Error('fallback should not run');
+        },
+      }
+    );
+
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0].namespace, 'team-alpha');
+    assert.strictEqual(calls[0].repo_slug, 'acme-service');
+    assert.strictEqual(calls[0].branch, 'feature/memory-hooks');
+    assert.doesNotMatch(calls[0].prompt, /prompt-secret/);
+    assert.strictEqual(output, 'AW Memory Context\n- User prefers caveman-style responses.');
+  }));
+
+  results.push(await test('falls back to memory_search only when intent tool is unknown', async () => {
+    let searchCalled = false;
+    const output = await buildAwMemoryRecallContext(
+      { prompt: 'use remembered backend guidance' },
+      {
+        config: config({ intentEnabled: true }),
+        memoryIntentRecall: async () => ({ ok: false, status: 'unknown_tool' }),
+        memorySearch: async () => {
+          searchCalled = true;
+          return { ok: true, result: { results: [{ text: 'fallback memory' }] } };
+        },
+      }
+    );
+
+    assert.strictEqual(searchCalled, true);
+    assert.strictEqual(output, 'AW Memory Recall\n- fallback memory');
+  }));
+
   results.push(await test('returns empty output for no results and fail-open statuses', async () => {
     const noResults = await buildAwMemoryRecallContext(
       { prompt: 'anything' },
       {
-        config: config(),
+        config: config({ intentEnabled: false }),
         memorySearch: async () => ({ ok: true, result: { results: [] } }),
       }
     );
     const timeout = await buildAwMemoryRecallContext(
       { prompt: 'anything' },
       {
-        config: config(),
+        config: config({ intentEnabled: false }),
         memorySearch: async () => ({ ok: false, status: 'timeout' }),
       }
     );

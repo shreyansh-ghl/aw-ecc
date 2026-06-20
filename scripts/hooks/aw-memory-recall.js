@@ -5,7 +5,7 @@ const path = require('path');
 const { spawnSync: defaultSpawnSync } = require('child_process');
 
 const { getAwMemoryHookConfig } = require('./aw-memory-config');
-const { memorySearch } = require('./aw-memory-client');
+const { memoryIntentRecall, memorySearch } = require('./aw-memory-client');
 const { redactForMemory } = require('./aw-memory-redaction');
 
 const DEFAULT_QUERY_CHARS = 1000;
@@ -134,6 +134,18 @@ function extractMemorySearchResults(result) {
   return [];
 }
 
+function extractIntentRecallResult(result) {
+  if (!result) return null;
+  if (typeof result === 'string') return parseJsonMaybe(result);
+  if (typeof result !== 'object') return null;
+  if (Object.prototype.hasOwnProperty.call(result, 'should_inject')) return result;
+  if (Object.prototype.hasOwnProperty.call(result, 'content')) {
+    const text = Array.isArray(result.content) ? contentArrayText(result.content) : String(result.content || '');
+    return parseJsonMaybe(text);
+  }
+  return null;
+}
+
 function entryText(entry) {
   if (typeof entry === 'string') return entry;
   if (!entry || typeof entry !== 'object') return '';
@@ -183,6 +195,29 @@ async function buildAwMemoryRecallContext(input = {}, adapters = {}) {
 
   const query = buildSearchQuery(prompt, metadata, adapters.maxQueryChars || DEFAULT_QUERY_CHARS);
   if (!query) return '';
+
+  if (config.intentEnabled !== false) {
+    const intentRecall = adapters.memoryIntentRecall || memoryIntentRecall;
+    const intentArgs = {
+      prompt: redactForMemory(prompt, { maxChars: adapters.maxQueryChars || DEFAULT_QUERY_CHARS }).value,
+      harness: firstString(input.harness, adapters.env?.AW_HARNESS, process.env.AW_HARNESS, 'unknown'),
+      max_results: asPositiveInt(config.maxResults, 3, 1, 10),
+    };
+    if (metadata.repoName) intentArgs.repo_slug = metadata.repoName;
+    if (metadata.branch) intentArgs.branch = metadata.branch;
+    if (config.namespace) intentArgs.namespace = config.namespace;
+
+    const intentResponse = await intentRecall(config, intentArgs, adapters.clientAdapters || {});
+    if (intentResponse?.ok) {
+      const intentResult = extractIntentRecallResult(intentResponse.result);
+      const context = typeof intentResult?.additional_context === 'string'
+        && intentResult.should_inject === true
+        ? intentResult.additional_context
+        : '';
+      return context ? redactForMemory(context, { maxChars: 4000 }).value : '';
+    }
+    if (intentResponse?.status !== 'unknown_tool') return '';
+  }
 
   const search = adapters.memorySearch || memorySearch;
   const searchArgs = {
@@ -234,6 +269,7 @@ if (require.main === module) {
 
 module.exports = {
   buildAwMemoryRecallContext,
+  extractIntentRecallResult,
   extractMemorySearchResults,
   formatAwMemoryRecall,
   resolveRepoMetadata,

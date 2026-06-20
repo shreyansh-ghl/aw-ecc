@@ -44,9 +44,9 @@ Result: the workspace gets the repo-local AW command surface plus linked GHL pla
 
 ### AW Memory Hooks
 
-`aw init` installs Codex and editor hook entrypoints that keep AW Memory on by default. Prompt hooks recall relevant curated memory, and stop/session-end hooks sync curated rows from `.aw_docs/learnings/_pending-sync.jsonl`.
+`aw init` installs Codex and editor hook entrypoints that keep AW Memory on by default. Prompt hooks call `memory_intent_recall` and inject only backend-approved `AW Memory Context`. Stop/session-end hooks call `memory_intent_capture` on the recent transcript, then keep the existing curated sync path for `.aw_docs/learnings/_pending-sync.jsonl`.
 
-By default, memory uses the production MCP endpoint at `https://services.leadconnectorhq.com/agentic-workspace/mcp` and reads its namespace from `.aw/.aw_registry/.sync-config.json`. Environment variables remain the override path for staging and local testing: `AW_MEMORY_MCP_URL`, `AW_MEMORY_NAMESPACE`, `AW_MEMORY_HOOKS`, `AW_MEMORY_RECALL`, and `AW_MEMORY_SYNC`.
+By default, memory uses the production MCP endpoint at `https://services.leadconnectorhq.com/agentic-workspace/mcp` and reads its namespace from `.aw/.aw_registry/.sync-config.json`. Environment variables remain the override path for staging and local testing: `AW_MEMORY_MCP_URL`, `AW_MEMORY_NAMESPACE`, `AW_MEMORY_HOOKS`, `AW_MEMORY_INTENT`, `AW_MEMORY_RECALL`, `AW_MEMORY_CAPTURE`, `AW_MEMORY_SYNC`, `AW_MEMORY_CAPTURE_MAX_CHARS`, and `AW_MEMORY_DEBUG`.
 
 ## AW Stage Model
 

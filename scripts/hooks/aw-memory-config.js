@@ -12,6 +12,7 @@ const DEFAULT_TIMEOUT_MS = 10000;
 const MAX_TIMEOUT_MS = 30000;
 const DEFAULT_MAX_RESULTS = 3;
 const DEFAULT_SYNC_MAX_PER_RUN = 5;
+const DEFAULT_CAPTURE_MAX_CHARS = 12000;
 
 function hasOwn(obj, key) {
   return Object.prototype.hasOwnProperty.call(obj || {}, key);
@@ -320,8 +321,11 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
 
   const recallFlag = envFlag(env, 'AW_MEMORY_RECALL');
   const syncFlag = envFlag(env, 'AW_MEMORY_SYNC');
+  const intentFlag = envFlag(env, 'AW_MEMORY_INTENT');
+  const captureFlag = envFlag(env, 'AW_MEMORY_CAPTURE');
   const cursorFlag = envFlag(env, 'AW_MEMORY_CURSOR_PROMPT_INJECTION');
   const dryRunFlag = envFlag(env, 'AW_MEMORY_DRY_RUN');
+  const debugFlag = envFlag(env, 'AW_MEMORY_DEBUG');
 
   const timeoutMs = clampNumber(
     valueFromEnvOrPrefs(env, 'AW_MEMORY_HOOK_TIMEOUT_MS', prefs, 'timeoutMs', DEFAULT_TIMEOUT_MS),
@@ -341,16 +345,26 @@ function getAwMemoryHookConfig(env = process.env, fsAdapter = fs, homeDir = os.h
     1,
     25
   );
+  const captureMaxChars = clampNumber(
+    valueFromEnvOrPrefs(env, 'AW_MEMORY_CAPTURE_MAX_CHARS', prefs, 'captureMaxChars', DEFAULT_CAPTURE_MAX_CHARS),
+    DEFAULT_CAPTURE_MAX_CHARS,
+    1000,
+    50000
+  );
 
   return {
     enabled,
+    intentEnabled: enabled && (intentFlag === null ? prefBool(prefs.intent, true) : intentFlag),
     recallEnabled: enabled && (recallFlag === null ? prefBool(prefs.recall, true) : recallFlag),
+    captureEnabled: enabled && (captureFlag === null ? prefBool(prefs.capture, true) : captureFlag),
     syncEnabled: enabled && (syncFlag === null ? prefBool(prefs.sync, true) : syncFlag),
     cursorPromptInjectionEnabled: enabled && (cursorFlag === null ? prefBool(prefs.cursorPromptInjection, false) : cursorFlag),
     dryRun: dryRunFlag === null ? prefBool(prefs.dryRun, false) : dryRunFlag,
+    debugEnabled: debugFlag === null ? prefBool(prefs.debug, false) : debugFlag,
     timeoutMs,
     maxResults,
     syncMaxPerRun,
+    captureMaxChars,
     prefsPath,
     mcp: resolveMcpConfig(env, fsAdapter, homeDir, diagnostics),
     namespace: namespace.namespace,
@@ -367,13 +381,17 @@ function redactConfigForLog(config) {
   const authHeaders = config?.mcp?.authHeaders || {};
   return {
     enabled: Boolean(config?.enabled),
+    intentEnabled: Boolean(config?.intentEnabled),
     recallEnabled: Boolean(config?.recallEnabled),
+    captureEnabled: Boolean(config?.captureEnabled),
     syncEnabled: Boolean(config?.syncEnabled),
     cursorPromptInjectionEnabled: Boolean(config?.cursorPromptInjectionEnabled),
     dryRun: Boolean(config?.dryRun),
+    debugEnabled: Boolean(config?.debugEnabled),
     timeoutMs: config?.timeoutMs,
     maxResults: config?.maxResults,
     syncMaxPerRun: config?.syncMaxPerRun,
+    captureMaxChars: config?.captureMaxChars,
     prefsPath: config?.prefsPath || null,
     namespace: config?.namespace || null,
     namespaceSource: config?.namespaceSource || null,
@@ -391,6 +409,7 @@ function redactConfigForLog(config) {
 module.exports = {
   DEFAULT_MCP_URL,
   DEFAULT_MAX_RESULTS,
+  DEFAULT_CAPTURE_MAX_CHARS,
   DEFAULT_SYNC_MAX_PER_RUN,
   DEFAULT_TIMEOUT_MS,
   PREFS_FILE,
