@@ -8,6 +8,8 @@ const assert = require('assert');
 
 const {
   callMemoryTool,
+  memoryIntentCapture,
+  memoryIntentRecall,
   memorySearch,
   memoryStore,
 } = require('../../scripts/hooks/aw-memory-client');
@@ -47,6 +49,18 @@ function baseConfig(overrides = {}) {
       },
     },
     ...overrides,
+  };
+}
+
+function jsonResponse(payload) {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      jsonrpc: '2.0',
+      id: 1,
+      ...payload,
+    }),
   };
 }
 
@@ -99,6 +113,20 @@ async function runTests() {
 
     assert.strictEqual(result.ok, true);
     assert.strictEqual(toolName, 'memory_store');
+  })) passed++; else failed++;
+
+  if (await test('intent helpers dispatch memory_intent tools', async () => {
+    const names = [];
+    const fetchImpl = async (_url, options) => {
+      const body = JSON.parse(options.body);
+      names.push(body.params.name);
+      return jsonResponse({ result: { ok: true } });
+    };
+
+    await memoryIntentRecall(baseConfig(), { prompt: 'remember?' }, { fetch: fetchImpl });
+    await memoryIntentCapture(baseConfig(), { transcript: 'User: remember this' }, { fetch: fetchImpl });
+
+    assert.deepStrictEqual(names, ['memory_intent_recall', 'memory_intent_capture']);
   })) passed++; else failed++;
 
   if (await test('fails open when MCP config is missing', async () => {

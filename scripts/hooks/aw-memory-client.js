@@ -164,8 +164,18 @@ function memoryStore(config, args = {}, adapters = {}) {
   return callMemoryTool(config, 'memory_store', args, adapters);
 }
 
+function memoryIntentRecall(config, args = {}, adapters = {}) {
+  return callMemoryTool(config, 'memory_intent_recall', args, adapters);
+}
+
+function memoryIntentCapture(config, args = {}, adapters = {}) {
+  return callMemoryTool(config, 'memory_intent_capture', args, adapters);
+}
+
 module.exports = {
   callMemoryTool,
+  memoryIntentCapture,
+  memoryIntentRecall,
   memorySearch,
   memoryStore,
 };

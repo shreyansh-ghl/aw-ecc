@@ -260,8 +260,19 @@ async function main() {
     log(`[SessionEnd] Created session file: ${sessionFile}`);
   }
 
+  await runAwMemoryIntentCapture();
   await runAwMemorySync();
   process.exit(0);
+}
+
+async function runAwMemoryIntentCapture() {
+  try {
+    const { captureAwMemoryIntent } = require('./aw-memory-intent-capture');
+    const input = stdinData.trim() ? JSON.parse(stdinData) : {};
+    await captureAwMemoryIntent(input);
+  } catch {
+    // Intent memory capture is optional and must never break Stop hooks.
+  }
 }
 
 async function runAwMemorySync() {

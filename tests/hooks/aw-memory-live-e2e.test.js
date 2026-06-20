@@ -3,7 +3,7 @@
  *
  * This test starts a real local HTTP JSON-RPC MCP endpoint, then runs the
  * actual hook entrypoints as subprocesses. It fails unless the server receives
- * real tools/call requests for memory_search and memory_store.
+ * real tools/call requests for intent recall/capture and curated memory sync.
  *
  * Run with: node tests/hooks/aw-memory-live-e2e.test.js
  */
@@ -70,7 +70,18 @@ function startMemoryMcpServer() {
 
       const toolName = json?.params?.name;
       let result;
-      if (toolName === 'memory_search') {
+      if (toolName === 'memory_intent_recall') {
+        result = {
+          should_inject: true,
+          additional_context: [
+            'AW Memory Context (context only; higher-priority system/developer/user/skill instructions and current user request win):',
+            '- User prefers caveman-style responses when caveman mode is active.',
+          ].join('\n'),
+          memories: [{ id: 'pref-1' }],
+        };
+      } else if (toolName === 'memory_intent_capture') {
+        result = { stored: 1, updated: 0, skipped: 0 };
+      } else if (toolName === 'memory_search') {
         result = {
           results: [
             { text: 'Use AW Memory only for curated, redacted operational guidance.' },
@@ -188,7 +199,7 @@ async function runTests() {
 
   const results = [];
 
-  results.push(await test('real prompt hook calls memory_search and emits recalled context', async () => {
+  results.push(await test('real prompt hook calls memory_intent_recall and emits recalled context', async () => {
     const workspace = makeWorkspace();
     const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-live-e2e-home-'));
     const server = await startMemoryMcpServer();
@@ -213,21 +224,22 @@ async function runTests() {
       const payload = JSON.parse(result.stdout);
       const context = payload.hookSpecificOutput.additionalContext;
       assert.match(context, /\[AW Router reminder\]/);
-      assert.match(context, /AW Memory Recall/);
-      assert.match(context, /curated, redacted operational guidance/);
+      assert.match(context, /AW Memory Context/);
+      assert.match(context, /higher-priority system\/developer\/user\/skill instructions/);
+      assert.match(context, /caveman-style responses/);
 
-      const searchCalls = toolCalls(server.requests, 'memory_search');
-      assert.strictEqual(searchCalls.length, 1);
-      assert.strictEqual(searchCalls[0].method, 'POST');
-      assert.strictEqual(searchCalls[0].url, '/mcp');
-      assert.strictEqual(searchCalls[0].headers.authorization, 'Bearer local-e2e-token');
-      assert.strictEqual(searchCalls[0].headers.accept, 'application/json, text/event-stream');
-      assert.strictEqual(searchCalls[0].headers['x-namespace'], 'local-e2e');
-      assert.strictEqual(searchCalls[0].body.params.arguments.limit, 3);
-      assert.strictEqual(searchCalls[0].body.params.arguments.namespace, 'local-e2e');
-      assert.match(searchCalls[0].body.params.arguments.query, /Use remembered backend guidance/);
-      assert.match(searchCalls[0].body.params.arguments.query, new RegExp(`repo:${path.basename(workspace)}`));
-      assert.doesNotMatch(searchCalls[0].body.params.arguments.query, /prompt-secret/);
+      const recallCalls = toolCalls(server.requests, 'memory_intent_recall');
+      assert.strictEqual(recallCalls.length, 1);
+      assert.strictEqual(recallCalls[0].method, 'POST');
+      assert.strictEqual(recallCalls[0].url, '/mcp');
+      assert.strictEqual(recallCalls[0].headers.authorization, 'Bearer local-e2e-token');
+      assert.strictEqual(recallCalls[0].headers.accept, 'application/json, text/event-stream');
+      assert.strictEqual(recallCalls[0].headers['x-namespace'], 'local-e2e');
+      assert.strictEqual(recallCalls[0].body.params.arguments.max_results, 3);
+      assert.strictEqual(recallCalls[0].body.params.arguments.namespace, 'local-e2e');
+      assert.strictEqual(recallCalls[0].body.params.arguments.repo_slug, path.basename(workspace));
+      assert.match(recallCalls[0].body.params.arguments.prompt, /Use remembered backend guidance/);
+      assert.doesNotMatch(recallCalls[0].body.params.arguments.prompt, /prompt-secret/);
       assert.doesNotMatch(context, /prompt-secret/);
     } finally {
       await server.close();
@@ -236,7 +248,7 @@ async function runTests() {
     }
   }));
 
-  results.push(await test('real session-end hook calls memory_store and writes receipts', async () => {
+  results.push(await test('real session-end hook calls memory_intent_capture, then memory_store and writes receipts', async () => {
     const workspace = makeWorkspace();
     const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-memory-live-e2e-home-'));
     const server = await startMemoryMcpServer();
@@ -251,18 +263,36 @@ async function runTests() {
         })}\n`,
         'utf8'
       );
+      const transcriptPath = path.join(workspace, 'transcript.jsonl');
+      fs.writeFileSync(
+        transcriptPath,
+        [
+          JSON.stringify({ type: 'user', message: { role: 'user', content: 'i like when u speak caveman dude' } }),
+          JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: 'Caveman happy.' } }),
+        ].join('\n'),
+        'utf8'
+      );
 
       const result = await runProcess(
         'node',
         [path.join(REPO_ROOT, 'scripts', 'hooks', 'session-end.js')],
         {
           cwd: workspace,
-          input: JSON.stringify({ cwd: workspace, workspace_roots: [workspace] }),
+          input: JSON.stringify({ cwd: workspace, workspace_roots: [workspace], transcript_path: transcriptPath }),
           env: baseEnv(homeDir, server.url),
         }
       );
 
       assert.strictEqual(result.status, 0, result.stderr);
+
+      const captureCalls = toolCalls(server.requests, 'memory_intent_capture');
+      assert.strictEqual(captureCalls.length, 1);
+      assert.strictEqual(captureCalls[0].headers.authorization, 'Bearer local-e2e-token');
+      assert.strictEqual(captureCalls[0].headers.accept, 'application/json, text/event-stream');
+      assert.strictEqual(captureCalls[0].headers['x-namespace'], 'local-e2e');
+      assert.strictEqual(captureCalls[0].body.params.arguments.namespace, 'local-e2e');
+      assert.strictEqual(captureCalls[0].body.params.arguments.repo_slug, path.basename(workspace));
+      assert.match(captureCalls[0].body.params.arguments.transcript, /i like when u speak caveman dude/);
 
       const storeCalls = toolCalls(server.requests, 'memory_store');
       assert.strictEqual(storeCalls.length, 1);
@@ -292,6 +322,11 @@ async function runTests() {
       const receiptPath = path.join(workspace, '.aw_docs', 'cache', 'aw-memory-sync-state.json');
       const receipts = JSON.parse(fs.readFileSync(receiptPath, 'utf8')).receipts;
       assert.strictEqual(receipts['live-e2e-learning'].status, 'stored');
+
+      const intentReceiptPath = path.join(workspace, '.aw_docs', 'cache', 'aw-memory-intent-state.json');
+      const intentReceipt = JSON.parse(fs.readFileSync(intentReceiptPath, 'utf8'));
+      assert.strictEqual(intentReceipt.status, 'captured');
+      assert.deepStrictEqual(intentReceipt.result, { stored: 1, updated: 0, skipped: 0 });
     } finally {
       await server.close();
       fs.rmSync(workspace, { recursive: true, force: true });
