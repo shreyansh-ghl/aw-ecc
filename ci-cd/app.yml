@@ -1,0 +1,34 @@
+version: "1.0"
+app: aw-ecc
+repo: aw-ecc
+team: agentic-workspace
+paths:
+- agents/**
+- skills/**
+- commands/**
+- defaults/**
+- rules/**
+- hooks/**
+- docs/**
+- references/**
+- scripts/**
+- tests/**
+loop:
+  key: agentic-workspace
+  provider: clickup
+  clickup:
+    team_id: "8631005"
+    space_id: "5903684"
+    folder_id: "90169964589"
+    list_id: "901615391180"
+    space_name: Dev Team
+    folder_name: GHL Agentic Workspace
+    list_name: Agentic Workspace
+  task_tags:
+    ready: aw:ready-for-afk-agent
+    in_progress: aw:in-progress
+    testing: aw:testing
+    review: aw:review
+    merge_ready: aw:merge-ready
+    blocked: aw:blocked
+    hold: aw:hold
