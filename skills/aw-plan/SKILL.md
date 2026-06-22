@@ -476,6 +476,19 @@ When `tasks.md` is ready:
 - name the selected chunk review mode when it is known safely
 - name any blocker that should send the work back to planning instead of guessing
 
+## Model Routing
+
+When spawning subagents for exploration phases, match model to work type:
+
+| Phase | Work type | Model |
+|-------|-----------|-------|
+| File reads, codebase search, discovery | Read-only | `haiku` |
+| `idea-refine`, `aw-brainstorm` subagents | Ideation | `haiku` |
+| Writing `spec.md`, `tasks.md`, `prd.md` | Synthesis | `sonnet` (main agent — no subagent) |
+
+Pass `model: "haiku"` explicitly when spawning Agent for read-only or ideation subagent phases.
+Reserve Sonnet for the main planning agent doing synthesis and artifact writing.
+
 ## Hard Gates
 
 - do not write code
