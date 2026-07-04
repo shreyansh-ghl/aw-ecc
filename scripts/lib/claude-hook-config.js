@@ -14,7 +14,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"\'',
+          command: 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"',
         },
       ],
       description: 'Load AW routing context at session start',
@@ -25,7 +25,7 @@ const GENERATED_AW_HOOKS = Object.freeze({
       hooks: [
         {
           type: 'command',
-          command: 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"\'',
+          command: 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"',
         },
       ],
       description: 'Inject compact AW routing and rule reminders on each prompt',

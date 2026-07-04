@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { repairInstalledStates } = require('./lib/install-lifecycle');
+const { repairInstalledStates, deduplicateSettingsHooks } = require('./lib/install-lifecycle');
 const { SUPPORTED_INSTALL_TARGETS } = require('./lib/install-manifests');
 
 function showHelp(exitCode = 0) {
@@ -81,10 +81,20 @@ function main() {
     });
     const hasErrors = result.summary.errorCount > 0;
 
+    // Deduplicate hooks in settings.json
+    const dedupResult = deduplicateSettingsHooks({
+      homeDir: process.env.HOME,
+      dryRun: options.dryRun,
+    });
+
     if (options.json) {
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({ ...result, hookDedup: dedupResult }, null, 2));
     } else {
       printHuman(result);
+      if (dedupResult.removedCount > 0) {
+        const verb = options.dryRun ? 'Would remove' : 'Removed';
+        console.log(`\nHook dedup: ${verb} ${dedupResult.removedCount} duplicate hook(s) in ${dedupResult.deduplicatedEvents.join(', ')}`);
+      }
     }
 
     process.exitCode = hasErrors ? 1 : 0;

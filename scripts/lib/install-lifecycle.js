@@ -1301,9 +1301,95 @@ function uninstallInstalledStates(options = {}) {
   };
 }
 
+/**
+ * Deduplicate hook entries in a Claude settings.json file.
+ *
+ * For each hook event type, removes entries with identical command strings,
+ * preferring entries that have an AW-managed description (description starting
+ * with "AW-managed:" or "AW usage telemetry") over bare entries without one.
+ *
+ * @param {object} options
+ * @param {string} [options.settingsPath] - Path to settings.json (default: ~/.claude/settings.json)
+ * @param {boolean} [options.dryRun] - If true, return the plan without writing
+ * @returns {{ deduplicatedEvents: string[], removedCount: number, dryRun: boolean }}
+ */
+function deduplicateSettingsHooks(options = {}) {
+  const settingsPath = options.settingsPath
+    || path.join(options.homeDir || process.env.HOME, '.claude', 'settings.json');
+
+  if (!fs.existsSync(settingsPath)) {
+    return { deduplicatedEvents: [], removedCount: 0, dryRun: Boolean(options.dryRun) };
+  }
+
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  const hooks = settings.hooks;
+  if (!hooks || typeof hooks !== 'object') {
+    return { deduplicatedEvents: [], removedCount: 0, dryRun: Boolean(options.dryRun) };
+  }
+
+  let totalRemoved = 0;
+  const deduplicatedEvents = [];
+
+  for (const [eventName, entries] of Object.entries(hooks)) {
+    if (!Array.isArray(entries) || entries.length <= 1) {
+      continue;
+    }
+
+    const seen = new Map();
+    const deduped = [];
+
+    for (const entry of entries) {
+      const commands = (entry.hooks || [])
+        .map(h => h.command || '')
+        .join('||');
+
+      if (!commands) {
+        deduped.push(entry);
+        continue;
+      }
+
+      const existing = seen.get(commands);
+      if (!existing) {
+        seen.set(commands, entry);
+        deduped.push(entry);
+        continue;
+      }
+
+      // Keep the entry with a description (preferring AW-managed ones)
+      const existingHasDesc = Boolean(existing.description);
+      const currentHasDesc = Boolean(entry.description);
+
+      if (!existingHasDesc && currentHasDesc) {
+        // Replace the bare entry with the described one
+        const index = deduped.indexOf(existing);
+        deduped[index] = entry;
+        seen.set(commands, entry);
+      }
+      // Otherwise drop the duplicate (current entry)
+    }
+
+    if (deduped.length < entries.length) {
+      totalRemoved += entries.length - deduped.length;
+      deduplicatedEvents.push(eventName);
+      hooks[eventName] = deduped;
+    }
+  }
+
+  if (totalRemoved > 0 && !options.dryRun) {
+    fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+  }
+
+  return {
+    deduplicatedEvents,
+    removedCount: totalRemoved,
+    dryRun: Boolean(options.dryRun),
+  };
+}
+
 module.exports = {
   DEFAULT_REPO_ROOT,
   buildDoctorReport,
+  deduplicateSettingsHooks,
   discoverInstalledStates,
   normalizeTargets,
   repairInstalledStates,

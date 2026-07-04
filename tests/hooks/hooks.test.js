@@ -1883,8 +1883,7 @@ async function runTests() {
               const isHookShellWrapper = /^(bash|sh)\s+["']?\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/hooks\/run-with-flags-shell\.sh/.test(hook.command);
               const isSessionStartFallback = hook.command.startsWith('bash -lc') && hook.command.includes('run-with-flags.js');
               const isManagedHookWrapper = hook.command === 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"'
-                || hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"\''
-                || hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"\'';
+                || hook.command === 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"';
               assert.ok(
                 isNode || isNpx || isSkillScript || isHookShellWrapper || isSessionStartFallback || isManagedHookWrapper,
                 `Hook command should use node or approved shell wrapper: ${hook.command.substring(0, 100)}...`
@@ -1974,7 +1973,7 @@ async function runTests() {
       assert.ok(
         entry.hooks.some(hook =>
           hook.type === 'command'
-          && hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"\''
+          && hook.command === 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/hooks/session-start"'
         ),
         'SessionStart should invoke the managed session-start shell entrypoint'
       );
@@ -1994,7 +1993,7 @@ async function runTests() {
         promptSubmit.some(entry =>
           Array.isArray(entry.hooks) && entry.hooks.some(hook =>
             hook.type === 'command'
-            && hook.command === 'bash -lc \'exec bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"\''
+            && hook.command === 'bash "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/scripts/hooks/session-start-rules-context.sh"'
           )
         ),
         'UserPromptSubmit should invoke the managed session-start-rules-context shell entrypoint'
