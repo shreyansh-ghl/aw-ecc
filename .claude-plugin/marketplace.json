@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "aw-marketplace",
-  "description": "GoHighLevel Agentic Workspace — agents, skills, commands, hooks, and rules for GHL development workflows.",
+  "description": "GoHighLevel Agentic Workspace \u2014 agents, skills, commands, hooks, and rules for GHL development workflows.",
   "owner": {
     "name": "GoHighLevel"
   },
@@ -9,8 +9,8 @@
     {
       "name": "aw",
       "source": "./",
-      "description": "Agentic Workspace Engine — agents, skills, commands, hooks, and rules for GHL development workflows.",
-      "version": "1.4.74",
+      "description": "Agentic Workspace Engine \u2014 agents, skills, commands, hooks, and rules for GHL development workflows.",
+      "version": "1.4.75",
       "author": {
         "name": "GoHighLevel"
       },
