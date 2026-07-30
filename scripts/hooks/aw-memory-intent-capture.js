@@ -5,12 +5,12 @@ const fs = require('fs');
 const path = require('path');
 
 const { getAwMemoryHookConfig } = require('./aw-memory-config');
+const { readBoundedStdin, startHookDeadline } = require('./aw-memory-hook-runtime');
 const { memoryIntentCapture } = require('./aw-memory-client');
 const { redactForMemory } = require('./aw-memory-redaction');
 const { resolveRepoMetadata } = require('./aw-memory-recall');
 
 const STATE_RELATIVE_PATH = path.join('.aw_docs', 'cache', 'aw-memory-intent-state.json');
-const MAX_STDIN = 1024 * 1024;
 
 function parseJsonMaybe(text) {
   try {
@@ -196,27 +196,16 @@ async function captureAwMemoryIntent(input = {}, adapters = {}) {
   };
 }
 
-function readStdin() {
-  return new Promise((resolve) => {
-    let raw = '';
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => {
-      if (raw.length < MAX_STDIN) {
-        raw += chunk.slice(0, MAX_STDIN - raw.length);
-      }
-    });
-    process.stdin.on('end', () => resolve(raw));
-    process.stdin.on('error', () => resolve(raw));
-  });
-}
-
 async function main() {
+  const stopDeadline = startHookDeadline();
   try {
-    const raw = await readStdin();
+    const raw = await readBoundedStdin();
     const input = parseJsonMaybe(raw) || {};
     await captureAwMemoryIntent(input);
   } catch (_error) {
     process.exitCode = 0;
+  } finally {
+    stopDeadline();
   }
 }
 

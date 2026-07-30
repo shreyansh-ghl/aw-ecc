@@ -5,6 +5,7 @@ const path = require('path');
 const { spawnSync: defaultSpawnSync } = require('child_process');
 
 const { getAwMemoryHookConfig } = require('./aw-memory-config');
+const { readBoundedStdin, startHookDeadline } = require('./aw-memory-hook-runtime');
 const { memoryIntentRecall, memorySearch } = require('./aw-memory-client');
 const { redactForMemory } = require('./aw-memory-redaction');
 
@@ -237,29 +238,17 @@ async function buildAwMemoryRecallContext(input = {}, adapters = {}) {
   });
 }
 
-function readStdin() {
-  return new Promise((resolve) => {
-    let raw = '';
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => {
-      raw += chunk;
-      if (raw.length > 1024 * 1024) {
-        raw = raw.slice(0, 1024 * 1024);
-      }
-    });
-    process.stdin.on('end', () => resolve(raw));
-    process.stdin.on('error', () => resolve(raw));
-  });
-}
-
 async function main() {
+  const stopDeadline = startHookDeadline();
   try {
-    const raw = await readStdin();
+    const raw = await readBoundedStdin();
     const input = parseJsonMaybe(raw) || {};
     const output = await buildAwMemoryRecallContext(input);
     if (output) process.stdout.write(`${output}\n`);
   } catch (_error) {
     process.exitCode = 0;
+  } finally {
+    stopDeadline();
   }
 }
 
