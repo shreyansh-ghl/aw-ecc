@@ -137,20 +137,15 @@
           "items": {
             "$ref": "#/$defs/hookItem"
           }
-        },
-        "description": {
-          "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "oneOf": [
     {
       "type": "object",
       "properties": {
-        "$schema": {
-          "type": "string"
-        },
         "hooks": {
           "type": "object",
           "propertyNames": {
@@ -185,7 +180,8 @@
       },
       "required": [
         "hooks"
-      ]
+      ],
+      "additionalProperties": false
     },
     {
       "type": "array",

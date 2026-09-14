@@ -6,7 +6,6 @@ const {
   getClaudeAwHookBaseSourceRelativePath,
 } = require('./claude-aw-hook-files');
 
-const DEFAULT_SCHEMA = 'https://json.schemastore.org/claude-code-settings.json';
 const GENERATED_AW_HOOKS = Object.freeze({
   SessionStart: [
     {
@@ -50,10 +49,16 @@ function buildClaudeHookConfig(options = {}) {
     hooks[eventName] = cloneJson(entries);
   }
 
-  const config = {
-    $schema: baseConfig.$schema || DEFAULT_SCHEMA,
-    hooks,
-  };
+  // Claude Code's plugin hooks.json parser accepts only `hooks` at the root and
+  // `matcher`/`hooks` per entry.  `$schema` and `description` are settings.json
+  // concepts — emitting them makes Claude Code warn "unknown keys ... ignored".
+  // They stay in hooks.base.json as maintainer docs and are dropped here.
+  for (const entries of Object.values(hooks)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) delete entry.description;
+  }
+
+  const config = { hooks };
 
   for (const phaseName of getClaudePhaseNames()) {
     if (!Array.isArray(config.hooks[phaseName]) || config.hooks[phaseName].length === 0) {
