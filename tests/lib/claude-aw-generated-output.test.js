@@ -47,6 +47,26 @@ runSuite('Testing generated Claude AW hook output', [
     configSourceFile: HOME_SOURCE_FILE,
     configOutputFile: RUNTIME_OUTPUT_FILE,
   }),
+  ['generated hooks.json carries no keys Claude Code would reject', () => {
+    // Claude Code's plugin hooks.json parser accepts only `hooks` at the root
+    // and `matcher`/`hooks` per entry.  Anything else produces a startup
+    // warning: `aw: hooks.json: unknown keys ... ignored`.  hooks.base.json
+    // keeps `description` as maintainer docs; the generator must strip it.
+    for (const file of [HOME_SOURCE_FILE, RUNTIME_OUTPUT_FILE]) {
+      const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+      assert.deepStrictEqual(Object.keys(config), ['hooks'],
+        `${file} must contain only 'hooks' at the root`);
+
+      for (const [event, entries] of Object.entries(config.hooks)) {
+        entries.forEach((entry, index) => {
+          const unknown = Object.keys(entry).filter(key => key !== 'matcher' && key !== 'hooks');
+          assert.deepStrictEqual(unknown, [],
+            `${file}: ${event}[${index}] has unknown keys: ${unknown.join(', ')}`);
+        });
+      }
+    }
+  }],
   ['hooks.base.json wires all required usage telemetry hooks', () => {
     const config = JSON.parse(fs.readFileSync(HOME_SOURCE_BASE, 'utf8'));
     const missing = [];

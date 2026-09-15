@@ -1932,14 +1932,27 @@ async function runTests() {
 
   if (
     test('InsAIts hook is opt-in and scoped to high-signal tool inputs', () => {
+      // Wiring is asserted on the generated runtime config; the opt-in note is
+      // asserted on hooks.base.json, since `description` is stripped from the
+      // generated file (Claude Code rejects unknown keys in hooks.json).
       const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
       const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
-      const insaitsHook = hooks.hooks.PreToolUse.find(entry => entry.description && entry.description.includes('InsAIts'));
+      const insaitsHook = hooks.hooks.PreToolUse.find(entry =>
+        (entry.hooks || []).some(hook => String(hook.command || '').includes('insaits-security-wrapper.js'))
+      );
 
       assert.ok(insaitsHook, 'Should define an InsAIts PreToolUse hook');
       assert.strictEqual(insaitsHook.matcher, 'Bash|Write|Edit|MultiEdit', 'InsAIts hook should avoid matching every tool');
-      assert.ok(insaitsHook.description.includes('ECC_ENABLE_INSAITS=1'), 'InsAIts hook should document explicit opt-in');
       assert.ok(insaitsHook.hooks[0].command.includes('insaits-security-wrapper.js'), 'InsAIts hook should execute through the JS wrapper');
+
+      const basePath = path.join(__dirname, '..', '..', 'scripts', 'claude-aw-home', 'hooks.base.json');
+      const base = JSON.parse(fs.readFileSync(basePath, 'utf8'));
+      const insaitsSource = base.hooks.PreToolUse.find(entry =>
+        (entry.hooks || []).some(hook => String(hook.command || '').includes('insaits-security-wrapper.js'))
+      );
+
+      assert.ok(insaitsSource, 'hooks.base.json should define the InsAIts hook');
+      assert.ok(insaitsSource.description.includes('ECC_ENABLE_INSAITS=1'), 'InsAIts hook should document explicit opt-in');
     })
   )
     passed++;
