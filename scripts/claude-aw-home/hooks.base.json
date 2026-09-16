@@ -374,6 +374,20 @@
         ],
         "description": "Session end lifecycle marker (non-blocking)"
       }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/ponytail-subagent.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading ponytail mode..."
+          }
+        ],
+        "description": "Vendored ponytail: SessionStart context never reaches subagents, so re-inject the active ruleset there"
+      }
     ]
   }
 }

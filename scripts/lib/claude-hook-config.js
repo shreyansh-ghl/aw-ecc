@@ -18,6 +18,18 @@ const GENERATED_AW_HOOKS = Object.freeze({
       ],
       description: 'Load AW routing context at session start',
     },
+    {
+      matcher: 'startup|resume|clear|compact',
+      hooks: [
+        {
+          type: 'command',
+          command: 'node "${CLAUDE_PLUGIN_ROOT}/hooks/ponytail-activate.js"',
+          timeout: 5,
+          statusMessage: 'Loading ponytail mode...',
+        },
+      ],
+      description: 'Vendored ponytail: activate the lazy-first ruleset at session start',
+    },
   ],
   UserPromptSubmit: [
     {
@@ -28,6 +40,17 @@ const GENERATED_AW_HOOKS = Object.freeze({
         },
       ],
       description: 'Inject compact AW routing and rule reminders on each prompt',
+    },
+    {
+      hooks: [
+        {
+          type: 'command',
+          command: 'node "${CLAUDE_PLUGIN_ROOT}/hooks/ponytail-mode-tracker.js"',
+          timeout: 5,
+          statusMessage: 'Tracking ponytail mode...',
+        },
+      ],
+      description: 'Vendored ponytail: track /ponytail level switches per prompt',
     },
   ],
 });

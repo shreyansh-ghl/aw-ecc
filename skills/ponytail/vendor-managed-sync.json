@@ -1,0 +1,44 @@
+{
+  "sync_label": "ponytail",
+  "dest_relative": "skills",
+  "git_url": "https://github.com/DietrichGebert/ponytail.git",
+  "git_ref": "v4.10.0",
+  "source_path": "skills",
+  "commit": "e3ba2aa6f1e6f0bc4d69eb09c9f0d0a93af56156",
+  "synced_at_utc": "2026-09-16T00:00:00Z",
+  "skill_include": [
+    "ponytail",
+    "ponytail-review",
+    "ponytail-audit",
+    "ponytail-debt",
+    "ponytail-gain",
+    "ponytail-help"
+  ],
+  "license": "MIT",
+  "also_vendored": [
+    "docs/platform-native.md -> skills/ponytail/references/platform-native.md",
+    "LICENSE -> skills/ponytail/LICENSE",
+    "hooks/ponytail-activate.js -> hooks/ponytail-activate.js",
+    "hooks/ponytail-config.js -> hooks/ponytail-config.js",
+    "hooks/ponytail-instructions.js -> hooks/ponytail-instructions.js",
+    "hooks/ponytail-mode-tracker.js -> hooks/ponytail-mode-tracker.js",
+    "hooks/ponytail-runtime.js -> hooks/ponytail-runtime.js",
+    "hooks/ponytail-subagent.js -> hooks/ponytail-subagent.js",
+    "hooks/ponytail-statusline.sh -> hooks/ponytail-statusline.sh",
+    "hooks/ponytail-statusline.ps1 -> hooks/ponytail-statusline.ps1",
+    "commands/*.toml -> commands/ponytail*.md (prompt text verbatim, {{args}} -> $ARGUMENTS)"
+  ],
+  "local_edits": [
+    "skills/ponytail-gain/SKILL.md: benchmark figures refreshed to the upstream agentic numbers and marked Claude-runner-only",
+    "skills/ponytail-help/SKILL.md: Update section rewritten for the AW install path (aw pull / AW_ECC_TAG) instead of /plugin marketplace"
+  ],
+  "not_vendored": [
+    "ponytail-mcp/",
+    "pi-extension/",
+    ".opencode/",
+    "__init__.py + plugin.yaml (Hermes)",
+    "tests/ and scripts/ (bound to the upstream root layout)",
+    "benchmarks/ and examples/ (raw data is gitignored upstream)",
+    "non-Claude host adapters (.windsurf .clinerules .kiro .qoder* .grok-plugin .devin-plugin .github/plugin gemini-extension.json .openclaw)"
+  ]
+}
