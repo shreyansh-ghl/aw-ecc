@@ -78,6 +78,6 @@ clean. The only local edits are recorded in that same file.
 
 ## More
 
-Upstream docs + examples: https://github.com/DietrichGebert/ponytail (MIT).
+Upstream docs + examples: [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
 AW wiring, precedence, and the GHL platform mapping:
 `skills/ponytail/references/aw-integration.md`.
