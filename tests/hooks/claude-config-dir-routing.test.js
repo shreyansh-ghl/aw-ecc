@@ -218,17 +218,16 @@ function runTests() {
     const cwd = makeTempDir();
     const artifact = path.join(cwd, 'plan.md');
     fs.writeFileSync(artifact, '# plan\n');
-    writeSessions(path.join(profile, 'plan-canvas'), {
-      k1: {
-        key: 'k1',
-        file: artifact,
-        status: 'feedback',
-        pendingFeedback: [{ kind: 'verdict', verdict: 'request-changes', text: 'tighten step 2' }],
-      },
-    });
+    const stateDir = path.join(profile, 'plan-canvas');
+    const store = require(libSessions).createSessionStore({ stateDir });
+    const { session } = store.open(artifact);
+    assert.match(session.key, /^[a-f0-9]{12}$/, 'use the canonical producer session identifier');
+    store.queueFeedback(session.key, [{ kind: 'verdict', verdict: 'request-changes', text: 'tighten step 2' }]);
     const decision = JSON.parse(runPendingHook({ home, profile, payload: { cwd } }));
     assert.strictEqual(decision.decision, 'block');
     assert.match(decision.reason, /tighten step 2/);
+    const persisted = JSON.parse(fs.readFileSync(path.join(stateDir, 'sessions.json'), 'utf8'));
+    assert.deepStrictEqual(persisted.sessions[session.key].pendingFeedback, [], 'profile queue is actually drained');
   }));
 
   console.log('\nproducer to consumer');
