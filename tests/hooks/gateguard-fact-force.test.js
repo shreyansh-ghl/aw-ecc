@@ -5429,6 +5429,10 @@ function runTests() {
     const savedTranscript = process.env.CLAUDE_TRANSCRIPT_PATH;
     const originalOpenSync = fs.openSync;
     const originalReadSync = fs.readSync;
+    const originalCloseSync = fs.closeSync;
+    const transcriptIdentity = fs.statSync(big);
+    const transcriptReads = [];
+    let transcriptOpenCount = 0;
     const bigFds = new Set();
     let bytesRead = 0;
     let result;
@@ -5444,13 +5448,29 @@ function runTests() {
       };
       fs.openSync = function countingOpenSync(target) {
         const opened = originalOpenSync.apply(fs, arguments);
-        if (String(target) === big) bigFds.add(opened);
+        if (String(target) === big) {
+          bigFds.add(opened);
+          transcriptOpenCount += 1;
+        }
         return opened;
       };
       fs.readSync = function countingReadSync(readFd) {
         const n = originalReadSync.apply(fs, arguments);
-        if (bigFds.has(readFd)) bytesRead += n;
+        if (bigFds.has(readFd)) {
+          const identity = fs.fstatSync(readFd);
+          assert.strictEqual(identity.dev, transcriptIdentity.dev, 'measured descriptor belongs to the transcript device');
+          assert.strictEqual(identity.ino, transcriptIdentity.ino, 'measured descriptor belongs to the transcript inode');
+          bytesRead += n;
+          transcriptReads.push({ bytes: n, position: arguments[4] });
+        }
         return n;
+      };
+      // Descriptor numbers are reused after close, including by lazy require()
+      // reads. Only a currently open transcript descriptor belongs in the count.
+      fs.closeSync = function countingCloseSync(readFd) {
+        const closed = originalCloseSync.apply(fs, arguments);
+        bigFds.delete(readFd);
+        return closed;
       };
       const start = process.hrtime.bigint();
       result = hook.run(payload);
@@ -5458,6 +5478,7 @@ function runTests() {
     } finally {
       fs.openSync = originalOpenSync;
       fs.readSync = originalReadSync;
+      fs.closeSync = originalCloseSync;
       if (savedRoot === undefined) delete process.env.CLAUDE_PROJECT_DIR;
       else process.env.CLAUDE_PROJECT_DIR = savedRoot;
       if (savedTranscript === undefined) delete process.env.CLAUDE_TRANSCRIPT_PATH;
@@ -5466,7 +5487,13 @@ function runTests() {
     }
     console.log(`    (run() on 50 MB transcript: ${bytesRead} bytes read, ${ms.toFixed(1)} ms)`);
     assert.ok(result && String(result.additionalContext || '').includes('Prior search seen'), 'credited from the tail');
-    assert.ok(bigFds.size >= 1 && bytesRead > 0, 'transcript was read through fs.readSync');
+    assert.strictEqual(transcriptOpenCount, 1, 'the transcript was opened exactly once');
+    assert.strictEqual(bigFds.size, 0, 'the measured transcript descriptor was closed');
+    assert.ok(transcriptReads.length >= 1 && bytesRead > 0, 'transcript was read through fs.readSync');
+    for (const read of transcriptReads) {
+      assert.ok(Number.isInteger(read.position) && read.position >= transcriptIdentity.size - 256 * 1024, 'read starts inside the final256KiB');
+      assert.ok(read.position + read.bytes <= transcriptIdentity.size, 'read stays within the transcript file');
+    }
     assert.ok(bytesRead <= 256 * 1024, `read ${bytesRead} bytes; must stay within the 256 KiB tail`);
     assert.ok(ms < 1000, `wall-clock backstop: run() took ${ms.toFixed(1)} ms`);
   });
