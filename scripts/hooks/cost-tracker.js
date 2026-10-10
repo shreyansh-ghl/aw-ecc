@@ -174,7 +174,11 @@ function sumUsageFromTranscript(transcriptPath) {
     const key = (typeof msg.id === 'string' && msg.id)
       ? msg.id
       : `__line_${++syntheticKey}`;
-    usageById.set(key, { usage: msg.usage, model: msg.model });
+    const previous = usageById.get(key);
+    const requestModel = msg.model && msg.model !== 'unknown'
+      ? msg.model
+      : previous && previous.model;
+    usageById.set(key, { usage: msg.usage, model: requestModel });
 
     if (msg.model && msg.model !== 'unknown') model = msg.model;
   }
