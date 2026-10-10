@@ -180,11 +180,14 @@ test('an index larger than the read bound fails before it is read', () => fixtur
   assert.throws(() => routing.readRoutingIndex(stateRoot), /integrity|bound/);
 }));
 
-test('an anchored suggestion is not hidden by unanchored candidates ranked above it', () => {
+test('an anchored suggestion above the evidence floor is not hidden by unanchored candidates ranked above it', () => {
   const filler = position => ({ id: `skill:filler-${position}`, name: `filler-${position}`,
     description: `migrate database schema safely today with care number ${position}`, ownerModuleId: 'm', packId: 'p' });
   const index = { entries: [1, 2, 3, 4].map(filler)
-    .concat({ id: 'skill:schema-tool', name: 'schema-tool', description: 'Generic helper', ownerModuleId: 'm', packId: 'p' }) };
+    .concat({ id: 'skill:schema-tool', name: 'schema-tool', description: 'Database migrate helper', ownerModuleId: 'm', packId: 'p' })
+    // Keep a realistic corpus size so the evidence floor is calibrated as it
+    // is in production; the anchored candidate ranks fifth at BM25 13.12.
+    .concat(Array.from({ length: 100 }, (_, i) => ({ id: `skill:background-${i}`, name: `background-${i}`, description: 'Unrelated artifacts.' }))) };
   assert.deepEqual(routing.suggestContext(index, 'migrate database schema safely today').map(item => item.id), ['skill:schema-tool']);
 });
 
@@ -234,3 +237,41 @@ test('a skill edited during the build never publishes an index under the stored 
   } finally { selection.routingEntries = original; }
   assert.equal(routing.readRoutingIndex(stateRoot), null);
 }));
+
+for (const change of [
+  receipt => ({ ...receipt, revision: '1; echo injected' }),
+  receipt => ({ ...receipt, revision: 0 }),
+  receipt => ({ ...receipt, schemaVersion: 'unexpected' }),
+  receipt => ({ ...receipt, selection: { ...receipt.selection, selectionMode: 'invalid' } }),
+]) {
+  test(`self-consistent receipt metadata fails closed: ${change.toString()}`, () => fixture(({ repoRoot, stateRoot }) => {
+    store.applyStore({ repoRoot, stateRoot, target: 'claude' });
+    const { digestObject } = require('../../scripts/lib/context-profile-support');
+    const statePath = path.join(stateRoot, 'state.json');
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    const receipt = change(JSON.parse(fs.readFileSync(path.join(stateRoot, 'receipts', `${state.receiptDigest}.json`), 'utf8')));
+    const digest = digestObject(receipt);
+    fs.writeFileSync(path.join(stateRoot, 'receipts', `${digest}.json`), JSON.stringify(receipt));
+    fs.writeFileSync(statePath, JSON.stringify({ ...state, receiptDigest: digest }));
+    assert.throws(() => routing.readBinding(stateRoot), /receipt|state|integrity/i);
+  }));
+}
+
+test('actual pointer bytes are bounded again after the preliminary stat', () => fixture(({ repoRoot, stateRoot }) => {
+  store.applyStore({ repoRoot, stateRoot, target: 'claude' });
+  routing.writeRoutingIndex({ repoRoot, stateRoot });
+  const io = require('../../scripts/lib/context-profile-store-fs');
+  const original = io.read;
+  io.read = file => {
+    const bytes = original(file);
+    return path.dirname(file) === path.join(stateRoot, 'routing')
+      ? Buffer.concat([bytes, Buffer.alloc(4096, 0x20)]) : bytes;
+  };
+  try { assert.throws(() => routing.readRoutingIndex(stateRoot), /integrity|bound|limit/i); }
+  finally { io.read = original; }
+}));
+
+test('one weak name-term overlap is ranking noise rather than a suggestion', () => {
+  const index = { entries: [{ id: 'skill:schema-tool', name: 'schema-tool', description: 'Generic helper' }] };
+  assert.deepEqual(routing.suggestContext(index, 'migrate schema records carefully'), []);
+});

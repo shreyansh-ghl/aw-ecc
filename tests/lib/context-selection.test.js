@@ -334,3 +334,13 @@ test('admission denials carry stable codes', () => withFixture(root => {
   assert.throws(() => resolve(root, { query: 'shared', proposedIds: ['skill:shared'] }, { load: true }),
     error => error.code === 'ECC_CONTEXT_MANUAL_ONLY');
 }));
+
+test('suggestion evidence requires an exact name or the absolute fallback floor', () => {
+  const { hasSuggestionEvidence } = require('../../scripts/lib/context-selection');
+  const candidate = values => ({ exact: false, bm25: 12, matchedTerms: ['feature', 'work'], ...values });
+  assert.equal(hasSuggestionEvidence(candidate()), true);
+  assert.equal(hasSuggestionEvidence(candidate({ bm25: 11.99 })), false);
+  assert.equal(hasSuggestionEvidence(candidate({ matchedTerms: ['feature'] })), false);
+  assert.equal(hasSuggestionEvidence(candidate({ exact: true, bm25: 1, matchedTerms: ['feature'] })), true);
+  assert.equal(hasSuggestionEvidence(null), false);
+});

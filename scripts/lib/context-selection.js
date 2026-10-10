@@ -26,6 +26,18 @@ const AUTO_ADMIT_MARGIN = 1.5;
 const FALLBACK_MIN_BM25 = 12;
 const FALLBACK_MIN_TERMS = 2;
 const FALLBACK_MARGIN = 1.1;
+
+// Adapted from contributor PR #3480: rankings become suggestions only when
+// an exact name or the fallback's absolute evidence floor supports them.
+function meetsFallbackBar(candidate) {
+  return Boolean(candidate && candidate.bm25 >= FALLBACK_MIN_BM25
+    && Array.isArray(candidate.matchedTerms) && candidate.matchedTerms.length >= FALLBACK_MIN_TERMS);
+}
+
+function hasSuggestionEvidence(candidate) {
+  return Boolean(candidate && (candidate.exact || meetsFallbackBar(candidate)));
+}
+
 // Both tiers also require at least one matched term in the skill's name or
 // curated triggers. Description-only overlap on common words (two, both, same)
 // can clear the score bars without naming the skill's subject.
@@ -259,7 +271,7 @@ function resolveTaskContext({ repoRoot = DEFAULT_REPO_ROOT, task, profileId = 'l
     && !explicitIds.length && !proposedIds.length && candidates.length && !exactAnchors.length) {
     const top = candidates[0];
     const second = candidates[1];
-    if (top.bm25 >= FALLBACK_MIN_BM25 && top.matchedTerms.length >= FALLBACK_MIN_TERMS
+    if (meetsFallbackBar(top)
       && top.anchorTerms.length >= MIN_ANCHOR_TERMS
       && (!second || top.bm25 >= FALLBACK_MARGIN * (second.bm25 || 0))) {
       fallback = { id: top.id, bm25: top.bm25, matchedTerms: top.matchedTerms.length };
@@ -310,4 +322,4 @@ function resolveDeclinedFallback(options, selection) {
     receipt: { ...receiptValue, receiptDigest: digestObject(receiptValue) } };
 }
 
-module.exports = { resolveTaskContext, resolveDeclinedFallback, routingEntries };
+module.exports = { hasSuggestionEvidence, resolveTaskContext, resolveDeclinedFallback, routingEntries };

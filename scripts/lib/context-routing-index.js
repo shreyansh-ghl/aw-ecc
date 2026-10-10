@@ -7,6 +7,7 @@
 const path = require('node:path');
 const io = require('./context-profile-store-fs');
 const { buildRetrievalIndex, searchRetrieval, sparseDense } = require('./context-retrieval');
+const { hasSuggestionEvidence } = require('./context-selection');
 const { DEFAULT_REPO_ROOT, digestObject, stableStringify } = require('./context-profile-support');
 
 const SCHEMA = 'ecc.context-routing-index.v1';
@@ -39,11 +40,16 @@ function readBinding(stateRoot) {
     throw new Error('Directory is not an owned ECC managed store');
   }
   const state = io.readJson(path.join(root, 'state.json'));
-  if (state.schemaVersion !== 'ecc.context-store-state.v1' || !DIGEST.test(state.receiptDigest) || !DIGEST.test(state.generationDigest)) {
+  if (state.schemaVersion !== 'ecc.context-store-state.v1' || !DIGEST.test(state.receiptDigest) || !DIGEST.test(state.generationDigest)
+    || !Number.isSafeInteger(state.revision) || state.revision < 1) {
     throw new Error('Managed state integrity mismatch');
   }
   const receipt = io.readJson(path.join(root, 'receipts', `${state.receiptDigest}.json`));
-  if (digestObject(receipt) !== state.receiptDigest || receipt.generationDigest !== state.generationDigest) {
+  if (receipt.schemaVersion !== 'ecc.context-store-receipt.v1' || digestObject(receipt) !== state.receiptDigest
+    || receipt.generationDigest !== state.generationDigest || receipt.destinationDigest !== marker.destinationDigest
+    || !Number.isSafeInteger(receipt.revision) || receipt.revision < 1 || receipt.revision !== state.revision
+    || !['auto', 'manual', 'suggest'].includes(receipt.selection?.selectionMode)
+    || stableStringify(receipt.selection) !== stableStringify(state.selection)) {
     throw new Error('Managed receipt and state integrity mismatch');
   }
   return { root, generationDigest: state.generationDigest, receiptDigest: state.receiptDigest,
@@ -132,7 +138,9 @@ function readRoutingIndex(stateRoot, binding = readBinding(stateRoot)) {
   if (!io.inspect(path.dirname(file), true).stat || !io.inspect(file, true).stat) return null;
   const invalid = () => new Error('Routing index integrity mismatch; rebuild it with ecc profile routing-index');
   if (io.inspect(file).stat.size > MAX_POINTER_BYTES) throw invalid();
-  const { pointerDigest, ...pointer } = io.readJson(file);
+  const pointerBytes = io.read(file);
+  if (pointerBytes.length > MAX_POINTER_BYTES) throw invalid();
+  const { pointerDigest, ...pointer } = JSON.parse(pointerBytes.toString('utf8'));
   if (pointer.schemaVersion !== POINTER_SCHEMA || digestObject(pointer) !== pointerDigest || !DIGEST.test(pointer.indexDigest || '')
     || !DIGEST.test(pointer.receiptDigest || '') || pointer.generationDigest !== binding.generationDigest
     || !Number.isSafeInteger(pointer.bytes) || pointer.bytes <= 0 || pointer.bytes > MAX_INDEX_BYTES) throw invalid();
@@ -166,7 +174,8 @@ const singleLine = text => String(text).replace(CONTROL_CHARACTERS, ' ').replace
 function suggestContext(index, prompt, { limit = MAX_SUGGESTIONS } = {}) {
   // Filter before trimming so unanchored matches cannot crowd out anchored ones.
   return searchRetrieval(buildRetrievalIndex(index.entries), prompt, { limit: index.entries.length })
-    .filter(candidate => SKILL_ID.test(candidate.id) && (candidate.exact || candidate.anchorTerms.length > 0))
+    .filter(candidate => SKILL_ID.test(candidate.id) && hasSuggestionEvidence(candidate)
+      && (candidate.exact || candidate.anchorTerms.length > 0))
     .slice(0, Math.min(limit, MAX_SUGGESTIONS))
     .map(candidate => {
       const description = singleLine(candidate.description);
