@@ -106,7 +106,7 @@ test('loading advice matches the saved mode', () => {
     assert.match(text, /skill:feature/);
     assert.match(text, /--load/);
   });
-  fixture(({ stateRoot, env }) => {
+  fixture(({ env }) => {
     const text = stdout(hook.run(PROMPT, {}, env));
     assert.match(text, /skill:feature/);
     assert.doesNotMatch(text, /--load/);
