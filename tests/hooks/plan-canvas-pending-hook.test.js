@@ -278,7 +278,7 @@ async function runTests() {
         assert.strictEqual(await hook.drainViaServer(port, 'aaaaaaaaaaaa'), null);
       }
       fs.writeFileSync(path.join(stateDir, 'server.json'), JSON.stringify({ port: 4321 }));
-      for (const key of ['bad?key=SECRET&other=1', 'A'.repeat(12), 'a'.repeat(13), 'a'.repeat(100000), {}, null]) {
+      for (const key of ['bad?key=SECRET&other=1', 'A'.repeat(12), 'a'.repeat(13), 'a'.repeat(12) + '\n', 'a'.repeat(12) + '\r\n', 'a'.repeat(100000), {}, null]) {
         writeState(stateDir, { aaaaaaaaaaaa: sessionRecord(key, artifact, [{ kind: 'chat', text: 'KEEP' }]) });
         const raw = JSON.stringify({ cwd: root });
         assert.strictEqual((await hook.run(raw)).stdout, raw);
