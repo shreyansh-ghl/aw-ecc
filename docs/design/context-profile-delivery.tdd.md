@@ -108,4 +108,29 @@ Session-only Claude discovery adapts the ownership and receipt intent of #2788 t
 - No authenticated model call, interactive turn or native skill invocation ran. The projection is the host's estimate for the plugin listing, not whole-context truth.
 - Maintainer credential-free macOS arm64 check, October 10: Claude Code 2.1.296 prepared Lean with three skills (~289 listing tokens), Full with the then-current 302 skills (~25,982 listing tokens), reported stale after each managed profile switch, and restored Lean through managed and native rollback. These are observed plugin-listing projections for that snapshot, not whole-context measurements.
 
+## Prompt suggestions
+
+The suggest-only prompt hook from #2945 now reads a generation-bound metadata index instead of its own catalog cache.
+
+- RED: routing-index and hook cases fail before the modules exist. GREEN adds a stored-vector key to the entry shape, a stale-source refusal and the session-start builder; all 16 cases pass, with a retrieval case proving stored vectors rank identically to computed ones.
+- The resolver path took 300 to 500 ms per prompt from a source checkout, almost all in rehashing 293 skills and 584 files. Loading Ajv lazily and storing vectors moved the hook's own work to about 95 to 110 ms on a Full Claude index (276 entries, 1.8 MB); wrapper invocations measured 140 to 180 ms against a 71 ms disabled baseline on Linux x64.
+- RED: on the full registry the function-word prompt still produced three unanchored suggestions. GREEN applies the routing policy v5 anchor to suggestions; the prompt now yields none and a React keyboard-focus prompt still leads with `skill:frontend-a11y`.
+- Stored vectors moved from JSON pairs to little-endian base64 (RED: format test fails; GREEN: exact decode). The Full index shrank from 1.8 MB to 0.97 MB, its parse from 26 ms to 6 ms, and hook work to about 89 to 98 ms; wrapper invocations measured 149 to 190 ms against a 61 ms disabled baseline. The resolver's two registry reads are left intact as its source-consistency check.
+- Selection, retrieval, profile CLI and hook-wrapper suites pass unchanged.
+- No interactive Claude or Codex session loaded the hook; suggestion quality is bounded by the resolver ranking measured above.
+
+Review follow-up, October 8:
+
+- RED (15 index, hook and selection cases fail): a rollback to an indexed generation threw instead of reporting the index missing; digest-consistent entries with a non-string ID, name, description, owner or trigger, or a non-skill ID, were accepted; an oversized index was read in full; an anchored skill ranked fourth was hidden behind three unanchored matches; a skill edited mid-build was published under the stored generation; manual mode read the index before going silent; suggest mode advertised `resolve --load`, which returns no bodies there; admission denials were matched by message text, so a non-UTF-8 skill silently left the index.
+- GREEN: a valid pointer for an earlier receipt is retired (`missing`) and the SessionStart builder rebuilds it; entries are validated against a closed key set before decoding and returned as new objects; pointer and index reads are bounded at 4 KiB, 4 MiB and 2,048 entries; suggestions filter for anchors before trimming to three; a build refuses plan or registry digests that differ from the checked carrier; the hook reads only the state binding before its manual-mode exit; suggest mode prints `ecc profile mode auto` with the current revision; denials carry `ECC_CONTEXT_*` codes and everything else propagates.
+- Budget: a worker thread would make the 150 ms budget a hard bound but measured 135 to 150 ms for the same work (about 85 ms in process), so it would suppress most suggestions. The hook keeps in-process checks between steps, the read bounds cap the work at a real registry's size, and the documented snippet sets Claude Code's `timeout` as the outer bound.
+- Full Claude index, auto mode, Linux x64 Node 22.22.0: wrapper invocations 108 to 122 ms against 29 to 45 ms with the hook disabled.
+
+Review follow-up, October 9:
+
+- RED (1 case fails): a build interrupted while writing the entries file left partial bytes under its digest name, and every later build refused them, so the index could not be restored. GREEN writes the file through the store's temporary-file-and-rename path and replaces a digest-named file whose bytes do not hash to its name.
+- Sources edited after the entries are read: a new case pins that the published index still matches the stored generation and that the next build reports the generation stale. A final source recheck before the pointer would only discard a correct index. The triggers manifest, though, is not bound to the generation: an edit to it after `ecc profile set` reaches the next index unnoticed. Binding it is a store change, left open.
+- Schema validation stays manual on the read path. On Windows x64, Node 24, loading Ajv took about 44 ms and compiling an index schema about 20 ms in a fresh process, against 22 ms for loading the whole routing module. That would cost the prompt-time read about 64 ms of its 150 ms budget, so Ajv stays off the prompt path, as `validateSchema` already documents.
+- Budget: the October 8 decision stands. On the same Windows machine a prototype worker measured 64 to 77 ms against about 55 ms in process, and stopped a simulated 600 ms read at 152 ms. That gap is smaller than the Linux measurement above, so the trade-off may be worth revisiting with numbers from both platforms.
+
 These boundaries keep the shipped behavior distinct from the M1 release gate. Authenticated outcome observations, a complete Tier 2 disk diff, live-install migration, additional-provider activation, whole-context token truth and release defaults remain unverified until their explicit prerequisites are available.
