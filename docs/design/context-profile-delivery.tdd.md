@@ -134,3 +134,11 @@ Review follow-up, October 9:
 - Budget: the October 8 decision stands. On the same Windows machine a prototype worker measured 64 to 77 ms against about 55 ms in process, and stopped a simulated 600 ms read at 152 ms. That gap is smaller than the Linux measurement above, so the trade-off may be worth revisiting with numbers from both platforms.
 
 These boundaries keep the shipped behavior distinct from the M1 release gate. Authenticated outcome observations, a complete Tier 2 disk diff, live-install migration, additional-provider activation, whole-context token truth and release defaults remain unverified until their explicit prerequisites are available.
+
+## October 10 carrier closure parser follow-up
+
+Independent review reproduced literal loads hidden after object-literal division and postfix increment, native `module.require` calls being skipped, and malformed source yielding a successful empty scan. The original hand-written lexer returned no dependencies for all four RED fixtures.
+
+The maintained parser in the existing pinned TypeScript development dependency now reads source without evaluating it. The gate traverses literal `require`, native `module.require`, dynamic `import`, static imports/re-exports, and literal `path.join(__dirname, ...)` calls. Existing regex, template, escape and nested-dynamic cases remain covered. Parse diagnostics fail the projection closed. ESM URL queries and fragments identify the same planned file; encoded separators and malformed escapes fail rather than normalize into a safe path.
+
+Focused validation passes 67 cases under Node 24.9.0 and Node 18.20.8. The actual CLI projects the current 304-skill registry into 10 profile/layout combinations, with 3,016 planned files, 65 JavaScript scripts and 35/35 literal relative specifiers resolved, zero escapes and zero warnings. Script execution remains deferred. Dynamic expressions are reported as warnings; arbitrary loader aliases, shadowed bindings and provider-native runtime behavior remain outside this literal-dependency gate.
