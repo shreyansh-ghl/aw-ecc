@@ -162,6 +162,7 @@ function writeManifestSourceFixture(root) {
   writeFile(root, path.join('src', 'stray.pyd'), 'ignored\n');
   writeFile(root, path.join('src', 'nested', 'ecc-install-state.json'), '{}\n');
   writeFile(root, path.join('rules', 'common', 'coding-style.md'), '# Common\n');
+  writeFile(root, path.join('rules', 'common', 'agents.md'), 'Use the `ecc:planner` agent.\n');
   writeFile(root, path.join('skills', 'demo', 'SKILL.md'), '# Demo\n');
   writeFile(root, 'standalone.txt', 'standalone\n');
   writeFile(root, path.join('runtime', 'ecc', 'install-state.json'), '{}\n');
@@ -684,6 +685,11 @@ function runTests() {
       assert.ok(fs.existsSync(path.join(homeDir, '.claude', 'src', 'app.js')));
       assert.ok(fs.existsSync(path.join(homeDir, '.claude', 'standalone.txt')));
       assert.ok(fs.existsSync(path.join(homeDir, '.claude', 'plugin.json')));
+      const installedAgentsRule = fs.readFileSync(
+        path.join(homeDir, '.claude', 'rules', 'ecc', 'common', 'agents.md'),
+        'utf8'
+      );
+      assert.strictEqual(installedAgentsRule, 'Use the `planner` agent.\n');
       const state = JSON.parse(fs.readFileSync(path.join(homeDir, '.claude', 'ecc', 'install-state.json'), 'utf8'));
       assert.strictEqual(state.request.profile, 'minimal');
       assert.deepStrictEqual(state.resolution.selectedModules, ['fixture-core']);
@@ -1161,9 +1167,13 @@ function runTests() {
       for (const name of OPENCODE_ENTRYPOINTS) {
         assert.strictEqual(
           fs.readFileSync(path.join(homeDir, '.config', 'opencode', 'plugins', name), 'utf8'),
-          fs.readFileSync(path.join(REPO_ROOT, '.opencode', 'plugins', name), 'utf8')
+          name === 'index.ts' ? INERT_OPENCODE_PLUGIN : fs.readFileSync(path.join(REPO_ROOT, '.opencode', 'plugins', name), 'utf8')
         );
       }
+      assert.strictEqual(
+        enabledPlan.statePreview.operations.find(operation => operation.sourceRelativePath.split(path.sep).join('/') === '.opencode/plugins/index.ts').contentTransform,
+        'opencode-disable-plugin-entrypoint'
+      );
       applyInstallPlanDirect(declinedPlan);
       const declinedState = JSON.parse(fs.readFileSync(declinedPlan.installStatePath, 'utf8'));
       assert.strictEqual(declinedState.request.hookConsent, 'declined');
