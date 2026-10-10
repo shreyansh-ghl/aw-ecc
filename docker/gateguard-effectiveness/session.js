@@ -128,7 +128,7 @@ function runConversation({ cwd, stateDir, settingsPath, prompt, intent }, option
     exchange.push({ role: 'agent', text: message });
     if (turn === userTurns) break;
 
-    const reply = judge(intent, message, { model: judgeModel, execute });
+    const reply = judge(intent, message, { executable, model: judgeModel, execute });
     judgeFailed = judgeFailed || reply.judgeFailed;
     if (!reply.isQuestion) break;
     asked = true;

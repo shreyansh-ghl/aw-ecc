@@ -38,8 +38,16 @@ node docker/gateguard-effectiveness/run-intent.js --out gg-intent --summarize
 node docker/gateguard-effectiveness/run-intent.js --out gg-intent --verify
 ```
 
-Runs sharing an output directory are serialized by `.run.lock`; concurrent workers
+The one-shot `run.js` runner serializes an output directory with `.run.lock`; concurrent workers
 must use separate `--out` directories. Normal completion and errors release the
 lock. After a killed process, confirm that its worker has stopped before removing
 the stale lock and resuming. Metadata uses private exclusive temporary creation
 and atomic rename so a destination symlink cannot redirect metadata writes.
+
+Hidden-intent trials retain the selected Claude configuration directory and pass
+`--claude` to both the agent and simulated user. Session cleanup removes only new
+project folders matching workspaces observed inside that trial's temporary root;
+pre-existing folders and concurrent runs remain. Shared project-name overrides
+remain untouched because they do not establish exclusive trial ownership.
+`arm-patch.js` is included in frozen harness fingerprints, so changes to ablations
+require a new output directory rather than continuing an existing experiment.

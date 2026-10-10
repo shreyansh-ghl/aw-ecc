@@ -28,6 +28,7 @@ const USAGE = [
   '  --model <model>         Claude model under test (required unless --dry-run or --summarize)',
   '  --allow-real-provider   run real Claude sessions (each trial is several billed turns)',
   '  --judge-model <model>   model playing the user (default: haiku)',
+  '  --claude <executable>   CLI executable for both agent and simulated user',
   `  --arms <a,b,...>        ${SUPPORTED_ARMS.join(', ')} (default: off,gate,placebo)`,
   '  --scenarios <a,b,...>   scenario ids (default: all)',
   '  --reps <n>              repetitions per scenario and arm (default: 3)',
@@ -126,23 +127,38 @@ function completedTrialKeys(rows) {
 // would isolate those but also hides the credentials, so they are removed here
 // instead. Only folders this run created, named after its own temp work root,
 // are touched.
-function sessionsDir() {
-  const home = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+function sessionsDir(env = process.env) {
+  const home = env.CLAUDE_CONFIG_DIR || path.join(env.HOME || env.USERPROFILE || os.homedir(), '.claude');
   return path.join(home, 'projects');
 }
 
-function listSessions() {
+function listSessions(env = process.env) {
   try {
-    return new Set(fs.readdirSync(sessionsDir()));
+    return new Set(fs.readdirSync(sessionsDir(env)));
   } catch (_) {
     return new Set();
   }
 }
 
-function removeTrialSessions(before) {
-  const dir = sessionsDir();
-  for (const entry of listSessions()) {
-    if (before.has(entry) || !entry.includes('gateguard-intent')) continue;
+function projectSessionName(workspace) {
+  const resolved = path.resolve(workspace);
+  const encoded = resolved.replace(/[^A-Za-z0-9]/g, '-');
+  if (encoded.length <= 200) return encoded;
+  // Match the official Claude Agent SDK0.3.296 project storage key, including
+  // its long-path suffix. Shared provider project-name overrides are not owned.
+  let hash = 0;
+  for (let index = 0; index < resolved.length; index += 1) {
+    hash = ((hash << 5) - hash + resolved.charCodeAt(index)) | 0;
+  }
+  return `${encoded.slice(0, 200)}-${Math.abs(hash).toString(36)}`;
+}
+
+function removeTrialSessions(before, ownedWorkspaces, env = process.env) {
+  if (env.CLAUDE_CODE_PROJECT_DIR_NAME) return;
+  const dir = sessionsDir(env);
+  const ownedNames = new Set([...ownedWorkspaces].map(projectSessionName));
+  for (const entry of listSessions(env)) {
+    if (before.has(entry) || !ownedNames.has(entry)) continue;
     fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
   }
 }
@@ -245,7 +261,7 @@ function main() {
     seed: options.seed, configuration,
     scenarioFingerprints: Object.fromEntries(scenarios.map(scenario => [scenario.id, evidence.hashDirectory(scenario.root)])),
     sourceFingerprints: Object.fromEntries([
-      'run-intent.js', 'coverage.js', 'intent-eval.js', 'lib.js', 'session.js', 'user-sim.js', 'arms.js', 'evidence.js',
+      'run-intent.js', 'coverage.js', 'intent-eval.js', 'lib.js', 'session.js', 'user-sim.js', 'arms.js', 'arm-patch.js', 'evidence.js',
       '../context-profiles/ai-eval-lib.js'
     ].map(name => [name, evidence.hashFile(path.resolve(__dirname, name))]))
   };
@@ -303,22 +319,35 @@ function main() {
     for (const [index, trial] of trials.entries()) {
       const sessionsBefore = listSessions();
       const transcript = [];
+      const ownedWorkspaces = new Set();
       const execute = (file, args, spawnOptions) => {
+        if (spawnOptions.cwd) {
+          const cwd = path.resolve(spawnOptions.cwd);
+          const relative = path.relative(workRoot, cwd);
+          if (relative && !relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative)) {
+            ownedWorkspaces.add(cwd);
+          }
+        }
         const result = spawnSync(file, args, spawnOptions);
         if (result.stdout) transcript.push(result.stdout);
         return result;
       };
-      const row = runIntentTrial(trial, {
-        workRoot,
-        armSettingsByName,
-        executable: options.claude,
-        model: options.model,
-        judgeModel: options.judgeModel,
-        maxTurns: options.maxTurns,
-        timeoutMs: options.timeoutMin * 60000,
-        userTurns: options.userTurns,
-        execute
-      });
+      let row;
+      try {
+        row = runIntentTrial(trial, {
+          workRoot,
+          armSettingsByName,
+          executable: options.claude,
+          model: options.model,
+          judgeModel: options.judgeModel,
+          maxTurns: options.maxTurns,
+          timeoutMs: options.timeoutMin * 60000,
+          userTurns: options.userTurns,
+          execute
+        });
+      } finally {
+        removeTrialSessions(sessionsBefore, ownedWorkspaces);
+      }
       const attemptId = crypto.randomUUID();
       const transcriptName = `${trial.key.replace(/\//g, '__')}__${attemptId}.jsonl`;
       row.attemptId = attemptId;
@@ -329,7 +358,6 @@ function main() {
       );
       row.transcriptSha256 = evidence.hashFile(path.join(options.out, row.transcript));
       fs.rmSync(path.join(workRoot, trial.key.replace(/\//g, '__')), { recursive: true, force: true });
-      removeTrialSessions(sessionsBefore);
       // An unauthenticated or hookless run must not be recorded: graded as data it
       // looks like a finding (the first such trial was filed as a coverage hole).
       if (row.providerError && /authenticat|log ?in|oauth/i.test(row.providerMessage || '')) {
@@ -363,4 +391,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { parseArgs, writeReport, checkGraders, completedTrialKeys, writeAtomic };
+module.exports = { parseArgs, writeReport, checkGraders, completedTrialKeys, writeAtomic, sessionsDir, listSessions, projectSessionName, removeTrialSessions };

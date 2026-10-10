@@ -11,7 +11,7 @@ const { ARMS, TRIAL_FILE, trialPatch } = require('./arms');
 const SCENARIO_DIR = path.join(__dirname, 'scenarios');
 const DOT_PREFIX = 'dot-';
 const AUTONOMY_NOTE = 'Work autonomously in this repository and do not ask clarifying questions.';
-const PASSTHROUGH_ENV = new Set(['CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CODE_GIT_BASH_PATH']);
+const PASSTHROUGH_ENV = new Set(['CLAUDE_CODE_OAUTH_TOKEN', 'CLAUDE_CODE_GIT_BASH_PATH', 'CLAUDE_CONFIG_DIR']);
 const SCRUBBED_ENV = /^(CLAUDE_|ECC_|GATEGUARD_)/;
 
 // --- scenarios ---

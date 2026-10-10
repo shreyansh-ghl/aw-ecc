@@ -17,6 +17,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..', '..');
 const DIR = path.join(ROOT, 'docker', 'gateguard-effectiveness');
@@ -24,7 +25,7 @@ const userSim = require(path.join(DIR, 'user-sim'));
 const session = require(path.join(DIR, 'session'));
 const coverage = require(path.join(DIR, 'coverage'));
 const intentEval = require(path.join(DIR, 'intent-eval'));
-const { parseArgs, completedTrialKeys, writeAtomic } = require(path.join(DIR, 'run-intent'));
+const { parseArgs, completedTrialKeys, writeAtomic, sessionsDir, listSessions, projectSessionName, removeTrialSessions } = require(path.join(DIR, 'run-intent'));
 const evidence = require(path.join(DIR, 'evidence'));
 
 let passed = 0;
@@ -437,21 +438,170 @@ test('a timeout on an earlier turn is not cleared by a later clean turn', () => 
   assert.strictEqual(result.timedOut, true);
 });
 
+test('a selected custom executable runs both agent and simulated user with bare claude absent', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gg-intent-executable-'));
+  const fake = path.join(dir, 'fake.js');
+  const log = path.join(dir, 'calls.jsonl');
+  try {
+    fs.writeFileSync(fake, `
+      const fs = require('fs');
+      const args = process.argv.slice(2);
+      const model = args[args.indexOf('--model') + 1];
+      const agent = args.includes('--output-format');
+      fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ agent, model }) + '\\n');
+      if (agent) {
+        const text = args.includes('--resume') ? 'done' : 'how long is the window?';
+        console.log(JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text }] } }));
+        console.log(JSON.stringify({ type: 'result', is_error: false, num_turns: 1, usage: {} }));
+      } else {
+        const text = fs.readFileSync(0, 'utf8');
+        const isQuestion = text.includes('how long is the window?');
+        console.log(JSON.stringify({ isQuestion, reply: isQuestion ? '400 days' : 'done', disclosed: isQuestion ? ['window'] : [] }));
+      }
+    `);
+    const execute = (file, args, options) => spawnSync(file, [fake, ...args], {
+      ...options, env: { ...options.env, PATH: '', HOME: dir, USERPROFILE: dir }
+    });
+    const missing = spawnSync('claude', ['--version'], { env: { ...process.env, PATH: '' }, encoding: 'utf8' });
+    assert.ok(missing.error && missing.error.code === 'ENOENT', 'bare claude is unavailable');
+    const result = session.runConversation(
+      { cwd: dir, stateDir: dir, settingsPath: path.join(dir, 'settings.json'), prompt: 'p', intent: INTENT },
+      { executable: process.execPath, model: 'selected-agent', judgeModel: 'selected-judge', maxTurns: 2, timeoutMs: 10000, userTurns: 2, execute }
+    );
+    assert.strictEqual(result.judgeFailed, false);
+    assert.strictEqual(result.providerError, false);
+    assert.strictEqual(result.userTurns, 1);
+    assert.deepStrictEqual(fs.readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line)), [
+      { agent: true, model: 'selected-agent' }, { agent: false, model: 'selected-judge' },
+      { agent: true, model: 'selected-agent' }, { agent: false, model: 'selected-judge' }
+    ]);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('session cleanup preserves concurrent and pre-existing folders under custom config and HOME', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gg-intent-cleanup-'));
+  const saved = { HOME: process.env.HOME, CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR };
+  try {
+    for (const env of [{ HOME: path.join(root, 'home') }, { HOME: path.join(root, 'home'), CLAUDE_CONFIG_DIR: path.join(root, 'config') }]) {
+      process.env.HOME = env.HOME;
+      if (env.CLAUDE_CONFIG_DIR) process.env.CLAUDE_CONFIG_DIR = env.CLAUDE_CONFIG_DIR;
+      else delete process.env.CLAUDE_CONFIG_DIR;
+      const dir = sessionsDir(env);
+      fs.mkdirSync(dir, { recursive: true });
+      const workRoot = path.join(root, 'gateguard-intent-OWNED');
+      const workspace = path.join(workRoot, 'date__gate__1', 'repo');
+      const own = projectSessionName(workspace);
+      const preexisting = projectSessionName(path.join(workRoot, 'date__off__1', 'repo'));
+      const concurrent = projectSessionName(path.join(root, 'gateguard-intent-OTHER', 'date__gate__1', 'repo'));
+      const make = name => { fs.mkdirSync(path.join(dir, name)); fs.writeFileSync(path.join(dir, name, 'sentinel'), name); };
+      make(preexisting);
+      const before = listSessions(env);
+      for (const name of [own, concurrent, `${own}-other`]) make(name);
+      removeTrialSessions(before, new Set([workspace, path.join(workRoot, 'date__off__1', 'repo')]), env);
+      assert.ok(!fs.existsSync(path.join(dir, own)), 'exact owned folder removed');
+      for (const name of [preexisting, concurrent, `${own}-other`]) {
+        assert.strictEqual(fs.readFileSync(path.join(dir, name, 'sentinel'), 'utf8'), name);
+      }
+      make(own);
+      removeTrialSessions(before, new Set([workspace]), { ...env, CLAUDE_CODE_PROJECT_DIR_NAME: own });
+      assert.strictEqual(fs.readFileSync(path.join(dir, own, 'sentinel'), 'utf8'), own, 'shared provider name override stays untouched');
+    }
+  } finally {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('actual runner freezes arm-patch source and refuses changed-input resume before dispatch', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'gg-intent-resume-'));
+  const repo = path.join(root, 'repo');
+  const copied = path.join(repo, 'docker', 'gateguard-effectiveness');
+  const out = path.join(root, 'out');
+  const preload = path.join(root, 'preload.js');
+  const calls = path.join(root, 'calls.log');
+  const config = path.join(root, 'claude-config');
+  try {
+    fs.mkdirSync(repo);
+    fs.cpSync(path.join(ROOT, 'scripts'), path.join(repo, 'scripts'), { recursive: true });
+    fs.cpSync(DIR, copied, { recursive: true });
+    fs.mkdirSync(path.join(repo, 'docker', 'context-profiles'), { recursive: true });
+    fs.copyFileSync(path.join(ROOT, 'docker', 'context-profiles', 'ai-eval-lib.js'), path.join(repo, 'docker', 'context-profiles', 'ai-eval-lib.js'));
+    fs.copyFileSync(path.join(ROOT, 'package.json'), path.join(repo, 'package.json'));
+    const env = { ...process.env, HOME: path.join(root, 'home'), USERPROFILE: path.join(root, 'home'), CLAUDE_CONFIG_DIR: config, CLAUDE_CODE_PROJECT_DIR_NAME: '',
+      NODE_PATH: path.join(ROOT, 'node_modules'), GIT_CONFIG_GLOBAL: path.join(root, 'unused-gitconfig'),
+      GIT_AUTHOR_NAME: 'Synthetic Eval', GIT_COMMITTER_NAME: 'Synthetic Eval', GIT_AUTHOR_EMAIL: 'eval@example.invalid', GIT_COMMITTER_EMAIL: 'eval@example.invalid' };
+    for (const args of [['init', '-q'], ['add', '.'], ['commit', '-q', '--no-gpg-sign', '-m', 'synthetic source snapshot']]) {
+      const result = spawnSync('git', args, { cwd: repo, env, encoding: 'utf8', timeout: 30000 });
+      assert.strictEqual(result.status, 0, result.stderr);
+    }
+    const scenario = intentEval.loadIntentScenarios()[0];
+    const copiedReference = path.join(copied, 'scenarios-intent', scenario.id, 'reference');
+    fs.writeFileSync(preload, `
+      const cp = require('child_process');
+      const fs = require('fs');
+      const path = require('path');
+      const spawn = cp.spawnSync;
+      cp.spawnSync = (file, args, options) => {
+        if (file !== 'ecc-intent-fake') return spawn(file, args, options);
+        fs.appendFileSync(${JSON.stringify(calls)}, (args.includes('--settings') ? 'agent' : 'judge') + '\\n');
+        if (!args.includes('--settings')) return spawn(process.execPath, ['-e', 'console.log(JSON.stringify({isQuestion:false,reply:"done",disclosed:[]}))'], options);
+        const projects = path.join(options.env.CLAUDE_CONFIG_DIR, 'projects');
+        const own = path.resolve(options.cwd).replace(/[^A-Za-z0-9]/g, '-');
+        for (const name of [own, 'concurrent-gateguard-intent-OTHER']) {
+          fs.mkdirSync(path.join(projects, name), { recursive: true });
+          fs.writeFileSync(path.join(projects, name, 'sentinel'), name);
+        }
+        return spawn(process.execPath, [${JSON.stringify(path.join(copied, 'fake-claude.js'))}, ...args], { ...options, env: { ...options.env, FAKE_CLAUDE_OVERLAY: ${JSON.stringify(copiedReference)} } });
+      };
+    `);
+    const args = ['--require', preload, path.join(copied, 'run-intent.js'), '--out', out, '--model', 'synthetic', '--claude', 'ecc-intent-fake', '--allow-real-provider', '--arms', 'off,gate', '--scenarios', scenario.id, '--reps', '1'];
+    const run = () => spawnSync(process.execPath, args, { cwd: repo, env, encoding: 'utf8', timeout: 60000 });
+    const first = run();
+    assert.strictEqual(first.status, 0, first.stderr);
+    const meta = JSON.parse(fs.readFileSync(path.join(out, 'meta.json'), 'utf8'));
+    const patch = path.join(copied, 'arm-patch.js');
+    assert.strictEqual(meta.sourceFingerprints['arm-patch.js'], evidence.hashFile(patch));
+    assert.deepStrictEqual(fs.readdirSync(path.join(config, 'projects')), ['concurrent-gateguard-intent-OTHER'], 'concurrent folder survives exact cleanup');
+    const results = fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8');
+    const callsBefore = fs.readFileSync(calls, 'utf8');
+    const resumed = run();
+    assert.strictEqual(resumed.status, 0, resumed.stderr);
+    assert.ok(resumed.stderr.includes('0 trials to run'));
+    assert.strictEqual(fs.readFileSync(calls, 'utf8'), callsBefore);
+    fs.appendFileSync(patch, '\n// Changed ablation implementation must invalidate resume.\n');
+    const changed = run();
+    assert.notStrictEqual(changed.status, 0);
+    assert.match(changed.stderr, /different experiment configuration/);
+    assert.strictEqual(fs.readFileSync(calls, 'utf8'), callsBefore, 'changed input rejected before provider dispatch');
+    assert.strictEqual(fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8'), results);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
 test('the config directory is never isolated, because that hides the credentials', () => {
   // A per-trial CLAUDE_CONFIG_DIR looks like the right way to stop persisted
   // sessions piling up, but it makes every turn return "Not logged in", and the
   // trial is then graded as a coverage hole. Guard against reintroducing it.
-  let seen = 'unset';
-  const execute = (file, args, options) => {
-    seen = options.env.CLAUDE_CONFIG_DIR;
-    return streamFor('done');
-  };
-  const judge = () => ({ isQuestion: false, reply: INTENT.stonewall, disclosed: [], judgeFailed: false });
-  session.runConversation(
-    { cwd: '.', stateDir: '.', settingsPath: 's', prompt: 'p', intent: INTENT },
-    { model: 'm', maxTurns: 5, timeoutMs: 1000, userTurns: 1, execute, judge }
-  );
-  assert.strictEqual(seen, process.env.CLAUDE_CONFIG_DIR);
+  const previous = process.env.CLAUDE_CONFIG_DIR;
+  process.env.CLAUDE_CONFIG_DIR = path.join(os.tmpdir(), 'explicit-claude-config-fixture');
+  try {
+    let seen = 'unset';
+    const execute = (file, args, options) => {
+      seen = options.env.CLAUDE_CONFIG_DIR;
+      return streamFor('done');
+    };
+    const judge = () => ({ isQuestion: false, reply: INTENT.stonewall, disclosed: [], judgeFailed: false });
+    session.runConversation(
+      { cwd: '.', stateDir: '.', settingsPath: 's', prompt: 'p', intent: INTENT },
+      { model: 'm', maxTurns: 5, timeoutMs: 1000, userTurns: 1, execute, judge }
+    );
+    assert.strictEqual(seen, process.env.CLAUDE_CONFIG_DIR);
+  } finally {
+    if (previous === undefined) delete process.env.CLAUDE_CONFIG_DIR;
+    else process.env.CLAUDE_CONFIG_DIR = previous;
+  }
 });
 
 test('a missing or errored result is a provider error, not a trial', () => {
