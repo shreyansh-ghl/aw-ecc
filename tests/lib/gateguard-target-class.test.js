@@ -224,8 +224,10 @@ test('Windows name tricks: trailing dots/spaces, streams and 8.3 short names', (
 // ── collapseGateDir (real directories) ──
 console.log('\ncollapseGateDir:');
 
+// Native paths give the OS identity independently of collapseGateDir, including
+// Windows8.3 aliases that legacy realpath may retain in a temporary root.
 function tempProject() {
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-collapse-')));
+  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-collapse-')));
   fs.mkdirSync(path.join(root, 'src', 'real'), { recursive: true });
   fs.mkdirSync(path.join(root, '.claude', 'hooks'), { recursive: true });
   return root;
@@ -261,6 +263,27 @@ test('the worktree prefix is stripped only for a real worktree (.git present)', 
   }
 });
 
+test('native canonical directory keys match raw aliases and missing descendants', () => {
+  const rawRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-native-key-'));
+  const nativeRoot = fs.realpathSync.native(rawRoot);
+  const expectedKey = value => process.platform === 'win32' ? value.replace(/\\/g, '/').toLowerCase() : value;
+  try {
+    fs.mkdirSync(path.join(rawRoot, 'src', 'real'), { recursive: true });
+    fs.mkdirSync(path.join(rawRoot, '.claude', 'hooks'), { recursive: true });
+    withProjectDir(rawRoot, () => {
+      const data = { cwd: rawRoot };
+      for (const root of [rawRoot, nativeRoot]) {
+        assert.strictEqual(collapseGateDir(path.join(root, 'src', 'real', 'a.js'), data, 'code'), expectedKey(path.join(nativeRoot, 'src', 'real')));
+        assert.strictEqual(collapseGateDir(path.join(root, 'src', 'missing', 'deeper', 'a.js'), data, 'code'), expectedKey(path.join(nativeRoot, 'src', 'missing', 'deeper')));
+        assert.strictEqual(collapseGateDir(path.join(root, '.claude', 'hooks', 'a.js'), data, 'code'), null, 'native alias cannot collapse an instruction directory');
+      }
+      if (process.platform === 'win32') {
+        assert.strictEqual(collapseGateDir(path.join(rawRoot.toUpperCase(), 'SRC', 'REAL', 'a.js'), data, 'code'), expectedKey(path.join(nativeRoot, 'src', 'real')), 'case aliases share the same native directory');
+      }
+    });
+  } finally { fs.rmSync(rawRoot, { recursive: true, force: true }); }
+});
+
 test('collapse is screened on the real directory (symlinks, missing parents, fs errors)', () => {
   const root = tempProject();
   try {
@@ -282,7 +305,7 @@ test('collapse is screened on the real directory (symlinks, missing parents, fs 
       trySymlink(at('tests'), at('src/t-alias'));
       fs.mkdirSync(at('tests'), { recursive: true });
       assert.strictEqual(collapseGateDir(at('src/t-alias/b.js'), data, 'code'), null, 'real location has another class');
-      const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-outside-')));
+      const outside = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-outside-')));
       try {
         trySymlink(outside, at('src/out'));
         assert.strictEqual(collapseGateDir(at('src/out/b.js'), data, 'code'), null, 'symlink out of the project');
@@ -478,7 +501,7 @@ test('isSensitiveTarget fails safe (any error => sensitive)', () => {
 });
 
 test('isSensitiveTargetFor uses the project-relative class path', () => {
-  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-sensitive-')));
+  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-sensitive-')));
   try {
     // The project itself sits under an ancestor named `security`: only project-relative segments count.
     const proj = path.join(root, 'security', 'proj');
@@ -502,7 +525,7 @@ test('isSensitiveTargetFor uses the project-relative class path', () => {
 
 test('isSensitiveTargetFor also judges the real (symlink-resolved) path', () => {
   const root = tempProject();
-  const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-outside-')));
+  const outside = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'gateguard-outside-')));
   try {
     withProjectDir(root, () => {
       const data = { cwd: root };

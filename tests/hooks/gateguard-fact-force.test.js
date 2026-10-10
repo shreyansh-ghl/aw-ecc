@@ -5794,7 +5794,9 @@ function runTests() {
   });
 
   // --- Same-turn sibling creations and counters ---
-  const projectRoot = fs.realpathSync(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-proj-')));
+  // Native realpath expands Windows8.3 temp aliases; expected directory keys
+  // use physical fixture roots independently of the production path helpers.
+  const projectRoot = fs.realpathSync.native(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-proj-')));
   const projectEnv = { CLAUDE_PROJECT_DIR: projectRoot, CLAUDE_TRANSCRIPT_PATH: '' };
   const siblingOutputs = [];
   const projectRun = (toolName, toolInput, transcriptPath, env = {}) => {
@@ -6196,7 +6198,7 @@ function runTests() {
   });
 
   // --- Prior-search credit: scope and matching rules ---
-  const scopeRoot = fs.realpathSync(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-scope-proj-')));
+  const scopeRoot = fs.realpathSync.native(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-scope-proj-')));
   // Shell fixtures use forward slashes: bash treats unquoted backslashes as escapes.
   const scopeRootSh = scopeRoot.replace(/\\/g, '/');
   for (const dir of ['src/handlers', 'handlers', 'f']) fs.mkdirSync(path.join(scopeRoot, dir), { recursive: true });
@@ -6426,7 +6428,7 @@ function runTests() {
 
   // --- Sibling collapse keyed by target class ---
   // The project root sits under an ancestor `tests/` on purpose: `src/a.py` must still be code.
-  const classBase = fs.realpathSync(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-class-')));
+  const classBase = fs.realpathSync.native(fs.mkdtempSync(path.join(tmpRoot, 'gateguard-class-')));
   const classRoot = path.join(classBase, 'tests', 'proj');
   fs.mkdirSync(classRoot, { recursive: true });
   const classEnv = { CLAUDE_PROJECT_DIR: classRoot, CLAUDE_TRANSCRIPT_PATH: '' };
