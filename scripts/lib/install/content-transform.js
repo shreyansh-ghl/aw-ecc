@@ -16,6 +16,9 @@ function transformInstallContent(operation, content) {
   if (!operation.contentTransform) {
     return content;
   }
+  if (operation.contentTransform === 'qwen-agent-frontmatter') {
+    return require('../../qwen-adapt-agents').adaptFrontmatter(content).text;
+  }
   if (operation.contentTransform === 'antigravity-agent-frontmatter') {
     return adaptAntigravityAgent(content, operation.sourceRelativePath);
   }
