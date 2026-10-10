@@ -58,6 +58,7 @@ const {
 } = require('./stale-operations-reconciliation');
 const { buildInstallIndex, rewriteRelativeLinks } = require('./link-rewrite');
 const { transformInstallContent } = require('./content-transform');
+const { assertScriptBoundary } = require('./opencode-script-boundary');
 
 function isMarkdownPath(filePath) {
   return /\.(md|mdx|markdown)$/i.test(String(filePath || ''));
@@ -293,6 +294,22 @@ function readPreviousInstallState(plan) {
     return null;
   }
   return readInstallState(plan.installStatePath);
+}
+
+function assertOpenCodeScriptBoundary(plan, writtenDestinations = new Set()) {
+  if (plan.adapter?.target !== 'opencode') return;
+  assertSafeInstallOperation(plan, { destinationPath: plan.installStatePath });
+  assertScriptBoundary(plan, {
+    readFile: destinationPath => readInstalledFileNoFollow(plan, { destinationPath }),
+    previousOperations: readPreviousInstallState(plan)?.operations || [],
+    writtenDestinations,
+    expectedContent(operation) {
+      if (!operation || operation.kind !== 'copy-file') return null;
+      const source = fs.readFileSync(operation.sourcePath);
+      return operation.contentTransform
+        ? Buffer.from(transformInstallContent(operation, source.toString('utf8'))) : source;
+    },
+  });
 }
 
 function comparablePath(filePath) {
@@ -690,6 +707,7 @@ function preflightQwenAgentOperations(plan) {
 
 function previewInstallPlan(plan) {
   preflightQwenAgentOperations(plan);
+  assertOpenCodeScriptBoundary(plan);
   assertOpenCodeHookDeactivationReady(plan);
   const migration = prepareStaleOperationsReconciliation(
     plan,
@@ -757,6 +775,7 @@ function applyInstallPlanLocked(plan, dependencies = {}, settingsLockHeld = fals
   if (typeof beforeInstallStateRead === 'function') {
     beforeInstallStateRead({ plan });
   }
+  assertOpenCodeScriptBoundary(plan);
   assertOpenCodeLeaseCoverage(plan, dependencies.opencodeLease);
   const legacyActivation = inspectLegacyOpenCodeDeactivation(plan);
   const activationSnapshot = assertOpenCodeHookDeactivationReady(plan);
@@ -809,6 +828,9 @@ function applyInstallPlanLocked(plan, dependencies = {}, settingsLockHeld = fals
         beforeOperationWrite({ plan: appliedPlan, operation });
       }
       assertNoNewUserOwnedFile(migration, operation, appliedPlan);
+      if (operation.sourceRelativePath === 'manifests/install-assets/commonjs-scripts-package.json') {
+        assertOpenCodeScriptBoundary(appliedPlan, writtenDestinations);
+      }
       assertOpenCodeActivationUnchanged(appliedPlan, operation, activationSnapshot);
 
       if (
@@ -1059,6 +1081,7 @@ function applyInstallPlanLocked(plan, dependencies = {}, settingsLockHeld = fals
 
 module.exports = {
   applyInstallPlan,
+  assertOpenCodeScriptBoundary,
   assertOpenCodeActivationUnchanged,
   assertOpenCodeLeaseCoverage,
   assertOpenCodeHookDeactivationReady,

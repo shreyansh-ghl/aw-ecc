@@ -111,8 +111,9 @@ function createModularInstallRoot(options = {}) {
 
   fs.writeFileSync(
     path.join(root, "package.json"),
-    JSON.stringify({ name: "ecc-universal", version: "0.0.0-test" })
+    JSON.stringify({ name: "ecc-universal", version: "0.0.0-test", type: "module" })
   )
+  fs.writeFileSync(path.join(root, "scripts", "package.json"), JSON.stringify({ type: "commonjs" }))
 
   // The plugin's tools import @opencode-ai/plugin, which resolves through
   // node_modules — a real installation has it, an isolated temp dir would not.
