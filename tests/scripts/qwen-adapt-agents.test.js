@@ -366,6 +366,51 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('preserves an explicit empty allowlist through actual CLI adaptation and rerun', () => {
+    const tempDir = createTempDir();
+    const agentsDir = path.join(tempDir, '.qwen', 'agents');
+    const yaml = require('js-yaml');
+    const frontmatter = text => yaml.load(text.match(/^---\n([\s\S]*?)\n---/)[1]);
+    try {
+      writeAgent(agentsDir, 'no-tools.md', [
+        '---', 'name: no-tools', 'description: No tools permitted',
+        'tools: []', 'model: sonnet', '---', '', 'BODY_SENTINEL'
+      ].join('\n'));
+      const first = run([agentsDir]);
+      assert.strictEqual(first.code, 0, first.stderr);
+      assert.ok(first.stdout.includes('Updated 1 agent file(s)'));
+      const adapted = readAgent(agentsDir, 'no-tools.md');
+      assert.deepStrictEqual(frontmatter(adapted).tools, []);
+      assert.strictEqual(frontmatter(adapted).model, 'inherit');
+      assert.ok(adapted.endsWith('BODY_SENTINEL'));
+      const second = run([agentsDir]);
+      assert.strictEqual(second.code, 0, second.stderr);
+      assert.ok(second.stdout.includes('Updated 0 agent file(s)'));
+      assert.strictEqual(readAgent(agentsDir, 'no-tools.md'), adapted);
+      assert.deepStrictEqual(frontmatter(readAgent(agentsDir, 'no-tools.md')).tools, []);
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
+  if (test('keeps an absent tools field absent through CLI adaptation and rerun', () => {
+    const tempDir = createTempDir();
+    const agentsDir = path.join(tempDir, '.qwen', 'agents');
+    const yaml = require('js-yaml');
+    try {
+      writeAgent(agentsDir, 'inherit-tools.md', [
+        '---', 'name: inherit-tools', 'description: Uses parent tools',
+        'model: sonnet', '---', '', 'BODY_SENTINEL'
+      ].join('\n'));
+      const first = run([agentsDir]);
+      assert.strictEqual(first.code, 0, first.stderr);
+      const adapted = readAgent(agentsDir, 'inherit-tools.md');
+      const parsed = yaml.load(adapted.match(/^---\n([\s\S]*?)\n---/)[1]);
+      assert.strictEqual(Object.hasOwn(parsed, 'tools'), false);
+      const second = run([agentsDir]);
+      assert.strictEqual(second.code, 0, second.stderr);
+      assert.strictEqual(readAgent(agentsDir, 'inherit-tools.md'), adapted);
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);
 }

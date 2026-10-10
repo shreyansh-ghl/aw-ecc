@@ -113,7 +113,9 @@ function formatToolLine(tools) {
   // Comma-separated scalar rather than the JSON flow sequence
   // gemini-adapt-agents.js emits: Qwen Code parses both, and the scalar form is
   // what its own agent examples use.
-  return `tools: ${tools.join(', ')}`;
+  // YAML null can discard an optional allowlist and inherit parent tools.
+  // Keep an explicitly empty source list as an empty native list.
+  return tools.length ? `tools: ${tools.join(', ')}` : 'tools: []';
 }
 
 function adaptColor(line) {
