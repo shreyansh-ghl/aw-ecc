@@ -52,10 +52,6 @@ const {
 } = require('./excluded-paths-reconciliation');
 const { buildInstallIndex, rewriteRelativeLinks } = require('./link-rewrite');
 const { transformInstallContent } = require('./content-transform');
-const { stripPluginNamespace } = require('./plugin-namespace');
-
-// Manual Claude targets expose bare component names.
-const MANUAL_CLAUDE_TARGETS = new Set(['claude', 'claude-project']);
 
 function isMarkdownPath(filePath) {
   return /\.(md|mdx|markdown)$/i.test(String(filePath || ''));
@@ -862,20 +858,17 @@ function applyInstallPlanLocked(plan, dependencies = {}, settingsLockHeld = fals
         && operation.sourceRelativePath
         && isMarkdownPath(operation.destinationPath)
       );
-      const stripNamespace = MANUAL_CLAUDE_TARGETS.has(plan.adapter?.target)
-        && isMarkdownPath(operation.destinationPath);
-      if (operation.kind === 'copy-file' && (operation.contentTransform || needsLinkRewrite || stripNamespace)) {
+      if (operation.kind === 'copy-file' && (operation.contentTransform || needsLinkRewrite)) {
         const transformed = transformInstallContent(
           operation,
           fs.readFileSync(operation.sourcePath, 'utf8')
         );
-        const namespaced = stripNamespace ? stripPluginNamespace(transformed) : transformed;
         const installedContent = needsLinkRewrite
-          ? rewriteRelativeLinks(namespaced, {
+          ? rewriteRelativeLinks(transformed, {
             sourceRel: operation.sourceRelativePath,
             index: linkIndex,
           })
-          : namespaced;
+          : transformed;
         const writeOptions = getOpenCodeActivationWriteOptions(operation, activationSnapshot);
         if (writeOptions.expectedContent) {
           writeFileNoFollow(operation.destinationPath, installedContent, {
