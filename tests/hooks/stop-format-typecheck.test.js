@@ -17,8 +17,10 @@ const {
   getPerBatchBudgetMs,
   getTotalBudgetMs,
   isPluginClonePath,
+  diagnosticMatchesFile,
   parseAccumulator,
 } = require('../../scripts/hooks/stop-format-typecheck');
+
 
 function test(name, fn) {
   try {
@@ -227,6 +229,13 @@ if (test('getPerBatchBudgetMs always returns a positive child timeout', () => {
   assert.strictEqual(getPerBatchBudgetMs(210000, 2), 105000);
   assert.strictEqual(getPerBatchBudgetMs(210000, 210001), 1);
   assert.strictEqual(getPerBatchBudgetMs(210000, 0), 60000);
+})) passed++; else failed++;
+
+if (test('matches forward-slash TypeScript paths against Windows edited paths', () => {
+  const candidates = new Set(['C:\\project\\src\\broken.ts', 'src\\broken.ts']);
+  assert.strictEqual(diagnosticMatchesFile('src/broken.ts(1,14): error TS2322', candidates), true);
+  assert.strictEqual(diagnosticMatchesFile('src/other.ts(1,14): error TS2322', candidates), false);
+
 })) passed++; else failed++;
 
 if (test('stop hook clears accumulator after processing duplicates', () => {
