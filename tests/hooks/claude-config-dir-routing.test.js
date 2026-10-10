@@ -98,7 +98,7 @@ function writeSessions(stateDir, sessions) {
 }
 
 function runTests() {
-  console.log('\n🧪 Testing CLAUDE_CONFIG_DIR routing in hooks\n');
+  console.log('\nTesting CLAUDE_CONFIG_DIR routing in hooks\n');
   let passed = 0;
   let failed = 0;
   const record = ok => { if (ok) passed++; else failed++; };
