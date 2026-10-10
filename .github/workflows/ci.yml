@@ -20,7 +20,9 @@ jobs:
   test:
     name: Test (${{ matrix.os }}, Node ${{ matrix.node }}, ${{ matrix.pm }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    # The complete cross-platform suite reaches its final installer cases at
+    # 30 minutes on hosted Windows Node 18; retain a bounded completion window.
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
