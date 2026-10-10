@@ -45,12 +45,14 @@ function test(desc, fn) {
   }
 }
 
+const transcriptRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-transcript-context-'));
+process.on('exit', () => fs.rmSync(transcriptRoot, { recursive: true, force: true }));
 let fixtureSeq = 0;
 
 function writeTranscript(lines) {
   fixtureSeq += 1;
-  const filePath = path.join(os.tmpdir(), `transcript-context-test-${process.pid}-${fixtureSeq}.jsonl`);
-  fs.writeFileSync(filePath, lines.join('\n') + '\n');
+  const filePath = path.join(transcriptRoot, `transcript-context-test-${process.pid}-${fixtureSeq}.jsonl`);
+  fs.writeFileSync(filePath, lines.join('\n') + '\n', { flag: 'wx', mode: 0o600 });
   return filePath;
 }
 
@@ -111,7 +113,7 @@ test('returns null for a transcript with no usage records', () => {
 });
 
 test('returns null for a missing transcript file', () => {
-  assert.strictEqual(readLatestContextTokens(path.join(os.tmpdir(), 'definitely-missing.jsonl')), null);
+  assert.strictEqual(readLatestContextTokens(path.join(transcriptRoot, 'definitely-missing.jsonl')), null);
 });
 
 test('returns null for empty or non-string paths', () => {

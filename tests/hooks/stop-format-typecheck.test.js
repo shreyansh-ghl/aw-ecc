@@ -37,6 +37,12 @@ function test(name, fn) {
 let passed = 0;
 let failed = 0;
 
+// Keep accumulator fixtures private, including subprocess hook invocations.
+const accumulatorTempRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-stop-fixtures-')));
+const originalTempEnv = Object.fromEntries(['TMPDIR', 'TMP', 'TEMP'].map(key => [key, process.env[key]]));
+for (const key of Object.keys(originalTempEnv)) process.env[key] = accumulatorTempRoot;
+process.on('exit', () => fs.rmSync(accumulatorTempRoot, { recursive: true, force: true }));
+
 // Use a unique session ID for tests so we don't pollute real sessions
 const TEST_SESSION_ID = `test-${Date.now()}`;
 const origSessionId = process.env.CLAUDE_SESSION_ID;
@@ -45,7 +51,7 @@ process.env.CLAUDE_SESSION_ID = TEST_SESSION_ID;
 delete process.env.ECC_SESSION_ID;
 
 function getAccumFile() {
-  return path.join(os.tmpdir(), `ecc-edited-${TEST_SESSION_ID}.txt`);
+  return path.join(accumulatorTempRoot, `ecc-edited-${TEST_SESSION_ID}.txt`);
 }
 
 function cleanAccumFile() {
@@ -275,8 +281,8 @@ console.log('\nsession-scoped accumulator regression (#3460)');
 function withPayloadSessions(fn) {
   const sessionA = `${TEST_SESSION_ID}-payload-a`;
   const sessionB = `${TEST_SESSION_ID}-payload-b`;
-  const fileA = path.join(os.tmpdir(), `ecc-edited-${sessionA}.txt`);
-  const fileB = path.join(os.tmpdir(), `ecc-edited-${sessionB}.txt`);
+  const fileA = path.join(accumulatorTempRoot, `ecc-edited-${sessionA}.txt`);
+  const fileB = path.join(accumulatorTempRoot, `ecc-edited-${sessionB}.txt`);
   try {
     cleanAccumFile();
     fn({ sessionA, sessionB, fileA, fileB });
@@ -323,7 +329,7 @@ if (test('MultiEdit uses the same stdin session accumulator for every edit', () 
 if (test('ECC_SESSION_ID precedes CLAUDE_SESSION_ID while preserving legacy filenames', () => {
   const rawId = `${TEST_SESSION_ID}/ecc.with spaces`;
   const safeId = rawId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
-  const file = path.join(os.tmpdir(), `ecc-edited-${safeId}.txt`);
+  const file = path.join(accumulatorTempRoot, `ecc-edited-${safeId}.txt`);
   process.env.ECC_SESSION_ID = rawId;
   try {
     cleanAccumFile();
@@ -343,7 +349,7 @@ if (test('ECC_SESSION_ID precedes CLAUDE_SESSION_ID while preserving legacy file
 if (test('stdin IDs keep the existing filename sanitizer and length limit', () => {
   const rawId = `${TEST_SESSION_ID}/../nested\\session ${'x'.repeat(100)}`;
   const safeId = rawId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
-  const file = path.join(os.tmpdir(), `ecc-edited-${safeId}.txt`);
+  const file = path.join(accumulatorTempRoot, `ecc-edited-${safeId}.txt`);
   try {
     accumulator.run(JSON.stringify({ session_id: rawId, tool_input: { file_path: '/nonexistent/safe.ts' } }));
     assert.strictEqual(fs.readFileSync(file, 'utf8'), '/nonexistent/safe.ts\n');
@@ -394,6 +400,12 @@ if (test('resolves traversal before deciding', () => {
   const p = path.join(FAKE_CWD, 'src', '..', '.claude', 'plugins', 'p', 'x.js');
   assert.strictEqual(isPluginClonePath(p, FAKE_CWD, FAKE_HOME), true);
 })) passed++; else failed++;
+
+fs.rmSync(accumulatorTempRoot, { recursive: true, force: true });
+for (const [key, value] of Object.entries(originalTempEnv)) {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}
 
 // Restore env
 if (origSessionId === undefined) {

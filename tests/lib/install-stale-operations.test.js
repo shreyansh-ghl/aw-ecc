@@ -185,7 +185,12 @@ for (const phase of ['during hashing', 'after hashing']) {
     const edited = 'user edit bytes\n';
     assert.strictEqual(original.length, edited.length);
     writeFile(file, original);
-    const identity = fs.statSync(file, { bigint: true });
+    // Bind the fixture identity to its opened private file, keeping the later
+    // pathname read an assertion rather than relying on a prior stat check.
+    const identityFd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    let identity;
+    try { identity = fs.fstatSync(identityFd, { bigint: true }); }
+    finally { fs.closeSync(identityFd); }
     const originalRead = fs.readFileSync;
     const originalFstat = fs.fstatSync;
     let mutationApplied = false;
