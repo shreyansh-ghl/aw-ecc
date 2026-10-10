@@ -24,18 +24,18 @@ function test(desc, fn) {
   }
 }
 
-function runWorker({ policy, exitCode = 0 } = {}) {
+function runWorker({ policy, exitCode = 0, outsideTask = false, relativeTask = false } = {}) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-orch-worker-'));
   const binDir = path.join(tempRoot, 'bin');
   const captureFile = path.join(tempRoot, 'args.json');
-  const taskFile = path.join(tempRoot, 'task.md');
+  const taskFile = outsideTask ? `${tempRoot}-outside.md` : path.join(tempRoot, 'task.md');
   const handoffFile = path.join(tempRoot, 'handoff.md');
   const statusFile = path.join(tempRoot, 'status.md');
 
   try {
     fs.mkdirSync(binDir);
     fs.writeFileSync(taskFile, 'Make a focused change.');
-    fs.writeFileSync(path.join(binDir, 'codex'), `#!${process.execPath}
+    fs.writeFileSync(path.join(binDir, 'codex'), `#!/usr/bin/env node
 const fs = require('fs');
 const args = process.argv.slice(2);
 fs.writeFileSync(process.env.ECC_TEST_CAPTURE, JSON.stringify(args));
@@ -57,7 +57,7 @@ process.exit(Number(process.env.ECC_TEST_EXIT));
     };
     if (policy === undefined) delete env.ECC_CODEX_APPROVAL_POLICY;
     else env.ECC_CODEX_APPROVAL_POLICY = policy;
-    const result = spawnSync('bash', [SCRIPT, taskFile, handoffFile, statusFile], {
+    const result = spawnSync('bash', [SCRIPT, relativeTask ? 'task.md' : taskFile, handoffFile, statusFile], {
       cwd: tempRoot, env, encoding: 'utf8', timeout: 10000
     });
     return {
@@ -68,6 +68,7 @@ process.exit(Number(process.env.ECC_TEST_EXIT));
     };
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
+    if (outsideTask) fs.rmSync(taskFile, { force: true });
   }
 }
 
@@ -79,6 +80,20 @@ test('starts a worker with the current CLI grammar and configured model', () => 
     'Worker should inherit the configured model rather than pin a retired model');
   assert.ok(result.handoff.includes('Completed the focused task.'));
   assert.ok(result.workerStatus.includes('- State: completed'));
+});
+
+test('accepts a relative task file resolved inside the worktree', () => {
+  const result = runWorker({ relativeTask: true });
+  assert.strictEqual(result.status, 0, result.stderr);
+  assert.ok(result.args);
+  assert.ok(result.workerStatus.includes('- State: completed'));
+});
+
+test('rejects a readable sibling task before invoking Codex', () => {
+  const result = runWorker({ outsideTask: true });
+  assert.notStrictEqual(result.status, 0);
+  assert.strictEqual(result.args, null);
+  assert.ok(result.workerStatus.includes('task file outside worktree'));
 });
 
 test('forwards the explicit supported approval policy', () => {

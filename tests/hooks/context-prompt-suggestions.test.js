@@ -116,7 +116,9 @@ test('loading advice matches the saved mode', () => {
 });
 
 test('shell metacharacters in a store path remain data rather than executable advice', () => {
-  const root = '/tmp/store-$(touch SHOULD_NOT_RUN)-`echo injected`-"quoted"';
+  // Use a native canonical absolute root and filename characters legal on
+  // Windows while still exercising shell substitutions and command separators.
+  const root = path.join(path.resolve(os.tmpdir()), "store-$(touch SHOULD_NOT_RUN)-`echo injected`-'quote'-semi;and&");
   const routingModule = require('../../scripts/lib/context-routing-index');
   const originals = { readBinding: routingModule.readBinding, readRoutingIndex: routingModule.readRoutingIndex,
     suggestContext: routingModule.suggestContext };

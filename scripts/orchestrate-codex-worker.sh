@@ -65,8 +65,24 @@ esac
 
 # Contain the task file to the current worktree so a malicious launcher cannot
 # point the worker at /etc/passwd or a sibling checkout.
-task_real="$(realpath -m "$task_file" 2>/dev/null || readlink -f "$task_file" 2>/dev/null || printf '%s' "$task_file")"
-work_real="$(pwd -P 2>/dev/null || pwd)"
+canonical_path() {
+  local candidate="$1"
+  if command -v cygpath >/dev/null 2>&1; then
+    # Native Node callers supply C:\ paths (sometimes 8.3 names), whereas
+    # MSYS pwd returns /c/ paths. Expand and normalize both before comparison.
+    candidate="$(cygpath -a -m -l "$candidate")" || return 1
+    candidate="$(cygpath -a -u "$candidate")" || return 1
+  fi
+  # Only existing paths are valid. Resolve symlinks and never fall back to
+  # an uncanonicalized string if the platform cannot resolve the path.
+  realpath "$candidate" 2>/dev/null || readlink -f "$candidate" 2>/dev/null
+}
+
+if ! task_real="$(canonical_path "$task_file")" || ! work_real="$(canonical_path "$(pwd -P)")"; then
+  echo "[ECC worker] Refusing to run: cannot resolve task file or worktree" >&2
+  write_status "failed" "- Error: cannot resolve task file or worktree"
+  exit 1
+fi
 case "$task_real" in
   "$work_real"/*) ;;
   *)
