@@ -108,6 +108,7 @@ function buildExpectedPublishPaths(repoRoot) {
     "scripts/welcome.js",
     "scripts/gemini-adapt-agents.js",
     "scripts/qwen-adapt-agents.js",
+    "scripts/gateguard-report.js",
     "scripts/sync-ecc-to-codex.sh",
     "scripts/codex/legacy-sync-state.js",
     "scripts/codex/install-global-git-hooks.sh",

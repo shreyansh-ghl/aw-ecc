@@ -130,6 +130,7 @@
     "scripts/memory.js",
     "scripts/memory-mcp.mjs",
     "scripts/gemini-adapt-agents.js",
+    "scripts/gateguard-report.js",
     "scripts/github-coordination.js",
     "scripts/qwen-adapt-agents.js",
     "scripts/harness-adapter-compliance.js",
