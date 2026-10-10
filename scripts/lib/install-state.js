@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const {
   CLAUDE_HOOKS_CONFIG_PATH,
