@@ -2,7 +2,7 @@
   "name": "ecc",
   "displayName": "ECC",
   "version": "2.2.3",
-  "description": "Harness-native engineering workflows for Qoder: 302 skills, 71 agents, legacy command shims, a reviewed SessionStart hook, and optional MCP tooling.",
+  "description": "Harness-native engineering workflows for Qoder: canonical skills and agents, legacy command shims, a reviewed SessionStart hook, and optional MCP tooling.",
   "author": {
     "name": "Affaan Mustafa",
     "url": "https://x.com/affaanmustafa"

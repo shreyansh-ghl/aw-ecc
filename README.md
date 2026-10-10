@@ -140,12 +140,12 @@ Instead of rebuilding that process in every prompt, you install it once and make
 
 ECC is MIT-licensed open source. It works best with Claude Code today, has native Codex and Qoder plugin paths, and provides capability-limited adapters for Cursor, OpenCode, Gemini, Zed, GitHub Copilot, Antigravity, Qwen, and other harnesses. See the [support status matrix](#platform-support) before assuming feature parity.
 
-Access to 71 agents, 303 skills, and 97 legacy command shims, plus hooks, rules, memory, continuous learning, and AgentShield security scanning. The agents are specialized for planning, review, build repair, security, architecture, and domain work.
+Access to 71 agents, 304 skills, and 97 legacy command shims, plus hooks, rules, memory, continuous learning, and AgentShield security scanning. The agents are specialized for planning, review, build repair, security, architecture, and domain work.
 
 | Included         |       Count | What it gives you                                                                    |
 | ---------------- | ----------: | ------------------------------------------------------------------------------------ |
 | Agents           |   71 agents | Planning, review, build repair, security, architecture, and domain work              |
-| Skills           |  303 skills | TDD, research, security, docs, frontend, data, ML, operations, and more              |
+| Skills           |  304 skills | TDD, research, security, docs, frontend, data, ML, operations, and more              |
 | Commands         | 97 commands | Convenient entry points while ECC moves to a skills-first surface                    |
 | Hooks and memory |     Runtime | Enforcement, session summaries, continuous learning, instincts, and context controls |
 | Rules            |   Selective | Always-loaded standards you choose by language or project                            |
@@ -385,7 +385,7 @@ For repo navigation, surface ownership, and PR diff packet guidance, read the [C
 
 ### Qoder CLI and IDE
 
-ECC ships a native Qoder plugin that reuses the canonical 302 skills, 71 agents,
+ECC ships a native Qoder plugin that reuses the canonical skills, agents,
 95 legacy command shims, and the pinned `chrome-devtools` MCP definition. From a
 reviewed checkout, validate and install it with Qoder CLI:
 
