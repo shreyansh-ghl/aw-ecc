@@ -36,6 +36,7 @@ function exec(command, args, cwd = process.cwd()) {
   const invocation = getLinterInvocation(command, args);
   return spawnSync(invocation.command, invocation.args, {
     ...invocation.options,
+    shell: false,
     cwd,
     env: invocation.options.env || process.env,
     timeout: 15000

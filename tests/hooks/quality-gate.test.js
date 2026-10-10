@@ -200,7 +200,7 @@ function withFormatterFixture(formatter, fallback, fn) {
       ECC_TEST_EXIT: '0'
     });
     const input = JSON.stringify({ tool_input: { file_path: filePath } });
-    const runHook = overrides => spawnSync(process.execPath, [hookPath], {
+    const runHook = (overrides, nodeArguments = []) => spawnSync(process.execPath, [...nodeArguments, hookPath], {
       cwd: srcDir, input, encoding: 'utf8', timeout: 20000,
       env: { ...env, ...overrides }
     });
@@ -247,6 +247,25 @@ for (const formatter of ['prettier', 'biome']) {
     });
   })) passed++; else failed++;
 }
+
+if (test('preserves literal formatter arguments even if invocation options drift to shell:true', () => {
+  withFormatterFixture('prettier', false, fixture => {
+    const preload = path.join(fixture.root, 'invocation-drift.cjs');
+    const helperPath = path.resolve(__dirname, '../../scripts/hooks/pre-bash-commit-quality.js');
+    fs.writeFileSync(preload, [
+      `const helper = require(${JSON.stringify(helperPath)});`,
+      'const original = helper.getLinterInvocation;',
+      'helper.getLinterInvocation = (...args) => {',
+      '  const invocation = original(...args);',
+      '  invocation.options.shell = true;',
+      '  return invocation;',
+      '};'
+    ].join('\n'));
+    const result = fixture.runHook({}, ['--require', preload]);
+    assertInvocation(fixture, result, ['--check', fixture.filePath]);
+    assert.strictEqual(result.stderr, '');
+  });
+})) passed++; else failed++;
 
 if (test('reports a real formatter failure in strict mode while preserving hook input', () => {
   withFormatterFixture('prettier', false, fixture => {

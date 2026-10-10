@@ -13,6 +13,12 @@ const { getCostSnapshotPath } = require('../../scripts/lib/session-cost-snapshot
 
 const script = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'cost-tracker.js');
 
+// Harness caches belong to a real private root shared by parent and hook child.
+const cacheRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-cost-cache-')));
+const savedTempEnvironment = Object.fromEntries(['TMPDIR', 'TMP', 'TEMP']
+  .map(name => [name, process.env[name]]));
+for (const name of Object.keys(savedTempEnvironment)) process.env[name] = cacheRoot;
+
 function test(name, fn) {
   try {
     fn();
@@ -50,13 +56,13 @@ function runScript(input, envOverrides = {}) {
     encoding: 'utf8',
     input: inputStr,
     timeout: 10000,
-    env: { ...process.env, ...envOverrides },
+    env: { ...process.env, ...envOverrides, TMPDIR: cacheRoot, TMP: cacheRoot, TEMP: cacheRoot },
   });
   return { code: result.status || 0, stdout: result.stdout || '', stderr: result.stderr || '' };
 }
 
 function removeHarnessCostCache(sessionId) {
-  const cachePath = path.join(os.tmpdir(), `harness-cost-${sessionId}.json`);
+  const cachePath = path.join(cacheRoot, `harness-cost-${sessionId}.json`);
   try {
     fs.unlinkSync(cachePath);
   } catch (err) {
@@ -405,7 +411,7 @@ function runTests() {
         },
       },
     ]);
-    const harnessCachePath = path.join(os.tmpdir(), `harness-cost-${sessionId}.json`);
+    const harnessCachePath = path.join(cacheRoot, `harness-cost-${sessionId}.json`);
     const nowEpoch = Math.floor(Date.now() / 1000);
     fs.writeFileSync(
       harnessCachePath,
@@ -449,7 +455,7 @@ function runTests() {
     ]);
 
     fs.writeFileSync(
-      path.join(os.tmpdir(), `harness-cost-${sessionId}.json`),
+      path.join(cacheRoot, `harness-cost-${sessionId}.json`),
       JSON.stringify({ ts: Math.floor(Date.now() / 1000), cost_usd: 999 }),
       'utf8'
     );
@@ -750,7 +756,7 @@ function runTests() {
         },
       },
     ]);
-    const harnessCachePath = path.join(os.tmpdir(), `harness-cost-${sessionId}.json`);
+    const harnessCachePath = path.join(cacheRoot, `harness-cost-${sessionId}.json`);
     const staleEpoch = Math.floor(Date.now() / 1000) - 3600;
     fs.writeFileSync(
       harnessCachePath,
@@ -778,7 +784,14 @@ function runTests() {
   }) ? passed++ : failed++);
 
   console.log(`\nResults: Passed: ${passed}, Failed: ${failed}`);
-  process.exit(failed > 0 ? 1 : 0);
+  process.exitCode = failed > 0 ? 1 : 0;
 }
 
-runTests();
+try {
+  runTests();
+} finally {
+  for (const [name, value] of Object.entries(savedTempEnvironment)) {
+    if (value === undefined) delete process.env[name]; else process.env[name] = value;
+  }
+  fs.rmSync(cacheRoot, { recursive: true, force: true });
+}
