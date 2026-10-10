@@ -34,6 +34,7 @@ skills:
   - claude-devfleet
   - click-path-audit
   - clickhouse-io
+  - brownfield-retrospective
   - codebase-onboarding
   - coding-standards
   - compose-multiplatform-patterns
