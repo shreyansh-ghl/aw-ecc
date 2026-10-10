@@ -712,6 +712,20 @@ function runTests() {
       model: 'claude-haiku-5-5',
       usage: { input_tokens: 50000, output_tokens: 1000, cache_read_input_tokens: 50001 }
     }]).estimated_cost_usd, 0.03, 'cached prompt tokens count toward the long-prompt threshold');
+    assert.strictEqual(priceMessages([{
+      model: 'claude-haiku-5-5',
+      usage: { input_tokens: 50000, cache_creation_input_tokens: 50001 }
+    }]).estimated_cost_usd, 0.056251, 'cache writes count toward and use the long-prompt tier');
+    for (const laterModel of [undefined, 'unknown']) {
+      const original = message('claude-haiku-5-5', 500, 500, 'duplicate');
+      const later = message(laterModel, 1000, 1000, 'duplicate');
+      const mixed = priceMessages([
+        original, later, message('claude-opus-5-5', 1000, 1000, 'other')
+      ]);
+      assert.strictEqual(mixed.input_tokens, 2000, 'the latest duplicate usage replaces earlier usage');
+      assert.strictEqual(mixed.estimated_cost_usd, 0.0246,
+        'a duplicate without a known model retains its earlier request model');
+    }
     const first = message('claude-haiku-5-5', 60000, 1000, 'first');
     const second = message('claude-haiku-5-5', 60000, 1000, 'second');
     const row = priceMessages([first, first, second]);
