@@ -97,4 +97,15 @@ The 77-prompt routing corpus from #2945 (52 direct, 25 paraphrased) found one wr
 - Corpus result: zero loads outside the expected set; 19 implicit admissions become 17. The other dropped admission, `skill:cost-tracking`, now defers to the bounded proposal instead of loading.
 - The existing nine-query auto/agent corpus, fallback, launch, evaluation and retrieval suites pass unchanged.
 
-These boundaries keep the shipped behavior distinct from the M1 release gate. Authenticated outcome observations, a complete Tier 2 disk diff, live-install migration, other-provider activation, whole-context token truth and release defaults remain unverified until their explicit prerequisites are available.
+## Isolated Claude native generations
+
+Session-only Claude discovery adapts the ownership and receipt intent of #2788 to the existing native store; it never writes a marketplace or user settings.
+
+- RED: 22 cases fail before the provider adapter (preview, prepare, version gate, nine discovery corruptions, details mismatch, static integrity, runtime-state tolerance, provider-home roots, Codex-to-Claude staleness, task launch and interactive start).
+- GREEN: all 22 pass. Codex native (39), interactive (8), launch (12), auto launch (5), evaluation (31), store (31) and profile CLI suites pass unchanged; Codex receipts keep their shape, and evaluator Claude launches without a plugin directory keep their arguments and environment.
+- Credential-free real run on Linux x64 with Claude Code 2.1.292 and the actual registry: Lean prepared ready with three skills and a 398-token always-on projection; Full prepared ready with 293 skills and 35,658 tokens; Full excluding `skill:python-patterns` verified 292 skills without it at 35,561 tokens. Switching profiles reported `stale`, and native rollback restored the Lean generation. `run --dry-run` resolved the pinned binary with `--plugin-dir`; `start --dry-run` proposed the Claude generation.
+- Claude Code auto-updated to 2.1.293 during review, and the exact 2.1.292 pin rejected it. RED: tests for later 2.1 patches fail. GREEN admits 2.1.292 and later 2.1 patches while rejecting 2.1.291, 2.2.0, prereleases and malformed output. A real 2.1.293 run prepared Lean ready at the same 398-token projection; preparation took 2.4 s (provider calls 1.2 s), an unchanged re-preparation 0.9 s and status 11 ms.
+- No authenticated model call, interactive turn or native skill invocation ran. The projection is the host's estimate for the plugin listing, not whole-context truth.
+- Maintainer credential-free macOS arm64 check, October 10: Claude Code 2.1.296 prepared Lean with three skills (~289 listing tokens), Full with the then-current 302 skills (~25,982 listing tokens), reported stale after each managed profile switch, and restored Lean through managed and native rollback. These are observed plugin-listing projections for that snapshot, not whole-context measurements.
+
+These boundaries keep the shipped behavior distinct from the M1 release gate. Authenticated outcome observations, a complete Tier 2 disk diff, live-install migration, additional-provider activation, whole-context token truth and release defaults remain unverified until their explicit prerequisites are available.
