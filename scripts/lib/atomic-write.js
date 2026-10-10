@@ -4,6 +4,27 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+// Native Windows replacement can temporarily deny a reader's open as well as
+// a writer's rename. Retry only sharing errors, never missing files or parsing.
+function readFileWithSharingRetry(filePath, options) {
+  const deadline = performance.now() + 750;
+  let attempts = 0;
+  let sleeper;
+  while (true) {
+    try {
+      return fs.readFileSync(filePath, options);
+    } catch (error) {
+      attempts++;
+      const remaining = deadline - performance.now();
+      if (process.platform !== 'win32'
+        || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code)
+        || attempts >= 21 || remaining <= 0) throw error;
+      sleeper ||= new Int32Array(new SharedArrayBuffer(4));
+      Atomics.wait(sleeper, 0, 0, Math.min(25, remaining));
+    }
+  }
+}
+
 function renameAtomic(tempPath, resolvedPath, options) {
   const deadline = performance.now() + 750;
   let attempts = 0;
@@ -70,5 +91,6 @@ function writeFileAtomic(filePath, content, options = {}) {
 }
 
 module.exports = {
+  readFileWithSharingRetry,
   writeFileAtomic,
 };

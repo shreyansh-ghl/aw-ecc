@@ -1238,8 +1238,9 @@ function runTests() {
       assert.strictEqual(aliases.saveAliases({ aliases: { replacement: { sessionPath: '/new' } } }), false);
       assert.strictEqual(aliases.renameAlias('preserved', 'changed').success, false);
       assert.strictEqual(fs.readFileSync(aliasesPath, 'utf8'), before);
-      assert.strictEqual(staged.length, 2, 'Each failed operation attempts one publication');
-      assert.notStrictEqual(staged[0], staged[1], 'Each write has its own staging file');
+      const stagingPaths = [...new Set(staged)];
+      assert.strictEqual(stagingPaths.length, 2, 'Each write retains one private staging file across retries');
+      assert.ok(staged.length >= 2 && staged.length <= 42, 'Publication attempts remain bounded for both writes');
       assert.deepStrictEqual(fs.readdirSync(path.dirname(aliasesPath)), ['session-aliases.json']);
     } finally {
       fs.renameSync = originalRename;

@@ -11,11 +11,12 @@ const source = fs.readFileSync(filename, 'utf8');
 
 // Load the actual helper with a local platform/filesystem facade. File creation,
 // fsync, replacement and cleanup remain real; fault injection is module-local.
-function loadHelper(platform, rename, { clockStep = 25 } = {}) {
+function loadHelper(platform, rename, { clockStep = 25, read = fs.readFileSync } = {}) {
   let elapsed = 0;
   let waits = 0;
   const filesystem = Object.create(fs);
   filesystem.renameSync = rename;
+  filesystem.readFileSync = read;
   const module = { exports: {} };
   vm.runInNewContext(source, {
     module, exports: module.exports,
@@ -150,6 +151,75 @@ test('parent replacement during retry preserves both destinations and original p
   assert.strictEqual(fs.readFileSync(path.join(original, staging[0]), 'utf8'), 'new');
   assert.deepStrictEqual(fs.readdirSync(parent), ['state.json']);
   assert.strictEqual(fs.readFileSync(destination, 'utf8'), 'old');
+});
+
+for (const code of ['EPERM', 'EACCES', 'EBUSY']) {
+  test(`Windows reader recovers ${code} and returns the complete published bytes`, ({ root, destination }) => {
+    fs.writeFileSync(destination, '{"published":true}');
+    let attempts = 0;
+    const helper = loadHelper('win32', fs.renameSync, { read(file, options) {
+      attempts++;
+      assert.strictEqual(file, destination);
+      assert.strictEqual(options, 'utf8');
+      if (attempts < 3) throw sharingError(code);
+      return fs.readFileSync(file, options);
+    } });
+    assert.deepStrictEqual(JSON.parse(helper.readFileWithSharingRetry(destination, 'utf8')), { published: true });
+    assert.strictEqual(attempts, 3);
+    assert.strictEqual(helper.waits(), 2);
+    assert.deepStrictEqual(fs.readdirSync(root), ['state.json']);
+  });
+
+  test(`Windows reader preserves the final permanent ${code} and never writes`, ({ root, destination }) => {
+    let attempts = 0;
+    const expected = sharingError(code);
+    const helper = loadHelper('win32', fs.renameSync, { read() { attempts++; throw expected; } });
+    assert.throws(() => helper.readFileWithSharingRetry(destination, 'utf8'), error => error === expected);
+    assert.strictEqual(attempts, 21);
+    assert.strictEqual(helper.waits(), 20);
+    assert.strictEqual(fs.readFileSync(destination, 'utf8'), 'old');
+    assert.deepStrictEqual(fs.readdirSync(root), ['state.json']);
+  });
+}
+
+for (const platform of ['linux', 'darwin']) {
+  for (const code of ['EPERM', 'EACCES', 'EBUSY']) {
+    test(`${platform} reader propagates ${code} immediately`, ({ destination }) => {
+      let attempts = 0;
+      const expected = sharingError(code);
+      const helper = loadHelper(platform, fs.renameSync, { read() { attempts++; throw expected; } });
+      assert.throws(() => helper.readFileWithSharingRetry(destination, 'utf8'), error => error === expected);
+      assert.strictEqual(attempts, 1);
+      assert.strictEqual(helper.waits(), 0);
+    });
+  }
+}
+
+test('Windows reader stops at the elapsed deadline', ({ destination }) => {
+  let attempts = 0;
+  const expected = sharingError('EPERM');
+  const helper = loadHelper('win32', fs.renameSync, { clockStep: 250, read() { attempts++; throw expected; } });
+  assert.throws(() => helper.readFileWithSharingRetry(destination, 'utf8'), error => error === expected);
+  assert.strictEqual(attempts, 4);
+});
+
+test('Windows reader does not retry missing files', ({ root }) => {
+  const helper = loadHelper('win32', fs.renameSync);
+  assert.throws(() => helper.readFileWithSharingRetry(path.join(root, 'missing'), 'utf8'), error => error.code === 'ENOENT');
+  assert.strictEqual(helper.waits(), 0);
+});
+
+test('Windows reader does not retry unrelated IO or JSON parse failures', ({ destination }) => {
+  const expected = sharingError('EIO');
+  const denied = loadHelper('win32', fs.renameSync, { read() { throw expected; } });
+  assert.throws(() => denied.readFileWithSharingRetry(destination, 'utf8'), error => error === expected);
+  assert.strictEqual(denied.waits(), 0);
+  fs.writeFileSync(destination, '{malformed');
+  let reads = 0;
+  const invalid = loadHelper('win32', fs.renameSync, { read(file, options) { reads++; return fs.readFileSync(file, options); } });
+  assert.throws(() => JSON.parse(invalid.readFileWithSharingRetry(destination, 'utf8')), /JSON|property|Unexpected/);
+  assert.strictEqual(reads, 1);
+  assert.strictEqual(invalid.waits(), 0);
 });
 
 console.log(`Results: Passed: ${passed}, Failed: ${failed}`);

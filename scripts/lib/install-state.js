@@ -24,7 +24,8 @@ function cloneJsonValue(value) {
 
 function readJson(filePath, label) {
   try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const { readFileWithSharingRetry } = require('./atomic-write');
+    return JSON.parse(readFileWithSharingRetry(filePath, 'utf8'));
   } catch (error) {
     throw new Error(`Failed to read ${label}: ${error.message}`);
   }

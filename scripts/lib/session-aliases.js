@@ -3,14 +3,12 @@
  * Manages session aliases stored in $ECC_AGENT_DATA_HOME/session-aliases.json (default ~/.claude).
  */
 
-const fs = require('fs');
 const path = require('path');
-const { writeFileAtomic } = require('./atomic-write');
+const { readFileWithSharingRetry, writeFileAtomic } = require('./atomic-write');
 const { acquireSettingsLock } = require('./install/claude-settings-lock');
 
 const {
   getClaudeDir,
-  readFile,
   log
 } = require('./utils');
 
@@ -43,11 +41,15 @@ function getDefaultAliases() {
 function loadAliases() {
   const aliasesPath = getAliasesPath();
 
-  if (!fs.existsSync(aliasesPath)) {
-    return getDefaultAliases();
+  let content;
+  try {
+    content = readFileWithSharingRetry(aliasesPath, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return getDefaultAliases();
+    // An unreadable published snapshot is not an empty store. Fail closed so
+    // a transaction cannot replace existing aliases with a default snapshot.
+    throw error;
   }
-
-  const content = readFile(aliasesPath);
   if (!content) {
     return getDefaultAliases();
   }
