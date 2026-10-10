@@ -121,7 +121,10 @@ const cases = [
       return originalRename.apply(this, arguments);
     };
     try {
-      const release = acquireSettingsLock(file, { timeoutMs: 100 });
+      // Quarantine IO can consume a short deadline on native Windows runners.
+      // Leave room for the next acquisition attempt after the injected ENOENT;
+      // the separate contention case verifies the short bounded timeout.
+      const release = acquireSettingsLock(file, { timeoutMs: 2000 });
       assert.ok(raced);
       release();
       assert.deepStrictEqual(fs.readdirSync(root), []);
