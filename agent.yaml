@@ -173,6 +173,7 @@ skills:
   - x-api
 commands:
   - aside
+  - astra-review
   - auto-update
   - build-fix
   - checkpoint

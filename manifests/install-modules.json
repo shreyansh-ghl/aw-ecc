@@ -64,8 +64,10 @@
       "description": "Core slash-command library and command docs.",
       "paths": [
         "commands",
+        "scripts/astra-review.js",
         "scripts/harness-audit.js",
         "scripts/skills-health.js",
+        "scripts/lib/astra-review",
         "scripts/ci/validate-skill-host-compat.js",
         "scripts/ci/validate-skills.js"
       ],

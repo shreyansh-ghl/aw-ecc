@@ -117,6 +117,7 @@
     "scripts/ci/validate-skills.js",
     "scripts/consult.js",
     "scripts/profile.js",
+    "scripts/astra-review.js",
     "scripts/auto-update.js",
     "scripts/claw.js",
     "scripts/control-pane.js",
