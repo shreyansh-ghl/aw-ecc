@@ -338,7 +338,7 @@ test('is exported and returns the trailing bytes with a truncation flag', () => 
   assert.deepStrictEqual(whole, { text: 'first-line\nsecond\nthird\n', truncated: false });
   const tail = readFileTail(file, 6);
   assert.deepStrictEqual(tail, { text: 'third\n', truncated: true });
-  assert.strictEqual(readFileTail(path.join(os.tmpdir(), `missing-${process.pid}.jsonl`), 10), null);
+  assert.strictEqual(readFileTail(path.join(transcriptRoot, `missing-${process.pid}.jsonl`), 10), null);
 });
 
 // ── formatWindowLabel ──
