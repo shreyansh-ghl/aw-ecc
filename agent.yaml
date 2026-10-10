@@ -149,6 +149,7 @@ skills:
   - security-review
   - security-scan
   - skill-comply
+  - skill-host-compat
   - skill-stocktake
   - springboot-patterns
   - springboot-security
@@ -174,6 +175,7 @@ skills:
   - x-api
 commands:
   - aside
+  - astra-review
   - auto-update
   - build-fix
   - checkpoint
@@ -263,6 +265,7 @@ commands:
   - setup-pm
   - skill-create
   - skill-health
+  - skill-host-compat
   - test-coverage
   - token-card
   - update-codemaps

@@ -64,8 +64,12 @@
       "description": "Core slash-command library and command docs.",
       "paths": [
         "commands",
+        "scripts/astra-review.js",
         "scripts/harness-audit.js",
-        "scripts/skills-health.js"
+        "scripts/skills-health.js",
+        "scripts/lib/astra-review",
+        "scripts/ci/validate-skill-host-compat.js",
+        "scripts/ci/validate-skills.js"
       ],
       "targets": [
         "claude",
@@ -354,6 +358,7 @@
         "skills/agent-introspection-debugging",
         "skills/ai-regression-testing",
         "skills/configure-ecc",
+        "skills/deepseek-harness-setup",
         "skills/code-tour",
         "skills/continuous-learning",
         "skills/continuous-learning-v2",
@@ -369,6 +374,7 @@
         "skills/plankton-code-quality",
         "skills/production-audit",
         "skills/skill-comply",
+        "skills/skill-host-compat",
         "skills/skill-scout",
         "skills/skill-stocktake",
         "skills/strategic-compact",

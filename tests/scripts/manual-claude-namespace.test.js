@@ -33,7 +33,7 @@ for (const target of ['claude', 'claude-project']) {
   const rule = path.join(installRoot, 'rules/ecc/common/agents.md');
   const run = args => {
     const result = spawnSync(process.execPath, [cli, ...args], {
-      cwd: project, env, encoding: 'utf8', timeout: 45000,
+      cwd: project, env, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024, timeout: 45000,
     });
     assert.ifError(result.error);
     assert.strictEqual(result.status, 0, result.stderr || result.stdout);

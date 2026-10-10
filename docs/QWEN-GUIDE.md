@@ -52,3 +52,12 @@ That removes files recorded in `~/.qwen/ecc-install-state.json` and leaves unrel
 ## Scope
 
 This target is intentionally narrower than stale PR #1352. It ports the maintainable Qwen install-target intent onto the current selective installer and avoids unverified hook-runtime claims until Qwen's hook/event contract is confirmed.
+
+## Agent adaptation
+
+Managed Qwen installs adapt canonical agent tools and colors before recording ownership.
+Claude model tiers become `model: inherit`, so the configured Qwen session selects its provider.
+Canonical agent files stay unchanged. The standalone `scripts/qwen-adapt-agents.js` utility
+can adapt an explicitly selected, user-owned copy; use the managed installer for ECC-owned files
+to keep repair and uninstall receipts consistent. Native subagent dispatch still requires
+verification in the user's configured Qwen runtime.
