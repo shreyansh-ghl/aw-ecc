@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const yaml = require('js-yaml');
 const { normalizeAgentTools } = require('./lib/agent-tools');
 
 // Qwen Code is a Gemini CLI descendant, so most tool ids match Gemini's. Three
@@ -90,15 +91,6 @@ function ensureDirectory(dirPath) {
   }
 }
 
-function parseToolList(line) {
-  const match = line.match(/^\s*tools\s*:\s*(.*)$/);
-  if (!match) {
-    return null;
-  }
-
-  return normalizeAgentTools(match[1]);
-}
-
 function adaptToolName(toolName) {
   const mapped = TOOL_NAME_MAP.get(toolName);
   if (mapped) {
@@ -113,9 +105,7 @@ function formatToolLine(tools) {
   // Comma-separated scalar rather than the JSON flow sequence
   // gemini-adapt-agents.js emits: Qwen Code parses both, and the scalar form is
   // what its own agent examples use.
-  // YAML null can discard an optional allowlist and inherit parent tools.
-  // Keep an explicitly empty source list as an empty native list.
-  return tools.length ? `tools: ${tools.join(', ')}` : 'tools: []';
+  return `tools: ${tools.join(', ')}`;
 }
 
 function adaptColor(line) {
@@ -149,10 +139,31 @@ function adaptFrontmatter(text) {
     return { text, changed: false };
   }
 
+  const firstMappingLine = match[1].split('\n').find(line => line.trim() && !line.trimStart().startsWith('#'));
+  if (firstMappingLine && /^\s/.test(firstMappingLine)) {
+    throw new Error('Unsupported indented Qwen agent frontmatter: use unindented root mapping keys');
+  }
+
+  const frontmatter = yaml.load(match[1]);
+  const hasTools = frontmatter && Object.hasOwn(frontmatter, 'tools');
+  const sourceTools = hasTools ? normalizeAgentTools(frontmatter.tools) : null;
+  // Qwen 0.25.0 definition files interpret [] as inherit-all, unlike its
+  // internal runtime ToolConfig. Reject rather than broaden source authority.
+  // https://github.com/QwenLM/qwen-code/blob/v0.25.0/packages/core/src/subagents/subagent-manager.ts#L1661-L1685
+  if (hasTools && sourceTools.length === 0) {
+    throw new Error('Unsupported empty tools allowlist: Qwen Code inherits all tools for an empty agent list; omit tools only when inheritance is intended');
+  }
+
+  if (hasTools && !/^tools\s*:/m.test(match[1])) {
+    throw new Error('Unsupported Qwen tools key format: use an unquoted root tools key');
+  }
+
   let changed = false;
   const updatedLines = [];
 
-  for (const line of match[1].split('\n')) {
+  const lines = match[1].split('\n');
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     // Claude tiers are not Qwen provider IDs; inherit the configured session.
     if (/^model:\s*["']?(haiku|sonnet|opus)["']?\s*$/.test(line)) {
       updatedLines.push('model: inherit');
@@ -170,12 +181,16 @@ function adaptFrontmatter(text) {
       continue;
     }
 
-    const tools = parseToolList(line);
-    if (tools) {
+    if (/^tools\s*:/.test(line) && hasTools) {
+      // Consume indented YAML continuations before writing the native scalar.
+      while (index + 1 < lines.length && /^(?:\s|#|$)/.test(lines[index + 1])) {
+        index += 1;
+        changed = true;
+      }
       const adaptedTools = [];
       const seen = new Set();
 
-      for (const tool of tools.map(adaptToolName)) {
+      for (const tool of sourceTools.map(adaptToolName)) {
         if (!tool || seen.has(tool)) {
           continue;
         }
@@ -212,15 +227,25 @@ function adaptAgents(dirPath) {
   let updated = 0;
   let unchanged = 0;
 
-  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+  const prepared = [];
+  // Validate the entire batch before rewriting any installed agent.
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isFile() || !entry.name.endsWith('.md')) {
       continue;
     }
 
     const filePath = path.join(dirPath, entry.name);
     const original = fs.readFileSync(filePath, 'utf8');
-    const adapted = adaptFrontmatter(original);
+    let adapted;
+    try {
+      adapted = adaptFrontmatter(original);
+    } catch (error) {
+      throw new Error(`${entry.name}: ${error.message}`);
+    }
+    prepared.push({ filePath, adapted });
+  }
 
+  for (const { filePath, adapted } of prepared) {
     if (adapted.changed) {
       fs.writeFileSync(filePath, adapted.text);
       updated += 1;

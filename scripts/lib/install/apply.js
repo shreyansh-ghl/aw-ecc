@@ -676,7 +676,20 @@ function prepareHookConsentMigration(plan, migration) {
   };
 }
 
+function preflightQwenAgentOperations(plan) {
+  for (const operation of plan.operations || []) {
+    if (operation.kind === 'copy-file' && operation.contentTransform === 'qwen-agent-frontmatter') {
+      assertSafeInstallOperation(plan, operation);
+      if (!fs.lstatSync(operation.sourcePath).isFile()) {
+        throw new Error('Refusing Qwen agent adaptation from a non-regular source file');
+      }
+      transformInstallContent(operation, fs.readFileSync(operation.sourcePath, 'utf8'));
+    }
+  }
+}
+
 function previewInstallPlan(plan) {
+  preflightQwenAgentOperations(plan);
   assertOpenCodeHookDeactivationReady(plan);
   const migration = prepareStaleOperationsReconciliation(
     plan,
@@ -736,6 +749,7 @@ function applyInstallPlan(plan, dependencies = {}) {
 }
 
 function applyInstallPlanLocked(plan, dependencies = {}, settingsLockHeld = false) {
+  preflightQwenAgentOperations(plan);
   const persistInstallState = dependencies.writeInstallState || writeInstallState;
   const beforeInstallStateRead = dependencies.beforeInstallStateRead;
   const beforeOperationWrite = dependencies.beforeOperationWrite;

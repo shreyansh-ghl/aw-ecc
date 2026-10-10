@@ -366,28 +366,88 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('preserves an explicit empty allowlist through actual CLI adaptation and rerun', () => {
+  if (test('rejects an empty allowlist before writing any agent in the CLI batch', () => {
     const tempDir = createTempDir();
     const agentsDir = path.join(tempDir, '.qwen', 'agents');
-    const yaml = require('js-yaml');
-    const frontmatter = text => yaml.load(text.match(/^---\n([\s\S]*?)\n---/)[1]);
     try {
-      writeAgent(agentsDir, 'no-tools.md', [
-        '---', 'name: no-tools', 'description: No tools permitted',
-        'tools: []', 'model: sonnet', '---', '', 'BODY_SENTINEL'
-      ].join('\n'));
-      const first = run([agentsDir]);
-      assert.strictEqual(first.code, 0, first.stderr);
-      assert.ok(first.stdout.includes('Updated 1 agent file(s)'));
-      const adapted = readAgent(agentsDir, 'no-tools.md');
-      assert.deepStrictEqual(frontmatter(adapted).tools, []);
-      assert.strictEqual(frontmatter(adapted).model, 'inherit');
-      assert.ok(adapted.endsWith('BODY_SENTINEL'));
-      const second = run([agentsDir]);
-      assert.strictEqual(second.code, 0, second.stderr);
-      assert.ok(second.stdout.includes('Updated 0 agent file(s)'));
-      assert.strictEqual(readAgent(agentsDir, 'no-tools.md'), adapted);
-      assert.deepStrictEqual(frontmatter(readAgent(agentsDir, 'no-tools.md')).tools, []);
+      for (const emptyTools of ['[]', '[] # no tools', '', 'null', '""']) {
+        writeAgent(agentsDir, 'a-valid.md', ['---', 'name: valid', 'tools: Read', 'model: sonnet', '---', 'VALID_BODY'].join('\n'));
+        writeAgent(agentsDir, 'z-no-tools.md', ['---', 'name: no-tools', `tools: ${emptyTools}`, 'model: sonnet', '---', 'NO_TOOLS_BODY'].join('\n'));
+        writeAgent(agentsDir, 'ignored.txt', 'UNCHANGED');
+        const snapshot = () => fs.readdirSync(agentsDir).sort().map(name => [name, fs.readFileSync(path.join(agentsDir, name)).toString('base64')]);
+        const before = snapshot();
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const result = run([agentsDir]);
+          assert.strictEqual(result.code, 1, result.stdout);
+          assert.match(result.stderr, /z-no-tools.md: Unsupported empty tools allowlist/);
+          assert.match(result.stderr, /inherits all tools/);
+          assert.deepStrictEqual(snapshot(), before);
+        }
+      }
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
+  if (test('adapts a nonempty YAML block list without leftover tool entries', () => {
+    const { adaptFrontmatter } = require(SCRIPT);
+    const yaml = require('js-yaml');
+    const result = adaptFrontmatter(['---', 'name: block-tools', 'description: Neighbor metadata', 'tools:', '  - Read', '', '# Tool list comment', '  - Grep', 'model: sonnet', 'metadata:', '  owner: operator', '---', 'BODY'].join('\n'));
+    const parsed = yaml.load(result.text.match(/^---\n([\s\S]*?)\n---/)[1]);
+    assert.strictEqual(parsed.tools, 'read_file, grep_search');
+    assert.strictEqual(parsed.model, 'inherit');
+    assert.strictEqual(parsed.description, 'Neighbor metadata');
+    assert.deepStrictEqual(parsed.metadata, { owner: 'operator' });
+    assert.strictEqual(adaptFrontmatter(result.text).changed, false);
+  })) passed++; else failed++;
+
+  if (test('rejects uniformly indented mappings without changing neighboring metadata', () => {
+    const tempDir = createTempDir();
+    try {
+      const source = ['---', '  name: indented', '  description: Preserve me', '  tools:', '    - Read', '    - Grep', '  model: sonnet', '---', 'BODY'].join('\n');
+      writeAgent(tempDir, 'indented.md', source);
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = run([tempDir]);
+        assert.strictEqual(result.code, 1);
+        assert.match(result.stderr, /Unsupported indented Qwen agent frontmatter/);
+        assert.strictEqual(readAgent(tempDir, 'indented.md'), source);
+      }
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
+  if (test('preflights every managed Qwen transform before file or receipt writes', () => {
+    const { applyInstallPlan, previewInstallPlan } = require('../../scripts/lib/install/apply');
+    const tempDir = createTempDir();
+    const targetRoot = path.join(tempDir, 'installed');
+    const sourceRoot = path.join(tempDir, 'source');
+    try {
+      fs.mkdirSync(targetRoot);
+      fs.mkdirSync(sourceRoot);
+      const valid = ['---', 'name: valid', 'tools: Read', '---', 'BODY'].join('\n');
+      const invalid = ['---', 'name: invalid', 'tools: []', '---', 'BODY'].join('\n');
+      writeAgent(sourceRoot, 'a-valid.md', valid);
+      writeAgent(sourceRoot, 'z-invalid.md', invalid);
+      writeAgent(targetRoot, 'z-invalid.md', 'OPERATOR_OWNED_BYTES');
+      writeAgent(targetRoot, 'ecc-install-state.json', '{"preserve":"receipt"}');
+      const plan = {
+        adapter: { id: 'qwen-home', target: 'qwen' },
+        targetRoot,
+        installStatePath: path.join(targetRoot, 'ecc-install-state.json'),
+        operations: ['a-valid.md', 'z-invalid.md'].map(name => ({
+          kind: 'copy-file', sourcePath: path.join(sourceRoot, name),
+          sourceRelativePath: `agents/${name}`,
+          destinationPath: path.join(targetRoot, name),
+          contentTransform: 'qwen-agent-frontmatter',
+        })),
+      };
+      const snapshot = () => fs.readdirSync(targetRoot).sort().map(name => [name, fs.readFileSync(path.join(targetRoot, name)).toString('base64')]);
+      const before = snapshot();
+      for (const operation of [previewInstallPlan, applyInstallPlan]) {
+        assert.throws(() => operation(plan), /Unsupported empty tools allowlist/);
+        assert.deepStrictEqual(snapshot(), before);
+      }
+      fs.unlinkSync(path.join(sourceRoot, 'z-invalid.md'));
+      fs.mkdirSync(path.join(sourceRoot, 'z-invalid.md'));
+      assert.throws(() => applyInstallPlan(plan), /non-regular source file/);
+      assert.deepStrictEqual(snapshot(), before);
     } finally { cleanupTempDir(tempDir); }
   })) passed++; else failed++;
 
