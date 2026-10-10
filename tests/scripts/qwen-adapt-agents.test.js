@@ -413,6 +413,74 @@ function runTests() {
     assert.strictEqual(adaptFrontmatter(result.text).changed, false);
   })) passed++; else failed++;
 
+  if (test('converts indentless tool sequences through the actual CLI without changing neighboring metadata', () => {
+    const tempDir = createTempDir();
+    const yaml = require('js-yaml');
+    try {
+      for (const [name, items] of [['plain.md', '- Read\n- Grep'], ['comments.md', '- Read\n# Keep the list valid\n- Grep']]) {
+        writeAgent(tempDir, name, [
+          '---', `name: ${name.slice(0, -3)}`, 'description: Preserve neighboring metadata',
+          'metadata:', '  color: teal', '  owner: operator',
+          'tools:', items, 'model: sonnet', '---', 'BODY_SENTINEL',
+        ].join('\n'));
+      }
+      const first = run([tempDir]);
+      assert.strictEqual(first.code, 0, first.stderr);
+      const beforeRerun = fs.readdirSync(tempDir).sort().map(name => [name, readAgent(tempDir, name)]);
+      for (const [, text] of beforeRerun) {
+        const parsed = yaml.load(text.match(/^---\n([\s\S]*?)\n---/)[1]);
+        assert.strictEqual(parsed.tools, 'read_file, grep_search');
+        assert.strictEqual(parsed.model, 'inherit');
+        assert.strictEqual(parsed.description, 'Preserve neighboring metadata');
+        assert.deepStrictEqual(parsed.metadata, { color: 'teal', owner: 'operator' });
+        assert.ok(text.endsWith('BODY_SENTINEL'));
+      }
+      assert.strictEqual(run([tempDir]).code, 0);
+      assert.deepStrictEqual(fs.readdirSync(tempDir).sort().map(name => [name, readAgent(tempDir, name)]), beforeRerun);
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
+  if (test('a real managed plan installs parseable indentless tool sequences', () => {
+    const { createManifestInstallPlan, previewInstallPlan, applyInstallPlan } = require('../../scripts/lib/install-executor');
+    const yaml = require('js-yaml');
+    const tempDir = createTempDir();
+    try {
+      const plan = createManifestInstallPlan({
+        sourceRoot: path.join(__dirname, '..', '..'), target: 'qwen',
+        homeDir: path.join(tempDir, 'home'), projectRoot: tempDir,
+        moduleIds: ['agents-core'], env: { HOME: path.join(tempDir, 'home') },
+      });
+      const operation = plan.operations.find(item => item.contentTransform === 'qwen-agent-frontmatter');
+      assert.ok(operation);
+      const source = path.join(tempDir, 'source.md');
+      fs.writeFileSync(source, ['---', 'name: sequence', 'description: Valid tools',
+        'tools:', '- Read', '- Grep', 'model: sonnet', '---', 'MANAGED_BODY'].join('\n'));
+      operation.sourcePath = source;
+      previewInstallPlan(plan);
+      applyInstallPlan(plan);
+      const installed = fs.readFileSync(operation.destinationPath, 'utf8');
+      const parsed = yaml.load(installed.match(/^---\n([\s\S]*?)\n---/)[1]);
+      assert.strictEqual(parsed.tools, 'read_file, grep_search');
+      assert.strictEqual(parsed.model, 'inherit');
+      assert.ok(installed.endsWith('MANAGED_BODY'));
+      assert.ok(fs.existsSync(plan.installStatePath));
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
+  if (test('rejects an invalid converted alias before changing any standalone file', () => {
+    const tempDir = createTempDir();
+    try {
+      writeAgent(tempDir, 'a-valid.md', ['---', 'name: valid', 'tools: Read', '---', 'BODY'].join('\n'));
+      writeAgent(tempDir, 'z-alias.md', ['---', 'name: alias', 'tools: &allowed', '- Read',
+        'metadata:', '  allowed: *allowed', '---', 'ALIAS_BODY'].join('\n'));
+      const before = fs.readdirSync(tempDir).sort().map(name => [name, readAgent(tempDir, name)]);
+      const result = run([tempDir]);
+      assert.strictEqual(result.code, 1);
+      assert.match(result.stderr, /transformed YAML is invalid/);
+      assert.deepStrictEqual(fs.readdirSync(tempDir).sort().map(name => [name, readAgent(tempDir, name)]), before);
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
   if (test('rejects uniformly indented mappings without changing neighboring metadata', () => {
     const tempDir = createTempDir();
     try {

@@ -173,7 +173,7 @@ function adaptFrontmatter(text) {
       changed = true;
       continue;
     }
-    const color = adaptColor(line);
+    const color = line === line.trimStart() ? adaptColor(line) : null;
     if (color) {
       if (color.changed) {
         changed = true;
@@ -185,8 +185,10 @@ function adaptFrontmatter(text) {
     }
 
     if (/^tools\s*:/.test(line) && hasTools) {
-      // Consume indented YAML continuations before writing the native scalar.
-      while (index + 1 < lines.length && /^(?:\s|#|$)/.test(lines[index + 1])) {
+      // YAML permits sequence items at the same indentation as their key.
+      // Consume both list styles before publishing the native scalar.
+      while (index + 1 < lines.length
+        && /^(?:\s|#|$|-(?:\s|$))/.test(lines[index + 1])) {
         index += 1;
         changed = true;
       }
@@ -214,6 +216,14 @@ function adaptFrontmatter(text) {
 
   if (!changed) {
     return { text, changed: false };
+  }
+
+  // Aliases or other unsupported forms must fail during preflight, never
+  // leave an invalid definition in either a standalone or managed install.
+  try {
+    yaml.load(updatedLines.join('\n'));
+  } catch (_error) {
+    throw new Error('Unsupported Qwen frontmatter conversion: transformed YAML is invalid; use a plain tools list');
   }
 
   const adapted = `---\n${updatedLines.join('\n')}\n---${match[2]}${source.slice(match[0].length)}`;
