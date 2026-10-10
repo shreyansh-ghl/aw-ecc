@@ -135,13 +135,33 @@ function main() {
 
   if (args.out) {
     const dir = path.resolve(args.out);
-    if (!args.dryRun) fs.mkdirSync(dir, { recursive: true });
+    if (!args.dryRun) {
+      if (fs.existsSync(dir) && fs.lstatSync(dir).isSymbolicLink()) {
+        throw new Error('output directory must not be a symlink');
+      }
+      // Check the whole batch before writing. Existing operator-owned agents
+      // cannot be replaced simply because they share an ECC dispatch name.
+      for (const r of results) {
+        const target = path.join(dir, `${r.id}.md`);
+        let stat;
+        try { stat = fs.lstatSync(target); } catch (error) {
+          if (error.code !== 'ENOENT') throw error;
+        }
+        if (stat && (!stat.isFile() || stat.isSymbolicLink()
+          || fs.readFileSync(target, 'utf8') !== r.markdown)) {
+          throw new Error(`refusing to overwrite existing agent: ${target}`);
+        }
+      }
+      fs.mkdirSync(dir, { recursive: true });
+    }
     for (const r of results) {
       const target = path.join(dir, `${r.id}.md`);
       if (args.dryRun) {
         progress(`[dry-run] would write ${target}`);
-      } else {
-        fs.writeFileSync(target, r.markdown);
+      } else if (!fs.existsSync(target)) {
+        // Exclusive creation prevents a file/symlink appearing after preflight
+        // from being overwritten. Identical existing output stays untouched.
+        fs.writeFileSync(target, r.markdown, { flag: 'wx' });
         progress(`wrote ${target}`);
       }
     }
@@ -172,4 +192,4 @@ function main() {
   }
 }
 
-main();
+try { main(); } catch (error) { console.error(`error: ${error.message}`); process.exitCode = 1; }

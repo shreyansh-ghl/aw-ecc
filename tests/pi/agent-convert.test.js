@@ -65,6 +65,24 @@ function main() {
       assert.match(planner, /prompt_mode: replace/);
     }],
 
+    ["--out preserves user-owned agents before writing any output", () => {
+      const dir = tmpdir();
+      const target = path.join(dir, "planner.md");
+      fs.writeFileSync(target, "USER_OWNED_AGENT\n");
+      assert.throws(() => runCli(["--out", dir]), /refusing to overwrite existing agent/);
+      assert.strictEqual(fs.readFileSync(target, "utf8"), "USER_OWNED_AGENT\n");
+      assert.deepStrictEqual(fs.readdirSync(dir), ["planner.md"]);
+    }],
+
+    ["--out repeats identical output without changing bytes", () => {
+      const dir = tmpdir();
+      runCli(["--out", dir]);
+      const target = path.join(dir, "planner.md");
+      const before = fs.readFileSync(target, "utf8");
+      runCli(["--out", dir]);
+      assert.strictEqual(fs.readFileSync(target, "utf8"), before);
+    }],
+
     ["--out --dry-run writes nothing", () => {
       const dir = tmpdir()
       const out = runCli(["--from", "claude", "--to", "pi", "--out", dir, "--dry-run"])
