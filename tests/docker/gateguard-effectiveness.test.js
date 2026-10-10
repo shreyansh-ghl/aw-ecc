@@ -16,7 +16,7 @@ const HOOK = path.join(ROOT, 'scripts', 'hooks', 'gateguard-fact-force.js');
 const lib = require(path.join(DIR, 'lib'));
 const arms = require(path.join(DIR, 'arms'));
 const { applyArm, armQuestionIds, PLACEBO_TEXT } = require(path.join(DIR, 'arm-patch'));
-const { parseArgs, writeMetadata, withOutputLock } = require(path.join(DIR, 'run'));
+const { parseArgs, readOptionalText, writeMetadata, withOutputLock } = require(path.join(DIR, 'run'));
 
 let passed = 0;
 let failed = 0;
@@ -362,6 +362,19 @@ if (gitAvailable()) {
       assert.strictEqual(fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8'), results);
       assert.deepStrictEqual(JSON.parse(fs.readFileSync(metaPath, 'utf8')), metadata);
       if (process.platform !== 'win32') {
+        const resultsPath = path.join(out, 'results.jsonl');
+        for (const file of [metaPath, resultsPath]) {
+          const original = fs.readFileSync(file, 'utf8');
+          fs.unlinkSync(file);
+          fs.symlinkSync(victim, file);
+          const early = run({});
+          assert.notStrictEqual(early.status, 0, 'early symlink must prevent a trial');
+          assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'VICTIM_BYTES');
+          assert.throws(() => readOptionalText(file, { ...fs, constants: { ...fs.constants, O_NOFOLLOW: 0 } }), /without symlinks/);
+          fs.unlinkSync(file);
+          fs.writeFileSync(file, original, { flag: 'wx', mode: 0o600 });
+        }
+        assert.strictEqual(fs.readFileSync(resultsPath, 'utf8'), results);
         const raced = run({ ECC_TEST_META_RACE: '1' });
         assert.strictEqual(raced.status, 0, raced.stderr);
         assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'VICTIM_BYTES');

@@ -72,18 +72,21 @@ function parseArgs(argv) {
   return options;
 }
 
-function readOptionalText(file) {
+function readOptionalText(file, io = fs) {
   let fd;
   try {
-    fd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+    fd = io.openSync(file, io.constants.O_RDONLY | (io.constants.O_NOFOLLOW || 0) | (io.constants.O_NONBLOCK || 0));
   } catch (error) {
     if (error.code === 'ENOENT') return null;
     throw error;
   }
   try {
-    if (!fs.fstatSync(fd).isFile()) throw new Error('Resume metadata/results must be regular files');
-    return fs.readFileSync(fd, 'utf8');
-  } finally { fs.closeSync(fd); }
+    if (!io.fstatSync(fd).isFile()
+      || (!io.constants.O_NOFOLLOW && io.lstatSync(file).isSymbolicLink())) {
+      throw new Error('Resume metadata/results must be regular files without symlinks');
+    }
+    return io.readFileSync(fd, 'utf8');
+  } finally { io.closeSync(fd); }
 }
 
 function writeMetadata(file, meta) {
