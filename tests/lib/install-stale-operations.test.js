@@ -185,8 +185,8 @@ for (const phase of ['during hashing', 'after hashing']) {
     const edited = 'user edit bytes\n';
     assert.strictEqual(original.length, edited.length);
     writeFile(file, original);
-    // Bind the fixture identity to its opened private file, keeping the later
-    // pathname read an assertion rather than relying on a prior stat check.
+    // Bind the fixture identity to its opened private file. Validate the
+    // retained pathname through a fresh descriptor after the injected race.
     const identityFd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
     let identity;
     try { identity = fs.fstatSync(identityFd, { bigint: true }); }
@@ -224,7 +224,15 @@ for (const phase of ['during hashing', 'after hashing']) {
       fs.fstatSync = originalFstat;
     }
     assert.ok(mutationApplied, 'The equal-length mutation must actually execute');
-    assert.strictEqual(fs.readFileSync(file, 'utf8'), edited);
+    const retainedFd = fs.openSync(file, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    try {
+      const retainedIdentity = fs.fstatSync(retainedFd, { bigint: true });
+      assert.ok(retainedIdentity.isFile());
+      assert.ok(matches(retainedIdentity), 'The mutated fixture inode must remain at the retained path');
+      assert.strictEqual(fs.readFileSync(retainedFd, 'utf8'), edited);
+    } finally {
+      fs.closeSync(retainedFd);
+    }
     assert.deepStrictEqual(result.removedPaths, []);
     assert.strictEqual(result.warnings.length, 1);
     assert.match(result.warnings[0], /changed while being verified/);

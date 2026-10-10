@@ -4666,9 +4666,12 @@ function runTests() {
     }
     for (const [rel, parts] of byFile) {
       const file = path.join(trivialRoot, rel);
-      if (fs.existsSync(file)) continue;
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, `${parts.join('\n')}\n`);
+      try {
+        fs.writeFileSync(file, `${parts.join('\n')}\n`, { flag: 'wx' });
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+      }
     }
   };
   const trivialRun = (toolName, tool_input, env = {}) => {

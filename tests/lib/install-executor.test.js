@@ -903,15 +903,30 @@ function runTests() {
           assert.strictEqual(fs.readFileSync(userPath, 'utf8'), 'Keep my settings.\n');
         }
 
-        const modifiedContent = `${fs.readFileSync(toolPath, 'utf8')}\n// User test customisation.\n`;
-        fs.writeFileSync(toolPath, modifiedContent, 'utf8');
+        const toolFd = fs.openSync(toolPath, fs.constants.O_RDWR | (fs.constants.O_NOFOLLOW || 0));
+        let modifiedContent;
+        try {
+          assert.ok(fs.fstatSync(toolFd).isFile());
+          modifiedContent = `${fs.readFileSync(toolFd, 'utf8')}\n// User test customisation.\n`;
+          const modifiedBytes = Buffer.from(modifiedContent);
+          assert.strictEqual(fs.writeSync(toolFd, modifiedBytes, 0, modifiedBytes.length, 0), modifiedBytes.length);
+          fs.ftruncateSync(toolFd, modifiedBytes.length);
+        } finally {
+          fs.closeSync(toolFd);
+        }
         const uninstalled = uninstallInstalledStates(lifecycleOptions);
         assert.strictEqual(uninstalled.results.length, 1);
         assert.strictEqual(uninstalled.results[0].status, 'partial', JSON.stringify(uninstalled));
         assert.ok(uninstalled.results[0].removedPaths.includes(barrelPath));
         assert.ok(!fs.existsSync(barrelPath), 'both legacy and repaired managed barrels are recognised');
         assert.deepStrictEqual(uninstalled.results[0].retainedPaths, [toolPath]);
-        assert.strictEqual(fs.readFileSync(toolPath, 'utf8'), modifiedContent);
+        const retainedFd = fs.openSync(toolPath, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+        try {
+          assert.ok(fs.fstatSync(retainedFd).isFile());
+          assert.strictEqual(fs.readFileSync(retainedFd, 'utf8'), modifiedContent);
+        } finally {
+          fs.closeSync(retainedFd);
+        }
         assert.strictEqual(fs.readFileSync(userPath, 'utf8'), 'Keep my settings.\n');
         assert.ok(fs.existsSync(plan.installStatePath), 'modified managed content retains its ownership record');
       }
