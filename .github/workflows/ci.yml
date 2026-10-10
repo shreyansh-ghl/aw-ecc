@@ -73,7 +73,8 @@ jobs:
           }
           rg --version
           if ($LASTEXITCODE -ne 0) { throw 'ripgrep executable is unavailable' }
-          'ecc-pcre2-probe' | rg --pcre2 -- '^ecc-pcre2-probe$'
+          # PowerShell writes CRLF to native stdin; retain anchored matching.
+          'ecc-pcre2-probe' | rg --pcre2 --crlf -- '^ecc-pcre2-probe$'
           if ($LASTEXITCODE -ne 0) { throw 'ripgrep PCRE2 support is required' }
 
       # Package manager setup
