@@ -230,7 +230,50 @@ const SCANNER_CASES = [
   ['a template import() is still a dependency', 'import(`./templated`);', ['./templated']],
   ['member calls named require or import',
     "r.require('./label'); obj?.import('./x'); obj . require('./y'); obj.\nimport('./z'); require('./real');", ['./real']],
+  ['division after an object literal', "const ratio = {} / 2; require('../after-object');", ['../after-object']],
+  ['division after a nested object literal', "const v = { a: { b: 1 } } / 2, q = \"/\"; require('./after-nested-object');",
+    ['./after-nested-object']],
+  ['division after an object literal inside an interpolation',
+    "const s = `${ {} / 2 }`, q = \"/\"; require('./after-interpolated-object');", ['./after-interpolated-object']],
+  ['regex after a function body', "function f() {} /\"/.test(s); require('./after-function');", ['./after-function']],
+  ['regex after a class body', "class A {} /\"/.test(s); require('./after-class-body');", ['./after-class-body']],
+  ['regex after a nested block', "if (a) { if (b) {} } /\"/.test(s); require('./after-nested-block');",
+    ['./after-nested-block']],
+  ['division after a member named of', "const n = a.of / 2, q = \"/\"; require('./after-member-of');",
+    ['./after-member-of']],
+  ['spread of a require', "const all = [...require('../spread-array')]; f(... require('./spread-arg'));",
+    ['../spread-array', './spread-arg']],
+  ['a literal require with extra arguments', "require('../extra-arg', null); require(path.join(__dirname, 'j.js'), 0);",
+    ['../extra-arg', './j.js']],
 ];
+
+test('scanner: an import() with an options argument is an exact-path import, not a dynamic warning', () => {
+  const { specifiers, imports, dynamic } = validator().extractReferences(
+    "import('./data.json', { with: { type: 'json' } }); require('./plain', null);");
+  assert.deepEqual(specifiers.sort(), ['./data.json', './plain']);
+  assert.deepEqual(imports, ['./data.json']);
+  assert.deepEqual(dynamic, []);
+});
+
+test('scanner: a computed first argument still warns when more arguments follow', () => {
+  assert.deepEqual(validator().extractReferences("require(name, null); require('./a' + b, c);").dynamic.sort(),
+    ["'./a' + b", 'name']);
+});
+
+// Each of these shapes once passed the gate with its dependency missing.
+for (const [label, line] of [
+  ['division after an object literal', "const ratio = {} / 2; require('../../shared/helper');"],
+  ['a spread require', "module.exports = [...require('../../shared/helper')];"],
+  ['a require with an extra argument', "module.exports = require('../../shared/helper', null);"],
+]) {
+  test(`an unplanned require hidden by ${label} still fails`, () => withFixture(root => {
+    plantSkillScript(root, `'use strict';\n\n${line}\n`);
+    const result = validator().validate(root);
+    assert.equal(result.status, 'failure');
+    assert.ok(specifiersOf(result.failures).includes('../../shared/helper'), JSON.stringify(result.failures));
+    assert.ok(result.failures.every(failure => failure.reason === 'unplanned-target'));
+  }));
+}
 
 test('scanner: computed arguments nested more than one level deep still warn', () => {
   const { dynamic } = validator().extractReferences(
