@@ -26,23 +26,29 @@ const BUILTINS = new Set(builtinModules);
 const SCRIPT_EXTENSIONS = new Set(['.js', '.cjs', '.mjs']);
 const MARK = '\u0000';
 const SLOT = `${MARK}(\\d+)${MARK}`;
-// `obj.require(`, `obj?.import(` and `obj . require(` are method calls, not module loads.
-const NOT_MEMBER = '(?<!\\.\\s*)';
-const CALL_PATTERN = new RegExp(`${NOT_MEMBER}\\b(require|import)\\s*\\(\\s*${SLOT}\\s*\\)`, 'g');
+// `obj.require(`, `obj?.import(` and `obj . require(` are method calls, not
+// module loads; the last dot of a spread (`...require(`) is not member access.
+const NOT_MEMBER = '(?<!(?<!\\.)\\.\\s*)';
 const FROM_PATTERN = new RegExp(`\\bfrom\\s*${SLOT}`, 'g');
 const SIDE_EFFECT_PATTERN = new RegExp(`\\bimport\\s*${SLOT}`, 'g');
-const DIRNAME_JOIN_PATTERN = new RegExp(
-  `${NOT_MEMBER}\\brequire\\s*\\(\\s*path\\.join\\s*\\(\\s*__dirname\\s*((?:,\\s*${SLOT}\\s*)+)\\)\\s*\\)`, 'g');
-const CALL_OPEN_PATTERN = new RegExp(`${NOT_MEMBER}\\b(?:require|import)\\s*\\(`, 'g');
-const STATIC_JOIN_PATTERN = new RegExp(`^path\\.join\\s*\\(\\s*__dirname\\s*(?:,\\s*${SLOT}\\s*)+\\)$`);
+const CALL_OPEN_PATTERN = new RegExp(`${NOT_MEMBER}\\b(require|import)\\s*\\(`, 'g');
+const LITERAL_PATTERN = new RegExp(`^${SLOT}$`);
+const STATIC_JOIN_PATTERN = new RegExp(`^path\\.join\\s*\\(\\s*__dirname\\s*((?:,\\s*${SLOT}\\s*)+)\\)$`);
 const SLOT_PATTERN = new RegExp(SLOT, 'g');
 // Closes an interpolation; no keyword pattern can match across it.
 const CLOSE = `${MARK}${MARK}`;
 const ESCAPE_PATTERN = /\\(?:u\{([0-9a-fA-F]+)\}|u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2})|(\r\n|[\s\S]))/g;
 const SIMPLE_ESCAPES = Object.freeze({ n: '\n', r: '\r', t: '\t', b: '\b', f: '\f', v: '\v', 0: '\0' });
 const LINE_CONTINUATIONS = new Set(['\n', '\r', '\r\n', '\u2028', '\u2029']);
-// `}` ends a block, so a slash after it starts a statement: a regex.
-const REGEX_PRECEDES = /(?:[([{},;:=!&|?+\-*/%~^<>]|\b(?:return|typeof|case|in|of|new|delete|void|instanceof|do|else|yield|await))$/;
+// A keyword, not a member of that name: `a.of / 2` divides.
+const KEYWORD = `${NOT_MEMBER}(?<![\\w$])`;
+// `}` is absent: whether a slash after it divides depends on the brace (see opensBlock).
+const REGEX_PRECEDES = new RegExp(
+  `(?:[([{,;:=!&|?+\\-*/%~^<>]|${KEYWORD}(?:return|typeof|case|in|of|new|delete|void|instanceof|do|else|yield|await))$`);
+// After these a `{` opens an object literal; after any other word it opens a block.
+const OBJECT_KEYWORD = new RegExp(
+  `${KEYWORD}(?:return|typeof|case|in|of|new|delete|void|instanceof|yield|await)$`);
+const CASE_LABEL = new RegExp(`${KEYWORD}(?:case\\b[^;{}]*|default\\s*):$`);
 const CONDITION_KEYWORD = /(?:^|[^\w$])(if|while|for|with)$/;
 
 /** Cook a raw string or template chunk the way the JavaScript parser would. */
@@ -71,6 +77,21 @@ function isAbsoluteSpecifier(value) {
 function opensCondition(code) {
   const match = CONDITION_KEYWORD.exec(code);
   return Boolean(match) && !code.slice(0, code.length - match[1].length).trimEnd().endsWith('.');
+}
+
+/**
+ * Whether a `{` after code opens a block (a slash after its `}` starts a
+ * regex) or an object literal (a slash after its `}` divides). `blocks` holds
+ * the kind of every enclosing brace, innermost last.
+ */
+function opensBlock(code, blocks) {
+  if (!code || code.endsWith('=>')) return true;
+  const last = code[code.length - 1];
+  if (last === ')' || last === ';' || last === '}') return true;
+  if (last === '{') return blocks[blocks.length - 1] !== false;
+  if (last === ':') return blocks[blocks.length - 1] !== false && CASE_LABEL.test(code);
+  if (/[\w$]/.test(last)) return !OBJECT_KEYWORD.test(code);
+  return false;
 }
 
 function readRegexLiteral(source, start) {
@@ -102,6 +123,10 @@ function scanSource(rawSource) {
   // last one closed did: `/` after `if (...)` starts a regex, not division.
   const parens = [];
   let closedCondition = false;
+  // The same for braces: whether each open one began a block, and whether the
+  // last one closed did: `/` after `{}` divides, after `if (x) {}` it does not.
+  const blocks = [];
+  let closedBlock = false;
   let code = '';
   let index = 0;
   // Slots cut from template literals; `from` and `import` need a quoted string.
@@ -141,7 +166,9 @@ function scanSource(rawSource) {
       index = index === -1 ? source.length : index + 2;
       continue;
     }
-    if (char === '/' && (REGEX_PRECEDES.test(code.trimEnd()) || (closedCondition && code.trimEnd().endsWith(')')))) {
+    if (char === '/' && (REGEX_PRECEDES.test(code.trimEnd())
+      || (closedCondition && code.trimEnd().endsWith(')'))
+      || (closedBlock && code.trimEnd().endsWith('}')))) {
       index = readRegexLiteral(source, index);
       code += ' ';
       continue;
@@ -168,6 +195,8 @@ function scanSource(rawSource) {
     }
     if (char === '(') parens.push(opensCondition(code.trimEnd()));
     else if (char === ')') closedCondition = parens.pop() === true;
+    else if (char === '{') blocks.push(opensBlock(code.trimEnd(), blocks));
+    else if (char === '}') closedBlock = blocks.pop() !== false;
     code += char;
     index += 1;
   }
@@ -185,9 +214,11 @@ function collect(pattern, code, handler) {
 }
 
 /**
- * The argument text of every `require(...)`/`import(...)` call, matched to
- * its closing paren at any nesting depth. Strings are already slots, so a
- * paren inside one cannot unbalance the count.
+ * The first argument of every `require(...)`/`import(...)` call, matched to
+ * its closing paren at any nesting depth and cut at the first top-level
+ * comma: Node resolves only the first argument, so `require('./x', null)` and
+ * `import('./x.json', { with })` still name `./x`. Strings are already slots,
+ * so a paren or comma inside one cannot unbalance the count.
  */
 function callArguments(code) {
   const found = [];
@@ -195,12 +226,15 @@ function callArguments(code) {
     const start = match.index + match[0].length;
     let depth = 1;
     let cursor = start;
+    let end = null;
     while (cursor < code.length && depth > 0) {
-      if (code[cursor] === '(') depth += 1;
-      else if (code[cursor] === ')') depth -= 1;
+      const char = code[cursor];
+      if (char === '(' || char === '[' || char === '{') depth += 1;
+      else if (char === ')' || char === ']' || char === '}') depth -= 1;
+      else if (char === ',' && depth === 1 && end === null) end = cursor;
       cursor += 1;
     }
-    if (depth === 0) found.push(code.slice(start, cursor - 1).trim());
+    if (depth === 0) found.push({ keyword: match[1], argument: code.slice(start, end ?? cursor - 1).trim() });
   });
   return found;
 }
@@ -230,7 +264,6 @@ function extractReferences(rawSource) {
       packages.add(value.startsWith('@') ? value.split('/').slice(0, 2).join('/') : value.split('/')[0]);
     }
   };
-  collect(CALL_PATTERN, code, match => record(literals[Number(match[2])], match[1] === 'import'));
   // Static `from` and side-effect `import` take only a quoted string, so a
   // template there (a tag named `from`, say) is not an import.
   for (const pattern of [FROM_PATTERN, SIDE_EFFECT_PATTERN]) {
@@ -238,14 +271,19 @@ function extractReferences(rawSource) {
       if (!templates.has(Number(match[1]))) record(literals[Number(match[1])], true);
     });
   }
-  collect(DIRNAME_JOIN_PATTERN, code, match => {
-    const segments = [];
-    collect(SLOT_PATTERN, match[1], slotMatch => segments.push(literals[Number(slotMatch[1])]));
-    specifiers.add(`./${segments.join('/')}`);
-  });
-  for (const argument of callArguments(code)) {
-    if (!argument || new RegExp(`^${SLOT}$`).test(argument) || STATIC_JOIN_PATTERN.test(argument)) continue;
-    dynamic.add(renderExpression(argument, literals));
+  for (const { keyword, argument } of callArguments(code)) {
+    if (!argument) continue;
+    const literal = LITERAL_PATTERN.exec(argument);
+    const join = keyword === 'require' && STATIC_JOIN_PATTERN.exec(argument);
+    if (literal) {
+      record(literals[Number(literal[1])], keyword === 'import');
+    } else if (join) {
+      const segments = [];
+      collect(SLOT_PATTERN, join[1], slotMatch => segments.push(literals[Number(slotMatch[1])]));
+      specifiers.add(`./${segments.join('/')}`);
+    } else {
+      dynamic.add(renderExpression(argument, literals));
+    }
   }
   return { specifiers: [...specifiers], imports: [...imports], packages: [...packages], dynamic: [...dynamic] };
 }
