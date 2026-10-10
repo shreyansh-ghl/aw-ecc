@@ -107,5 +107,4 @@ Fourth review follow-up. Three open review findings still let a carrier with a m
 
 Scope. The gate checks static, relative module specifiers in planned JavaScript files, and nothing else. It does not see `require.resolve`, an aliased or `createRequire`-made `require`, files a script spawns or reads at run time, or `.sh` and `.py` scripts. It does not model `.node` addons or a directory's `package.json` `main`. Each of those can still ship a carrier that fails at load time.
 
-
 October 10 maintainer reconciliation: the refreshed source head `f7bc750326a40bca31fa4ff4ef7337c7b480de4c` rebases the four-file gate onto October 9 main and contributes fourteen further regression cases. Its refreshed source ancestry and those cases are retained. The maintained TypeScript parser supersedes the further partial-lexer repair, while preserving the existing parser, malformed-source, native module.require and ESM URL fixtures. The historical lexer verification above remains dated author evidence.
