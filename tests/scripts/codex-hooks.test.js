@@ -193,13 +193,17 @@ git_path="$(command -v git)"
 awk_path="$(command -v awk)"
 head_path="$(command -v head)"
 cat_path="$(command -v cat)"
-rg_path="$(command -v rg || true)"
+rg_path="$(type -P rg || true)"
+${scanner === 'real' ? `if [[ -z "$rg_path" ]]; then
+printf 'Real scanner fixture requires ripgrep with PCRE2 support on PATH.\\n' >&2
+exit 97
+fi` : ''}
 git() { "$git_path" "$@"; }
 awk() { "$awk_path" "$@"; }
 head() { "$head_path" "$@"; }
 cat() { "$cat_path" "$@"; }
 unset -f rg
-PATH="${toBashPath(binDir)}"
+${scanner === 'real' ? '# Preserve dependencies used by an actual scanner executable or wrapper.' : `PATH="${toBashPath(binDir)}"`}
 ${scanner ? `rg() {
 printf '%s\\n' "$*" >> "${toBashPath(callsPath)}"
 ${scanner === 'real' ? '"$rg_path" "$@"' : scanner === 'finding' ? "printf '1:synthetic-scanner-finding\\n'; return 0;" : scanner === 'error' ? 'return 2;' : 'return 1;'}
