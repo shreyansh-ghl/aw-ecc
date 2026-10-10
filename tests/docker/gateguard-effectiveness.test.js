@@ -16,7 +16,7 @@ const HOOK = path.join(ROOT, 'scripts', 'hooks', 'gateguard-fact-force.js');
 const lib = require(path.join(DIR, 'lib'));
 const arms = require(path.join(DIR, 'arms'));
 const { applyArm, armQuestionIds, PLACEBO_TEXT } = require(path.join(DIR, 'arm-patch'));
-const { parseArgs } = require(path.join(DIR, 'run'));
+const { parseArgs, writeMetadata, withOutputLock } = require(path.join(DIR, 'run'));
 
 let passed = 0;
 let failed = 0;
@@ -228,6 +228,41 @@ test('paired comparisons count discordant pairs and bound the difference', () =>
   assert.ok(markdown.includes('| off | 6 | -83%'), markdown);
 });
 
+test('metadata publication replaces a symlink entry without touching its victim', () => {
+  const out = tempDir('gg-eff-meta-');
+  try {
+    const victim = path.join(out, 'victim');
+    const meta = path.join(out, 'meta.json');
+    fs.writeFileSync(victim, 'VICTIM_BYTES');
+    try { fs.symlinkSync(victim, meta); }
+    catch (error) {
+      if (process.platform !== 'win32') throw error;
+      fs.writeFileSync(meta, 'old');
+    }
+    writeMetadata(meta, { model: 'fake', sha: 'fixture' });
+    assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'VICTIM_BYTES');
+    const fd = fs.openSync(meta, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    try {
+      assert.strictEqual(fs.fstatSync(fd).isFile(), true);
+      assert.deepStrictEqual(JSON.parse(fs.readFileSync(fd, 'utf8')), { model: 'fake', sha: 'fixture' });
+    } finally { fs.closeSync(fd); }
+    assert.ok(!fs.readdirSync(out).some(file => file.endsWith('.tmp')));
+  } finally { fs.rmSync(out, { recursive: true, force: true }); }
+});
+
+test('same-output workers are rejected and the lock is released on errors', () => {
+  const out = tempDir('gg-eff-lock-');
+  try {
+    assert.throws(() => withOutputLock(out, () => {
+      assert.throws(() => withOutputLock(out, () => assert.fail('second worker started')), /concurrent workers/);
+      throw new Error('trial failure');
+    }), /trial failure/);
+    assert.deepStrictEqual(fs.readdirSync(out), []);
+    assert.strictEqual(withOutputLock(out, () => 'resumed'), 'resumed');
+    assert.deepStrictEqual(fs.readdirSync(out), []);
+  } finally { fs.rmSync(out, { recursive: true, force: true }); }
+});
+
 test('arguments require an output folder, a model and the real-provider opt-in', () => {
   assert.throws(() => parseArgs([]), /--out is required/);
   assert.throws(() => parseArgs(['--out', 'x']), /--model is required/);
@@ -283,6 +318,60 @@ if (gnuTarDir) {
 }
 
 if (gitAvailable()) {
+  test('actual fake-provider CLI resumes identity and resists a metadata publication symlink race', () => {
+    const root = tempDir('gg-eff-cli-');
+    const out = path.join(root, 'out');
+    const victim = path.join(root, 'victim');
+    const preload = path.join(root, 'preload.js');
+    const scenario = scenarios.find(item => item.id === 'importers-date-shape');
+    try {
+      fs.writeFileSync(victim, 'VICTIM_BYTES');
+      fs.writeFileSync(preload, `
+        const cp = require('child_process');
+        const originalSpawn = cp.spawnSync;
+        cp.spawnSync = (file, args, options) => file === 'ecc-fake-claude'
+          ? originalSpawn(process.execPath, [${JSON.stringify(path.join(DIR, 'fake-claude.js'))}, ...args], options)
+          : originalSpawn(file, args, options);
+        if (process.env.ECC_TEST_META_RACE === '1') {
+          const fs = require('fs');
+          const rename = fs.renameSync;
+          fs.renameSync = (from, to) => {
+            if (String(to).endsWith('meta.json')) {
+              fs.unlinkSync(to);
+              fs.symlinkSync(${JSON.stringify(victim)}, to);
+            }
+            return rename(from, to);
+          };
+        }
+      `);
+      const args = ['--require', preload, path.join(DIR, 'run.js'), '--out', out, '--model', 'fake', '--claude', 'ecc-fake-claude', '--allow-real-provider', '--arms', 'off', '--reps', '1', '--scenarios', scenario.id];
+      const env = { ...process.env, FAKE_CLAUDE_OVERLAY: path.join(scenario.root, 'reference') };
+      const run = extraEnv => spawnSync(process.execPath, args, { env: { ...env, ...extraEnv }, encoding: 'utf8', timeout: 60000 });
+      const first = run({});
+      assert.strictEqual(first.status, 0, first.stderr);
+      const metaPath = path.join(out, 'meta.json');
+      const metadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      assert.strictEqual(metadata.model, 'fake');
+      assert.strictEqual(metadata.sha, arms.resolveRef(ROOT, 'HEAD'));
+      const results = fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8');
+      assert.strictEqual(results.trim().split('\n').length, 1);
+      assert.strictEqual(JSON.parse(results.trim()).passed, true);
+      const second = run({});
+      assert.strictEqual(second.status, 0, second.stderr);
+      assert.ok(second.stderr.includes('0 trials to run'));
+      assert.strictEqual(fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8'), results);
+      assert.deepStrictEqual(JSON.parse(fs.readFileSync(metaPath, 'utf8')), metadata);
+      if (process.platform !== 'win32') {
+        const raced = run({ ECC_TEST_META_RACE: '1' });
+        assert.strictEqual(raced.status, 0, raced.stderr);
+        assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'VICTIM_BYTES');
+        assert.deepStrictEqual(JSON.parse(fs.readFileSync(metaPath, 'utf8')), metadata);
+        assert.strictEqual(fs.readFileSync(path.join(out, 'results.jsonl'), 'utf8'), results);
+      }
+      assert.ok(!fs.readdirSync(out).includes('.run.lock'));
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  });
+
   test('a trial wires the arm hook, counts the denial and grades the result (test double for Claude)', () => {
     const work = tempDir('gg-eff-trial-');
     const saved = process.env.FAKE_CLAUDE_OVERLAY;

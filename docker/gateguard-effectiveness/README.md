@@ -37,3 +37,9 @@ node docker/gateguard-effectiveness/run-intent.js --out gg-intent --model <model
 node docker/gateguard-effectiveness/run-intent.js --out gg-intent --summarize
 node docker/gateguard-effectiveness/run-intent.js --out gg-intent --verify
 ```
+
+Runs sharing an output directory are serialized by `.run.lock`; concurrent workers
+must use separate `--out` directories. Normal completion and errors release the
+lock. After a killed process, confirm that its worker has stopped before removing
+the stale lock and resuming. Metadata uses private exclusive temporary creation
+and atomic rename so a destination symlink cannot redirect metadata writes.

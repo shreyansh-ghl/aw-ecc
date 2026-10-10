@@ -203,6 +203,20 @@ function runTests() {
     }
   })) passed++; else failed++;
 
+  if (test('adapts color with long whitespace through the actual CLI', () => {
+    const tempDir = createTempDir();
+    try {
+      const tabs = '\t'.repeat(250000);
+      writeAgent(tempDir, 'color.md', ['---', 'name: color', 'tools: Read', `color:${tabs}teal${tabs}`, '---', 'BODY'].join('\n'));
+      const result = run([tempDir]);
+      assert.strictEqual(result.code, 0, result.stderr);
+      assert.ok(readAgent(tempDir, 'color.md').includes('color: cyan'));
+      const before = readAgent(tempDir, 'color.md');
+      assert.strictEqual(run([tempDir]).code, 0);
+      assert.strictEqual(readAgent(tempDir, 'color.md'), before);
+    } finally { cleanupTempDir(tempDir); }
+  })) passed++; else failed++;
+
   if (test('leaves an already-compatible agent untouched', () => {
     const tempDir = createTempDir();
     const agentsDir = path.join(tempDir, '.qwen', 'agents');

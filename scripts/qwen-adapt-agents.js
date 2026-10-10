@@ -109,19 +109,22 @@ function formatToolLine(tools) {
 }
 
 function adaptColor(line) {
-  const match = line.match(/^(\s*)color\s*:\s*(.+?)\s*$/);
-  if (!match) {
+  const trimmed = line.trimStart();
+  const colon = trimmed.indexOf(':');
+  if (colon < 0 || trimmed.slice(0, colon).trimEnd() !== 'color') {
     return null;
   }
-
-  const value = match[2].replace(/^["']|["']$/g, '');
+  const rawValue = trimmed.slice(colon + 1).trim();
+  if (!rawValue) return null;
+  const indent = line.slice(0, line.length - trimmed.length);
+  const value = rawValue.replace(/^["']|["']$/g, '');
   if (VALID_COLORS.has(value)) {
     return { line, changed: false };
   }
 
   const remapped = COLOR_MAP.get(value);
   if (remapped) {
-    return { line: `${match[1]}color: ${remapped}`, changed: true };
+    return { line: `${indent}color: ${remapped}`, changed: true };
   }
 
   return { line: null, changed: true };

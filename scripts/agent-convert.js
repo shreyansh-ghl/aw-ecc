@@ -89,6 +89,26 @@ Options:
 `);
 }
 
+function isIdenticalExistingAgent(target, markdown) {
+  let fd;
+  try {
+    fd = fs.openSync(target, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0) | (fs.constants.O_NONBLOCK || 0));
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+  try {
+    if (!fs.fstatSync(fd).isFile()
+      || (!fs.constants.O_NOFOLLOW && fs.lstatSync(target).isSymbolicLink())
+      || fs.readFileSync(fd, 'utf8') !== markdown) {
+      throw new Error(`refusing to overwrite existing agent: ${target}`);
+    }
+    return true;
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 function main() {
   let args;
   try {
@@ -135,6 +155,7 @@ function main() {
 
   if (args.out) {
     const dir = path.resolve(args.out);
+    const identicalOutputs = new Set();
     if (!args.dryRun) {
       if (fs.existsSync(dir) && fs.lstatSync(dir).isSymbolicLink()) {
         throw new Error('output directory must not be a symlink');
@@ -143,14 +164,7 @@ function main() {
       // cannot be replaced simply because they share an ECC dispatch name.
       for (const r of results) {
         const target = path.join(dir, `${r.id}.md`);
-        let stat;
-        try { stat = fs.lstatSync(target); } catch (error) {
-          if (error.code !== 'ENOENT') throw error;
-        }
-        if (stat && (!stat.isFile() || stat.isSymbolicLink()
-          || fs.readFileSync(target, 'utf8') !== r.markdown)) {
-          throw new Error(`refusing to overwrite existing agent: ${target}`);
-        }
+        if (isIdenticalExistingAgent(target, r.markdown)) identicalOutputs.add(target);
       }
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -158,10 +172,19 @@ function main() {
       const target = path.join(dir, `${r.id}.md`);
       if (args.dryRun) {
         progress(`[dry-run] would write ${target}`);
-      } else if (!fs.existsSync(target)) {
-        // Exclusive creation prevents a file/symlink appearing after preflight
-        // from being overwritten. Identical existing output stays untouched.
-        fs.writeFileSync(target, r.markdown, { flag: 'wx' });
+      } else if (identicalOutputs.has(target)) {
+        // Existing output may have changed while the rest of the batch was checked.
+        if (!isIdenticalExistingAgent(target, r.markdown)) {
+          throw new Error(`existing agent disappeared after preflight: ${target}`);
+        }
+      } else {
+        // Exclusive descriptor creation rejects a raced file or symlink.
+        const fd = fs.openSync(target, 'wx', 0o600);
+        try {
+          fs.writeFileSync(fd, r.markdown);
+        } finally {
+          fs.closeSync(fd);
+        }
         progress(`wrote ${target}`);
       }
     }

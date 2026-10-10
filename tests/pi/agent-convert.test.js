@@ -74,6 +74,53 @@ function main() {
       assert.deepStrictEqual(fs.readdirSync(dir), ["planner.md"]);
     }],
 
+    ["--out rejects a file created at exclusive-open time without overwriting bytes", () => {
+      const root = tmpdir();
+      const dir = path.join(root, "out");
+      const preload = path.join(root, "race.js");
+      fs.mkdirSync(dir);
+      fs.writeFileSync(preload, `
+        const fs = require('fs');
+        const open = fs.openSync;
+        let injected = false;
+        fs.openSync = function(file, flags, mode) {
+          if (!injected && flags === 'wx' && String(file).endsWith('.md')) {
+            injected = true;
+            const fd = open(file, 'wx', 0o600);
+            try { fs.writeFileSync(fd, 'RACED_OPERATOR_BYTES'); }
+            finally { fs.closeSync(fd); }
+          }
+          return open(file, flags, mode);
+        };
+      `);
+      try {
+        assert.throws(() => execFileSync(NODE, ["--require", preload, CLI, "--out", dir], { encoding: "utf8", stdio: "pipe" }), /EEXIST/);
+        const files = fs.readdirSync(dir);
+        assert.strictEqual(files.length, 1);
+        assert.strictEqual(fs.readFileSync(path.join(dir, files[0]), "utf8"), "RACED_OPERATOR_BYTES");
+      } finally { fs.rmSync(root, { recursive: true, force: true }); }
+    }],
+
+    ["--out fails closed when existing output changes after batch preflight", () => {
+      const root = tmpdir();
+      const dir = path.join(root, "out");
+      const preload = path.join(root, "change.js");
+      runCli(["--out", dir]);
+      const target = path.join(dir, fs.readdirSync(dir).sort()[0]);
+      fs.writeFileSync(preload, `
+        const fs = require('fs');
+        const mkdir = fs.mkdirSync;
+        fs.mkdirSync = function(file, options) {
+          if (String(file) === ${JSON.stringify(dir)}) fs.writeFileSync(${JSON.stringify(target)}, 'CHANGED_AFTER_PREFLIGHT');
+          return mkdir(file, options);
+        };
+      `);
+      try {
+        assert.throws(() => execFileSync(NODE, ["--require", preload, CLI, "--out", dir], { encoding: "utf8", stdio: "pipe" }), /refusing to overwrite existing agent/);
+        assert.strictEqual(fs.readFileSync(target, "utf8"), "CHANGED_AFTER_PREFLIGHT");
+      } finally { fs.rmSync(root, { recursive: true, force: true }); }
+    }],
+
     ["--out repeats identical output without changing bytes", () => {
       const dir = tmpdir();
       runCli(["--out", dir]);

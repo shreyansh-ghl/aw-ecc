@@ -103,6 +103,12 @@ check('exports extractFrontmatter and inspectFrontmatter without running the CLI
   assert.strictEqual(inspected.values.name, 'demo');
 });
 
+check('YAML list extraction handles long whitespace without ambiguous backtracking', () => {
+  const { extractTopLevelList } = require('../../scripts/ci/validate-skill-host-compat');
+  const tabs = '\t'.repeat(250000);
+  assert.deepStrictEqual(extractTopLevelList(`skills:\n-${tabs}\n-${tabs}portable${tabs}\n  - "second"\nnext: value\n  - ignored`, 'skills'), ['portable', 'second']);
+});
+
 check('happy: skill with name/description only, no Codex copy required, exits 0', () => {
   const root = createRoot();
   try {

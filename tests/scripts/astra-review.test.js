@@ -285,29 +285,34 @@ test('writeReport writes the whole content via the descriptor and cleans up when
 test('writeReport replaces a symlink and a world-readable file with a private regular file (real fs)', () => {
   const posix = process.platform !== 'win32';
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'astra-report-'));
-  const victim = path.join(dir, 'victim.txt');
-  fs.writeFileSync(victim, 'keep me');
-  const linked = path.join(dir, 'linked.json');
-  let canSymlink = true;
   try {
-    fs.symlinkSync(victim, linked);
-  } catch {
-    canSymlink = false; // Windows without symlink privilege: replacement is still checked below
-  }
-  const shared = path.join(dir, 'shared.json');
-  fs.writeFileSync(shared, 'old', { mode: 0o644 });
+    const victim = path.join(dir, 'victim.txt');
+    fs.writeFileSync(victim, 'keep me');
+    const linked = path.join(dir, 'linked.json');
+    let canSymlink = true;
+    try {
+      fs.symlinkSync(victim, linked);
+    } catch {
+      canSymlink = false; // Windows without symlink privilege: replacement is still checked below
+    }
+    const shared = path.join(dir, 'shared.json');
+    fs.writeFileSync(shared, 'old', { mode: 0o644 });
 
-  if (canSymlink) cli.writeReport(linked, '{"a":1}');
-  cli.writeReport(shared, '{"b":2}');
+    if (canSymlink) cli.writeReport(linked, '{"a":1}');
+    cli.writeReport(shared, '{"b":2}');
 
-  if (canSymlink) {
-    assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'keep me', 'symlink target untouched');
-    assert.strictEqual(fs.lstatSync(linked).isSymbolicLink(), false, 'symlink replaced by a regular file');
-    assert.strictEqual(fs.readFileSync(linked, 'utf8'), '{"a":1}');
-  }
-  assert.strictEqual(fs.readFileSync(shared, 'utf8'), '{"b":2}');
-  if (posix) assert.strictEqual((fs.statSync(shared).mode & 0o777), 0o600, 'existing 0644 file becomes 0600');
-  assert.deepStrictEqual(fs.readdirSync(dir).filter((name) => name.endsWith('.tmp')), [], 'no temp files left');
+    if (canSymlink) {
+      assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'keep me', 'symlink target untouched');
+      const fd = fs.openSync(linked, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+      try {
+        assert.strictEqual(fs.fstatSync(fd).isFile(), true, 'published report is regular');
+        assert.strictEqual(fs.readFileSync(fd, 'utf8'), '{"a":1}');
+      } finally { fs.closeSync(fd); }
+    }
+    assert.strictEqual(fs.readFileSync(shared, 'utf8'), '{"b":2}');
+    if (posix) assert.strictEqual((fs.statSync(shared).mode & 0o777), 0o600, 'existing 0644 file becomes 0600');
+    assert.deepStrictEqual(fs.readdirSync(dir).filter((name) => name.endsWith('.tmp')), [], 'no temp files left');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('CLI exits 2 with usage on a bad argument', () => {

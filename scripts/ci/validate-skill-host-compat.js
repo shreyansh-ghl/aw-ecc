@@ -133,9 +133,10 @@ function extractTopLevelList(yamlSource, key) {
       break;
     }
 
-    const match = line.match(/^\s*-\s+(.+?)\s*$/);
-    if (match) {
-      results.push(unquoteYamlScalar(match[1]));
+    const trimmed = line.trim();
+    if (trimmed.startsWith('-') && trimmed.length > 1 && /\s/.test(trimmed[1])) {
+      const value = trimmed.slice(1).trim();
+      if (value) results.push(unquoteYamlScalar(value));
     }
   }
 
