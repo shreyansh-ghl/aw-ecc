@@ -475,7 +475,8 @@
     "!**/*.pyd",
     "!**/.pytest_cache/**",
     "skills/conventional-commit-review/",
-    "skills/brownfield-retrospective/"
+    "skills/brownfield-retrospective/",
+    "skills/agent-runtime-gateway-smoke-test/"
   ],
   "bin": {
     "ecc": "scripts/ecc.js",
