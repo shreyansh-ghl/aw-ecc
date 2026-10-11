@@ -54,9 +54,9 @@ function runHook(home, transcript, env = {}) {
   });
 }
 
-function sessionFileFor(home, uuid) {
+function sessionFileFor(home, uuid, date = getDateString()) {
   const shortId = sanitizeSessionId(uuid.slice(-8).toLowerCase());
-  return path.join(home, '.claude', 'session-data', `${getDateString()}-${shortId}-session.tmp`);
+  return path.join(home, '.claude', 'session-data', `${date}-${shortId}-session.tmp`);
 }
 
 function runTests() {
@@ -320,21 +320,31 @@ function runTests() {
   // A local stand-in exercises the actual bootstrap -> runner -> Stop hook ->
   // child timeout chain without invoking Claude or using authentication.
   if (process.platform !== 'win32') {
-    (test('times out a slow summarizer before lifecycle expiry and saves fallback', () => {
+    (test('times out a slow summarizer across a calendar-day rollover and saves fallback', () => {
       const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ecc-session-budget-'));
       try {
         const uuid = '12345678-1234-4234-8234-123456789abc';
         const transcript = path.join(home, `${uuid}.jsonl`);
         const bin = path.join(home, 'bin');
+        const started = path.join(home, 'started');
+        const calendarAfter = path.join(home, 'calendar-after');
+        const calendarPreload = path.join(home, 'calendar.cjs');
+        const sessionDate = '2000-01-01';
+        const nextDate = '2000-01-02';
+        const utils = path.resolve(__dirname, '../../scripts/lib/utils.js');
         fs.mkdirSync(bin);
+        // Only the calendar helper changes. Date.now and the actual lifecycle
+        // deadline stay real while the summarizer crosses into the next day.
+        fs.writeFileSync(calendarPreload, `const fs = require('node:fs');\nrequire(${JSON.stringify(utils)}).getDateString = () => fs.existsSync(${JSON.stringify(started)}) ? ${JSON.stringify(nextDate)} : ${JSON.stringify(sessionDate)};\n`);
         fs.writeFileSync(transcript, JSON.stringify({ type: 'user', content: 'Persist after a slow summary' }) + '\n');
-        fs.writeFileSync(path.join(bin, 'claude'), `#!${process.execPath}\nrequire('fs').writeFileSync(${JSON.stringify(path.join(home, 'started'))}, 'started');\nsetTimeout(() => console.log('late summary'), 5000);\n`, { mode: 0o755 });
+        fs.writeFileSync(path.join(bin, 'claude'), `#!${process.execPath}\nconst fs = require('node:fs');\nfs.writeFileSync(${JSON.stringify(started)}, 'started');\nfs.writeFileSync(${JSON.stringify(calendarAfter)}, require(${JSON.stringify(utils)}).getDateString());\nsetTimeout(() => console.log('late summary'), 5000);\n`, { mode: 0o755 });
         const root = path.resolve(__dirname, '../..');
         const bootstrap = path.join(root, 'scripts/hooks/lifecycle-hook-bootstrap.js');
         const res = spawnSync(process.execPath, [bootstrap, 'session:stop:session-end', 'scripts/hooks/session-end.js', 'minimal,standard,strict', '2500'], {
           encoding: 'utf8', input: JSON.stringify({ transcript_path: transcript }),
           env: {
             ...isolatedHomeEnv(home), PATH: bin,
+            NODE_OPTIONS: `--require ${JSON.stringify(calendarPreload)}`,
             CLAUDE_PLUGIN_ROOT: root, ECC_HOOK_PROFILE: 'standard',
             ECC_LLM_SUMMARY_INTERVAL: '1', ECC_SKIP_LLM_SUMMARY: '',
             ECC_LLM_SUMMARY_SUBPROCESS: '', ECC_HOOK_DEADLINE_MS: '1',
@@ -343,10 +353,14 @@ function runTests() {
           timeout: 7000
         });
         assert.strictEqual(res.status, 0, res.stderr);
-        assert.ok(fs.existsSync(path.join(home, 'started')), 'Fresh bootstrap must replace an inherited expired deadline');
+        assert.ok(fs.existsSync(started), 'Fresh bootstrap must replace an inherited expired deadline');
+        assert.strictEqual(fs.readFileSync(calendarAfter, 'utf8'), nextDate, 'The summarizer must advance the fixture calendar');
         assert.match(res.stderr, /LLM summary failed; falling back/);
         assert.doesNotMatch(res.stderr, /lifecycle runner failed/);
-        assert.match(fs.readFileSync(sessionFileFor(home, uuid), 'utf8'), /Persist after a slow summary/);
+        const saved = fs.readFileSync(sessionFileFor(home, uuid, sessionDate), 'utf8');
+        assert.match(saved, /Persist after a slow summary/);
+        assert.ok(saved.includes(`**Date:** ${sessionDate}`), 'Resume metadata must retain the date captured before summarization');
+        assert.ok(!fs.existsSync(sessionFileFor(home, uuid, nextDate)), 'Rollover must not create a second session file');
       } finally {
         fs.rmSync(home, { recursive: true, force: true });
       }
