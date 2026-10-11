@@ -31,23 +31,11 @@ try {
   for (const code of [null, 'EACCES', 'EPERM']) {
     const faultCount = path.join(root, `fault-count-${code}.json`);
     const args = [];
-    if (code) {
-      const preload = path.join(root, `deny-${code}.cjs`);
-      fs.writeFileSync(preload, [
-        "const fs=require('fs'), vm=require('vm');",
-        `const file=${JSON.stringify(aliasPath)}, helper=${JSON.stringify(path.join(repo, 'scripts/lib/atomic-write.js'))};`,
-        'const original=fs.readFileSync; let denied=0;',
-        `fs.readFileSync=function(input){ if(input===file){ denied++; throw Object.assign(new Error('injected unreadable aliases'),{code:${JSON.stringify(code)}}); } return original.apply(this,arguments); };`,
-        'const record={exports:{}};',
-        "vm.runInNewContext(original(helper,'utf8'),{module:record,exports:record.exports,require,process:{platform:'win32',pid:process.pid},performance,Atomics,SharedArrayBuffer,Int32Array},{filename:helper});",
-        'require.cache[helper]={id:helper,filename:helper,loaded:true,exports:record.exports};',
-        `process.on('exit',()=>fs.writeFileSync(${JSON.stringify(faultCount)},JSON.stringify(denied)));`
-      ].join('\n'));
-      args.push('--require', preload);
-    }
+    if (code) args.push('--require', path.join(repo, 'tests/fixtures/session-start-alias-read-preload.cjs'));
     try {
       const result = spawnSync(process.execPath, [...args, path.join(repo, 'scripts/hooks/session-start.js')], {
-        cwd: project, env, input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', session_id: `startup-${code}`, cwd: project }),
+        cwd: project, env: { ...env, ECC_TEST_ALIAS_PATH: aliasPath,
+          ECC_TEST_ALIAS_FAULT_COUNT: faultCount, ECC_TEST_ALIAS_READ_ERROR: code || '' }, input: JSON.stringify({ hook_event_name: 'SessionStart', source: 'startup', session_id: `startup-${code}`, cwd: project }),
         encoding: 'utf8', timeout: 15000,
       });
       assert.ifError(result.error);
@@ -63,7 +51,8 @@ try {
       assert.match(result.stderr, /No package manager preference found/);
       if (code) {
         assert.match(result.stderr, /Session aliases unavailable/);
-        assert.ok(JSON.parse(fs.readFileSync(faultCount, 'utf8')) >= 1);
+        const denied = JSON.parse(fs.readFileSync(faultCount, 'utf8'));
+        assert.ok(denied >= 1 && denied <= 21, 'Actual sharing retries remain bounded');
       } else assert.match(result.stderr, /session alias\(es\) available: kept/);
       assert.strictEqual(fs.readFileSync(aliasPath, 'utf8'), aliasBytes);
       passed++; console.log(`PASS actual startup preserves context with ${code || 'readable'} aliases`);
