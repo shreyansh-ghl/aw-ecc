@@ -763,13 +763,17 @@ async function main() {
     }
   }
 
-  // Check for available session aliases
-  const aliases = listAliases({ limit: 5 });
-
-  if (aliases.length > 0) {
-    const aliasNames = aliases.map(a => a.name).join(', ');
-    log(`[SessionStart] ${aliases.length} session alias(es) available: ${aliasNames}`);
-    log(`[SessionStart] Use /sessions load <alias> to continue a previous session`);
+  // Alias suggestions are optional. An unreadable store must not discard
+  // already-collected context or prevent the remaining startup guidance.
+  try {
+    const aliases = listAliases({ limit: 5 });
+    if (aliases.length > 0) {
+      const aliasNames = aliases.map(a => a.name).join(', ');
+      log(`[SessionStart] ${aliases.length} session alias(es) available: ${aliasNames}`);
+      log(`[SessionStart] Use /sessions load <alias> to continue a previous session`);
+    }
+  } catch (error) {
+    log(`[SessionStart] Session aliases unavailable: ${error.message}`);
   }
 
   // Detect and report package manager
