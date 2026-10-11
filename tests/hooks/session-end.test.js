@@ -329,15 +329,30 @@ function runTests() {
         const started = path.join(home, 'started');
         const calendarAfter = path.join(home, 'calendar-after');
         const calendarPreload = path.join(home, 'calendar.cjs');
+        const summarizer = path.join(home, 'summarizer.cjs');
         const sessionDate = '2000-01-01';
         const nextDate = '2000-01-02';
         const utils = path.resolve(__dirname, '../../scripts/lib/utils.js');
         fs.mkdirSync(bin);
         // Only the calendar helper changes. Date.now and the actual lifecycle
         // deadline stay real while the summarizer crosses into the next day.
-        fs.writeFileSync(calendarPreload, `const fs = require('node:fs');\nrequire(${JSON.stringify(utils)}).getDateString = () => fs.existsSync(${JSON.stringify(started)}) ? ${JSON.stringify(nextDate)} : ${JSON.stringify(sessionDate)};\n`);
+        fs.writeFileSync(calendarPreload, [
+          "const fs = require('node:fs');",
+          'require(process.env.ECC_SESSION_TEST_UTILS).getDateString = () =>',
+          '  fs.existsSync(process.env.ECC_SESSION_TEST_STARTED)',
+          '    ? process.env.ECC_SESSION_TEST_NEXT_DATE : process.env.ECC_SESSION_TEST_DATE;',
+          ''
+        ].join('\n'));
         fs.writeFileSync(transcript, JSON.stringify({ type: 'user', content: 'Persist after a slow summary' }) + '\n');
-        fs.writeFileSync(path.join(bin, 'claude'), `#!${process.execPath}\nconst fs = require('node:fs');\nfs.writeFileSync(${JSON.stringify(started)}, 'started');\nfs.writeFileSync(${JSON.stringify(calendarAfter)}, require(${JSON.stringify(utils)}).getDateString());\nsetTimeout(() => console.log('late summary'), 5000);\n`, { mode: 0o755 });
+        fs.writeFileSync(summarizer, [
+          "const fs = require('node:fs');",
+          "fs.writeFileSync(process.env.ECC_SESSION_TEST_STARTED, 'started');",
+          'fs.writeFileSync(process.env.ECC_SESSION_TEST_CALENDAR_AFTER,',
+          '  require(process.env.ECC_SESSION_TEST_UTILS).getDateString());',
+          "setTimeout(() => console.log('late summary'), 5000);",
+          ''
+        ].join('\n'));
+        fs.writeFileSync(path.join(bin, 'claude'), '#!/bin/sh\nexec "$ECC_SESSION_TEST_NODE" "$ECC_SESSION_TEST_SUMMARIZER"\n', { mode: 0o755 });
         const root = path.resolve(__dirname, '../..');
         const bootstrap = path.join(root, 'scripts/hooks/lifecycle-hook-bootstrap.js');
         const res = spawnSync(process.execPath, [bootstrap, 'session:stop:session-end', 'scripts/hooks/session-end.js', 'minimal,standard,strict', '2500'], {
@@ -345,6 +360,13 @@ function runTests() {
           env: {
             ...isolatedHomeEnv(home), PATH: bin,
             NODE_OPTIONS: `--require ${JSON.stringify(calendarPreload)}`,
+            ECC_SESSION_TEST_NODE: process.execPath,
+            ECC_SESSION_TEST_SUMMARIZER: summarizer,
+            ECC_SESSION_TEST_UTILS: utils,
+            ECC_SESSION_TEST_STARTED: started,
+            ECC_SESSION_TEST_CALENDAR_AFTER: calendarAfter,
+            ECC_SESSION_TEST_DATE: sessionDate,
+            ECC_SESSION_TEST_NEXT_DATE: nextDate,
             CLAUDE_PLUGIN_ROOT: root, ECC_HOOK_PROFILE: 'standard',
             ECC_LLM_SUMMARY_INTERVAL: '1', ECC_SKIP_LLM_SUMMARY: '',
             ECC_LLM_SUMMARY_SUBPROCESS: '', ECC_HOOK_DEADLINE_MS: '1',
