@@ -73,15 +73,7 @@ function resolveSessionRecord(target, cwd) {
       };
     }
 
-    let alias;
-    let aliasReadError;
-    try {
-      alias = sessionAliases.resolveAlias(explicitTarget);
-    } catch (error) {
-      // Alias lookup is optional when the supplied identifier independently
-      // resolves to recorded history. Preserve the error otherwise.
-      aliasReadError = error;
-    }
+    const alias = sessionAliases.resolveAlias(explicitTarget);
     if (alias) {
       return {
         session: hydrateSessionFromPath(alias.sessionPath),
@@ -94,7 +86,6 @@ function resolveSessionRecord(target, cwd) {
 
     const session = sessionManager.getSessionById(explicitTarget, true);
     if (!session) {
-      if (aliasReadError) throw aliasReadError;
       throw new Error(`Claude session not found: ${explicitTarget}`);
     }
 
