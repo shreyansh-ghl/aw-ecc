@@ -16,14 +16,15 @@ const HOME_SOURCE_BASE = path.join(HOME_SOURCE_DIR, 'hooks.base.json');
 const HOME_SOURCE_FILE = path.join(HOME_SOURCE_DIR, 'hooks.json');
 const RUNTIME_OUTPUT_FILE = path.join(REPO_ROOT, 'hooks', 'hooks.json');
 
-// Required telemetry hooks that must be present in hooks.base.json.
-// Each entry maps a Claude hook event to the aw-usage script basename it must wire.
-const REQUIRED_TELEMETRY_HOOKS = [
-  { event: 'SessionStart', script: 'aw-usage-session-start.js' },
-  { event: 'UserPromptSubmit', script: 'aw-usage-prompt-submit.js' },
-  { event: 'PostToolUse', script: 'aw-usage-post-tool-use.js' },
-  { event: 'PostToolUseFailure', script: 'aw-usage-post-tool-use-failure.js' },
-  { event: 'Stop', script: 'aw-usage-stop.js' },
+// aw-usage telemetry is owned by the aw CLI (ghl-agentic-workspace), which
+// wires it once through ~/.claude/settings.json. The plugin must not wire it
+// too, or every event would be sent twice.
+const AW_USAGE_SCRIPTS = [
+  'aw-usage-session-start.js',
+  'aw-usage-prompt-submit.js',
+  'aw-usage-post-tool-use.js',
+  'aw-usage-post-tool-use-failure.js',
+  'aw-usage-stop.js',
 ];
 
 function findHookCommand(entries, scriptBasename) {
@@ -67,32 +68,15 @@ runSuite('Testing generated Claude AW hook output', [
       }
     }
   }],
-  ['hooks.base.json wires all required usage telemetry hooks', () => {
-    const config = JSON.parse(fs.readFileSync(HOME_SOURCE_BASE, 'utf8'));
-    const missing = [];
-
-    for (const { event, script } of REQUIRED_TELEMETRY_HOOKS) {
-      const entries = config.hooks[event];
-      assert.ok(Array.isArray(entries), `Expected hooks.${event} to be an array`);
-      const match = findHookCommand(entries, script);
-      if (!match) {
-        missing.push(`${event} → ${script}`);
+  ['plugin hook files do not wire aw-usage telemetry (owned by the aw CLI)', () => {
+    for (const file of [HOME_SOURCE_BASE, HOME_SOURCE_FILE, RUNTIME_OUTPUT_FILE]) {
+      const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+      for (const [event, entries] of Object.entries(config.hooks)) {
+        for (const script of AW_USAGE_SCRIPTS) {
+          assert.strictEqual(findHookCommand(entries, script), null,
+            `${path.relative(REPO_ROOT, file)}: ${event} still wires ${script}`);
+        }
       }
-    }
-
-    assert.strictEqual(missing.length, 0,
-      `Missing telemetry hooks in hooks.base.json:\n  ${missing.join('\n  ')}`);
-  }],
-  ['usage telemetry hooks in hooks.base.json are async and non-blocking', () => {
-    const config = JSON.parse(fs.readFileSync(HOME_SOURCE_BASE, 'utf8'));
-
-    for (const { event, script } of REQUIRED_TELEMETRY_HOOKS) {
-      const match = findHookCommand(config.hooks[event] || [], script);
-      assert.ok(match, `${event} → ${script} not found (covered by previous test)`);
-      assert.strictEqual(match.hook.async, true,
-        `${event} → ${script} must be async to avoid blocking the conversation`);
-      assert.ok(typeof match.hook.timeout === 'number' && match.hook.timeout > 0,
-        `${event} → ${script} must have a positive timeout`);
     }
   }],
 ]);
