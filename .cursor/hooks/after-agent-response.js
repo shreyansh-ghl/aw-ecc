@@ -9,14 +9,13 @@
 
 'use strict';
 
-const path = require('path');
-const { readStdin, transformToClaude, getPluginRoot } = require('./adapter');
+const { readStdin, transformToClaude, resolveAwUsageLib } = require('./adapter');
 
 readStdin().then(raw => {
   try {
-    const root = getPluginRoot();
-    const { buildEvent, sendAsync } = require(path.join(root, 'scripts', 'lib', 'aw-usage-telemetry'));
-    const { estimateCost, toNumber } = require(path.join(root, 'scripts', 'lib', 'aw-pricing'));
+    // aw-usage libs come from the aw CLI install (~/.aw/aw-usage/lib).
+    const { buildEvent, sendAsync } = require(resolveAwUsageLib('aw-usage-telemetry.js'));
+    const { estimateCost, toNumber } = require(resolveAwUsageLib('aw-pricing.js'));
 
     const input = JSON.parse(raw);
     const claudeInput = transformToClaude(input);

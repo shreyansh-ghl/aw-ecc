@@ -35,7 +35,9 @@ function getPluginRoot() {
     return repoStyleRoot;
   }
 
-  if (fs.existsSync(path.join(awEccHome, 'scripts', 'lib', 'aw-usage-telemetry.js'))) {
+  // Key on a file aw-ecc keeps shipping. The aw-usage telemetry scripts now
+  // belong to the aw CLI (~/.aw/aw-usage) and will be removed from aw-ecc.
+  if (fs.existsSync(path.join(awEccHome, 'scripts', 'hooks', 'session-start-rules-context.sh'))) {
     return awEccHome;
   }
 
@@ -125,12 +127,39 @@ function runManagedCommand(command, args, stdinData) {
   }
 }
 
+// The aw CLI (ghl-agentic-workspace) owns the aw-usage telemetry scripts and
+// installs them to ~/.aw/aw-usage/{hooks,lib}. Prefer that copy; fall back to
+// this repo's copy only while it still ships one.
+function awUsageHome() {
+  return path.join(require('os').homedir(), '.aw', 'aw-usage');
+}
+
+function firstExisting(candidates) {
+  return candidates.find(candidate => fs.existsSync(candidate)) || null;
+}
+
+function resolveAwUsageScript(scriptName) {
+  return firstExisting([
+    path.join(awUsageHome(), 'hooks', scriptName),
+    path.join(getPluginRoot(), 'scripts', 'hooks', scriptName),
+  ]);
+}
+
+function resolveAwUsageLib(libName) {
+  return firstExisting([
+    path.join(awUsageHome(), 'lib', libName),
+    path.join(getPluginRoot(), 'scripts', 'lib', libName),
+  ]);
+}
+
 function runExistingHook(scriptName, stdinData) {
   const root = getPluginRoot();
-  const candidates = [
-    path.join(root, 'scripts', 'hooks', scriptName),
-    path.join(root, 'hooks', scriptName),
-  ];
+  const candidates = String(scriptName).startsWith('aw-usage-')
+    ? [resolveAwUsageScript(scriptName)].filter(Boolean)
+    : [
+      path.join(root, 'scripts', 'hooks', scriptName),
+      path.join(root, 'hooks', scriptName),
+    ];
   const scriptPath = candidates.find(candidate => fs.existsSync(candidate));
   if (!scriptPath) {
     if (process.env.AW_HOOK_DEBUG === '1') {
@@ -181,6 +210,8 @@ function hookEnabled(hookId, allowedProfiles = ['standard', 'strict']) {
 module.exports = {
   readStdin,
   getPluginRoot,
+  resolveAwUsageScript,
+  resolveAwUsageLib,
   transformToClaude,
   runExistingHook,
   runManagedShellHook,
