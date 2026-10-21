@@ -142,13 +142,22 @@ function isFile(filePath) {
   }
 }
 
-// Every aw-usage hook needs package.json and both lib files. Use
+// Every aw-usage hook needs package.json, both lib files and the sender
+// script that lib/aw-usage-telemetry.js starts from ../hooks/. Use
 // ~/.aw/aw-usage only when they are all there, so a partial install is never
 // mixed with the aw-ecc copy (each copy's hooks load their own lib/).
+// Keep in sync with AW_USAGE_LIB_FILES and missingAwUsageFiles() in
+// ghl-agentic-workspace libs/aw/aw-usage-wiring.mjs, which installs this folder.
+const AW_USAGE_REQUIRED_FILES = [
+  ['package.json'],
+  ['lib', 'aw-usage-telemetry.js'],
+  ['lib', 'aw-pricing.js'],
+  ['hooks', 'aw-usage-telemetry-send.js'],
+];
+
 function awUsageInstalled() {
   const home = awUsageHome();
-  return [['package.json'], ['lib', 'aw-usage-telemetry.js'], ['lib', 'aw-pricing.js']]
-    .every(parts => isFile(path.join(home, ...parts)));
+  return AW_USAGE_REQUIRED_FILES.every(parts => isFile(path.join(home, ...parts)));
 }
 
 function resolveAwUsageScript(scriptName) {

@@ -53,9 +53,10 @@ function writeFile(file, content = '// test\n') {
   fs.writeFileSync(file, content);
 }
 
-// The files every aw-usage hook needs: package.json and both lib files.
+// The files every aw-usage hook needs: package.json, both lib files and the
+// sender script the telemetry lib starts.
 function writeCopyACore(home, { skip = [] } = {}) {
-  for (const rel of ['package.json', 'lib/aw-usage-telemetry.js', 'lib/aw-pricing.js']) {
+  for (const rel of ['package.json', 'lib/aw-usage-telemetry.js', 'lib/aw-pricing.js', 'hooks/aw-usage-telemetry-send.js']) {
     if (!skip.includes(rel)) writeFile(path.join(home, '.aw', 'aw-usage', ...rel.split('/')));
   }
 }
@@ -99,6 +100,15 @@ function runTests() {
     const copyB = path.join(REPO_ROOT, 'scripts');
     assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), path.join(copyB, 'lib', 'aw-usage-telemetry.js'));
     assert.strictEqual(resolveAwUsageLib('aw-pricing.js'), path.join(copyB, 'lib', 'aw-pricing.js'));
+    assert.strictEqual(resolveAwUsageScript('aw-usage-prompt-submit.js'), path.join(copyB, 'hooks', 'aw-usage-prompt-submit.js'));
+  })));
+
+  results.push(test('~/.aw/aw-usage without the telemetry sender is not used', () => withHome((home) => {
+    writeCopyACore(home, { skip: ['hooks/aw-usage-telemetry-send.js'] });
+    writeFile(path.join(home, '.aw', 'aw-usage', 'hooks', 'aw-usage-prompt-submit.js'));
+    const { resolveAwUsageScript, resolveAwUsageLib } = freshAdapter();
+    const copyB = path.join(REPO_ROOT, 'scripts');
+    assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), path.join(copyB, 'lib', 'aw-usage-telemetry.js'));
     assert.strictEqual(resolveAwUsageScript('aw-usage-prompt-submit.js'), path.join(copyB, 'hooks', 'aw-usage-prompt-submit.js'));
   })));
 
