@@ -134,22 +134,39 @@ function awUsageHome() {
   return path.join(require('os').homedir(), '.aw', 'aw-usage');
 }
 
-function firstExisting(candidates) {
-  return candidates.find(candidate => fs.existsSync(candidate)) || null;
+function isFile(filePath) {
+  try {
+    return fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// Every aw-usage hook needs package.json and both lib files. Use
+// ~/.aw/aw-usage only when they are all there, so a partial install is never
+// mixed with the aw-ecc copy (each copy's hooks load their own lib/).
+function awUsageInstalled() {
+  const home = awUsageHome();
+  return [['package.json'], ['lib', 'aw-usage-telemetry.js'], ['lib', 'aw-pricing.js']]
+    .every(parts => isFile(path.join(home, ...parts)));
 }
 
 function resolveAwUsageScript(scriptName) {
-  return firstExisting([
-    path.join(awUsageHome(), 'hooks', scriptName),
-    path.join(getPluginRoot(), 'scripts', 'hooks', scriptName),
-  ]);
+  if (awUsageInstalled()) {
+    const installed = path.join(awUsageHome(), 'hooks', scriptName);
+    if (isFile(installed)) return installed;
+  }
+  // The aw-ecc copy is self-contained, so it is a safe per-script fallback.
+  const bundled = path.join(getPluginRoot(), 'scripts', 'hooks', scriptName);
+  return isFile(bundled) ? bundled : null;
 }
 
 function resolveAwUsageLib(libName) {
-  return firstExisting([
-    path.join(awUsageHome(), 'lib', libName),
-    path.join(getPluginRoot(), 'scripts', 'lib', libName),
-  ]);
+  const libDir = awUsageInstalled()
+    ? path.join(awUsageHome(), 'lib')
+    : path.join(getPluginRoot(), 'scripts', 'lib');
+  const libPath = path.join(libDir, libName);
+  return isFile(libPath) ? libPath : null;
 }
 
 function runExistingHook(scriptName, stdinData) {

@@ -29,12 +29,16 @@ function test(name, fn) {
 
 function withHome(fn) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-adapter-home-'));
-  const previous = process.env.HOME;
+  const previous = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE };
   process.env.HOME = home;
+  process.env.USERPROFILE = home;
   try {
     return fn(home);
   } finally {
-    process.env.HOME = previous;
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     fs.rmSync(home, { recursive: true, force: true });
   }
 }
@@ -49,11 +53,19 @@ function writeFile(file, content = '// test\n') {
   fs.writeFileSync(file, content);
 }
 
+// The files every aw-usage hook needs: package.json and both lib files.
+function writeCopyACore(home, { skip = [] } = {}) {
+  for (const rel of ['package.json', 'lib/aw-usage-telemetry.js', 'lib/aw-pricing.js']) {
+    if (!skip.includes(rel)) writeFile(path.join(home, '.aw', 'aw-usage', ...rel.split('/')));
+  }
+}
+
 function runTests() {
   console.log('\n=== Testing adapter.js aw-usage resolution ===\n');
   const results = [];
 
   results.push(test('resolveAwUsageScript prefers ~/.aw/aw-usage/hooks', () => withHome((home) => {
+    writeCopyACore(home);
     const installed = path.join(home, '.aw', 'aw-usage', 'hooks', 'aw-usage-prompt-submit.js');
     writeFile(installed);
     const { resolveAwUsageScript } = freshAdapter();
@@ -74,10 +86,27 @@ function runTests() {
   })));
 
   results.push(test('resolveAwUsageLib prefers ~/.aw/aw-usage/lib', () => withHome((home) => {
+    writeCopyACore(home);
     const installed = path.join(home, '.aw', 'aw-usage', 'lib', 'aw-usage-telemetry.js');
-    writeFile(installed);
     const { resolveAwUsageLib } = freshAdapter();
     assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), installed);
+  })));
+
+  results.push(test('an incomplete ~/.aw/aw-usage is not mixed with the aw-ecc copy', () => withHome((home) => {
+    writeCopyACore(home, { skip: ['lib/aw-pricing.js'] });
+    writeFile(path.join(home, '.aw', 'aw-usage', 'hooks', 'aw-usage-prompt-submit.js'));
+    const { resolveAwUsageScript, resolveAwUsageLib } = freshAdapter();
+    const copyB = path.join(REPO_ROOT, 'scripts');
+    assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), path.join(copyB, 'lib', 'aw-usage-telemetry.js'));
+    assert.strictEqual(resolveAwUsageLib('aw-pricing.js'), path.join(copyB, 'lib', 'aw-pricing.js'));
+    assert.strictEqual(resolveAwUsageScript('aw-usage-prompt-submit.js'), path.join(copyB, 'hooks', 'aw-usage-prompt-submit.js'));
+  })));
+
+  results.push(test('a directory where a lib file belongs does not count as installed', () => withHome((home) => {
+    writeCopyACore(home, { skip: ['lib/aw-pricing.js'] });
+    fs.mkdirSync(path.join(home, '.aw', 'aw-usage', 'lib', 'aw-pricing.js'), { recursive: true });
+    const { resolveAwUsageLib } = freshAdapter();
+    assert.strictEqual(resolveAwUsageLib('aw-pricing.js'), path.join(REPO_ROOT, 'scripts', 'lib', 'aw-pricing.js'));
   })));
 
   results.push(test('getPluginRoot finds ~/.aw-ecc without the aw-usage library', () => withHome((home) => {
