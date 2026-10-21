@@ -10,6 +10,30 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
+const { sendUsageTelemetry } = require('../../.cursor/hooks/before-submit-prompt');
+
+// Sanitized copy of a real Cursor 3.25.9 beforeSubmitPrompt input (captured 21 Oct 2026,
+// ghl-agentic-workspace .aw_docs/features/usage-telemetry-hook-v2/evidence/capture/).
+const CURSOR_BEFORE_SUBMIT_PROMPT = {
+  conversation_id: '<uuid>',
+  generation_id: '<uuid>',
+  model: 'auto-smart',
+  model_id: 'auto-smart',
+  composer_mode: 'agent',
+  prompt: '@aw-plan say hi',
+  attachments: [
+    { type: 'rule', file_path: 'common-aw-routing.mdc' },
+    { type: 'rule', file_path: 'security.mdc' },
+    { type: 'rule', file_path: 'universal.mdc' },
+    { type: 'rule', file_path: 'model-policy' },
+  ],
+  session_id: '<uuid>',
+  hook_event_name: 'beforeSubmitPrompt',
+  cursor_version: '3.25.9',
+  workspace_roots: ['<repo>'],
+  user_email: '<email>',
+};
+
 function test(name, fn) {
   try {
     fn();
@@ -95,6 +119,34 @@ function runTests() {
       assert.strictEqual(output.hook_event_name, undefined);
       assert.ok(result.stderr.includes('Potential secret detected in prompt'), 'Expected secret warning on stderr');
       assert.ok(result.stderr.includes('Remove secrets before submitting'), 'Expected secret remediation guidance');
+    });
+  })) passed++; else failed++;
+
+  if (test('passes the Cursor prompt to aw-usage-prompt-submit.js', () => {
+    const calls = [];
+    sendUsageTelemetry(JSON.stringify(CURSOR_BEFORE_SUBMIT_PROMPT), {
+      runExistingHook(scriptName, stdinData) {
+        calls.push({ scriptName, payload: JSON.parse(stdinData) });
+        return { stdout: '', stderr: '' };
+      },
+    });
+
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0].scriptName, 'aw-usage-prompt-submit.js');
+    assert.strictEqual(calls[0].payload.prompt, '@aw-plan say hi');
+    assert.ok(!('attachments' in calls[0].payload), 'attachments should not be forwarded');
+  })) passed++; else failed++;
+
+  if (test('does not throw when the aw-usage hook fails', () => {
+    sendUsageTelemetry(JSON.stringify(CURSOR_BEFORE_SUBMIT_PROMPT), {
+      runExistingHook() {
+        throw new Error('hook failed');
+      },
+    });
+    sendUsageTelemetry('not json', {
+      runExistingHook() {
+        throw new Error('should not be called');
+      },
     });
   })) passed++; else failed++;
 

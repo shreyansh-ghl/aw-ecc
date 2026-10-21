@@ -77,6 +77,12 @@ function transformToClaude(cursorInput, overrides = {}) {
       output: cursorInput.output || cursorInput.result || '',
     },
     transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
+    // beforeSubmitPrompt text, read by aw-usage-prompt-submit.js. Cursor's
+    // attachments are not copied: they hold only always-applied rule files.
+    prompt: cursorInput.prompt,
+    // Cursor's tool-call id, the same in beforeReadFile and postToolUse for one
+    // call. Kept as sent, including the newline inside it.
+    tool_use_id: cursorInput.tool_use_id || undefined,
     // Cursor common schema fields surfaced at top level for buildEvent()
     generation_id: cursorInput.generation_id,
     conversation_id: cursorInput.conversation_id,
