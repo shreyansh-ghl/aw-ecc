@@ -53,10 +53,28 @@ function writeFile(file, content = '// test\n') {
   fs.writeFileSync(file, content);
 }
 
-// The files every aw-usage hook needs: package.json, both lib files and the
-// sender script the telemetry lib starts.
+// The full v2 set the aw CLI installs (missingAwUsageFiles() in
+// ghl-agentic-workspace libs/aw/aw-usage-wiring.mjs).
+const COPY_A_FILES = [
+  'package.json',
+  'hooks/aw-usage-prompt-submit.js',
+  'hooks/aw-usage-post-tool-use.js',
+  'hooks/aw-usage-post-tool-use-failure.js',
+  'hooks/aw-usage-session-start.js',
+  'hooks/aw-usage-stop.js',
+  'hooks/aw-usage-telemetry-send.js',
+  'hooks/aw-usage-commit-created.js',
+  'lib/aw-usage-telemetry.js',
+  'lib/aw-pricing.js',
+  'lib/aw-usage-envelope.js',
+  'lib/aw-usage-queue.js',
+  'lib/aw-usage-commands.js',
+  'lib/aw-usage-skill-source.js',
+  'lib/aw-usage-stage-events.js',
+];
+
 function writeCopyACore(home, { skip = [] } = {}) {
-  for (const rel of ['package.json', 'lib/aw-usage-telemetry.js', 'lib/aw-pricing.js', 'hooks/aw-usage-telemetry-send.js']) {
+  for (const rel of COPY_A_FILES) {
     if (!skip.includes(rel)) writeFile(path.join(home, '.aw', 'aw-usage', ...rel.split('/')));
   }
 }
@@ -110,6 +128,17 @@ function runTests() {
     const copyB = path.join(REPO_ROOT, 'scripts');
     assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), path.join(copyB, 'lib', 'aw-usage-telemetry.js'));
     assert.strictEqual(resolveAwUsageScript('aw-usage-prompt-submit.js'), path.join(copyB, 'hooks', 'aw-usage-prompt-submit.js'));
+  })));
+
+  results.push(test('~/.aw/aw-usage missing any v2 file is not used', () => withHome((home) => {
+    const copyB = path.join(REPO_ROOT, 'scripts');
+    for (const rel of COPY_A_FILES) {
+      fs.rmSync(path.join(home, '.aw'), { recursive: true, force: true });
+      writeCopyACore(home, { skip: [rel] });
+      const { resolveAwUsageScript, resolveAwUsageLib } = freshAdapter();
+      assert.strictEqual(resolveAwUsageLib('aw-usage-telemetry.js'), path.join(copyB, 'lib', 'aw-usage-telemetry.js'), `missing ${rel}`);
+      assert.strictEqual(resolveAwUsageScript('aw-usage-stop.js'), path.join(copyB, 'hooks', 'aw-usage-stop.js'), `missing ${rel}`);
+    }
   })));
 
   results.push(test('a directory where a lib file belongs does not count as installed', () => withHome((home) => {

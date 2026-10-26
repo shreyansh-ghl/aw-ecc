@@ -148,17 +148,34 @@ function isFile(filePath) {
   }
 }
 
-// Every aw-usage hook needs package.json, both lib files and the sender
-// script that lib/aw-usage-telemetry.js starts from ../hooks/. Use
-// ~/.aw/aw-usage only when they are all there, so a partial install is never
-// mixed with the aw-ecc copy (each copy's hooks load their own lib/).
-// Keep in sync with AW_USAGE_LIB_FILES and missingAwUsageFiles() in
-// ghl-agentic-workspace libs/aw/aw-usage-wiring.mjs, which installs this folder.
+// The aw-usage scripts only work as a set: hooks load ../lib/, the v2 lib
+// files load each other, lib/aw-usage-telemetry.js starts the sender from
+// ../hooks/, and package.json carries the hook version. Use ~/.aw/aw-usage
+// only when every file is there, so a partial install falls back to the
+// self-contained aw-ecc copy instead of silently dropping telemetry.
+// Keep in sync with AW_USAGE_HOOK_SCRIPTS, AW_USAGE_LIB_FILES and
+// missingAwUsageFiles() in ghl-agentic-workspace libs/aw/aw-usage-wiring.mjs,
+// which installs this folder.
 const AW_USAGE_REQUIRED_FILES = [
   ['package.json'],
-  ['lib', 'aw-usage-telemetry.js'],
-  ['lib', 'aw-pricing.js'],
-  ['hooks', 'aw-usage-telemetry-send.js'],
+  ...[
+    'aw-usage-prompt-submit.js',
+    'aw-usage-post-tool-use.js',
+    'aw-usage-post-tool-use-failure.js',
+    'aw-usage-session-start.js',
+    'aw-usage-stop.js',
+    'aw-usage-telemetry-send.js',
+    'aw-usage-commit-created.js',
+  ].map(name => ['hooks', name]),
+  ...[
+    'aw-usage-telemetry.js',
+    'aw-pricing.js',
+    'aw-usage-envelope.js',
+    'aw-usage-queue.js',
+    'aw-usage-commands.js',
+    'aw-usage-skill-source.js',
+    'aw-usage-stage-events.js',
+  ].map(name => ['lib', name]),
 ];
 
 function awUsageInstalled() {
