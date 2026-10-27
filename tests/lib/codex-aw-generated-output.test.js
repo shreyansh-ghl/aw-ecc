@@ -44,4 +44,18 @@ runSuite('Testing generated Codex AW hook outputs', [
     configSourceFile: HOME_SOURCE_FILE,
     configOutputFile: OUTPUT_FILE,
   }),
+  ['Codex hook scripts run aw-usage telemetry from ~/.aw/aw-usage first', () => {
+    // The aw CLI owns the aw-usage scripts; the aw-ecc copy is only a fallback
+    // until it is deleted.
+    const sourceDir = path.join(REPO_ROOT, 'scripts', 'codex-aw-home', 'hooks');
+    for (const fileName of fs.readdirSync(sourceDir)) {
+      const content = fs.readFileSync(path.join(sourceDir, fileName), 'utf8');
+      const match = content.match(/TELEMETRY_HOOK="([^"]+)"/);
+      if (!match) continue;
+      assert.match(match[1], /^\$HOME\/\.aw\/aw-usage\/hooks\/aw-usage-[a-z-]+\.js$/,
+        `${fileName}: first TELEMETRY_HOOK must be ~/.aw/aw-usage`);
+      assert.match(content, /\[\[ -f "\$TELEMETRY_HOOK" \]\] \|\| TELEMETRY_HOOK="\$HOME\/\.aw-ecc\/scripts\/hooks\/aw-usage-/,
+        `${fileName}: must fall back to the aw-ecc copy only when ~/.aw/aw-usage is missing`);
+    }
+  }],
 ]);

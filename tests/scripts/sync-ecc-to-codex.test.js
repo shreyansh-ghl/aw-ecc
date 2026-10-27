@@ -79,21 +79,22 @@ function runTests() {
     }
   })) passed++; else failed++;
 
-  if (test('installs managed Codex hook phases and scripts from the neutral source', () => {
+  if (test('leaves Codex hook phases and scripts to the aw CLI, but syncs the shared prompt runtime', () => {
     const homeDir = createTempDir('sync-codex-home-');
 
     try {
+      // A user's existing hooks.json must survive the sync byte-for-byte.
+      const codexHome = path.join(homeDir, '.codex');
+      fs.mkdirSync(codexHome, { recursive: true });
+      const userHooks = JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'say done' }] }] } }, null, 2);
+      fs.writeFileSync(path.join(codexHome, 'hooks.json'), userHooks);
+
       runSync(homeDir);
 
-      const codexHome = path.join(homeDir, '.codex');
-      const hooksJson = JSON.parse(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8'));
-      for (const phaseName of ['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop']) {
-        assert.ok(Array.isArray(hooksJson.hooks[phaseName]), `Expected hooks.json to define ${phaseName}`);
-        assert.ok(hooksJson.hooks[phaseName].length > 0, `Expected ${phaseName} to have at least one entry`);
-      }
-
+      assert.strictEqual(fs.readFileSync(path.join(codexHome, 'hooks.json'), 'utf8'), userHooks,
+        'sync must not overwrite ~/.codex/hooks.json; the aw CLI owns AW Codex hook entries');
       for (const fileName of ['aw-session-start.sh', 'aw-user-prompt-submit.sh', 'aw-pre-tool-use.sh', 'aw-post-tool-use.sh', 'aw-stop.sh']) {
-        assert.ok(fs.existsSync(path.join(codexHome, 'hooks', fileName)), `Expected managed hook script ${fileName}`);
+        assert.ok(!fs.existsSync(path.join(codexHome, 'hooks', fileName)), `sync must not install ${fileName}`);
       }
 
       assert.ok(
@@ -192,7 +193,6 @@ function runTests() {
 
       const codexHome = path.join(homeDir, '.codex');
       assert.ok(fs.existsSync(path.join(codexHome, 'prompts', 'ecc-prompts-manifest.txt')));
-      assert.ok(fs.existsSync(path.join(codexHome, 'hooks.json')));
     } finally {
       cleanup(homeDir);
     }

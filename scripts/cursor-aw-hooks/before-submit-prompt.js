@@ -71,10 +71,10 @@ function scanPromptForSecrets(raw) {
   }
 }
 
-function sendUsageTelemetry(raw) {
+function sendUsageTelemetry(raw, deps = { runExistingHook }) {
   try {
     const claudePayload = transformToClaude(JSON.parse(raw));
-    runExistingHook('aw-usage-prompt-submit.js', JSON.stringify(claudePayload));
+    deps.runExistingHook('aw-usage-prompt-submit.js', JSON.stringify(claudePayload));
   } catch (_error) {
     // Telemetry is best-effort and should not block prompt submission.
   }
@@ -105,5 +105,6 @@ module.exports = {
   extractAwMemoryRecall,
   normalizeCursorPromptOutput,
   scanPromptForSecrets,
+  sendUsageTelemetry,
   shouldInjectMemoryRecall,
 };

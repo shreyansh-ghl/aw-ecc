@@ -35,7 +35,9 @@ function getPluginRoot() {
     return repoStyleRoot;
   }
 
-  if (fs.existsSync(path.join(awEccHome, 'scripts', 'lib', 'aw-usage-telemetry.js'))) {
+  // Key on a file aw-ecc keeps shipping. The aw-usage telemetry scripts now
+  // belong to the aw CLI (~/.aw/aw-usage) and will be removed from aw-ecc.
+  if (fs.existsSync(path.join(awEccHome, 'scripts', 'hooks', 'session-start-rules-context.sh'))) {
     return awEccHome;
   }
 
@@ -75,6 +77,12 @@ function transformToClaude(cursorInput, overrides = {}) {
       output: cursorInput.output || cursorInput.result || '',
     },
     transcript_path: cursorInput.transcript_path || cursorInput.transcriptPath || cursorInput.session?.transcript_path || '',
+    // beforeSubmitPrompt text, read by aw-usage-prompt-submit.js. Cursor's
+    // attachments are not copied: they hold only always-applied rule files.
+    prompt: cursorInput.prompt,
+    // Cursor's tool-call id, the same in beforeReadFile and postToolUse for one
+    // call. Kept as sent, including the newline inside it.
+    tool_use_id: cursorInput.tool_use_id || undefined,
     // Cursor common schema fields surfaced at top level for buildEvent()
     generation_id: cursorInput.generation_id,
     conversation_id: cursorInput.conversation_id,
@@ -125,12 +133,82 @@ function runManagedCommand(command, args, stdinData) {
   }
 }
 
+// The aw CLI (ghl-agentic-workspace) owns the aw-usage telemetry scripts and
+// installs them to ~/.aw/aw-usage/{hooks,lib}. Prefer that copy; fall back to
+// this repo's copy only while it still ships one.
+function awUsageHome() {
+  return path.join(require('os').homedir(), '.aw', 'aw-usage');
+}
+
+function isFile(filePath) {
+  try {
+    return fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// The aw-usage scripts only work as a set: hooks load ../lib/, the v2 lib
+// files load each other, lib/aw-usage-telemetry.js starts the sender from
+// ../hooks/, and package.json carries the hook version. Use ~/.aw/aw-usage
+// only when every file is there, so a partial install falls back to the
+// self-contained aw-ecc copy instead of silently dropping telemetry.
+// Keep in sync with AW_USAGE_HOOK_SCRIPTS, AW_USAGE_LIB_FILES and
+// missingAwUsageFiles() in ghl-agentic-workspace libs/aw/aw-usage-wiring.mjs,
+// which installs this folder.
+const AW_USAGE_REQUIRED_FILES = [
+  ['package.json'],
+  ...[
+    'aw-usage-prompt-submit.js',
+    'aw-usage-post-tool-use.js',
+    'aw-usage-post-tool-use-failure.js',
+    'aw-usage-session-start.js',
+    'aw-usage-stop.js',
+    'aw-usage-telemetry-send.js',
+    'aw-usage-commit-created.js',
+  ].map(name => ['hooks', name]),
+  ...[
+    'aw-usage-telemetry.js',
+    'aw-pricing.js',
+    'aw-usage-envelope.js',
+    'aw-usage-queue.js',
+    'aw-usage-commands.js',
+    'aw-usage-skill-source.js',
+    'aw-usage-stage-events.js',
+  ].map(name => ['lib', name]),
+];
+
+function awUsageInstalled() {
+  const home = awUsageHome();
+  return AW_USAGE_REQUIRED_FILES.every(parts => isFile(path.join(home, ...parts)));
+}
+
+function resolveAwUsageScript(scriptName) {
+  if (awUsageInstalled()) {
+    const installed = path.join(awUsageHome(), 'hooks', scriptName);
+    if (isFile(installed)) return installed;
+  }
+  // The aw-ecc copy is self-contained, so it is a safe per-script fallback.
+  const bundled = path.join(getPluginRoot(), 'scripts', 'hooks', scriptName);
+  return isFile(bundled) ? bundled : null;
+}
+
+function resolveAwUsageLib(libName) {
+  const libDir = awUsageInstalled()
+    ? path.join(awUsageHome(), 'lib')
+    : path.join(getPluginRoot(), 'scripts', 'lib');
+  const libPath = path.join(libDir, libName);
+  return isFile(libPath) ? libPath : null;
+}
+
 function runExistingHook(scriptName, stdinData) {
   const root = getPluginRoot();
-  const candidates = [
-    path.join(root, 'scripts', 'hooks', scriptName),
-    path.join(root, 'hooks', scriptName),
-  ];
+  const candidates = String(scriptName).startsWith('aw-usage-')
+    ? [resolveAwUsageScript(scriptName)].filter(Boolean)
+    : [
+      path.join(root, 'scripts', 'hooks', scriptName),
+      path.join(root, 'hooks', scriptName),
+    ];
   const scriptPath = candidates.find(candidate => fs.existsSync(candidate));
   if (!scriptPath) {
     if (process.env.AW_HOOK_DEBUG === '1') {
@@ -181,6 +259,8 @@ function hookEnabled(hookId, allowedProfiles = ['standard', 'strict']) {
 module.exports = {
   readStdin,
   getPluginRoot,
+  resolveAwUsageScript,
+  resolveAwUsageLib,
   transformToClaude,
   runExistingHook,
   runManagedShellHook,

@@ -38,8 +38,6 @@ PROMPTS_DEST="$CODEX_HOME/prompts"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 CURSOR_RULES_DIR="$REPO_ROOT/.cursor/rules"
-HOOKS_JSON_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks.json"
-HOOKS_DIR_SRC="$REPO_ROOT/scripts/codex-aw-home/hooks"
 HOOKS_JSON_DEST="$CODEX_HOME/hooks.json"
 HOOKS_DIR_DEST="$CODEX_HOME/hooks"
 SHARED_HOOKS_SRC="$REPO_ROOT/scripts/hooks"
@@ -218,8 +216,6 @@ require_path "$CURSOR_RULES_DIR" "ECC Cursor rules directory"
 require_path "$CONFIG_FILE" "Codex config.toml"
 require_path "$MCP_MERGE_SCRIPT" "ECC MCP merge script"
 require_path "$AGENT_MERGE_SCRIPT" "ECC Codex agent merge script"
-require_path "$HOOKS_JSON_SRC" "ECC Codex hooks.json"
-require_path "$HOOKS_DIR_SRC" "ECC Codex hooks directory"
 
 if ! command -v node >/dev/null 2>&1; then
   log "ERROR: node is required for MCP config merging but was not found"
@@ -594,23 +590,10 @@ else
   "$HOOKS_INSTALLER"
 fi
 
-log "Installing Codex hooks.json"
-if [[ "$MODE" == "dry-run" ]]; then
-  printf '[dry-run] cp "%s" "%s"\n' "$HOOKS_JSON_SRC" "$HOOKS_JSON_DEST"
-else
-  run_or_echo "cp \"$HOOKS_JSON_SRC\" \"$HOOKS_JSON_DEST\""
-fi
-
-log "Installing managed Codex hook scripts"
-if [[ "$MODE" == "dry-run" ]]; then
-  printf '[dry-run] mkdir -p "%s"\n' "$HOOKS_DIR_DEST"
-  printf '[dry-run] cp -R "%s"/. "%s"/\n' "$HOOKS_DIR_SRC" "$HOOKS_DIR_DEST"
-  printf '[dry-run] chmod +x "%s"/*.sh\n' "$HOOKS_DIR_DEST"
-else
-  run_or_echo "mkdir -p \"$HOOKS_DIR_DEST\""
-  run_or_echo "cp -R \"$HOOKS_DIR_SRC\"/. \"$HOOKS_DIR_DEST\"/"
-  run_or_echo "chmod +x \"$HOOKS_DIR_DEST\"/*.sh"
-fi
+# AW Codex hook phases (~/.codex/hooks.json entries and ~/.codex/hooks/aw-*.sh)
+# are written by the aw CLI (ghl-agentic-workspace hooks/codex-home.mjs), which
+# also owns the aw-usage telemetry scripts. Copying them here as well made two
+# writers fight over the same files, so this sync no longer installs them.
 
 log "Installing shared AW prompt hook runtime"
 if [[ "$MODE" == "dry-run" ]]; then
